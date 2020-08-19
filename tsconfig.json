@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "module": "CommonJS",
+        "target": "ES2019",
+        "lib": ["ES2019"],
+        "outDir": "out",
+        "rootDir": "src",
+        "sourceMap": true,
+        "strict": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "Node",
+        "baseUrl": ".",
+        "paths": {
+            "@common/*": [
+                "./src/common/*"
+            ]
+        }
+    },
+    "repository": {
+
+    },
+    "engines": {
+        "vscode": "^1.43.0"
+    }
+}
