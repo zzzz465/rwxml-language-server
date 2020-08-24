@@ -1,0 +1,20 @@
+{ // example config file
+    "folders": {
+        "1.1" : {
+            "About": "./About",
+            "Assemblies": "./Assemblies",
+            "Defs": "./1.1/Defs",
+            "Textures": "./Textures",
+            "Sounds": "./Sounds",
+            "Patches": "./1.1/Patches"
+        },
+        "1.2" : {
+            "About": "./About",
+            "Assemblies": "./Assemblies",
+            "Defs": "./1.2/Defs",
+            "Textures": "./Textures",
+            "Sounds": "./Sounds",
+            "Patches": "./1.2/Patches"
+        }
+    }
+}

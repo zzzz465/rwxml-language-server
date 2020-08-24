@@ -4,17 +4,19 @@
 	"description": "temp-description",
 	"main": "out/client/extension",
 	"scripts": {
-    "compile": "tsc -b",
-    "watch": "tsc -b -w",
+		"pkgvars": "node ./node_modules/vscode/bin/install",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
 		"test": "jest"
 	},
 	"author": "madeline",
-  "license": "ISC",
-  "categories": [],
-  "engines": {
-      "vscode": "^1.43.0"
-  },
-  "jest": {
+	"license": "ISC",
+	"categories": [],
+	"engines": {
+		"vscode": "^1.43.0"
+	},
+	"jest": {
 		"transform": {
 			"^.+\\.ts$": "ts-jest"
 		},
@@ -26,9 +28,9 @@
 		"preset": "ts-jest",
 		"testMatch": null
 	},
-  "activationEvents": [
-    "onLanguage:xml"
-  ],
+	"activationEvents": [
+		"onLanguage:xml"
+	],
 	"devDependencies": {
 		"@babel/core": "^7.11.1",
 		"@babel/preset-env": "^7.11.0",
@@ -45,10 +47,11 @@
 		"typescript": "^3.9.4"
 	},
 	"dependencies": {
-		"@types/vscode": "^1.48.0",
 		"linq-es2015": "^2.5.1",
 		"lodash": "^4.17.19",
 		"ts-jest": "^26.1.4",
+		"tsconfig-paths": "^3.9.0",
+		"vscode": "^1.1.37",
 		"vscode-languageclient": "^6.1.3",
 		"vscode-languageserver": "^6.1.1",
 		"vscode-languageserver-textdocument": "^1.0.1",

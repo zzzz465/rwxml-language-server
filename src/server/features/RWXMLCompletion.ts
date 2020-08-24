@@ -3,10 +3,21 @@ import { XMLDocument, Node } from '../parser/XMLParser';
 import { CompletionList, CompletionItem } from 'vscode-languageserver';
 import { createScanner } from '../parser/XMLScanner';
 import { TokenType, ScannerState, Scanner } from '../htmlLanguageTypes';
-import { TypeInfo, isTypeNode } from '../RW/TypeInfo'
+import { TypeInfo, isTypeNode, typeNode } from '../RW/TypeInfo'
+import { RWTextDocument } from 'server/documents';
+import { absPath } from '../../common/common'
+import { relative, basename } from 'path';
+
+export interface filesQuery {
+	(path: absPath): Promise<absPath[]>
+}
 
 export class RWXMLCompletion {
-	doComplete(document: TextDocument, position: Position, XMLDocument: XMLDocument): CompletionList {
+	constructor (private query: filesQuery) {
+
+	}
+
+	async doComplete(document: RWTextDocument, position: Position, XMLDocument: XMLDocument): Promise<CompletionList> {
 		const result: CompletionList = {
 			isIncomplete: false,
 			items: []
@@ -29,7 +40,31 @@ export class RWXMLCompletion {
 			return { start: document.positionAt(replaceStart), end: document.positionAt(replaceEnd) }
 		}
 
-		function collectDefNodeValueSuggestions(contentOffset: number, tagNameEnd?: number ): CompletionList {
+		const collectDefNodeValueSuggestions = async (contentOffset: number, tagNameEnd?: number ) => {
+			// TODO - performance alert!
+			// pretty sure this need to be cached...
+			const collectImageNodeSuggestions: (node: typeNode) => Promise<CompletionItem[]> 
+				= async () => {
+				if(document.loadFolders && document.loadFolders.Textures) {
+					const textures =  document.loadFolders.Textures
+					const respond = await this.query(textures)
+					respond.filter(path => !path.match(/png$|jpeg$|jpg$|gif$/))
+					return respond.map(absPath => {
+						const pathWithoutExt = relative(textures, absPath).replace(/\.[\w\W]+$/, '')
+							.replace(/\\/g, '/') // replace \ to /
+						const obj: CompletionItem = {
+							label: pathWithoutExt,
+							data: {
+								type: 'image',
+								absPath
+							}
+						}
+						return obj
+					})
+				}
+				return []
+			}
+
 			const range = getReplaceRange(contentOffset, tagNameEnd)
 			const result: CompletionList = {
 				isIncomplete: false,
@@ -38,12 +73,15 @@ export class RWXMLCompletion {
 			const node = XMLDocument.findNodeAt(contentOffset)
 			if(isTypeNode(node)) {
 				const typeInfo = node.typeInfo
-				if(typeInfo.leafNodeCompletions) {
+				if (node.tag === 'texPath') {
+					result.items = await collectImageNodeSuggestions(node)
+				} else if(typeInfo.leafNodeCompletions) {
 					result.items.push(...typeInfo.leafNodeCompletions)
 				}
 			}
 			return result
 		}
+
 
 		function collectOpenDefNameTagSuggestions(afterOpenBracket: number, tagNameEnd?: number): CompletionList {
 			const range = getReplaceRange(afterOpenBracket, tagNameEnd)

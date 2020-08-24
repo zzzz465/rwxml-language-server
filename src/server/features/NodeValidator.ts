@@ -36,7 +36,7 @@ export class NodeValidator implements NodeValidatorContext {
 		this.diagnostics = []
 	}
 
-	validateNode () {
+	validateNode (): Diagnostic[] {
 		this.diagnostics = []
 		const root = this.XMLDocument.root
 		if(root?.tag === 'Defs') {

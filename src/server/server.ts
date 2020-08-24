@@ -14,8 +14,11 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+	MarkupContent
 } from 'vscode-languageserver';
+
+import { URI } from 'vscode-uri'
 
 import {
 	TextDocument
@@ -25,21 +28,28 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
+// import { config, RWTextDocument } from '@common/config'
+import { LoadFolders, querySubFilesRequestType } from '../common/config'
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager. 
-const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+const documents: TextDocuments<RWTextDocument> = new TextDocuments(TextDocument);
 
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
+// const defaultConfig: config = { folders: { } } as any
+// let _config: config
+// const configfileUri: null | Uri = null
+
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
-	console.log(capabilities)
+	// _config = params.initializationOptions.config ?? defaultConfig // filePath: Uri 도 같이 있음
+	// configfileUri = params.initializationOptions.filePath ?? null
 
 	// Does the client support the `workspace/configuration` request?
 	// If not, we fall back using global settings.
@@ -85,61 +95,16 @@ connection.onInitialized(() => {
 			connection.console.log('Workspace folder change event received.');
 		});
 	}
-});
 
-// The example settings
-interface ExampleSettings {
-	maxNumberOfProblems: number;
-}
-
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
-let globalSettings: ExampleSettings = defaultSettings;
-
-// Cache the settings of all open documents
-const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
-
-connection.onDidChangeConfiguration(change => {
-	console.log(change)
-	if (hasConfigurationCapability) {
-		// Reset all cached document settings
-		documentSettings.clear();
-	} else {
-		globalSettings = <ExampleSettings>(
-			(change.settings.languageServerExample || defaultSettings)
-		);
-	}
-
-	// Revalidate all open text documents
-	documents.all().forEach(validateTextDocument);
-});
-
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'languageServerExample'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
-}
-
-// Only keep settings for open documents
-documents.onDidClose(e => {
-	documentSettings.delete(e.document.uri);
+	connection.onNotification(DefFileAddedNotificationType, params => {
+		console.log(params.path)
+	})
 });
 
 import * as fs from 'fs'
 import * as path from 'path'
-// import * as mockTypeData from '../testData/output.json'
-const mockDataPath = path.join(__dirname, './testData/output.json')
+
+const mockDataPath = path.join(__dirname, './testData/output.json') // for development only
 const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
 
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector } from './RW/TypeInfo'
@@ -151,24 +116,38 @@ const injector = new TypeInfoInjector(typeInfoMap)
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 
-let xmlDoc: XMLDocument
+let xmlDoc: XMLDocument = parse('') // create empty document
 let textDoc: TextDocument
-const completion = new RWXMLCompletion()
+const completion = new RWXMLCompletion((path: absPath) => {
+	return connection.sendRequest(querySubFilesRequestType, path)
+})
 import { builtInValidationParticipant } from './features/BuiltInValidator'
 
 connection.onCompletion(handler => {
-	if(xmlDoc.root.tag === 'Defs')
+	if(xmlDoc.root && xmlDoc.root.tag === 'Defs')
 		return completion.doComplete(textDoc, handler.position, xmlDoc)
 
 	return undefined
 })
 
-documents.onDidChangeContent(change => {
+import { LoadFoldersRequestType } from '../common/config'
+import { from } from 'linq-es2015';
+import { RWTextDocument } from './documents';
+import { FileSystem } from 'vscode-languageserver/lib/files';
+import { absPath } from '../common/common';
+import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs';
+
+documents.onDidChangeContent(async change => {
+	const filePath = URI.parse(change.document.uri).fsPath
+	const respond = await connection.sendRequest(LoadFoldersRequestType, filePath)
+	if (respond)
+		change.document.loadFolders = respond
+
 	textDoc = change.document
 	const text = change.document.getText()
 	if(text) {
 		xmlDoc = parse(text)
-		if(xmlDoc.root && xmlDoc.root.tag === 'Defs') {
+		if(xmlDoc.root?.tag === 'Defs') {
 			for (const defNode of xmlDoc.root.children)
 				injector.Inject(defNode)
 		}
@@ -180,94 +159,32 @@ documents.onDidChangeContent(change => {
 	// validateTextDocument(change.document);
 });
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-	// In this simple example we get the settings for every validate run.
-	const settings = await getDocumentSettings(textDocument.uri);
-
-	// The validator creates diagnostics for all uppercase words length 2 and more
-	const text = textDocument.getText();
-	const pattern = /\b[A-Z]{2,}\b/g;
-	let m: RegExpExecArray | null;
-
-	let problems = 0;
-	const diagnostics: Diagnostic[] = [];
-	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
-		problems++;
-		const diagnostic: Diagnostic = {
-			severity: DiagnosticSeverity.Warning,
-			range: {
-				start: textDocument.positionAt(m.index),
-				end: textDocument.positionAt(m.index + m[0].length)
-			},
-			message: `${m[0]} is all uppercase.`,
-			source: 'ex'
-		};
-		if (hasDiagnosticRelatedInformationCapability) {
-			diagnostic.relatedInformation = [
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Spelling matters'
-				},
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Particularly for names'
-				}
-			];
-		}
-		diagnostics.push(diagnostic);
-	}
-
-	// Send the computed diagnostics to VSCode.
-	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-}
-
-connection.onDidChangeWatchedFiles(_change => {
+// connection.onDidChangeWatchedFiles(_change => {
 	// Monitored files have change in VSCode
-	connection.console.log('We received an file change event');
-});
-
-// This handler provides the initial list of the completion items.
-/*
-connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-		// The pass parameter contains the position of the text document in
-		// which code complete got requested. For the example we ignore this
-		// info and always provide the same completion items.
-		return [
-			{
-				label: 'TypeScript',
-				kind: CompletionItemKind.Text,
-				data: 1
-			},
-			{
-				label: 'JavaScript',
-				kind: CompletionItemKind.Text,
-				data: 2
-			}
-		];
-	}
-);
-*/
+	// connection.console.log('We received an file change event');
+// });
 
 // This handler resolves additional information for the item selected in
 // the completion list.
 
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
-		if (item.data === 1) {
-			item.detail = 'TypeScript details';
-			item.documentation = 'TypeScript documentation';
-		} else if (item.data === 2) {
-			item.detail = 'JavaScript details';
-			item.documentation = 'JavaScript documentation';
+		if(typeof item.data === 'object') {
+			if (item.data.type === 'image') {
+				const path = '/' + (<string>(item.data.absPath)).replace(/\\/g, '/')
+				// const value = '```html'
+				// 	+ `<image src="${path}" width="500" height="500" />`
+				// 	+ '```'
+				const markup: MarkupContent = {
+					kind: 'markdown',
+					value: `![image](${path})`
+					// value
+				}
+				item.documentation = markup
+			}
 		}
-		return item;
+
+		return item
 	}
 );
 

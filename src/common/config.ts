@@ -1,38 +1,17 @@
-import 'vscode-languageserver'
-import * as vscode_client from 'vscode-languageclient'
-import * as vscode from 'vscode'
-import { DidChangeConfigurationNotification } from 'vscode-languageserver'
+// no vscode module allowed in here!!!!!!!
+import { RequestType } from 'vscode-languageserver'
+import { absPath } from './common'
 
-export interface config {
-	folders: {
-		[version: string]: rwDirectory
-	}
+export interface LoadFolders {
+	readonly version: string
+	readonly About: absPath,
+	readonly Assemblies?: absPath,
+	readonly Languages?: absPath,
+	readonly Defs?: absPath,
+	readonly Textures?: absPath,
+	readonly Sounds?: absPath,
+	readonly Patches?: absPath
 }
 
-type pathLike = string
-
-export interface rwDirectory {
-	About: pathLike
-	Assemblies?: pathLike
-	Languages?: pathLike
-	Defs?: pathLike
-	Textures?: pathLike
-	Sounds?: pathLike
-	Patches?: pathLike
-}
-
-const config: config = { folders: { } }
-
-// client
-export function registerConfigWatcher (client: vscode_client.LanguageClient) {
-	const fileWatcher = vscode.workspace.createFileSystemWatcher('/rwconfigrc.json')
-	console.log(`start watching '/rwconfigrc.json`)
-	function update (listener: vscode.Uri) {
-		const object = listener.toJSON()
-		client.sendNotification(DidChangeConfigurationNotification.type, object)
-	}
-	fileWatcher.onDidChange(update)
-	fileWatcher.onDidCreate(update)
-	fileWatcher.onDidDelete(listener => client.sendNotification(DidChangeConfigurationNotification.type, {} as any))
-
-}
+export const LoadFoldersRequestType = new RequestType<absPath, LoadFolders | undefined, undefined>('temp')
+export const querySubFilesRequestType = new RequestType<absPath, absPath[], undefined>('temp2')

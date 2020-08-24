@@ -3,6 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { relative } from 'path';
+import { Uri } from 'vscode';
+
 export const enum CharCode {
 	Slash = 47,
 	Backslash = 92
@@ -71,5 +74,6 @@ export const join: (...parts: string[]) => string = function () {
 	return value;
 };
 
-
-
+export function isSubPath(parent: Uri, child: Uri): boolean {
+	return relative(child.toString(), parent.toString()).startsWith('../')
+}

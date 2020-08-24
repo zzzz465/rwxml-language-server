@@ -9,12 +9,12 @@
         "strict": true,
         "resolveJsonModule": true,
         "moduleResolution": "Node",
-        "baseUrl": ".",
-        "paths": {
-            "@common/*": [
-                "./src/common/*"
-            ]
-        }
+        "baseUrl": "src",
+        // "paths": {
+        //     "@common/*": [
+        //         "./common/*"
+        //     ]
+        // }
     },
     "repository": {
 
