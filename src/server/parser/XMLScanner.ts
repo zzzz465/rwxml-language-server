@@ -346,32 +346,33 @@ export function createScanner(input: string, initialOffset = 0, initialState: Sc
 				}
 				state = ScannerState.WithinTag;
 				return internalScan(); // no advance yet - jump to WithinTag
-			case ScannerState.BeforeAttributeValue:
+			case ScannerState.BeforeAttributeValue: {
 				if (stream.skipWhitespace()) {
 					return finishToken(offset, TokenType.Whitespace);
 				}
-				let attributeValue = stream.advanceIfRegExp(/^[^\s"'`=<>]+/);
-				if (attributeValue.length > 0) {
-					if (stream.peekChar() === _RAN && stream.peekChar(-1) === _FSL) { // <foo bar=http://foo/>
-						stream.goBack(1);
-						attributeValue = attributeValue.substr(0, attributeValue.length - 1);
-					}
-					if (lastAttributeName === 'type') {
-						lastTypeValue = attributeValue;
-					}
-					state = ScannerState.WithinTag;
-					hasSpaceAfterTag = false;
-					return finishToken(offset, TokenType.AttributeValue);
-				}
+				// in xml we don't have any attribute value that is not capsuled with "", or ''
+				// let attributeValue = stream.advanceIfRegExp(/^[^\s"'`=<>]+/);
+				// if (attributeValue.length > 0) {
+					// if (stream.peekChar() === _RAN && stream.peekChar(-1) === _FSL) { // <foo bar=http://foo/>
+						// stream.goBack(1);
+						// attributeValue = attributeValue.substr(0, attributeValue.length - 1);
+					// }
+					// if (lastAttributeName === 'type') {
+						// lastTypeValue = attributeValue;
+					// }
+					// state = ScannerState.WithinTag;
+					// hasSpaceAfterTag = false;
+					// return finishToken(offset, TokenType.AttributeValue);
+				// }
 				const ch = stream.peekChar();
 				if (ch === _SQO || ch === _DQO) {
 					stream.advance(1); // consume quote
 					if (stream.advanceUntilChar(ch)) {
 						stream.advance(1); // consume quote
 					}
-					if (lastAttributeName === 'type') {
-						lastTypeValue = stream.getSource().substring(offset + 1, stream.pos() - 1);
-					}
+					// if (lastAttributeName === 'type') {
+						// lastTypeValue = stream.getSource().substring(offset + 1, stream.pos() - 1);
+					// }
 					state = ScannerState.WithinTag;
 					hasSpaceAfterTag = false;
 					return finishToken(offset, TokenType.AttributeValue);
@@ -379,6 +380,7 @@ export function createScanner(input: string, initialOffset = 0, initialState: Sc
 				state = ScannerState.WithinTag;
 				hasSpaceAfterTag = false;
 				return internalScan(); // no advance yet - jump to WithinTag
+			}
 			case ScannerState.WithinScriptContent:
 				// see http://stackoverflow.com/questions/14574471/how-do-browsers-parse-a-script-tag-exactly
 				let sciptState = 1;

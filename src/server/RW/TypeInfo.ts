@@ -49,7 +49,9 @@ export function objToTypeInfos(raw: any): TypeInfo[] {
 }
 
 export interface def extends typeNode {
-	defName: string;
+	defName?: string // not used?
+	closed: true
+	tag: string // it is important
 }
 
 export interface typeNode extends Node {
@@ -128,4 +130,12 @@ export function isTypeNode(obj: any): obj is typeNode {
 export interface GenericTypeInfo extends TypeInfo {
 	genericType: TypeInfo | GenericTypeInfo
 	fields: null
+}
+
+export function getDefIdentifier(def: def): string | null {
+	const defName = def.children.find(node => node.tag === 'defName')?.text
+	if (defName)
+		return defName
+	const Name = def.attributes?.Name
+	return Name || null
 }

@@ -158,7 +158,9 @@ export function parse(text: string): XMLDocument {
 				break;
 			}
 			case TokenType.AttributeValue: {
-				const value = scanner.getTokenText();
+				let value = scanner.getTokenText();
+				if (value.length >= 2)
+					value = value.substring(1, value.length - 1) // remove encapsuling text '' or ""
 				const attributes = curr.attributes;
 				if (attributes && pendingAttribute) {
 					attributes[pendingAttribute] = value;

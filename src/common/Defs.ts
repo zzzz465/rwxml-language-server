@@ -1,8 +1,6 @@
 import { RequestType, NotificationType } from 'vscode-languageserver';
-import { LoadFolders } from './config';
-import { def } from 'server/RW/TypeInfo';
 import { absPath } from './common'
-import { Uri } from 'vscode';
+import { def } from '../server/RW/TypeInfo';
 
 export type DefsFolderChanged = {
 	path: absPath,

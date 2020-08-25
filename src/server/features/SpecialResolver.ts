@@ -1,5 +1,5 @@
 import { CompletionItem } from 'vscode-languageserver'
-import { typeNode, TypeIdentifier } from 'server/RW/TypeInfo'
+import { TypeIdentifier, typeNode } from '../RW/TypeInfo'
 
 type specialType = {
 	tag?: string

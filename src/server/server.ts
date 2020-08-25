@@ -15,7 +15,9 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	MarkupContent
+	MarkupContent,
+	Declaration,
+	Location
 } from 'vscode-languageserver';
 
 import { URI } from 'vscode-uri'
@@ -30,21 +32,21 @@ import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
 // import { config, RWTextDocument } from '@common/config'
 import { LoadFolders, querySubFilesRequestType } from '../common/config'
+import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
+import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, getDefIdentifier, def } from './RW/TypeInfo';
+import { absPath } from '../common/common';
+import * as fs from 'fs'
+import * as path from 'path'
+import { ConfigChangedNotificationType, getLoadFolders } from '../client/config';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
-// Create a simple text document manager. 
-const documents: TextDocuments<RWTextDocument> = new TextDocuments(TextDocument);
-
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
-// const defaultConfig: config = { folders: { } } as any
-// let _config: config
-// const configfileUri: null | Uri = null
 
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
@@ -72,7 +74,11 @@ connection.onInitialize((params: InitializeParams) => {
 			completionProvider: {
 				resolveProvider: true,
 				triggerCharacters: [ '<' ]
-			}
+			},
+			// definitionProvider: true,
+			declarationProvider: true,
+			referencesProvider: true,
+			// typeDefinitionProvider: true,
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -96,19 +102,10 @@ connection.onInitialized(() => {
 		});
 	}
 
-	connection.onNotification(DefFileAddedNotificationType, params => {
-		console.log(params.path)
-	})
 });
-
-import * as fs from 'fs'
-import * as path from 'path'
 
 const mockDataPath = path.join(__dirname, './testData/output.json') // for development only
 const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
-
-import { objToTypeInfos, TypeInfoMap, TypeInfoInjector } from './RW/TypeInfo'
-import { NodeValidator } from './features/NodeValidator';
 const typeInfos = objToTypeInfos(mockTypeData)
 const typeInfoMap = new TypeInfoMap(typeInfos)
 const injector = new TypeInfoInjector(typeInfoMap)
@@ -116,12 +113,11 @@ const injector = new TypeInfoInjector(typeInfoMap)
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 
-let xmlDoc: XMLDocument = parse('') // create empty document
+const xmlDoc: XMLDocument = parse('') // create empty document
 let textDoc: TextDocument
 const completion = new RWXMLCompletion((path: absPath) => {
 	return connection.sendRequest(querySubFilesRequestType, path)
 })
-import { builtInValidationParticipant } from './features/BuiltInValidator'
 
 connection.onCompletion(handler => {
 	if(xmlDoc.root && xmlDoc.root.tag === 'Defs')
@@ -130,13 +126,7 @@ connection.onCompletion(handler => {
 	return undefined
 })
 
-import { LoadFoldersRequestType } from '../common/config'
-import { from } from 'linq-es2015';
-import { RWTextDocument } from './documents';
-import { FileSystem } from 'vscode-languageserver/lib/files';
-import { absPath } from '../common/common';
-import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs';
-
+/*
 documents.onDidChangeContent(async change => {
 	const filePath = URI.parse(change.document.uri).fsPath
 	const respond = await connection.sendRequest(LoadFoldersRequestType, filePath)
@@ -158,6 +148,7 @@ documents.onDidChangeContent(async change => {
 	connection.sendDiagnostics({ uri: textDoc.uri, diagnostics: result })
 	// validateTextDocument(change.document);
 });
+*/
 
 // connection.onDidChangeWatchedFiles(_change => {
 	// Monitored files have change in VSCode
@@ -166,7 +157,7 @@ documents.onDidChangeContent(async change => {
 
 // This handler resolves additional information for the item selected in
 // the completion list.
-
+/*
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
 		if(typeof item.data === 'object') {
@@ -187,11 +178,137 @@ connection.onCompletionResolve(
 		return item
 	}
 );
+*/
+const defTextDocuments = new DefTextDocuments()
 
+defTextDocuments.typeInjector = injector
 
-// Make the text document manager listen on the connection
-// for open, change and close text document events
-documents.listen(connection);
+connection.onNotification(ConfigChangedNotificationType, config => {
+	defTextDocuments.setVersionGetter(path => {
+		return getLoadFolders(config, path)?.version || null
+	})
+})
+
+connection.onDeclaration(request => {
+	const uri = request.textDocument.uri
+	const fsPath = URI.parse(uri).fsPath
+	const defs = defTextDocuments.getDefs(fsPath)
+	const textDocument = defTextDocuments.getDocument(fsPath)
+	if (textDocument) {
+		let targetDef: def | undefined = undefined
+		for (const def of defs) {
+			const offset = textDocument.offsetAt(request.position)
+			if (def.start < offset && offset < def.end) {
+				targetDef = def
+				break
+			}
+		}
+		if (targetDef && isReferencedDef(targetDef)) {
+			const base = targetDef.base
+			if (base && isSourcedDef(base)) {
+				const uri = URI.file(base.source)
+				const baseDoc = defTextDocuments.getDocument(base.source)
+				if (baseDoc) {
+					return {
+						uri: uri.toString(),
+						range: {
+							start: baseDoc.positionAt(base.start),
+							end: baseDoc.positionAt(base.end)
+						}
+					}
+				}
+			}
+		}
+	}
+})
+
+connection.onDefinition(request => {
+	const uri = request.textDocument.uri
+	const fsPath = URI.parse(uri).fsPath
+	const defs = defTextDocuments.getDefs(fsPath)
+	const textDocument = defTextDocuments.getDocument(fsPath)
+	if (textDocument) {
+		for (const def of defs) {
+			const offset = textDocument.offsetAt(request.position)
+			if (def.start < offset && offset < def.end) {
+				return {
+					uri: uri,
+					range: {
+						start: textDocument.positionAt(def.start),
+						end: textDocument.positionAt(def.end)
+					}
+				}
+			}
+		}
+	}
+})
+
+connection.onTypeDefinition(request => {
+	const uri = request.textDocument.uri
+	const fsPath = URI.parse(uri).fsPath
+	const defs = defTextDocuments.getDefs(fsPath)
+	const textDocument = defTextDocuments.getDocument(fsPath)
+	if (textDocument) {
+		for (const def of defs) {
+			const offset = textDocument.offsetAt(request.position)
+			if (def.start < offset && offset < def.end) {
+				return {
+					uri: uri,
+					range: {
+						start: textDocument.positionAt(def.start),
+						end: textDocument.positionAt(def.end)
+					}
+				}
+			}
+		}
+	}
+})
+
+connection.onImplementation(request => {
+	const uri = request.textDocument.uri
+	const fsPath = URI.parse(uri).fsPath
+	const defs = defTextDocuments.getDefs(fsPath)
+	const textDocument = defTextDocuments.getDocument(fsPath)
+	if (textDocument) {
+		for (const def of defs) {
+			const offset = textDocument.offsetAt(request.position)
+			if (def.start < offset && offset < def.end) {
+				return {
+					uri: uri,
+					range: {
+						start: textDocument.positionAt(def.start),
+						end: textDocument.positionAt(def.end)
+					}
+				}
+			}
+		}
+	}
+
+	return undefined
+})
+
+connection.onReferences(request => {
+	const uri = request.textDocument.uri
+	const fsPath = URI.parse(uri).fsPath
+	const defs = defTextDocuments.getDefs(fsPath)
+	const textDocument = defTextDocuments.getDocument(fsPath)
+	if (textDocument) {
+		for (const def of defs) {
+			const offset = textDocument.offsetAt(request.position)
+			if (def.start < offset && offset < def.end) {
+				const result: Location = {
+					uri: textDocument.uri,
+					range: {
+						start: textDocument.positionAt(def.start),
+						end: textDocument.positionAt(def.end)
+					}
+				}
+				return [result]
+			}
+		}
+	}
+})
 
 // Listen on the connection
 connection.listen();
+defTextDocuments.listen(connection)

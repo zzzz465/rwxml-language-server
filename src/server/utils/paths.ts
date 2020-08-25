@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { relative } from 'path';
-import { Uri } from 'vscode';
+import { URI } from 'vscode-uri';
 
 export const enum CharCode {
 	Slash = 47,
@@ -74,6 +74,6 @@ export const join: (...parts: string[]) => string = function () {
 	return value;
 };
 
-export function isSubPath(parent: Uri, child: Uri): boolean {
+export function isSubPath(parent: URI, child: URI): boolean {
 	return relative(child.toString(), parent.toString()).startsWith('../')
 }

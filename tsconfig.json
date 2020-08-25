@@ -9,7 +9,7 @@
         "strict": true,
         "resolveJsonModule": true,
         "moduleResolution": "Node",
-        "baseUrl": "src",
+        // "baseUrl": "src",
         // "paths": {
         //     "@common/*": [
         //         "./common/*"

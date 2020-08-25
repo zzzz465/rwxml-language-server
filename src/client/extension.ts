@@ -6,7 +6,7 @@
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
-import { parseConfig, LoadFolders, config } from './config'
+import { parseConfig, LoadFolders, config, ConfigChangedNotificationType, getLoadFolders } from './config'
 import { LoadFoldersRequestType, querySubFilesRequestType } from '../common/config'
 import { absPath } from '../common/common'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
@@ -21,10 +21,9 @@ import {
 	DidChangeWatchedFilesNotification,
 	DidChangeTextDocumentNotification
 } from 'vscode-languageclient';
-import { SSL_OP_CISCO_ANYCONNECT } from 'constants';
-import { type } from 'os';
-import { fstat } from 'fs';
 import { DefFileAddedNotificationType } from '../common/Defs';
+import { flatten } from 'lodash';
+import { ClientCapabilities } from '../server/htmlLanguageTypes';
 
 let client: LanguageClient;
 let configWatcher: FileSystemWatcher
@@ -50,32 +49,35 @@ export async function activate(context: ExtensionContext) {
 	};
 
 	let config: config | null = null
-	const DefsWatcher = vscode.workspace.createFileSystemWatcher('**/Defs/**/*.xml')
-
+	
 	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
 	const configFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
 	if (configFile.length > 0) {
 		const object = JSON.parse((await vscode.workspace.fs.readFile(configFile[0])).toString())
 		config = parseConfig(object, configFile[0])
 	}
-
+	
 	configWatcher.onDidCreate(uri => {
-		console.log('we received a config create event')
+		
 	})
 	configWatcher.onDidChange(uri => {
-		console.log('we received a config change event')
+		
 		// client.sendNotification(DidChangeConfigurationNotification.type)
 	})
 	configWatcher.onDidDelete(uri => {
-		console.log('we received a config delete event')
+		
 	})
+
+	// context.subscriptions.push(vscode.languages.registerReferenceProvider(
+		// 
+	// ))
 	
 	// Options to control the language client
 	const clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
 		documentSelector: [{ scheme: 'file', language: 'xml' }],
 	};
-
+	
 	// Create the language client and start the client.
 	client = new LanguageClient(
 		'rwxmlLangServer',
@@ -84,26 +86,44 @@ export async function activate(context: ExtensionContext) {
 		clientOptions
 	);
 
+	// client.registerFeature(ClientCapabilities)
+	
 	// client.registerFeature(staticfeatur)
-
+	
 	// client.registerFeature()
-
+	
 	// Start the client. This will also launch the server
 	client.start();
 	await client.onReady()
 
+	if (config)
+		client.sendNotification(ConfigChangedNotificationType, config)
+	
 	client.onRequest(LoadFoldersRequestType, (params, token) => {
-		return config?.getLoadFolders(params)
+		if (config)
+			return getLoadFolders(config, params)
 	})
-
+	
 	client.onRequest(querySubFilesRequestType, async (absPath, token) => {
 		const files = await vscode.workspace.findFiles(
 			new vscode.RelativePattern(absPath, '**')
-		)
-		return files.map(uri => uri.fsPath)
+			)
+			return files.map(uri => uri.fsPath)
 	})
 
-	
+	const files = await vscode.workspace.findFiles('**/Defs/**/*.xml')
+	for (const file of files) {
+		vscode.workspace.fs.readFile(file)
+			.then(array => {
+			const content = array.toString()
+			client.sendNotification(DefFileAddedNotificationType, {
+				path: file.fsPath,
+				text: content
+			})
+		})
+	}
+
+	const DefsWatcher = vscode.workspace.createFileSystemWatcher('**/Defs/**/*.xml')
 	DefsWatcher.onDidCreate(async (uri) => {
 		client.sendNotification(DefFileAddedNotificationType, {
 			path: uri.fsPath,

@@ -3,42 +3,43 @@ import { Uri } from 'vscode'
 import { relative } from 'path'
 import * as path from 'path'
 import { absPath } from '../common/common'
+import { NotificationType } from 'vscode-languageserver'
 
-export class LoadFolders {
-	constructor (
-		readonly version: absPath,
-		readonly About: absPath,
-		readonly Assemblies?: absPath,
-		readonly Languages?: absPath,
-		readonly Defs?: absPath,
-		readonly Textures?: absPath,
-		readonly Sounds?: absPath,
-		readonly Patches?: absPath
-	) {
+export interface LoadFolders {
+	readonly version: absPath,
+	readonly About: absPath,
+	readonly Assemblies?: absPath,
+	readonly Languages?: absPath,
+	readonly Defs?: absPath,
+	readonly Textures?: absPath,
+	readonly Sounds?: absPath,
+	readonly Patches?: absPath
+}
 
-	}
-
-	isSubFile (path: absPath): boolean {
-		for (const dir of this.getDirs()) {
-			if (dir !== undefined) {
-				if (path.startsWith(dir)) // only works when two paths are absolute path
-					return true
-			}
+export function isSubFile (folders: LoadFolders, path: absPath): boolean {
+	for (const dir of getDirs(folders)) {
+		if (dir !== undefined) {
+			if (path.startsWith(dir)) // only works when two paths are absolute path
+				return true
 		}
-
-		return false
 	}
+	return false
+}
 
-	getDirs (): (absPath|undefined)[] {
-		return [this.About, this.Assemblies, this.Languages, this.Defs, this.Textures, this.Sounds, this.Patches]
-	}
+function getDirs (folders: LoadFolders) {
+	return [folders.About, folders.Assemblies, folders.Languages, folders.Defs, folders.Textures, folders.Sounds, folders.Patches]
 }
 
 export interface config {
 	folders: {
 		[version: string]: LoadFolders
 	}
-	getLoadFolders (path: absPath): LoadFolders | undefined
+}
+
+export function getLoadFolders (config: config, path: absPath): LoadFolders | undefined {
+	for (const [version, object] of Object.entries(config.folders))
+		if (isSubFile(object, path))
+			return object
 }
 
 export function parseConfig(configLike: any, configFilePath: Uri): config {
@@ -49,29 +50,26 @@ export function parseConfig(configLike: any, configFilePath: Uri): config {
 			if (typeof object !== 'object')
 				continue
 			
-			const AboutUri = getFolderUriPath(object.About)
-			if (AboutUri === undefined)
+			const About = getFolderUriPath(object.About)
+			if (About === undefined)
 				continue
-			const AssembliesUri = getFolderUriPath(object.Assemblies)
-			const DefsUri = getFolderUriPath(object.Defs)
-			const TexturesUri = getFolderUriPath(object.Textures)
-			const SoundsUri = getFolderUriPath(object.Sounds)
-			const PatchesUri = getFolderUriPath(object.Patches)
-			const LanguagesUri = getFolderUriPath(object.Languages)
+			const Assemblies = getFolderUriPath(object.Assemblies)
+			const Defs = getFolderUriPath(object.Defs)
+			const Textures = getFolderUriPath(object.Textures)
+			const Sounds = getFolderUriPath(object.Sounds)
+			const Patches = getFolderUriPath(object.Patches)
+			const Languages = getFolderUriPath(object.Languages)
 
-			const loadFolders = new LoadFolders(version, AboutUri, AssembliesUri, LanguagesUri,
-					DefsUri, TexturesUri, SoundsUri, PatchesUri)
+			const loadFolders: LoadFolders = { version, About, Assemblies, Languages,
+					Defs, Textures, Sounds, Patches }
 
 			folders[version] = loadFolders
 		}
 	}
 
 	return {
-		folders: folders,
-		getLoadFolders: function (this: config, path: absPath) {
-			for (const [version, object] of Object.entries(this.folders))
-				if (object.isSubFile(path))
-					return object
-		}
+		folders: folders
 	}
 }
+
+export const ConfigChangedNotificationType = new NotificationType<config>('config/changed')
