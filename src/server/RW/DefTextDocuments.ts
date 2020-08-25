@@ -170,7 +170,7 @@ interface defCrossReference {
 
 export type referencedDef = defCrossReference & def
 export function isReferencedDef(obj: any): obj is referencedDef {
-	return 'base' in obj && 'derived' in obj
+	return 'derived' in obj
 }
 
 class DefDatabase {
@@ -227,7 +227,9 @@ class DefDatabase {
 						if (!isReferencedDef(baseDef)) {
 							Object.assign(baseDef, { derived: new Set() })
 						}
-						(<referencedDef>baseDef).derived.add(def)
+						const set = (<referencedDef>baseDef).derived
+						set.add(def)
+						assert(!def.base, 'trying to add parent to def which is already have a reference')
 						def.base = <referencedDef>baseDef
 						this._crossRefWanters.delete(def)
 					}
