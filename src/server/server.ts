@@ -293,18 +293,34 @@ connection.onReferences(request => {
 	const defs = defTextDocuments.getDefs(fsPath)
 	const textDocument = defTextDocuments.getDocument(fsPath)
 	if (textDocument) {
+		let selectedDef: def | undefined
 		for (const def of defs) {
 			const offset = textDocument.offsetAt(request.position)
 			if (def.start < offset && offset < def.end) {
-				const result: Location = {
-					uri: textDocument.uri,
-					range: {
-						start: textDocument.positionAt(def.start),
-						end: textDocument.positionAt(def.end)
-					}
-				}
-				return [result]
+				selectedDef = def
+				break
 			}
+		}
+
+		if (selectedDef && isReferencedDef(selectedDef)) {
+			const result: Location[] = []
+			for (const child of selectedDef.derived) {
+				if (!isSourcedDef(child))
+					continue
+
+				const document = defTextDocuments.getDocument(child.source)
+				if (document) {
+					const location = {
+						uri: URI.file(child.source).toString(),
+						range: {
+							start: document.positionAt(child.start),
+							end: document.positionAt(child.end)
+						}
+					} as Location
+					result.push(location)
+				}
+			}
+			return result
 		}
 	}
 })
