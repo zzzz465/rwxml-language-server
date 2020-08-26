@@ -85,13 +85,7 @@ export async function activate(context: ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
-
-	// client.registerFeature(ClientCapabilities)
-	
-	// client.registerFeature(staticfeatur)
-	
-	// client.registerFeature()
-	
+		
 	// Start the client. This will also launch the server
 	client.start();
 	await client.onReady()

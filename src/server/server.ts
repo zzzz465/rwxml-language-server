@@ -38,6 +38,8 @@ import { absPath } from '../common/common';
 import * as fs from 'fs'
 import * as path from 'path'
 import { ConfigChangedNotificationType, getLoadFolders } from '../client/config';
+import { NodeValidator } from './features/NodeValidator';
+import { builtInValidationParticipant } from './features/BuiltInValidator';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -78,6 +80,9 @@ connection.onInitialize((params: InitializeParams) => {
 			// definitionProvider: true,
 			declarationProvider: true,
 			referencesProvider: true,
+			renameProvider: {
+				prepareProvider: false,
+			}
 			// typeDefinitionProvider: true,
 		}
 	};
@@ -109,22 +114,6 @@ const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8
 const typeInfos = objToTypeInfos(mockTypeData)
 const typeInfoMap = new TypeInfoMap(typeInfos)
 const injector = new TypeInfoInjector(typeInfoMap)
-
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-
-const xmlDoc: XMLDocument = parse('') // create empty document
-let textDoc: TextDocument
-const completion = new RWXMLCompletion((path: absPath) => {
-	return connection.sendRequest(querySubFilesRequestType, path)
-})
-
-connection.onCompletion(handler => {
-	if(xmlDoc.root && xmlDoc.root.tag === 'Defs')
-		return completion.doComplete(textDoc, handler.position, xmlDoc)
-
-	return undefined
-})
 
 /*
 documents.onDidChangeContent(async change => {
@@ -222,71 +211,6 @@ connection.onDeclaration(request => {
 	}
 })
 
-connection.onDefinition(request => {
-	const uri = request.textDocument.uri
-	const fsPath = URI.parse(uri).fsPath
-	const defs = defTextDocuments.getDefs(fsPath)
-	const textDocument = defTextDocuments.getDocument(fsPath)
-	if (textDocument) {
-		for (const def of defs) {
-			const offset = textDocument.offsetAt(request.position)
-			if (def.start < offset && offset < def.end) {
-				return {
-					uri: uri,
-					range: {
-						start: textDocument.positionAt(def.start),
-						end: textDocument.positionAt(def.end)
-					}
-				}
-			}
-		}
-	}
-})
-
-connection.onTypeDefinition(request => {
-	const uri = request.textDocument.uri
-	const fsPath = URI.parse(uri).fsPath
-	const defs = defTextDocuments.getDefs(fsPath)
-	const textDocument = defTextDocuments.getDocument(fsPath)
-	if (textDocument) {
-		for (const def of defs) {
-			const offset = textDocument.offsetAt(request.position)
-			if (def.start < offset && offset < def.end) {
-				return {
-					uri: uri,
-					range: {
-						start: textDocument.positionAt(def.start),
-						end: textDocument.positionAt(def.end)
-					}
-				}
-			}
-		}
-	}
-})
-
-connection.onImplementation(request => {
-	const uri = request.textDocument.uri
-	const fsPath = URI.parse(uri).fsPath
-	const defs = defTextDocuments.getDefs(fsPath)
-	const textDocument = defTextDocuments.getDocument(fsPath)
-	if (textDocument) {
-		for (const def of defs) {
-			const offset = textDocument.offsetAt(request.position)
-			if (def.start < offset && offset < def.end) {
-				return {
-					uri: uri,
-					range: {
-						start: textDocument.positionAt(def.start),
-						end: textDocument.positionAt(def.end)
-					}
-				}
-			}
-		}
-	}
-
-	return undefined
-})
-
 connection.onReferences(request => {
 	const uri = request.textDocument.uri
 	const fsPath = URI.parse(uri).fsPath
@@ -324,6 +248,54 @@ connection.onReferences(request => {
 		}
 	}
 })
+
+connection.onRenameRequest(request => {
+	console.log(request)
+	return undefined
+	/*
+	const position = request.position
+	const fsPath = URI.parse(request.textDocument.uri).fsPath
+	const doc = defTextDocuments.getDocument(fsPath)
+	const xmlDoc = defTextDocuments.getXMLDocument(fsPath)
+	if (!doc || !xmlDoc) return undefined
+
+	const node = xmlDoc.findNodeAt(doc.offsetAt(position))
+
+	// node.
+	*/
+})
+
+connection.onCompletion(async handler => {
+	const fsPath = URI.parse(handler.textDocument.uri).fsPath
+	const document = defTextDocuments.getDocument(fsPath)
+	const defs = defTextDocuments.getDefs(fsPath)
+	if (!document || defs.length == 0)
+		return undefined
+	const xmlDocument = defs.find(node => node.document)?.document
+	if (xmlDocument) {
+		return await new RWXMLCompletion().doComplete(document, handler.position, xmlDocument)
+	}
+})
+
+connection.onCompletionResolve(handler => {
+	return handler
+})
+
+// const diagnostics: Map<absPath, Diagnostic[]> = new Map()
+
+defTextDocuments.onDocumentAdded = (({ textDocument: document, defs, xmlDocument }) => {
+	if (!xmlDocument) return
+	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant])
+	const validationResult = validator.validateNode()
+	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
+})
+
+defTextDocuments.onDocumentChanged = ({ textDocument: document, defs, xmlDocument }) => {
+	if (!xmlDocument) return
+	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant])
+	const validationResult = validator.validateNode()
+	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
+}
 
 // Listen on the connection
 connection.listen();

@@ -1,6 +1,7 @@
 import { absPath, TextReuqestType } from '../../common/common'
 import { def, getDefIdentifier, TypeInfoInjector, isTypeNode } from './TypeInfo';
 import { IConnection, Connection, TextDocuments, TextDocumentChangeEvent } from 'vscode-languageserver';
+import { Event } from '../../common/event'
 import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../../common/Defs';
 import { parse, XMLDocument } from '../parser/XMLParser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -25,19 +26,30 @@ export interface sourcedDef extends def {
 export function isSourcedDef(obj: any): obj is sourcedDef {
 	return 'source' in obj && typeof obj.source === 'string'
 }
+export interface DefTextDocumentChangedEvent {
+	textDocument: TextDocument
+	/** parsed textDocument to the XMLDocument */
+	xmlDocument?: XMLDocument
+	/** parsed defs within corresponding xmlDocument */
+	defs: sourcedDef[]
+}
 
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
 	private watchedFiles: Map<absPath, TextDocument> // absPath - text
+	private xmlDocuments: Map<absPath, XMLDocument>
 	private readonly textDocuments: TextDocuments<RWTextDocument>
 	private versionGetter: versionGetter | undefined
 	private connection: Connection | undefined
-	onDocumentChanged?: (listener: TextDocumentChangeEvent<RWTextDocument>) => void // event handler
+	onDocumentAdded?: Event<DefTextDocumentChangedEvent>
+	onDocumentChanged?: Event<DefTextDocumentChangedEvent> // event handler
+	onDocumentDeleted?: Event<URI>
 	typeInjector?: TypeInfoInjector
 	constructor() {
 		this.databases = new Map()
 		this.watchedFiles = new Map()
 		this.textDocuments = new TextDocuments(TextDocument)
+		this.xmlDocuments = new Map()
 	}
 
 	setVersionGetter (getter: versionGetter): void {
@@ -48,6 +60,10 @@ export class DefTextDocuments {
 
 	getDocument (absPath: absPath): TextDocument | undefined {
 		return this.watchedFiles.get(absPath)
+	}
+
+	getXMLDocument (absPath: absPath): XMLDocument | undefined { 
+		return this.xmlDocuments.get(absPath)
 	}
 
 	getDefs (absPath: absPath): sourcedDef[] {
@@ -69,9 +85,14 @@ export class DefTextDocuments {
 	listen (connection: IConnection): void {
 		this.connection = connection
 		connection.onNotification(DefFileAddedNotificationType, handler => {
-			this.watchedFiles.set(handler.path, 
-				TextDocument.create(URI.file(handler.path).toString(), 'xml', 1, handler.text))
+			const document = TextDocument.create(URI.file(handler.path).toString(), 'xml', 1, handler.text)
+			this.watchedFiles.set(handler.path, document)
 			this.update(handler.path, handler.text)
+			this.onDocumentAdded?.({
+				defs: this.getDefs(handler.path),
+				textDocument: document,
+				xmlDocument: this.getXMLDocument(handler.path)
+			})
 		})
 		connection.onNotification(DefFileChangedNotificationType, handler => {			
 			const uri = URI.file(handler.path)
@@ -85,6 +106,7 @@ export class DefTextDocuments {
 		})
 		connection.onNotification(DefFileRemovedNotificationType, path => {
 			this.watchedFiles.delete(path)
+			this.xmlDocuments.delete(path)
 		})
 		this.textDocuments.listen(connection)
 		this.textDocuments.onDidOpen(listener => {
@@ -97,11 +119,15 @@ export class DefTextDocuments {
 			const path = URI.parse(listener.document.uri).fsPath
 			this.update(path, text)
 			// TODO - 데이터 채워넣기...
-			this.onDocumentChanged?.(listener)
+			this.onDocumentChanged?.({
+				defs: this.getDefs(path),
+				textDocument: listener.document,
+				xmlDocument: this.getXMLDocument(path)
+			})
 		})
 	}
 
-	private parseText(content: string): def[] {
+	private parseText(content: string): { xmlDocument: XMLDocument, defs: def[] } {
 		const defs: def[] = []
 		const parsed = parse(content)
 		if (this.typeInjector && parsed.root?.tag === 'Defs') {
@@ -111,7 +137,10 @@ export class DefTextDocuments {
 					defs.push(node as def)
 			}
 		}
-		return defs
+		return {
+			xmlDocument: parsed,
+			defs
+		}
 	}
 
 	private update(path: absPath, content: string): void {
@@ -123,7 +152,8 @@ export class DefTextDocuments {
 					db = new DefDatabase(version)
 					this.databases.set(version, db)
 				}
-				const defs = this.parseText(content)
+				const { defs, xmlDocument } = this.parseText(content)
+				this.xmlDocuments.set(path, xmlDocument)
 				defs.map(def => Object.assign(def, { source: path }))
 				db.update(path, defs)
 			}

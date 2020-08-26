@@ -42,7 +42,8 @@ export class NodeValidator implements NodeValidatorContext {
 		if(root?.tag === 'Defs') {
 			for (const def of root.children) {
 				// todo - check if node is actual def, or not
-				this.validateDefNode(def as def)
+				if (isTypeNode(def))
+					this.validateDefNode(def as def)
 			}
 		}
 
