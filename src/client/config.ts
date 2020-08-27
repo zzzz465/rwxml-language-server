@@ -18,29 +18,12 @@ export interface LoadFolders {
 	readonly Patches?: URILike
 }
 
-export function isSubFile (folders: LoadFolders, path: URILike): boolean {
-	for (const dir of getDirs(folders)) {
-		if (dir !== undefined) {
-			if (path.startsWith(dir)) // only works when two paths are absolute path
-				return true
-		}
+function resolveRelativeToUri (baseUri: Uri, relative: relativePath | undefined): URILike | undefined {
+	if (relative) {
+		const dir = path.dirname(baseUri.fsPath)
+		const result = path.resolve(dir, relative)
+		return Uri.file(result).toString()
 	}
-	return false
-}
-
-function getDirs (folders: LoadFolders) {
-	return [folders.About, folders.Assemblies, folders.Languages, folders.Defs, folders.Textures, folders.Sounds, folders.Patches]
-}
-
-export function getLoadFolders (config: Config, path: URILike): LoadFolders | undefined {
-	for (const [version, object] of Object.entries(config.folders))
-		if (isSubFile(object, path))
-			return object
-}
-
-function resolveRelativeToUri (baseUri: Uri, relative: relativePath): URILike {
-	const result = path.resolve(baseUri.fsPath, relative)
-	return Uri.file(result).toString()
 }
 
 export function parseConfig(configLike: any, configFilePath: Uri): Config {

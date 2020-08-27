@@ -6,7 +6,7 @@
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
-import { parseConfig, LoadFolders, getLoadFolders } from './config'
+import { parseConfig, LoadFolders } from './config'
 import { querySubFilesRequestType, Config, ConfigChangedNotificationType } from '../common/config'
 import { URILike } from '../common/common'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
@@ -68,13 +68,14 @@ export async function activate(context: ExtensionContext) {
 	const _fileWatcher = new FileWatcher()
 	// client.registerFeature()
 	await client.onReady()
-
+	
 	_fileWatcher.listen(client)
 
 	let config: Config | null = null
 	
 	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
 	const configFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
+	
 	if (configFile.length > 0) {
 		const object = JSON.parse((await vscode.workspace.fs.readFile(configFile[0])).toString())
 		config = parseConfig(object, configFile[0])
@@ -106,8 +107,9 @@ export async function activate(context: ExtensionContext) {
 			)
 			return files.map(uri => uri.toString())
 	})
-
+	
 	const files = await vscode.workspace.findFiles('**/Defs/**/*.xml')
+	
 	for (const file of files) {
 		vscode.workspace.fs.readFile(file)
 			.then(array => {
@@ -118,8 +120,9 @@ export async function activate(context: ExtensionContext) {
 			})
 		})
 	}
-
+	
 	const DefsWatcher = vscode.workspace.createFileSystemWatcher('**/Defs/**/*.xml')
+	
 	DefsWatcher.onDidCreate(async (uri) => {
 		client.sendNotification(DefFileAddedNotificationType, {
 			path: uri.toString(),
@@ -137,6 +140,7 @@ export async function activate(context: ExtensionContext) {
 	DefsWatcher.onDidDelete(uri => {
 		client.sendNotification(DefFileRemovedNotificationType, uri.toString())
 	})
+	
 }
 
 export function deactivate(): Thenable<void> | undefined {

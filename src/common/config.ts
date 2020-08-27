@@ -22,3 +22,23 @@ export interface Config {
 
 export const querySubFilesRequestType = new RequestType<URILike, URILike[], undefined>('temp2')
 export const ConfigChangedNotificationType = new NotificationType<Config>('config/changed')
+
+export function getLoadFolders (config: Config, path: URILike): LoadFolders | undefined {
+	for (const [version, object] of Object.entries(config.folders))
+		if (isSubFile(object, path))
+			return object
+}
+
+export function isSubFile (folders: LoadFolders, path: URILike): boolean {
+	for (const dir of getDirs(folders)) {
+		if (dir !== undefined) {
+			if (path.startsWith(dir)) // only works when two paths are absolute path
+				return true
+		}
+	}
+	return false
+}
+
+function getDirs (folders: LoadFolders) {
+	return [folders.About, folders.Assemblies, folders.Languages, folders.Defs, folders.Textures, folders.Sounds, folders.Patches]
+}

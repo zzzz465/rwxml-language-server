@@ -14,7 +14,7 @@ export function findFirst<T>(array: T[], p: (x: T) => boolean): number {
 		return 0; // no children
 	}
 	while (low < high) {
-		let mid = Math.floor((low + high) / 2);
+		const mid = Math.floor((low + high) / 2);
 		if (p(array[mid])) {
 			high = mid;
 		} else {

@@ -1,6 +1,6 @@
 import { URILike } from '../../common/common'
 import { def, getDefIdentifier, TypeInfoInjector, isTypeNode } from './TypeInfo';
-import { IConnection, Connection, TextDocuments, TextDocumentChangeEvent } from 'vscode-languageserver';
+import { IConnection, TextDocuments } from 'vscode-languageserver';
 import { Event } from '../../common/event'
 import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../../common/Defs';
 import { parse, XMLDocument } from '../parser/XMLParser';
@@ -40,7 +40,6 @@ export class DefTextDocuments {
 	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<RWTextDocument>
 	private versionGetter: versionGetter | undefined
-	private connection: Connection | undefined
 	onDocumentAdded?: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged?: Event<DefTextDocumentChangedEvent> // event handler
 	onDocumentDeleted?: Event<URI>
@@ -84,7 +83,6 @@ export class DefTextDocuments {
 	// 2) if the same file is watched textDocument, then previous event will be ignored
 	// and we'll accept textDocument's event for a sync and incremental udpate
 	listen (connection: IConnection): void {
-		this.connection = connection
 		connection.onNotification(DefFileAddedNotificationType, handler => {
 			const document = TextDocument.create(URI.file(handler.path).toString(), 'xml', 1, handler.text)
 			this.watchedFiles.set(handler.path, document)
@@ -187,7 +185,6 @@ export class DefTextDocuments {
 	}
 }
 
-type defKey = string
 type defIdentifier = string
 type defType = string
 

@@ -8,7 +8,8 @@
 		"postinstall": "node ./node_modules/vscode/bin/install",
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
-		"test": "jest"
+		"test": "jest",
+		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix"
 	},
 	"author": "madeline",
 	"license": "ISC",

@@ -18,7 +18,7 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
-import { LoadFolders, querySubFilesRequestType, Config, ConfigChangedNotificationType } from '../common/config'
+import { LoadFolders, querySubFilesRequestType, Config, ConfigChangedNotificationType, getLoadFolders } from '../common/config'
 import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, getDefIdentifier, def } from './RW/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
@@ -28,7 +28,6 @@ import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
 import { disposeWatchFileRequestType, WatchFileRequestParams, WatchFileRequestType, WatchFileAddedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher';
 import { assert } from 'console';
-import { getLoadFolders } from '../client/config';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -171,7 +170,7 @@ connection.onNotification(ConfigChangedNotificationType, async newConfig => {
 	config = newConfig
 
 	// request client to dispose all watchers
-	await Promise.all( watchers.map(p => 
+	await Promise.all( watchers.map(p =>
 		connection.sendRequest(disposeWatchFileRequestType, p)))
 	
 	watchers = []
