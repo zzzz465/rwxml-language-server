@@ -30,19 +30,19 @@ function getDirs (folders: LoadFolders) {
 	return [folders.About, folders.Assemblies, folders.Languages, folders.Defs, folders.Textures, folders.Sounds, folders.Patches]
 }
 
-export interface config {
+export interface Config {
 	folders: {
 		[version: string]: LoadFolders
 	}
 }
 
-export function getLoadFolders (config: config, path: absPath): LoadFolders | undefined {
+export function getLoadFolders (config: Config, path: absPath): LoadFolders | undefined {
 	for (const [version, object] of Object.entries(config.folders))
 		if (isSubFile(object, path))
 			return object
 }
 
-export function parseConfig(configLike: any, configFilePath: Uri): config {
+export function parseConfig(configLike: any, configFilePath: Uri): Config {
 	const getFolderUriPath = (p: string | undefined) => p ? path.resolve(path.dirname(configFilePath.fsPath), p) : undefined
 	const folders: Record<string, LoadFolders> = {}
 	if ('folders' in configLike && typeof configLike.folders === 'object') {
@@ -72,4 +72,4 @@ export function parseConfig(configLike: any, configFilePath: Uri): config {
 	}
 }
 
-export const ConfigChangedNotificationType = new NotificationType<config>('config/changed')
+export const ConfigChangedNotificationType = new NotificationType<Config>('config/changed')

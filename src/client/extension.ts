@@ -6,7 +6,7 @@
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
-import { parseConfig, LoadFolders, config, ConfigChangedNotificationType, getLoadFolders } from './config'
+import { parseConfig, LoadFolders, Config, ConfigChangedNotificationType, getLoadFolders } from './config'
 import { LoadFoldersRequestType, querySubFilesRequestType } from '../common/config'
 import { absPath } from '../common/common'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
@@ -24,6 +24,8 @@ import {
 import { DefFileAddedNotificationType } from '../common/Defs';
 import { flatten } from 'lodash';
 import { ClientCapabilities } from '../server/htmlLanguageTypes';
+import { WatchFileRequestType } from '../common/fileWatcher';
+import { FileWatcher } from './fileWatcher';
 
 let client: LanguageClient;
 let configWatcher: FileSystemWatcher
@@ -48,31 +50,6 @@ export async function activate(context: ExtensionContext) {
 		}
 	};
 
-	let config: config | null = null
-	
-	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
-	const configFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
-	if (configFile.length > 0) {
-		const object = JSON.parse((await vscode.workspace.fs.readFile(configFile[0])).toString())
-		config = parseConfig(object, configFile[0])
-	}
-	
-	configWatcher.onDidCreate(uri => {
-		
-	})
-	configWatcher.onDidChange(uri => {
-		
-		// client.sendNotification(DidChangeConfigurationNotification.type)
-	})
-	configWatcher.onDidDelete(uri => {
-		
-	})
-
-	// context.subscriptions.push(vscode.languages.registerReferenceProvider(
-		// 
-	// ))
-	
-	// Options to control the language client
 	const clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
 		documentSelector: [{ scheme: 'file', language: 'xml' }],
@@ -88,7 +65,37 @@ export async function activate(context: ExtensionContext) {
 		
 	// Start the client. This will also launch the server
 	client.start();
+	const _fileWatcher = new FileWatcher()
+	// client.registerFeature()
 	await client.onReady()
+
+	_fileWatcher.listen(client)
+
+	let config: Config | null = null
+	
+	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
+	const configFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
+	if (configFile.length > 0) {
+		const object = JSON.parse((await vscode.workspace.fs.readFile(configFile[0])).toString())
+		config = parseConfig(object, configFile[0])
+	}
+	
+	configWatcher.onDidCreate(async uri => {
+		const text = (await vscode.workspace.fs.readFile(uri)).toString()
+		const object = JSON.parse(text)
+		config = parseConfig(object, uri)
+		client.sendNotification(ConfigChangedNotificationType, config)
+	})
+	configWatcher.onDidChange(async uri => {
+		const text = (await vscode.workspace.fs.readFile(uri)).toString()
+		const object = JSON.parse(text)
+		config = parseConfig(object, uri)
+		client.sendNotification(ConfigChangedNotificationType, config)
+		// client.sendNotification(DidChangeConfigurationNotification.type)
+	})
+	configWatcher.onDidDelete(uri => {
+		client.sendNotification(ConfigChangedNotificationType, config)
+	})
 
 	if (config)
 		client.sendNotification(ConfigChangedNotificationType, config)

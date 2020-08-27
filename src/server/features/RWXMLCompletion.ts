@@ -12,8 +12,10 @@ export interface filesQuery {
 	(path: absPath): Promise<absPath[]>
 }
 
+// need code refactor
 export class RWXMLCompletion {
-	constructor (private query: filesQuery) {
+	query?: filesQuery
+	constructor () {
 
 	}
 
@@ -45,7 +47,7 @@ export class RWXMLCompletion {
 			// pretty sure this need to be cached...
 			const collectImageNodeSuggestions: (node: typeNode) => Promise<CompletionItem[]> 
 				= async () => {
-				if(document.loadFolders && document.loadFolders.Textures) {
+				if(document.loadFolders && document.loadFolders.Textures && this.query) {
 					const textures =  document.loadFolders.Textures
 					const respond = await this.query(textures)
 					respond.filter(path => !path.match(/png$|jpeg$|jpg$|gif$/))

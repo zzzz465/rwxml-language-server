@@ -52,6 +52,7 @@ export class DefTextDocuments {
 		this.xmlDocuments = new Map()
 	}
 
+	// needs refactor
 	setVersionGetter (getter: versionGetter): void {
 		this.versionGetter = getter
 		this.databases.clear()

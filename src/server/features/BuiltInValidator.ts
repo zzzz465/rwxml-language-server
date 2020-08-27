@@ -79,15 +79,15 @@ function checkInappropriateNode(this: NodeValidatorContext, node: typeNode): Val
 
 function checkWhitespaceError (this: NodeValidatorContext, node: Node): ValidationResult {
 	if(node.text) {
-		const match = node.text.match(/ +$/) // match whitespace end of the text, only matches 1
+		const match = node.text.content.match(/ +$/) // match whitespace end of the text, only matches 1
 		if(match) {
-			const textOffset = node.textEnd! - match[0].length
+			const textOffset = node.text.end - match[0].length
 			return {
 				diagnostics: [{
 					message: 'content ends with illegal whitespace',
 					range: {
 						start: this.positionAt(textOffset),
-						end: this.positionAt(node.textEnd!)
+						end: this.positionAt(node.text.end)
 					}}]
 			}
 		}
@@ -99,9 +99,9 @@ const floatRegex = /[+-]?([0-9]*[.])?[0-9]+/
 
 function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult {
 	if(node.text) {
-		const matching = node.text.match(floatRegex)
+		const matching = node.text.content.match(floatRegex)
 		if(matching) {
-			const textRange = this.getTextRange(node)!
+			const textRange = this.getTextRange(node)
 			return {
 				diagnostics: [{
 						message: 'expected integer value, received floating number',
@@ -110,4 +110,31 @@ function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult
 						source: 'ex'
 					}]}}}
 	return {}
+}
+
+function checkTexPathValid (this: NodeValidatorContext, node: typeNode): ValidationResult {
+	const type = node.typeInfo
+	if (!this.projectFiles) {
+		return {
+			completeValidation: true,
+			diagnostics: [{
+				message: 'no folder data was provided for validation',
+				range: this.getTextRange(node),
+				severity: DiagnosticSeverity.Hint
+			}]
+		}
+	} else if (node.text) {
+		const text = node.text
+		if ((!this.projectFiles.has(text.content))) {
+			return {
+				completeValidation: true,
+				diagnostics: [{
+					message: 'invalid texture path',
+					range: this.getTextRange(node),
+
+				}]
+			}
+		}
+	}
+	return { }
 }

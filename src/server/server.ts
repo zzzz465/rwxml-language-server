@@ -4,42 +4,31 @@
  * ------------------------------------------------------------------------------------------ */
 import {
 	createConnection,
-	TextDocuments,
-	Diagnostic,
-	DiagnosticSeverity,
 	ProposedFeatures,
 	InitializeParams,
 	DidChangeConfigurationNotification,
-	CompletionItem,
-	CompletionItemKind,
-	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	MarkupContent,
-	Declaration,
 	Location
 } from 'vscode-languageserver';
 
 import { URI } from 'vscode-uri'
 
-import {
-	TextDocument
-} from 'vscode-languageserver-textdocument';
-
 import './parser/XMLParser'
 import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
-// import { config, RWTextDocument } from '@common/config'
 import { LoadFolders, querySubFilesRequestType } from '../common/config'
 import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, getDefIdentifier, def } from './RW/TypeInfo';
 import { absPath } from '../common/common';
 import * as fs from 'fs'
 import * as path from 'path'
-import { ConfigChangedNotificationType, getLoadFolders } from '../client/config';
+import { ConfigChangedNotificationType, getLoadFolders, Config } from '../client/config';
 import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
+import { disposeWatchFileRequestType, WatchFileRequestParams, WatchFileRequestType, WatchFileAddedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher';
+import { assert } from 'console';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -168,14 +157,103 @@ connection.onCompletionResolve(
 	}
 );
 */
-const defTextDocuments = new DefTextDocuments()
 
+const defTextDocuments = new DefTextDocuments()
 defTextDocuments.typeInjector = injector
 
-connection.onNotification(ConfigChangedNotificationType, config => {
-	defTextDocuments.setVersionGetter(path => {
-		return getLoadFolders(config, path)?.version || null
-	})
+let config: Config | null = null
+type relativePattern = string
+let watchers: WatchFileRequestParams[] = []
+/** version - absPath, 파일이 있는지 없는지 체크하기 위함 */
+const files: Map<string, Set<absPath>> = new Map()
+
+connection.onNotification(ConfigChangedNotificationType, async newConfig => {
+	config = newConfig
+
+	// request client to dispose all watchers
+	await Promise.all( watchers.map(p => 
+		connection.sendRequest(disposeWatchFileRequestType, p)))
+	
+	watchers = []
+	files.clear()
+	// update projectfiles cache
+	
+	if (config) {
+		const promises: (Promise<void>)[] = []
+		for (const [version, folder] of Object.entries(config.folders)) {
+			const set: Set<absPath> = new Set()
+			files.set(version, set)
+			
+			// eslint-disable-next-line no-inner-declarations
+			function registerInitialFiles(uris: string[]) {
+				for (const uri of uris) {
+					const fsPath = URI.parse(uri).fsPath
+					set.add(fsPath)
+				}
+			}
+			
+			// About
+			// connection.sendRequest(WatchFileRequestType, {
+				// basePath: folder.About,
+				// globPattern: ''
+			// } as WatchFileRequestParams)
+
+			// Defs
+			if (folder.Defs) {
+				const p = connection.sendRequest(WatchFileRequestType, {
+					basePath: folder.Defs,
+					globPattern: '**/*.xml'
+				}).then(registerInitialFiles)
+				promises.push(p)
+			}
+
+			if (folder.Textures) {
+				const p = connection.sendRequest(WatchFileRequestType, {
+					basePath: folder.Textures,
+					globPattern: '**/*.{png, jpeg, jpg, gif}'
+				})
+				.then(registerInitialFiles)
+				promises.push(p)
+			}
+
+			// Textures
+		}
+		await Promise.all(promises)
+
+		// needs refactor
+		const conf2 = config
+		defTextDocuments.setVersionGetter(path => {
+			return getLoadFolders(conf2, path)?.version || null
+		})
+	} else {
+		defTextDocuments.setVersionGetter(path => null)
+	}
+})
+
+connection.onNotification(WatchFileAddedNotificationType, uri => {
+	if (!config) return
+	const fsPath = URI.parse(uri).fsPath
+	const version = getLoadFolders(config, fsPath)?.version
+	if (version) {
+		const set = files.get(version)
+		if (set) {
+			assert(!set.has(fsPath), 'tried to add file which is already added')
+			set.add(fsPath)
+		}
+	}
+})
+
+connection.onNotification(WatchFileDeletedNotificationType, uri => {
+	if (!config) return
+	const fsPath = URI.parse(uri).fsPath
+	const version = getLoadFolders(config, fsPath)?.version
+	if (version) {
+		const set = files.get(version)
+		if (set) {
+			const result = set.delete(fsPath)
+			assert(result)
+		}
+	}
 })
 
 connection.onDeclaration(request => {
@@ -282,10 +360,20 @@ connection.onCompletionResolve(handler => {
 })
 
 // const diagnostics: Map<absPath, Diagnostic[]> = new Map()
-
+// need code refactor
 defTextDocuments.onDocumentAdded = (({ textDocument: document, defs, xmlDocument }) => {
 	if (!xmlDocument) return
-	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant])
+	let files2: Set<string> | undefined = undefined
+	if (config) {
+		const version = getLoadFolders(config, URI.parse(document.uri).fsPath)?.version
+		if (version)
+			files2 = files.get(version)
+	}
+	const validator = new NodeValidator(typeInfoMap,
+		document,
+		xmlDocument,
+		[builtInValidationParticipant],
+		files2)
 	const validationResult = validator.validateNode()
 	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
 })

@@ -3,15 +3,19 @@ import { Node, XMLDocument } from '../parser/XMLParser';
 import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
 import { range } from 'lodash';
+import { type } from 'os';
+import { absPath } from '../../common/common';
+import { assert } from 'console';
 
 const _WHS = ' '.charCodeAt(0)
 
 export interface NodeValidatorContext {
+	projectFiles?: ProjectFiles
 	getRangeIncludingTag (node: Node): Range
 	getRange (start: number, end: number): Range
 	positionAt (offset: number): Position
 	getMatchingRangeRegex (regex: RegExp, range: Range): Range | null
-	getTextRange (node: Node): Range | null
+	getTextRange (node: Node): Range
 }
 
 export interface NodeValidateFunction {
@@ -27,12 +31,19 @@ export interface NodeValidationParticipant {
 	getValidator (typeId: TypeIdentifier): NodeValidateFunction[]
 }
 
+export type ProjectFiles = Set<absPath>
+
 export class NodeValidator implements NodeValidatorContext {
 	private diagnostics: Diagnostic[]
+	/** 
+	 * @param projectFiles which contain all files in the specific version project folders
+	 * this is used to check the file exists, it can be undefined
+	 */
 	constructor (private map: TypeInfoMap, 
 		private textDocument: TextDocument, 
 		private XMLDocument: XMLDocument,
-		private nodeValidationParticipants: NodeValidationParticipant[]) {
+		private nodeValidationParticipants: NodeValidationParticipant[],
+		readonly projectFiles?: ProjectFiles) {
 		this.diagnostics = []
 	}
 
@@ -79,15 +90,16 @@ export class NodeValidator implements NodeValidatorContext {
 		return null
 	}
 
-	// return null if the node doesn't have text value
-	getTextRange (node: Node): Range | null {
-		if(node.text) {
-			return {
-				start: this.textDocument.positionAt(node.textStart!),
-				end: this.textDocument.positionAt(node.textEnd!)
-			}
+	/**
+	 * @param node target node, note that node.text variable should be valid
+	 */
+	getTextRange (node: Node): Range {
+		assert(node.text, `invalid node ${node} was passed, node.text is undefined / null`)
+		const text = node.text!
+		return {
+			start: this.textDocument.positionAt(text.start),
+			end: this.textDocument.positionAt(text.end)
 		}
-		return null
 	}
 
 	positionAt (offset: number): Position { return this.textDocument.positionAt(offset) }

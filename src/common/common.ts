@@ -2,7 +2,13 @@ import { RequestType } from 'vscode-languageserver'
 
 // import { } from './'
 
-export type absPath = string // accepts Uri.fsPath, or any real path
+/** path represents absoulte path start from disk letter  
+ * @deprecated should be removed asap 
+ * @example C:/path/to/directory 
+ * @example C:/path/to/file.ext
+*/
+export type absPath = string
+export type URILike = string
 
 export type respond = {
 	absPath: absPath,

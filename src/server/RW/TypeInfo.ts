@@ -135,7 +135,7 @@ export interface GenericTypeInfo extends TypeInfo {
 export function getDefIdentifier(def: def): string | null {
 	const defName = def.children.find(node => node.tag === 'defName')?.text
 	if (defName)
-		return defName
+		return defName.content
 	const Name = def.attributes?.Name
 	return Name || null
 }

@@ -75,9 +75,8 @@ describe('basic static type checking test', function () {
 		
 		const validator = new NodeValidator(typeInfoMap, textDoc, xmlDoc, [builtInValidationParticipant])
 		const result = validator.validateNode()
-		
-		const textStart = maxNumToIngestAtOnce.textStart!
-		const textEnd = maxNumToIngestAtOnce.textEnd!
+    
+    const { start: textStart, end: textEnd } = maxNumToIngestAtOnce.text!
 
 		const error = result.find(d => textDoc.offsetAt(d.range.start) >= textStart && textDoc.offsetAt(d.range.end) <= textEnd)
 		expect(error).not.toBeUndefined()

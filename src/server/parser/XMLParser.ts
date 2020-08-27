@@ -10,20 +10,23 @@ import { Range } from 'vscode-languageserver';
 // import { isVoidElement } from '../languageFacts/fact';
 
 export class Node {
+	public document?: XMLDocument
 	public tag: string | undefined;
 	public closed = false; // is validate closed? ex) <tag></tag>
 	public startTagEnd: number | undefined;
 	public endTagStart: number | undefined;
 	public attributes: { [name: string]: string | null } | undefined;
-	public textStart: number | undefined;
-	public text: string | undefined;
-	public textEnd: number | undefined;
+	public text?: {
+		start: number
+		content: string
+		end: number
+	}
 	public get attributeNames(): string[] { return this.attributes ? Object.keys(this.attributes) : []; }
 	constructor(public start: number, public end: number, public children: Node[], public parent?: Node) {
 	}
-	public isSameTag(tagString: string) {
+	public isSameTag(tagString: string): boolean {
 		// return this.tag && tagInLowerCase && this.tag.length === tagInLowerCase.length && this.tag.toLowerCase() === tagInLowerCase;
-		return this.tag && this.tag === tagString
+		return !!this.tag && this.tag === tagString
 	}
 	public get firstChild(): Node | undefined { return this.children[0]; }
 	public get lastChild(): Node | undefined { return this.children.length ? this.children[this.children.length - 1] : void 0; }
@@ -69,6 +72,7 @@ export function parse(text: string): XMLDocument {
 	const scanner = createScanner(text, undefined, undefined, true);
 
 	const XMLDocument = new Node(0, text.length, [], void 0) as XMLDocument;
+	XMLDocument.document = XMLDocument
 	let curr = XMLDocument as Node;
 	let endTagStart = -1;
 	let endTagName: string | null = null;
@@ -83,6 +87,7 @@ export function parse(text: string): XMLDocument {
 			}
 			case TokenType.StartTagOpen: {
 				const child = new Node(scanner.getTokenOffset(), text.length, [], curr);
+				child.document = XMLDocument
 				curr.children.push(child);
 				curr = child;
 				break;
@@ -169,9 +174,11 @@ export function parse(text: string): XMLDocument {
 				break;
 			}
 			case TokenType.Content: {
-				curr.textStart = scanner.getTokenOffset()
-				curr.text = scanner.getTokenText()
-				curr.textEnd = scanner.getTokenEnd()
+				curr.text = {
+					start: scanner.getTokenOffset(),
+					content: scanner.getTokenText(),
+					end: scanner.getTokenEnd()
+				}
 				break;
 			}
 		}
@@ -182,9 +189,7 @@ export function parse(text: string): XMLDocument {
 	while (queue.length > 0) { // node that have children can't have text value
 		const item = queue.pop()! // so it removes them
 		if(item.children.length > 0) {
-			item.textStart = undefined
-			item.text = undefined
-			item.textEnd = undefined
+			delete item.text
 			queue.push(...item.children)
 		}
 	}
