@@ -4,18 +4,17 @@ import {
 	NotificationType,
 } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { absPath } from './common';
+import { /* absPath */ URILike } from './common';
 
 
 // P params R result E error
-/** uri string that can be parsed with vscode-URI */
-export type URILike = string
+
 /** params used for request watch  
  * note that client will use globpatternOnly to check whether the request is same or not.
  */
 export interface WatchFileRequestParams extends FileSystemWatcher {
 	/** base path for glob pattern, used by vscode.RelativePattern */
-	basePath: absPath
+	basePath: URILike
 }
 
 /** 

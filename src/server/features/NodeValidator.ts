@@ -4,7 +4,7 @@ import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
 import { range } from 'lodash';
 import { type } from 'os';
-import { absPath } from '../../common/common';
+import { URILike } from '../../common/common';
 import { assert } from 'console';
 
 const _WHS = ' '.charCodeAt(0)
@@ -31,7 +31,7 @@ export interface NodeValidationParticipant {
 	getValidator (typeId: TypeIdentifier): NodeValidateFunction[]
 }
 
-export type ProjectFiles = Set<absPath>
+export type ProjectFiles = Set<URILike>
 
 export class NodeValidator implements NodeValidatorContext {
 	private diagnostics: Diagnostic[]

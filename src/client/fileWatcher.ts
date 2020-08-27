@@ -1,8 +1,9 @@
-import { disposeWatchFileRequestType, disposeResult, WatchFileRequestType, URILike, WatchFileRequestParams, WatchFileAddedNotificationType, WatchFileChangedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher'
+import { disposeWatchFileRequestType, disposeResult, WatchFileRequestType, WatchFileRequestParams, WatchFileAddedNotificationType, WatchFileChangedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher'
 import { LanguageClient } from 'vscode-languageclient';
 import { GlobPattern, FileSystemWatcher, workspace, RelativePattern } from 'vscode';
 const { createFileSystemWatcher, findFiles } = workspace
 import { URI } from 'vscode-uri';
+import { URILike } from '../common/common'
 
 export class FileWatcher {
 	private watchers: Map<GlobPattern, FileSystemWatcher>

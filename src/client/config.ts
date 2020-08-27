@@ -2,21 +2,22 @@ import * as vscode from 'vscode'
 import { Uri } from 'vscode'
 import { relative } from 'path'
 import * as path from 'path'
-import { absPath } from '../common/common'
+// import { absPath } from '../common/common'
 import { NotificationType } from 'vscode-languageserver'
+import { URILike, relativePath } from '../common/common'
 
 export interface LoadFolders {
-	readonly version: absPath,
-	readonly About: absPath,
-	readonly Assemblies?: absPath,
-	readonly Languages?: absPath,
-	readonly Defs?: absPath,
-	readonly Textures?: absPath,
-	readonly Sounds?: absPath,
-	readonly Patches?: absPath
+	readonly version: URILike
+	readonly About: URILike
+	readonly Assemblies?: URILike
+	readonly Languages?: URILike
+	readonly Defs?: URILike
+	readonly Textures?: URILike
+	readonly Sounds?: URILike
+	readonly Patches?: URILike
 }
 
-export function isSubFile (folders: LoadFolders, path: absPath): boolean {
+export function isSubFile (folders: LoadFolders, path: URILike): boolean {
 	for (const dir of getDirs(folders)) {
 		if (dir !== undefined) {
 			if (path.startsWith(dir)) // only works when two paths are absolute path
@@ -36,29 +37,33 @@ export interface Config {
 	}
 }
 
-export function getLoadFolders (config: Config, path: absPath): LoadFolders | undefined {
+export function getLoadFolders (config: Config, path: URILike): LoadFolders | undefined {
 	for (const [version, object] of Object.entries(config.folders))
 		if (isSubFile(object, path))
 			return object
 }
 
+function resolveRelativeToUri (baseUri: Uri, relative: relativePath): URILike {
+	const result = path.resolve(baseUri.fsPath, relative)
+	return Uri.file(result).toString()
+}
+
 export function parseConfig(configLike: any, configFilePath: Uri): Config {
-	const getFolderUriPath = (p: string | undefined) => p ? path.resolve(path.dirname(configFilePath.fsPath), p) : undefined
 	const folders: Record<string, LoadFolders> = {}
 	if ('folders' in configLike && typeof configLike.folders === 'object') {
 		for (const [version, object] of Object.entries<any>(configLike.folders)) {
 			if (typeof object !== 'object')
 				continue
 			
-			const About = getFolderUriPath(object.About)
+			const About = resolveRelativeToUri(configFilePath, object.About)
 			if (About === undefined)
 				continue
-			const Assemblies = getFolderUriPath(object.Assemblies)
-			const Defs = getFolderUriPath(object.Defs)
-			const Textures = getFolderUriPath(object.Textures)
-			const Sounds = getFolderUriPath(object.Sounds)
-			const Patches = getFolderUriPath(object.Patches)
-			const Languages = getFolderUriPath(object.Languages)
+			const Assemblies = resolveRelativeToUri(configFilePath, object.Assemblies)
+			const Defs = resolveRelativeToUri(configFilePath, object.Defs)
+			const Textures = resolveRelativeToUri(configFilePath, object.Textures)
+			const Sounds = resolveRelativeToUri(configFilePath, object.Sounds)
+			const Patches = resolveRelativeToUri(configFilePath, object.Patches)
+			const Languages = resolveRelativeToUri(configFilePath, object.Languages)
 
 			const loadFolders: LoadFolders = { version, About, Assemblies, Languages,
 					Defs, Textures, Sounds, Patches }

@@ -1,4 +1,4 @@
-import { absPath, TextReuqestType } from '../../common/common'
+import { URILike } from '../../common/common'
 import { def, getDefIdentifier, TypeInfoInjector, isTypeNode } from './TypeInfo';
 import { IConnection, Connection, TextDocuments, TextDocumentChangeEvent } from 'vscode-languageserver';
 import { Event } from '../../common/event'
@@ -12,7 +12,7 @@ import { assert } from 'console';
 type version = string;
 
 export interface versionGetter {
-	(path: absPath): version | null
+	(path: URILike): version | null
 }
 
 export interface DocumentChangedHandler {
@@ -20,7 +20,7 @@ export interface DocumentChangedHandler {
 }
 
 export interface sourcedDef extends def {
-	source: absPath
+	source: URILike
 }
 
 export function isSourcedDef(obj: any): obj is sourcedDef {
@@ -36,8 +36,8 @@ export interface DefTextDocumentChangedEvent {
 
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
-	private watchedFiles: Map<absPath, TextDocument> // absPath - text
-	private xmlDocuments: Map<absPath, XMLDocument>
+	private watchedFiles: Map<URILike, TextDocument> // URILike - text
+	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<RWTextDocument>
 	private versionGetter: versionGetter | undefined
 	private connection: Connection | undefined
@@ -59,24 +59,24 @@ export class DefTextDocuments {
 		this.refreshDocuments()
 	}
 
-	getDocument (absPath: absPath): TextDocument | undefined {
-		return this.watchedFiles.get(absPath)
+	getDocument (URILike: URILike): TextDocument | undefined {
+		return this.watchedFiles.get(URILike)
 	}
 
-	getXMLDocument (absPath: absPath): XMLDocument | undefined { 
-		return this.xmlDocuments.get(absPath)
+	getXMLDocument (URILike: URILike): XMLDocument | undefined { 
+		return this.xmlDocuments.get(URILike)
 	}
 
-	getDefs (absPath: absPath): sourcedDef[] {
+	getDefs (URILike: URILike): sourcedDef[] {
 		let version: string | null
-		if (!this.versionGetter || !(version = this.versionGetter(absPath)))
+		if (!this.versionGetter || !(version = this.versionGetter(URILike)))
 			return []
 		
 		let db: DefDatabase | undefined
 		if (!(db = this.databases.get(version)))
 			return []
 
-		return db.get(absPath) as sourcedDef[] // we already injected values when we add data
+		return db.get(URILike) as sourcedDef[] // we already injected values when we add data
 	}
 
 	// two strategies here
@@ -110,20 +110,17 @@ export class DefTextDocuments {
 			this.xmlDocuments.delete(path)
 		})
 		this.textDocuments.listen(connection)
-		this.textDocuments.onDidOpen(listener => {
-			const document = listener.document
-			const fsPath = URI.parse(document.uri).fsPath
-			this.watchedFiles.set(fsPath, document)
+		this.textDocuments.onDidOpen(({ document }) => {
+			this.watchedFiles.set(document.uri, document)
 		})
-		this.textDocuments.onDidChangeContent(listener => {
-			const text = listener.document.getText()
-			const path = URI.parse(listener.document.uri).fsPath
-			this.update(path, text)
+		this.textDocuments.onDidChangeContent(({ document }) => {
+			const text = document.getText()
+			this.update(document.uri, text)
 			// TODO - 데이터 채워넣기...
 			this.onDocumentChanged?.({
-				defs: this.getDefs(path),
-				textDocument: listener.document,
-				xmlDocument: this.getXMLDocument(path)
+				defs: this.getDefs(document.uri),
+				textDocument: document,
+				xmlDocument: this.getXMLDocument(document.uri)
 			})
 		})
 	}
@@ -144,7 +141,7 @@ export class DefTextDocuments {
 		}
 	}
 
-	private update(path: absPath, content: string): void {
+	private update(path: URILike, content: string): void {
 		if (this.versionGetter && this.typeInjector) {
 			const version = this.versionGetter(path)
 			if (version) {
@@ -161,14 +158,14 @@ export class DefTextDocuments {
 		}
 	}
 	/*
-	private update2(path: absPath, content: string): void {
+	private update2(path: URILike, content: string): void {
 		const defs = this.parseText(content)
 		this.update(path, defs)
 	}
 	*/
 
 	/*
-	private update(path: absPath, defs: def[]): void {
+	private update(path: URILike, defs: def[]): void {
 		let version: string | null
 		if (!this.versionGetter || !(version = this.versionGetter(path)))
 			return
@@ -205,7 +202,7 @@ export function isReferencedDef(obj: any): obj is referencedDef {
 }
 
 class DefDatabase {
-	private _defs: Map<absPath, (referencedDef | def)[]>
+	private _defs: Map<URILike, (referencedDef | def)[]>
 	private _defDatabase: Map<defType, Map<defIdentifier, (referencedDef | def)>>
 	private _crossRefWanters: Set<referencedDef>
 	constructor(readonly version: string) {
@@ -214,16 +211,16 @@ class DefDatabase {
 		this._crossRefWanters = new Set()
 	}
 
-	get(abspath: absPath): def[] { // only returns valid def
-		return this._defs.get(abspath) || []
+	get(URILike: URILike): def[] { // only returns valid def
+		return this._defs.get(URILike) || []
 	}
 
 	get2(defType: defType, name: string): def | null { // defName or Name property
 		return this._defDatabase.get(defType)?.get(name) || null
 	}
 
-	update(abspath: absPath, newDefs: def[]): void {
-		this.deleteDefs(abspath)
+	update(URILike: URILike, newDefs: def[]): void {
+		this.deleteDefs(URILike)
 		for (const def of newDefs) {
 			if (!def.tag || !def.closed)
 				continue
@@ -244,7 +241,7 @@ class DefDatabase {
 		}
 
 		this.resolveCrossRefWanters()
-		this._defs.set(abspath, newDefs)
+		this._defs.set(URILike, newDefs)
 	}
 
 	private resolveCrossRefWanters(): void {
@@ -275,8 +272,8 @@ class DefDatabase {
 		this._crossRefWanters.add(<referencedDef>def)
 	}
 
-	private deleteDefs(absPath: absPath): void {
-		const defs = this._defs.get(absPath)
+	private deleteDefs(URILike: URILike): void {
+		const defs = this._defs.get(URILike)
 		if (defs) {
 			for (const def of defs) {
 				if (isReferencedDef(def)) {
@@ -287,7 +284,7 @@ class DefDatabase {
 					delete def.base, def.derived
 				}
 			}
-			this._defs.delete(absPath)
+			this._defs.delete(URILike)
 		}
 	}
 

@@ -21,7 +21,7 @@ import { parse, Node, XMLDocument } from './parser/XMLParser';
 import { LoadFolders, querySubFilesRequestType } from '../common/config'
 import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, getDefIdentifier, def } from './RW/TypeInfo';
-import { absPath } from '../common/common';
+import { /* absPath */ URILike } from '../common/common';
 import * as fs from 'fs'
 import * as path from 'path'
 import { ConfigChangedNotificationType, getLoadFolders, Config } from '../client/config';
@@ -164,8 +164,8 @@ defTextDocuments.typeInjector = injector
 let config: Config | null = null
 type relativePattern = string
 let watchers: WatchFileRequestParams[] = []
-/** version - absPath, 파일이 있는지 없는지 체크하기 위함 */
-const files: Map<string, Set<absPath>> = new Map()
+/** version - URILike, 파일이 있는지 없는지 체크하기 위함 */
+const files: Map<string, Set<URILike>> = new Map()
 
 connection.onNotification(ConfigChangedNotificationType, async newConfig => {
 	config = newConfig
@@ -181,15 +181,13 @@ connection.onNotification(ConfigChangedNotificationType, async newConfig => {
 	if (config) {
 		const promises: (Promise<void>)[] = []
 		for (const [version, folder] of Object.entries(config.folders)) {
-			const set: Set<absPath> = new Set()
+			const set: Set<URILike> = new Set()
 			files.set(version, set)
 			
 			// eslint-disable-next-line no-inner-declarations
 			function registerInitialFiles(uris: string[]) {
-				for (const uri of uris) {
-					const fsPath = URI.parse(uri).fsPath
-					set.add(fsPath)
-				}
+				for (const uri of uris)
+					set.add(uri)
 			}
 			
 			// About
@@ -232,25 +230,23 @@ connection.onNotification(ConfigChangedNotificationType, async newConfig => {
 
 connection.onNotification(WatchFileAddedNotificationType, uri => {
 	if (!config) return
-	const fsPath = URI.parse(uri).fsPath
-	const version = getLoadFolders(config, fsPath)?.version
+	const version = getLoadFolders(config, uri)?.version
 	if (version) {
 		const set = files.get(version)
 		if (set) {
-			assert(!set.has(fsPath), 'tried to add file which is already added')
-			set.add(fsPath)
+			assert(!set.has(uri), 'tried to add file which is already added')
+			set.add(uri)
 		}
 	}
 })
 
 connection.onNotification(WatchFileDeletedNotificationType, uri => {
 	if (!config) return
-	const fsPath = URI.parse(uri).fsPath
-	const version = getLoadFolders(config, fsPath)?.version
+	const version = getLoadFolders(config, uri)?.version
 	if (version) {
 		const set = files.get(version)
 		if (set) {
-			const result = set.delete(fsPath)
+			const result = set.delete(uri)
 			assert(result)
 		}
 	}
@@ -258,9 +254,8 @@ connection.onNotification(WatchFileDeletedNotificationType, uri => {
 
 connection.onDeclaration(request => {
 	const uri = request.textDocument.uri
-	const fsPath = URI.parse(uri).fsPath
-	const defs = defTextDocuments.getDefs(fsPath)
-	const textDocument = defTextDocuments.getDocument(fsPath)
+	const defs = defTextDocuments.getDefs(uri)
+	const textDocument = defTextDocuments.getDocument(uri)
 	if (textDocument) {
 		let targetDef: def | undefined = undefined
 		for (const def of defs) {
@@ -291,9 +286,8 @@ connection.onDeclaration(request => {
 
 connection.onReferences(request => {
 	const uri = request.textDocument.uri
-	const fsPath = URI.parse(uri).fsPath
-	const defs = defTextDocuments.getDefs(fsPath)
-	const textDocument = defTextDocuments.getDocument(fsPath)
+	const defs = defTextDocuments.getDefs(uri)
+	const textDocument = defTextDocuments.getDocument(uri)
 	if (textDocument) {
 		let selectedDef: def | undefined
 		for (const def of defs) {
@@ -343,15 +337,14 @@ connection.onRenameRequest(request => {
 	*/
 })
 
-connection.onCompletion(async handler => {
-	const fsPath = URI.parse(handler.textDocument.uri).fsPath
-	const document = defTextDocuments.getDocument(fsPath)
-	const defs = defTextDocuments.getDefs(fsPath)
+connection.onCompletion(async ({ textDocument: { uri }, position }) => {
+	const document = defTextDocuments.getDocument(uri)
+	const defs = defTextDocuments.getDefs(uri)
 	if (!document || defs.length == 0)
 		return undefined
 	const xmlDocument = defs.find(node => node.document)?.document
 	if (xmlDocument) {
-		return await new RWXMLCompletion().doComplete(document, handler.position, xmlDocument)
+		return await new RWXMLCompletion().doComplete(document, position, xmlDocument)
 	}
 })
 
@@ -359,13 +352,13 @@ connection.onCompletionResolve(handler => {
 	return handler
 })
 
-// const diagnostics: Map<absPath, Diagnostic[]> = new Map()
+// const diagnostics: Map<URILike, Diagnostic[]> = new Map()
 // need code refactor
 defTextDocuments.onDocumentAdded = (({ textDocument: document, defs, xmlDocument }) => {
 	if (!xmlDocument) return
 	let files2: Set<string> | undefined = undefined
 	if (config) {
-		const version = getLoadFolders(config, URI.parse(document.uri).fsPath)?.version
+		const version = getLoadFolders(config, document.uri)?.version
 		if (version)
 			files2 = files.get(version)
 	}

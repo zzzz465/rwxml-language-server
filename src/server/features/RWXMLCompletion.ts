@@ -4,12 +4,12 @@ import { CompletionList, CompletionItem } from 'vscode-languageserver';
 import { createScanner } from '../parser/XMLScanner';
 import { TokenType, ScannerState, Scanner } from '../htmlLanguageTypes';
 import { TypeInfo, isTypeNode, typeNode } from '../RW/TypeInfo'
-import { absPath } from '../../common/common'
+import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
 import { RWTextDocument } from '../documents';
 
 export interface filesQuery {
-	(path: absPath): Promise<absPath[]>
+	(path: URILike): Promise<URILike[]>
 }
 
 // need code refactor

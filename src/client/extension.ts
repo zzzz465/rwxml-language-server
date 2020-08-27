@@ -7,8 +7,8 @@ import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
 import { parseConfig, LoadFolders, Config, ConfigChangedNotificationType, getLoadFolders } from './config'
-import { LoadFoldersRequestType, querySubFilesRequestType } from '../common/config'
-import { absPath } from '../common/common'
+import { querySubFilesRequestType } from '../common/config'
+import { URILike } from '../common/common'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
 
 import {
@@ -100,16 +100,11 @@ export async function activate(context: ExtensionContext) {
 	if (config)
 		client.sendNotification(ConfigChangedNotificationType, config)
 	
-	client.onRequest(LoadFoldersRequestType, (params, token) => {
-		if (config)
-			return getLoadFolders(config, params)
-	})
-	
 	client.onRequest(querySubFilesRequestType, async (absPath, token) => {
 		const files = await vscode.workspace.findFiles(
 			new vscode.RelativePattern(absPath, '**')
 			)
-			return files.map(uri => uri.fsPath)
+			return files.map(uri => uri.toString())
 	})
 
 	const files = await vscode.workspace.findFiles('**/Defs/**/*.xml')
@@ -118,7 +113,7 @@ export async function activate(context: ExtensionContext) {
 			.then(array => {
 			const content = array.toString()
 			client.sendNotification(DefFileAddedNotificationType, {
-				path: file.fsPath,
+				path: file.toString(),
 				text: content
 			})
 		})
@@ -127,20 +122,20 @@ export async function activate(context: ExtensionContext) {
 	const DefsWatcher = vscode.workspace.createFileSystemWatcher('**/Defs/**/*.xml')
 	DefsWatcher.onDidCreate(async (uri) => {
 		client.sendNotification(DefFileAddedNotificationType, {
-			path: uri.fsPath,
+			path: uri.toString(),
 			text: (await vscode.workspace.fs.readFile(uri)).toString()
 		})
 	})
 
 	DefsWatcher.onDidChange(async uri => {
 		client.sendNotification(DefFileChangedNotificationType, {
-			path: uri.fsPath,
+			path: uri.toString(),
 			text: (await vscode.workspace.fs.readFile(uri)).toString()
 		})
 	})
 
 	DefsWatcher.onDidDelete(uri => {
-		client.sendNotification(DefFileRemovedNotificationType, uri.fsPath)
+		client.sendNotification(DefFileRemovedNotificationType, uri.toString())
 	})
 }
 
