@@ -5,6 +5,7 @@ import * as path from 'path'
 // import { absPath } from '../common/common'
 import { NotificationType } from 'vscode-languageserver'
 import { URILike, relativePath } from '../common/common'
+import { Config } from '../common/config'
 
 export interface LoadFolders {
 	readonly version: URILike
@@ -29,12 +30,6 @@ export function isSubFile (folders: LoadFolders, path: URILike): boolean {
 
 function getDirs (folders: LoadFolders) {
 	return [folders.About, folders.Assemblies, folders.Languages, folders.Defs, folders.Textures, folders.Sounds, folders.Patches]
-}
-
-export interface Config {
-	folders: {
-		[version: string]: LoadFolders
-	}
 }
 
 export function getLoadFolders (config: Config, path: URILike): LoadFolders | undefined {
@@ -76,5 +71,3 @@ export function parseConfig(configLike: any, configFilePath: Uri): Config {
 		folders: folders
 	}
 }
-
-export const ConfigChangedNotificationType = new NotificationType<Config>('config/changed')

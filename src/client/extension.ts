@@ -6,8 +6,8 @@
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
-import { parseConfig, LoadFolders, Config, ConfigChangedNotificationType, getLoadFolders } from './config'
-import { querySubFilesRequestType } from '../common/config'
+import { parseConfig, LoadFolders, getLoadFolders } from './config'
+import { querySubFilesRequestType, Config, ConfigChangedNotificationType } from '../common/config'
 import { URILike } from '../common/common'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
 
