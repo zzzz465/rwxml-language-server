@@ -15,8 +15,9 @@ export class FileWatcher {
 	/** listen watchFile events, should be called after the client is ready */
 	listen(connection: LanguageClient): void {
 		this.connection = connection
-		connection.onRequest(WatchFileRequestType, this.watchHandler)
-		connection.onRequest(disposeWatchFileRequestType, this.disposeHandler)
+		// somehow in "onRequest", callback's this is fixed to "undefined", so we can't pass binded function, use lambda instead.
+		connection.onRequest(WatchFileRequestType, (req) => this.watchHandler(req))
+		connection.onRequest(disposeWatchFileRequestType, (req) => this.disposeHandler(req))
 	}
 
 	private async watchHandler(request: WatchFileRequestParams): Promise<URILike[]> {
