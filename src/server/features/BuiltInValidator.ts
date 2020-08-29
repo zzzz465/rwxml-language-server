@@ -1,5 +1,5 @@
 import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from './NodeValidator';
-import { TypeIdentifier, typeNode } from '../RW/TypeInfo';
+import { TypeIdentifier, typeNode, TypeInfo } from '../RW/TypeInfo';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import { Node } from '../parser/XMLParser';
 import { Range } from 'vscode-languageserver-textdocument';
@@ -42,8 +42,8 @@ for (const data of TypeToFunction) {
 }
 
 export const builtInValidationParticipant: NodeValidationParticipant = {
-	getValidator: (typeId: TypeIdentifier) => {
-		return builtInValidatorMap.get(typeId) || []
+	getValidator: ({ typeIdentifier }: TypeInfo) => {
+		return builtInValidatorMap.get(typeIdentifier) || []
 	}
 }
 

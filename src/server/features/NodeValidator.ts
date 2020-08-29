@@ -1,4 +1,4 @@
-import { TypeInfoMap, typeNode, def, TypeIdentifier, isTypeNode } from '../RW/TypeInfo';
+import { TypeInfoMap, typeNode, def, TypeIdentifier, isTypeNode, TypeInfo } from '../RW/TypeInfo';
 import { Node, XMLDocument } from '../parser/XMLParser';
 import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
@@ -28,7 +28,7 @@ export interface ValidationResult {
 }
 
 export interface NodeValidationParticipant {
-	getValidator (typeId: TypeIdentifier): NodeValidateFunction[]
+	getValidator (typeId: TypeInfo): NodeValidateFunction[]
 }
 
 export type ProjectFiles = Set<URILike>
@@ -112,7 +112,7 @@ export class NodeValidator implements NodeValidatorContext {
 
 			if (typeInfo.isLeafNode) {
 				const validators = this.nodeValidationParticipants.reduce((arr, p) => {
-					arr.push(...(p.getValidator(typeInfo.typeIdentifier)))
+					arr.push(...(p.getValidator(typeInfo)))
 					return arr
 				}, [] as NodeValidateFunction[])
 				

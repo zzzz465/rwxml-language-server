@@ -12,6 +12,7 @@ export interface defInfo {
 	children: defInfo[]
 }
 
+/** namespace+class name. ex) System.Int32 */
 export type TypeIdentifier = string;
 
 export interface TypeInfo { // 이거만 가져와보자
