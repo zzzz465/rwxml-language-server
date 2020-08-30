@@ -36,6 +36,7 @@ export interface DefTextDocumentChangedEvent {
 
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
+	/** URILike - text Set, it contain textDocuments which is watched */
 	private watchedFiles: Map<URILike, TextDocument> // URILike - text
 	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<RWTextDocument>
@@ -58,8 +59,12 @@ export class DefTextDocuments {
 		this.refreshDocuments()
 	}
 
+	/**
+	 * return opened / watched textDocument
+	 * @param URILike string that can be parsed with URI.parse
+	 */
 	getDocument (URILike: URILike): TextDocument | undefined {
-		return this.watchedFiles.get(URILike)
+		return this.textDocuments.get(URILike) || this.watchedFiles.get(URILike)
 	}
 
 	getXMLDocument (URILike: URILike): XMLDocument | undefined { 
@@ -93,7 +98,8 @@ export class DefTextDocuments {
 				xmlDocument: this.getXMLDocument(handler.path)
 			})
 		})
-		connection.onNotification(DefFileChangedNotificationType, handler => {			
+		connection.onNotification(DefFileChangedNotificationType, handler => {		
+			// console.log('defFileChangedNotification event')	 // FIXME - 이거 업데이트 안되는데?
 			const uri = URI.file(handler.path)
 			// textDocuments 에 의하여 업데이트 될 경우, 무시
 			if (this.textDocuments.get(uri.toString()) !== undefined)
@@ -112,6 +118,7 @@ export class DefTextDocuments {
 			this.watchedFiles.set(document.uri, document)
 		})
 		this.textDocuments.onDidChangeContent(({ document }) => {
+			// console.log('onDidChangeContent event')
 			const text = document.getText()
 			this.update(document.uri, text)
 			// TODO - 데이터 채워넣기...

@@ -336,7 +336,9 @@ connection.onRenameRequest(request => {
 	*/
 })
 
+// TODO - can this event called before "onDocumentChanged" event?
 connection.onCompletion(({ textDocument: { uri }, position }) => {
+	// console.log('completion request')
 	const document = defTextDocuments.getDocument(uri)
 	const defs = defTextDocuments.getDefs(uri)
 	if (!document || defs.length == 0)
@@ -344,6 +346,7 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 	const xmlDocument = defs.find(node => node.document)?.document
 	if (xmlDocument) {
 		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument)
+		// console.log(result)
 		return result
 	}
 })
