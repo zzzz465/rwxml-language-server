@@ -19,4 +19,6 @@ export type respond = {
 	text: string
 }
 
+export const FileRequestType = new RequestType<URILike, Uint8Array, undefined>('File2/Request')
+
 // export const TextReuqestType = new RequestType<URILike[], respond[], undefined>('text/request')

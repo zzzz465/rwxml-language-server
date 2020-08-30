@@ -5,18 +5,7 @@ import * as path from 'path'
 // import { absPath } from '../common/common'
 import { NotificationType } from 'vscode-languageserver'
 import { URILike, relativePath } from '../common/common'
-import { Config } from '../common/config'
-
-export interface LoadFolders {
-	readonly version: URILike
-	readonly About: URILike
-	readonly Assemblies?: URILike
-	readonly Languages?: URILike
-	readonly Defs?: URILike
-	readonly Textures?: URILike
-	readonly Sounds?: URILike
-	readonly Patches?: URILike
-}
+import { ConfigDatum, LoadFolders } from '../common/config'
 
 function resolveRelativeToUri (baseUri: Uri, relative: relativePath | undefined): URILike | undefined {
 	if (relative) {
@@ -26,7 +15,13 @@ function resolveRelativeToUri (baseUri: Uri, relative: relativePath | undefined)
 	}
 }
 
-export function parseConfig(configLike: any, configFilePath: Uri): Config {
+function resolveRelativeToUris (baseUri: Uri, p: string[] | undefined): URILike[] | undefined {
+	if (p) {
+		return p.map(p2 => resolveRelativeToUri(baseUri, p2)!)
+	}
+}
+
+export function parseConfig(configLike: any, configFilePath: Uri): ConfigDatum {
 	const folders: Record<string, LoadFolders> = {}
 	if ('folders' in configLike && typeof configLike.folders === 'object') {
 		for (const [version, object] of Object.entries<any>(configLike.folders)) {
@@ -42,9 +37,10 @@ export function parseConfig(configLike: any, configFilePath: Uri): Config {
 			const Sounds = resolveRelativeToUri(configFilePath, object.Sounds)
 			const Patches = resolveRelativeToUri(configFilePath, object.Patches)
 			const Languages = resolveRelativeToUri(configFilePath, object.Languages)
+			const DefReferences = resolveRelativeToUris(configFilePath, object.Languages)
 
 			const loadFolders: LoadFolders = { version, About, Assemblies, Languages,
-					Defs, Textures, Sounds, Patches }
+					Defs, Textures, Sounds, Patches, DefReferences }
 
 			folders[version] = loadFolders
 		}

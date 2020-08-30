@@ -6,8 +6,8 @@
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
-import { parseConfig, LoadFolders } from './config'
-import { querySubFilesRequestType, Config, ConfigChangedNotificationType } from '../common/config'
+import { parseConfig } from './config'
+import { querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType } from '../common/config'
 import { URILike } from '../common/common'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
 
@@ -71,7 +71,7 @@ export async function activate(context: ExtensionContext) {
 	
 	_fileWatcher.listen(client)
 
-	let config: Config | null = null
+	let config: ConfigDatum | null = null
 	
 	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
 	const configFile = await vscode.workspace.findFiles('**/rwconfigrc.json')

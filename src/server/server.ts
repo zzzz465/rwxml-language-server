@@ -18,7 +18,7 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
-import { LoadFolders, querySubFilesRequestType, Config, ConfigChangedNotificationType, getLoadFolders } from '../common/config'
+import { LoadFolders, querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType, getLoadFolders } from '../common/config'
 import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, getDefIdentifier, def } from './RW/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
@@ -160,7 +160,7 @@ connection.onCompletionResolve(
 const defTextDocuments = new DefTextDocuments()
 defTextDocuments.typeInjector = injector
 
-let config: Config | null = null
+let config: ConfigDatum | null = null
 type relativePattern = string
 let watchers: WatchFileRequestParams[] = []
 /** version - URILike, 파일이 있는지 없는지 체크하기 위함 */
@@ -201,6 +201,7 @@ connection.onNotification(ConfigChangedNotificationType, async newConfig => {
 					basePath: folder.Defs,
 					globPattern: '**/*.xml'
 				}).then(registerInitialFiles)
+				.catch(reason => console.log(reason))
 				promises.push(p)
 			}
 
@@ -210,10 +211,23 @@ connection.onNotification(ConfigChangedNotificationType, async newConfig => {
 					globPattern: '**/*.{png, jpeg, jpg, gif}'
 				})
 				.then(registerInitialFiles)
+				.catch(reason => console.log(reason))
 				promises.push(p)
 			}
 
 			// Textures
+
+			if (folder.DefReferences) {
+				for (const basePath of folder.DefReferences) {
+					const p = connection.sendRequest(WatchFileRequestType, {
+						basePath: basePath,
+						globPattern: '**/*.xml'
+					})
+					.then(registerInitialFiles)
+					.catch(reason => console.log(reason))
+					promises.push(p)
+				}
+			}
 		}
 		await Promise.all(promises)
 
@@ -320,6 +334,7 @@ connection.onReferences(request => {
 	}
 })
 
+// 레퍼런스로 연결된 textDocument 들은 수정하면 안됨!
 connection.onRenameRequest(request => {
 	console.log(request)
 	return undefined

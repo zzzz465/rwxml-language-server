@@ -12,6 +12,8 @@ function getOrCreate(key: string): NodeValidateFunction[] {
 	return builtInValidatorMap.get(key)!
 }
 
+// def reference 어떻게할래?
+
 const TypeToFunction = [
 	{ // 정수 체크
 		types: [
@@ -80,7 +82,7 @@ function checkInappropriateNode(this: NodeValidatorContext, node: typeNode): Val
 
 function checkWhitespaceError (this: NodeValidatorContext, node: Node): ValidationResult {
 	if(node.text) {
-		const match = node.text.content.match(/ +$/) // match whitespace end of the text, only matches 1
+		const match = node.text.content.match(/ +$|^ +/) // match start/end whitespace
 		if(match) {
 			const textOffset = node.text.end - match[0].length
 			return {
@@ -158,3 +160,8 @@ function checkTexPathValid (this: NodeValidatorContext, node: typeNode): Validat
 	}
 	return { }
 }
+
+/*
+TODO
+li node 지원
+*/

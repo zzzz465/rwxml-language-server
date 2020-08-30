@@ -12,18 +12,19 @@ export interface LoadFolders {
 	readonly Textures?: URILike
 	readonly Sounds?: URILike
 	readonly Patches?: URILike
+	readonly DefReferences?: URILike[]
 }
 
-export interface Config {
+export interface ConfigDatum {
 	folders: {
 		[version: string]: LoadFolders
 	}
 }
 
 export const querySubFilesRequestType = new RequestType<URILike, URILike[], undefined>('temp2')
-export const ConfigChangedNotificationType = new NotificationType<Config>('config/changed')
+export const ConfigChangedNotificationType = new NotificationType<ConfigDatum>('config/changed')
 
-export function getLoadFolders (config: Config, path: URILike): LoadFolders | undefined {
+export function getLoadFolders (config: ConfigDatum, path: URILike): LoadFolders | undefined {
 	for (const [version, object] of Object.entries(config.folders))
 		if (isSubFile(object, path))
 			return object
