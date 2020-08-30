@@ -15,10 +15,19 @@ export interface defInfo {
 /** namespace+class name. ex) System.Int32 */
 export type TypeIdentifier = string;
 
+/** 
+ * an object to check whether the node is special or not  
+ * it can have multiple flags
+ */
+export interface specialType {
+	texPath?: boolean
+}
+
 export interface TypeInfo { // 이거만 가져와보자
 	isDefNode: boolean
 	isLeafNode: boolean
 	typeIdentifier: TypeIdentifier
+	specialTypes?: specialType
 	suggestedAttributes?: CompletionItem[]
 	leafNodeCompletions?: CompletionItem[]
 	childNodes?: Map<string, TypeIdentifier>
