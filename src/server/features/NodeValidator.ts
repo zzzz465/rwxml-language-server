@@ -110,24 +110,22 @@ export class NodeValidator implements NodeValidatorContext {
 			const curr = queue.pop()!
 			const typeInfo = curr.typeInfo
 
-			if (typeInfo.isLeafNode) {
-				const validators = this.nodeValidationParticipants.reduce((arr, p) => {
-					arr.push(...(p.getValidator(typeInfo)))
-					return arr
-				}, [] as NodeValidateFunction[])
+			const validators = this.nodeValidationParticipants.reduce((arr, p) => {
+				arr.push(...(p.getValidator(typeInfo)))
+				return arr
+			}, [] as NodeValidateFunction[])
 				
-				for (const func of validators) {
-					const { diagnostics: result, completeValidation: completed } = func.call(this, curr)
-					if (result) {
-						this.diagnostics.push(...result)
-						if(result.length > 0 && completed === true)
-							break
-					}
+			for (const func of validators) {
+				const { diagnostics: result, completeValidation: completed } = func.call(this, curr)
+				if (result) {
+					this.diagnostics.push(...result)
+					if(result.length > 0 && completed === true)
+						break
 				}
-			} else {
-				for (const child of curr.children)
-					if(isTypeNode(child)) queue.push(child)
 			}
+			
+			for (const child of curr.children)
+				if(isTypeNode(child)) queue.push(child)
 		}
 	}
 }

@@ -43,7 +43,8 @@ for (const data of TypeToFunction) {
 
 export const builtInValidationParticipant: NodeValidationParticipant = {
 	getValidator: ({ typeIdentifier }: TypeInfo) => {
-		return builtInValidatorMap.get(typeIdentifier) || []
+		const validators = builtInValidatorMap.get(typeIdentifier) || []
+		return [checkDuplicateNode, ...validators]
 	}
 }
 
@@ -110,6 +111,25 @@ function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult
 						source: 'ex'
 					}]}}}
 	return {}
+}
+
+function checkDuplicateNode(this: NodeValidatorContext, node: typeNode): ValidationResult {
+	const diagnostics: Diagnostic[] = []
+	const marker: Set<string> = new Set() // tag marker
+	for (const childNode of node.children) {
+		if (!childNode.tag) continue
+		if (marker.has(childNode.tag)) {
+			diagnostics.push({
+				message: 'found duplicate node',
+				range: this.getRangeIncludingTag(childNode),
+				severity: DiagnosticSeverity.Error
+			})
+		} else {
+			marker.add(childNode.tag)
+		}
+	}
+	const complete = diagnostics.length > 0
+	return { completeValidation: complete, diagnostics: diagnostics }
 }
 
 function checkTexPathValid (this: NodeValidatorContext, node: typeNode): ValidationResult {

@@ -336,14 +336,15 @@ connection.onRenameRequest(request => {
 	*/
 })
 
-connection.onCompletion(async ({ textDocument: { uri }, position }) => {
+connection.onCompletion(({ textDocument: { uri }, position }) => {
 	const document = defTextDocuments.getDocument(uri)
 	const defs = defTextDocuments.getDefs(uri)
 	if (!document || defs.length == 0)
 		return undefined
 	const xmlDocument = defs.find(node => node.document)?.document
 	if (xmlDocument) {
-		return await new RWXMLCompletion().doComplete(document, position, xmlDocument)
+		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument)
+		return result
 	}
 })
 

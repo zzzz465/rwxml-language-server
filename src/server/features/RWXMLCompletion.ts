@@ -14,12 +14,11 @@ export interface filesQuery {
 
 // need code refactor
 export class RWXMLCompletion {
-	query?: filesQuery
 	constructor () {
 
 	}
 
-	async doComplete(document: RWTextDocument, position: Position, XMLDocument: XMLDocument): Promise<CompletionList> {
+	doComplete(document: RWTextDocument, position: Position, XMLDocument: XMLDocument): CompletionList {
 		const result: CompletionList = {
 			isIncomplete: false,
 			items: []
@@ -41,10 +40,12 @@ export class RWXMLCompletion {
 			}
 			return { start: document.positionAt(replaceStart), end: document.positionAt(replaceEnd) }
 		}
-
-		const collectDefNodeValueSuggestions = async (contentOffset: number, tagNameEnd?: number ) => {
+		
+		// TODO - fix this
+		const collectDefNodeValueSuggestions = (contentOffset: number, tagNameEnd?: number ) => {
 			// TODO - performance alert!
 			// pretty sure this need to be cached...
+			/*
 			const collectImageNodeSuggestions: (node: typeNode) => Promise<CompletionItem[]> 
 				= async () => {
 				if(document.loadFolders && document.loadFolders.Textures && this.query) {
@@ -82,6 +83,8 @@ export class RWXMLCompletion {
 				}
 			}
 			return result
+			*/
+			return { isIncomplete: false, items: [] } as CompletionList
 		}
 
 
@@ -92,8 +95,8 @@ export class RWXMLCompletion {
 				isIncomplete: false,
 				items: []
 			}
-			const node = XMLDocument.findNodeBefore(afterOpenBracket)
-			const parentNode = node.closed ? node.parent : XMLDocument.findNodeBefore(node.start)
+			const node = XMLDocument.findNodeAt(afterOpenBracket)
+			const parentNode = node.parent || XMLDocument.findNodeBefore(node.start)
 			if(isTypeNode(parentNode)) {
 				const typeInfo = parentNode.typeInfo
 				if(typeInfo.childNodes) {
