@@ -3,6 +3,7 @@ import { TypeIdentifier, typeNode, TypeInfo } from '../RW/TypeInfo';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import { Node } from '../parser/XMLParser';
 import { Range } from 'vscode-languageserver-textdocument';
+import { isReferencedDef } from '../RW/DefTextDocuments';
 // function pipeline 을 만들어야하나?
 const builtInValidatorMap = new Map<string, NodeValidateFunction[]>()
 
@@ -46,7 +47,7 @@ for (const data of TypeToFunction) {
 export const builtInValidationParticipant: NodeValidationParticipant = {
 	getValidator: ({ typeIdentifier }: TypeInfo) => {
 		const validators = builtInValidatorMap.get(typeIdentifier) || []
-		return [checkDuplicateNode, ...validators]
+		return [checkDuplicateNode, checkParentDefValid, ...validators]
 	}
 }
 
@@ -159,6 +160,30 @@ function checkTexPathValid (this: NodeValidatorContext, node: typeNode): Validat
 		}
 	}
 	return { }
+}
+
+function checkDefReference (this: NodeValidatorContext, node: typeNode): ValidationResult {
+
+
+	return { }
+}
+
+function checkParentDefValid (this: NodeValidatorContext, node: typeNode): ValidationResult {
+	const result: ValidationResult = {}
+	const typeInfo = node.typeInfo
+	if (node.attributes && node.attributes.ParentName) {
+		const parentName = node.attributes.ParentName
+		if (!isReferencedDef(node) || node.base?.tag !== parentName) {
+			result.completeValidation = true
+			const attrRange = this.getAttributeRange(node, 'ParentName')
+			result.diagnostics = [{
+				message: 'invalid parent Name',
+				range: attrRange?.value || this.getRangeIncludingTag(node)
+			}]
+		}
+	}
+
+	return result
 }
 
 /*

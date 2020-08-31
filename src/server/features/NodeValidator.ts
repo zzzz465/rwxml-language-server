@@ -6,6 +6,8 @@ import { range } from 'lodash';
 import { type } from 'os';
 import { URILike } from '../../common/common';
 import { assert } from 'console';
+import { createScanner } from '../parser/XMLScanner';
+import { TokenType } from '../htmlLanguageTypes';
 
 const _WHS = ' '.charCodeAt(0)
 
@@ -16,6 +18,7 @@ export interface NodeValidatorContext {
 	positionAt (offset: number): Position
 	getMatchingRangeRegex (regex: RegExp, range: Range): Range | null
 	getTextRange (node: Node): Range
+	getAttributeRange (node: Node, attributeName: string): { name: Range, value: Range } | undefined
 }
 
 export interface NodeValidateFunction {
@@ -100,6 +103,42 @@ export class NodeValidator implements NodeValidatorContext {
 			start: this.textDocument.positionAt(text.start),
 			end: this.textDocument.positionAt(text.end)
 		}
+	}
+
+	getAttributeRange(node: Node, attributeName: string): { name: Range, value: Range } | undefined {
+		if (!node.startTagEnd) return undefined
+		// const start = this.textDocument.positionAt(node.start)
+		// const end = this.textDocument.positionAt(node.startTagEnd)
+		const scanner = createScanner(this.textDocument.getText(), node.start)
+		let token = scanner.scan()
+		let name: Range | undefined = undefined
+		let value: Range | undefined = undefined
+		while (token !== TokenType.EOS && token !== TokenType.StartTagClose) {
+			switch(token) {
+				case TokenType.AttributeName: {
+					if (scanner.getTokenText() !== attributeName) break
+					const start = scanner.getTokenOffset()
+					const end = scanner.getTokenEnd()
+					name = {
+						start: this.textDocument.positionAt(start),
+						end: this.textDocument.positionAt(end)
+					}
+					break
+				}
+				case TokenType.AttributeValue: {
+					if (!name) break
+					const start = scanner.getTokenOffset()
+					const end = scanner.getTokenEnd()
+					value = {
+						start: this.textDocument.positionAt(start),
+						end: this.textDocument.positionAt(end)
+					}
+					return { name, value }
+				}
+			}
+			token = scanner.scan()
+		}
+		return undefined
 	}
 
 	positionAt (offset: number): Position { return this.textDocument.positionAt(offset) }
