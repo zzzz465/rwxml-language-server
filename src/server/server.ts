@@ -372,7 +372,11 @@ connection.onCompletionResolve(handler => {
 
 // const diagnostics: Map<URILike, Diagnostic[]> = new Map()
 // need code refactor
-defTextDocuments.onDocumentAdded = (({ textDocument: document, defs, xmlDocument }) => {
+const key = {}
+defTextDocuments.onDocumentAdded.subscribe(key, ({ }) => {
+
+})
+defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs, xmlDocument }) => {
 	if (!xmlDocument) return
 	let files2: Set<string> | undefined = undefined
 	if (config) {
@@ -387,14 +391,14 @@ defTextDocuments.onDocumentAdded = (({ textDocument: document, defs, xmlDocument
 		files2)
 	const validationResult = validator.validateNode()
 	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
-})
+}))
 
-defTextDocuments.onDocumentChanged = ({ textDocument: document, defs, xmlDocument }) => {
+defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument: document, defs, xmlDocument }) => {
 	if (!xmlDocument) return
 	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant])
 	const validationResult = validator.validateNode()
 	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
-}
+})
 
 // Listen on the connection
 connection.listen();

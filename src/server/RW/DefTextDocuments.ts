@@ -41,15 +41,18 @@ export class DefTextDocuments {
 	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<RWTextDocument>
 	private versionGetter: versionGetter | undefined
-	onDocumentAdded?: Event<DefTextDocumentChangedEvent>
-	onDocumentChanged?: Event<DefTextDocumentChangedEvent> // event handler
-	onDocumentDeleted?: Event<URI>
+	onDocumentAdded: Event<DefTextDocumentChangedEvent>
+	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
+	onDocumentDeleted: Event<URI>
 	typeInjector?: TypeInfoInjector
 	constructor() {
 		this.databases = new Map()
 		this.watchedFiles = new Map()
 		this.textDocuments = new TextDocuments(TextDocument)
 		this.xmlDocuments = new Map()
+		this.onDocumentAdded = new Event()
+		this.onDocumentChanged = new Event()
+		this.onDocumentDeleted = new Event()
 	}
 
 	// needs refactor
@@ -92,7 +95,7 @@ export class DefTextDocuments {
 			const document = TextDocument.create(URI.file(handler.path).toString(), 'xml', 1, handler.text)
 			this.watchedFiles.set(handler.path, document)
 			this.update(handler.path, handler.text)
-			this.onDocumentAdded?.({
+			this.onDocumentAdded?.Invoke({
 				defs: this.getDefs(handler.path),
 				textDocument: document,
 				xmlDocument: this.getXMLDocument(handler.path)
@@ -122,7 +125,7 @@ export class DefTextDocuments {
 			const text = document.getText()
 			this.update(document.uri, text)
 			// TODO - 데이터 채워넣기...
-			this.onDocumentChanged?.({
+			this.onDocumentChanged?.Invoke({
 				defs: this.getDefs(document.uri),
 				textDocument: document,
 				xmlDocument: this.getXMLDocument(document.uri)
