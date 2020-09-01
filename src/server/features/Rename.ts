@@ -1,5 +1,4 @@
-import { RWTextDocument } from '../documents';
-import { Position } from 'vscode-languageserver-textdocument';
+import { Position, TextDocument } from 'vscode-languageserver-textdocument';
 import { XMLDocument } from '../parser/XMLParser';
 import { WorkspaceEdit, Range } from 'vscode-languageserver';
 import { DefTextDocuments } from '../RW/DefTextDocuments';
@@ -11,7 +10,7 @@ export class XMLRename {
 
 	}
 
-	doRename (document: RWTextDocument,
+	doRename (document: TextDocument,
 		position: Position,
 		XMLDocument: XMLDocument,
 		defDocuments: DefTextDocuments

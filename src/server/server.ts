@@ -20,7 +20,7 @@ import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
 import { LoadFolders, querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType, getLoadFolders } from '../common/config'
 import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
-import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, getDefIdentifier, def } from './RW/TypeInfo';
+import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def } from './RW/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
 import * as fs from 'fs'
 import * as path from 'path'
@@ -336,7 +336,7 @@ connection.onReferences(request => {
 
 // 레퍼런스로 연결된 textDocument 들은 수정하면 안됨!
 connection.onRenameRequest(request => {
-	console.log(request)
+	console.log('onRenameRequest')
 	return undefined
 	/*
 	const position = request.position
@@ -353,7 +353,7 @@ connection.onRenameRequest(request => {
 
 // TODO - can this event called before "onDocumentChanged" event?
 connection.onCompletion(({ textDocument: { uri }, position }) => {
-	// console.log('completion request')
+	console.log('completion request')
 	const document = defTextDocuments.getDocument(uri)
 	const defs = defTextDocuments.getDefs(uri)
 	if (!document || defs.length == 0)
@@ -373,10 +373,8 @@ connection.onCompletionResolve(handler => {
 // const diagnostics: Map<URILike, Diagnostic[]> = new Map()
 // need code refactor
 const key = {}
-defTextDocuments.onDocumentAdded.subscribe(key, ({ }) => {
-
-})
 defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs, xmlDocument }) => {
+	console.log('defTextDocuments.onDocumentChanged')
 	if (!xmlDocument) return
 	let files2: Set<string> | undefined = undefined
 	if (config) {
@@ -394,6 +392,7 @@ defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs
 }))
 
 defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument: document, defs, xmlDocument }) => {
+	console.log('defTextDocuments.onDocumentChanged + validate')
 	if (!xmlDocument) return
 	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant])
 	const validationResult = validator.validateNode()

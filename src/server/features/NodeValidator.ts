@@ -2,8 +2,6 @@ import { TypeInfoMap, typeNode, def, TypeIdentifier, isTypeNode, TypeInfo } from
 import { Node, XMLDocument } from '../parser/XMLParser';
 import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
-import { range } from 'lodash';
-import { type } from 'os';
 import { URILike } from '../../common/common';
 import { assert } from 'console';
 import { createScanner } from '../parser/XMLScanner';
