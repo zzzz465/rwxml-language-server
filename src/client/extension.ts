@@ -8,8 +8,9 @@ import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
 import { parseConfig } from './config'
 import { querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType } from '../common/config'
-import { URILike } from '../common/common'
-import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
+import { URILike, absPath } from '../common/common'
+import { DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType } from '../common/Defs'
+import { glob } from 'glob'
 
 import {
 	LanguageClient,
@@ -19,13 +20,15 @@ import {
 	DidChangeWorkspaceFoldersNotification,
 	DidChangeConfigurationNotification,
 	DidChangeWatchedFilesNotification,
-	DidChangeTextDocumentNotification
+	DidChangeTextDocumentNotification,
+	NotificationType
 } from 'vscode-languageclient';
 import { DefFileAddedNotificationType } from '../common/Defs';
 import { flatten } from 'lodash';
 import { ClientCapabilities } from '../server/htmlLanguageTypes';
 import { WatchFileRequestType } from '../common/fileWatcher';
 import { FileWatcher } from './fileWatcher';
+import * as fs from 'fs'
 
 let client: LanguageClient;
 let configWatcher: FileSystemWatcher
@@ -92,14 +95,53 @@ export async function activate(context: ExtensionContext) {
 		const object = JSON.parse(text)
 		config = parseConfig(object, uri)
 		client.sendNotification(ConfigChangedNotificationType, config)
-		// client.sendNotification(DidChangeConfigurationNotification.type)
 	})
 	configWatcher.onDidDelete(uri => {
 		client.sendNotification(ConfigChangedNotificationType, config)
 	})
 
-	if (config)
+	if (config) {
 		client.sendNotification(ConfigChangedNotificationType, config)
+		// 임시로 넣은 코드, 첫 실행할때만 Def을 전송하게 될 것
+		for (const [version, obj] of Object.entries(config.folders)) {
+
+			if (obj.Defs) {
+				glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(obj.Defs).fsPath },
+				(err, files) => {
+					for (const path of files) {
+						const uri = vscode.Uri.file(path)
+						fs.promises.readFile(path, 'utf-8')
+						.then(text => {
+							client.sendNotification(DefFileAddedNotificationType, {
+								path: uri.toString(),
+								text
+							})
+						})
+					}
+				})
+			}
+			if (obj.DefReferences) {
+				for (const referencePath of obj.DefReferences) {
+					glob('**/*.xml', { 
+						absolute: true,
+						cwd: vscode.Uri.parse(referencePath).fsPath 
+					}, 
+					(err, files) => {
+						for (const path of files) {
+							const uri = vscode.Uri.file(path)
+							fs.promises.readFile(path, 'utf-8')
+							.then(text => {
+								client.sendNotification(ReferencedDefFileAddedNotificationType, {
+									path: vscode.Uri.file(path).toString(),
+									text
+								})
+							})
+						}
+					})
+				}
+			}
+		}
+	}
 	
 	client.onRequest(querySubFilesRequestType, async (absPath, token) => {
 		const files = await vscode.workspace.findFiles(
@@ -107,19 +149,6 @@ export async function activate(context: ExtensionContext) {
 			)
 			return files.map(uri => uri.toString())
 	})
-	
-	const files = await vscode.workspace.findFiles('**/Defs/**/*.xml')
-	
-	for (const file of files) {
-		vscode.workspace.fs.readFile(file)
-			.then(array => {
-			const content = array.toString()
-			client.sendNotification(DefFileAddedNotificationType, {
-				path: file.toString(),
-				text: content
-			})
-		})
-	}
 	
 	const DefsWatcher = vscode.workspace.createFileSystemWatcher('**/Defs/**/*.xml')
 	
