@@ -37,7 +37,7 @@ export function parseConfig(configLike: any, configFilePath: Uri): ConfigDatum {
 			const Sounds = resolveRelativeToUri(configFilePath, object.Sounds)
 			const Patches = resolveRelativeToUri(configFilePath, object.Patches)
 			const Languages = resolveRelativeToUri(configFilePath, object.Languages)
-			const DefReferences = resolveRelativeToUris(configFilePath, object.Languages)
+			const DefReferences = resolveRelativeToUris(configFilePath, object.DefReferences)
 
 			const loadFolders: LoadFolders = { version, About, Assemblies, Languages,
 					Defs, Textures, Sounds, Patches, DefReferences }
