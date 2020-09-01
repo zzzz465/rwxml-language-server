@@ -179,14 +179,12 @@ export class DefTextDocuments {
 
 	// 레퍼런스용 노드는 공용 노드로 인식해야함, 즉 모든 버전에 추가되어야 함
 	private updateReference (path: URILike, content: string): void {
-		/*
 		const { defs, xmlDocument } = this.parseText(content)
 		this.xmlDocuments.set(path, xmlDocument)
 		defs.map(def => Object.assign(def, { source: path }))
 		for (const [version, db] of this.databases.entries()) {
 			db.update(path, defs)
 		}
-		*/
 	}
 
 	private async refreshDocuments() {
@@ -212,7 +210,7 @@ export function isReferencedDef(obj: any): obj is referencedDef {
 
 class DefDatabase {
 	private _defs: Map<URILike, (referencedDef | def)[]>
-	private _defDatabase: Map<defType, Map<defIdentifier, (referencedDef | def)>> // todo - 이거 리스트로 바꾸고 중복되는것도 담도록 하자
+	private _defDatabase: Map<defType, Map<defIdentifier, Set<(referencedDef | def)>>> // todo - 이거 리스트로 바꾸고 중복되는것도 담도록 하자
 	private _NameDatabase: Map<string, Set<(referencedDef | def)>> // note that Name is global thing-y
 	private _crossRefWanters: Set<referencedDef>
 	constructor(readonly version: string) {
@@ -227,7 +225,12 @@ class DefDatabase {
 	}
 
 	get2(defType: defType, name: string): def | null { // defName or Name property
-		return this._defDatabase.get(defType)?.get(name) || null
+		const defs = this._defDatabase.get(defType)?.get(name)
+		if (defs) {
+			const res = defs.values().next()
+			return res.value || null
+		}
+		return null
 	}
 
 	update(URILike: URILike, newDefs: def[]): void {
@@ -245,14 +248,24 @@ class DefDatabase {
 					map = new Map()
 					this._defDatabase.set(defType, map)
 				}
-				map.set(defName, def)
+
+				let map2 = map.get(defName)
+				if (!map2) {
+					map2 = new Set()
+					map.set(defName, map2)
+				}
+				assert(!map2.has(def), 'unexpected: def is already registered') // is it necessary?
+				map2.add(def)
 			}
 
 			const Name = getName(def)
 			if (Name) {
-				if (!this._NameDatabase.has(Name))
-					this._NameDatabase.set(Name, new Set())
-				this._NameDatabase.get(Name)!.add(def) // it shouldn't make any errors
+				let set = this._NameDatabase.get(Name)
+				if (!set) {
+					set = new Set()
+					this._NameDatabase.set(Name, set)
+				}
+				set.add(def) // it shouldn't make any errors
 			}
 
 			if (def.attributes?.ParentName)
@@ -313,15 +326,33 @@ class DefDatabase {
 		const defs = this._defs.get(URILike)
 		if (defs) {
 			for (const def of defs) {
+				const map = this._defDatabase.get(def.tag)
+				if (map) {
+					const defName = getDefName(def)
+					if (defName) {
+						map.delete(defName)
+						if (map.size == 0)
+							this._defDatabase.delete(def.tag)
+					}
+					else
+						console.log(`unexpected error in deleteDefs`)
+				}
+
 				if (isReferencedDef(def)) {
-					this._defDatabase.get(def.tag)?.delete(getDefName(def)!) // possible runtime err
 					this.disconnectReferences(def)
 					// remove references
 					this._crossRefWanters.delete(def)
 					
 					const Name = getName(def)
-					if (Name)
-						this._NameDatabase.get(Name)?.delete(def)
+					if (Name) {
+						const set = this._NameDatabase.get(Name)
+						if (set) {
+							set.delete(def)
+							if (set.size == 0) {
+								this._NameDatabase.delete(Name)
+							}
+						}
+					}
 
 					delete def.base, def.derived
 				}
