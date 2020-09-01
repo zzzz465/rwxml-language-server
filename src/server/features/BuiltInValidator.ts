@@ -99,20 +99,22 @@ function checkWhitespaceError (this: NodeValidatorContext, node: Node): Validati
 	return {}
 }
 
-const floatRegex = /[+-]?([0-9]*[.])?[0-9]+/
+const floatRegex = / *[0-9]*\.[0-9]+ */
 
 function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult {
 	if(node.text) {
 		const matching = node.text.content.match(floatRegex)
-		if(matching) {
-			const textRange = this.getTextRange(node)
-			return {
-				diagnostics: [{
-						message: 'expected integer value, received floating number',
-						range: this.getTextRange(node)!,
+		if(matching) { // check it can contains float number
+			const num = parseFloat(matching[0])
+			if (num % 1 !== 0) { // check it is integer
+				return {
+					diagnostics: [{
+						message: 'cannot parse as valid integer',
+						range: this.getTextRange(node),
 						severity: DiagnosticSeverity.Warning,
 						source: 'ex'
 					}]}}}
+			}
 	return {}
 }
 
