@@ -11,5 +11,7 @@ export type DefsFolderChanged = {
 export const DefFileAddedNotificationType = new NotificationType<DefsFolderChanged>('Defs/added')
 export const DefFileChangedNotificationType = new NotificationType<DefsFolderChanged>('Defs/changed')
 export const DefFileRemovedNotificationType = new NotificationType<URILike>('Defs/remove')
+
+export const ReferencedDefFileAddedNotificationType = new NotificationType<DefsFolderChanged>('RefDefs/added')
 /** temp */
 export const DefRequestType = new RequestType<def[], URILike, undefined>('Defs/request')

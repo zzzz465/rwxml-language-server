@@ -1,22 +1,17 @@
 import { URILike } from '../../common/common'
-import { def, getDefIdentifier, TypeInfoInjector, isTypeNode } from './TypeInfo';
+import { def, getDefName, TypeInfoInjector, isTypeNode, getName } from './TypeInfo';
 import { IConnection, TextDocuments } from 'vscode-languageserver';
 import { Event } from '../../common/event'
-import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../../common/Defs';
+import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType } from '../../common/Defs';
 import { parse, XMLDocument } from '../parser/XMLParser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { RWTextDocument } from '../documents';
 import { assert } from 'console';
 
 type version = string;
 
 export interface versionGetter {
 	(path: URILike): version | null
-}
-
-export interface DocumentChangedHandler {
-	(change: RWTextDocument): void
 }
 
 export interface sourcedDef extends def {
@@ -34,12 +29,14 @@ export interface DefTextDocumentChangedEvent {
 	defs: sourcedDef[]
 }
 
+// TODO - 레퍼런스 / 프로젝트 파일 구별하도록 해야함
+
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
 	/** URILike - text Set, it contain textDocuments which is watched */
 	private watchedFiles: Map<URILike, TextDocument> // URILike - text
 	private xmlDocuments: Map<URILike, XMLDocument>
-	private readonly textDocuments: TextDocuments<RWTextDocument>
+	private readonly textDocuments: TextDocuments<TextDocument>
 	private versionGetter: versionGetter | undefined
 	onDocumentAdded: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
@@ -91,44 +88,57 @@ export class DefTextDocuments {
 	// 2) if the same file is watched textDocument, then previous event will be ignored
 	// and we'll accept textDocument's event for a sync and incremental udpate
 	listen (connection: IConnection): void {
-		connection.onNotification(DefFileAddedNotificationType, handler => {
-			const document = TextDocument.create(URI.file(handler.path).toString(), 'xml', 1, handler.text)
-			this.watchedFiles.set(handler.path, document)
-			this.update(handler.path, handler.text)
+		connection.onNotification(DefFileAddedNotificationType, params => {
+			console.log(`defFileAddEvent ${params.path}`)
+			const document = TextDocument.create(URI.parse(params.path).toString(), 'xml', 1, params.text)
+			this.watchedFiles.set(params.path, document)
+			this.update(params.path, params.text)
 			this.onDocumentAdded?.Invoke({
-				defs: this.getDefs(handler.path),
+				defs: this.getDefs(params.path),
 				textDocument: document,
-				xmlDocument: this.getXMLDocument(handler.path)
+				xmlDocument: this.getXMLDocument(params.path)
 			})
 		})
-		connection.onNotification(DefFileChangedNotificationType, handler => {		
+		connection.onNotification(DefFileChangedNotificationType, params => {		
 			// console.log('defFileChangedNotification event')	 // FIXME - 이거 업데이트 안되는데?
-			const uri = URI.file(handler.path)
+			const uri = URI.parse(params.path)
 			// textDocuments 에 의하여 업데이트 될 경우, 무시
 			if (this.textDocuments.get(uri.toString()) !== undefined)
 				return
 
-			this.watchedFiles.set(handler.path, 
-				TextDocument.create(URI.file(handler.path).toString(), 'xml', 1, handler.text))
-			this.update(handler.path, handler.text)
+			this.watchedFiles.set(params.path, 
+				TextDocument.create(URI.file(params.path).toString(), 'xml', 1, params.text))
+			this.update(params.path, params.text)
 		})
 		connection.onNotification(DefFileRemovedNotificationType, path => {
 			this.watchedFiles.delete(path)
 			this.xmlDocuments.delete(path)
+		})
+		// 레퍼런스용 코드
+		connection.onNotification(ReferencedDefFileAddedNotificationType, params => {
+			console.log(`refDefAdd ${params.path}`)
+			const document = TextDocument.create(URI.parse(params.path).toString(), 'xml', 1, params.text)
+			this.watchedFiles.set(params.path, document)
+			this.updateReference(params.path, params.text)
+			this.onDocumentAdded?.Invoke({
+				defs: this.getDefs(params.path),
+				textDocument: document,
+				xmlDocument: this.getXMLDocument(params.path)
+			})
 		})
 		this.textDocuments.listen(connection)
 		this.textDocuments.onDidOpen(({ document }) => {
 			this.watchedFiles.set(document.uri, document)
 		})
 		this.textDocuments.onDidChangeContent(({ document }) => {
-			// console.log('onDidChangeContent event')
+			console.log('textDocuments/onDidChangeContent')
 			const text = document.getText()
 			this.update(document.uri, text)
 			// TODO - 데이터 채워넣기...
-			this.onDocumentChanged?.Invoke({
-				defs: this.getDefs(document.uri),
-				textDocument: document,
-				xmlDocument: this.getXMLDocument(document.uri)
+			this.onDocumentChanged.Invoke({
+					defs: this.getDefs(document.uri),
+					textDocument: document,
+					xmlDocument: this.getXMLDocument(document.uri)
 			})
 		})
 	}
@@ -150,6 +160,7 @@ export class DefTextDocuments {
 	}
 
 	private update(path: URILike, content: string): void {
+		console.log('update')
 		if (this.versionGetter && this.typeInjector) {
 			const version = this.versionGetter(path)
 			if (version) {
@@ -165,27 +176,18 @@ export class DefTextDocuments {
 			}
 		}
 	}
-	/*
-	private update2(path: URILike, content: string): void {
-		const defs = this.parseText(content)
-		this.update(path, defs)
-	}
-	*/
 
-	/*
-	private update(path: URILike, defs: def[]): void {
-		let version: string | null
-		if (!this.versionGetter || !(version = this.versionGetter(path)))
-			return
-		let db = this.databases.get(version)
-		if (!db) {
-			db = new DefDatabase(version)
-			this.databases.set(version, db)
+	// 레퍼런스용 노드는 공용 노드로 인식해야함, 즉 모든 버전에 추가되어야 함
+	private updateReference (path: URILike, content: string): void {
+		/*
+		const { defs, xmlDocument } = this.parseText(content)
+		this.xmlDocuments.set(path, xmlDocument)
+		defs.map(def => Object.assign(def, { source: path }))
+		for (const [version, db] of this.databases.entries()) {
+			db.update(path, defs)
 		}
-		defs.map(def => Object.assign(def, { source: path })) // inject source field into def object
-		db.update(path, defs)
+		*/
 	}
-	*/
 
 	private async refreshDocuments() {
 		this.databases.clear()
@@ -210,12 +212,14 @@ export function isReferencedDef(obj: any): obj is referencedDef {
 
 class DefDatabase {
 	private _defs: Map<URILike, (referencedDef | def)[]>
-	private _defDatabase: Map<defType, Map<defIdentifier, (referencedDef | def)>>
+	private _defDatabase: Map<defType, Map<defIdentifier, (referencedDef | def)>> // todo - 이거 리스트로 바꾸고 중복되는것도 담도록 하자
+	private _NameDatabase: Map<string, Set<(referencedDef | def)>> // note that Name is global thing-y
 	private _crossRefWanters: Set<referencedDef>
 	constructor(readonly version: string) {
 		this._defs = new Map()
 		this._defDatabase = new Map()
 		this._crossRefWanters = new Set()
+		this._NameDatabase = new Map()
 	}
 
 	get(URILike: URILike): def[] { // only returns valid def
@@ -231,16 +235,24 @@ class DefDatabase {
 		for (const def of newDefs) {
 			if (!def.tag || !def.closed)
 				continue
-
+			
+			// FIXME - 이거 상속 아니어도 defDataBase는 만들어둬야할듯!!!
 			const defType = def.tag // defType
-			const identifier = getDefIdentifier(def)
-			if (identifier && defType) {
+			const defName = getDefName(def)
+			if (defName && defType) {
 				let map = this._defDatabase.get(defType)
 				if (!map) {
 					map = new Map()
 					this._defDatabase.set(defType, map)
 				}
-				map.set(identifier, def)
+				map.set(defName, def)
+			}
+
+			const Name = getName(def)
+			if (Name) {
+				if (!this._NameDatabase.has(Name))
+					this._NameDatabase.set(Name, new Set())
+				this._NameDatabase.get(Name)!.add(def) // it shouldn't make any errors
 			}
 
 			if (def.attributes?.ParentName)
@@ -253,6 +265,23 @@ class DefDatabase {
 
 	private resolveCrossRefWanters(): void {
 		for (const def of this._crossRefWanters.values()) {
+			const ParentName = def.attributes?.ParentName
+			if (ParentName) {
+				const baseDefs = this._NameDatabase.get(ParentName)
+				if (baseDefs) {
+					for (const baseDef of baseDefs) {
+						if (!isReferencedDef(baseDef)) {
+							Object.assign(baseDef, { derived: new Set() })
+						}
+						const set = (<referencedDef>baseDef).derived
+						set.add(def)
+						assert(!def.base, 'trying to add parent to def which is already have a reference')
+						def.base = <referencedDef>baseDef
+						this._crossRefWanters.delete(def)
+					}
+				}
+			}
+			/*
 			const map = this._defDatabase.get(def.tag)
 			if (map) {
 				const ParentName = def.attributes?.ParentName
@@ -270,6 +299,7 @@ class DefDatabase {
 					}
 				}
 			}
+			*/
 		}
 	}
 
@@ -284,10 +314,15 @@ class DefDatabase {
 		if (defs) {
 			for (const def of defs) {
 				if (isReferencedDef(def)) {
-					this._defDatabase.get(def.tag)?.delete(getDefIdentifier(def)!) // possible runtime err
+					this._defDatabase.get(def.tag)?.delete(getDefName(def)!) // possible runtime err
 					this.disconnectReferences(def)
 					// remove references
 					this._crossRefWanters.delete(def)
+					
+					const Name = getName(def)
+					if (Name)
+						this._NameDatabase.get(Name)?.delete(def)
+
 					delete def.base, def.derived
 				}
 			}
