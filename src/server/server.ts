@@ -355,12 +355,10 @@ connection.onRenameRequest(request => {
 connection.onCompletion(({ textDocument: { uri }, position }) => {
 	console.log('completion request')
 	const document = defTextDocuments.getDocument(uri)
-	const defs = defTextDocuments.getDefs(uri)
-	if (!document || defs.length == 0)
-		return undefined
-	const xmlDocument = defs.find(node => node.document)?.document
-	if (xmlDocument) {
-		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument)
+	const xmlDocument = defTextDocuments.getXMLDocument(uri)
+	const defDatabase = defTextDocuments.getDefDatabase(uri) || undefined
+	if (xmlDocument && document) {
+		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, defDatabase)
 		// console.log(result)
 		return result
 	}

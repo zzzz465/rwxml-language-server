@@ -37,7 +37,7 @@ export class DefTextDocuments {
 	private watchedFiles: Map<URILike, TextDocument> // URILike - text
 	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<TextDocument>
-	private versionGetter: versionGetter | undefined
+	private versionGetter: versionGetter | undefined // fixme - remove this?
 	onDocumentAdded: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
 	onDocumentDeleted: Event<URI>
@@ -81,6 +81,13 @@ export class DefTextDocuments {
 			return []
 
 		return db.get(URILike) as sourcedDef[] // we already injected values when we add data
+	}
+
+	getDefDatabase(URILike: URILike): iDefDatabase | null {
+		const version = this.versionGetter?.(URILike)
+		if (version)
+			return this.databases.get(version) || null
+		return null
 	}
 
 	// two strategies here
@@ -208,7 +215,13 @@ export function isReferencedDef(obj: any): obj is referencedDef {
 	return 'derived' in obj
 }
 
-class DefDatabase {
+export interface iDefDatabase {
+	get(URIlike: URILike): def[]
+	get2(defType: defType, name: string): def | null
+	getDefs(defType: defType): def[]
+}
+
+export class DefDatabase implements iDefDatabase {
 	private _defs: Map<URILike, (referencedDef | def)[]>
 	private _defDatabase: Map<defType, Map<defIdentifier, Set<(referencedDef | def)>>> // todo - 이거 리스트로 바꾸고 중복되는것도 담도록 하자
 	private _NameDatabase: Map<string, Set<(referencedDef | def)>> // note that Name is global thing-y
@@ -231,6 +244,20 @@ class DefDatabase {
 			return res.value || null
 		}
 		return null
+	}
+
+	getDefs(defType: defType): def[] {
+		const map = this._defDatabase.get(defType)
+		if (map) {
+			/** collect all defs */
+			const defs = [...map.values()].reduce((prev, curr) => {
+				prev.push(...curr.values())
+				return prev
+			}, [] as def[])
+
+			return defs
+		}
+		return []
 	}
 
 	update(URILike: URILike, newDefs: def[]): void {

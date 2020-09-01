@@ -6,11 +6,13 @@ import { URILike } from '../../common/common';
 import { assert } from 'console';
 import { createScanner } from '../parser/XMLScanner';
 import { TokenType } from '../htmlLanguageTypes';
+import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
 
 const _WHS = ' '.charCodeAt(0)
 
 export interface NodeValidatorContext {
 	projectFiles?: ProjectFiles
+	defDatabase?: iDefDatabase
 	getRangeIncludingTag (node: Node): Range
 	getRange (start: number, end: number): Range
 	positionAt (offset: number): Position
@@ -44,7 +46,8 @@ export class NodeValidator implements NodeValidatorContext {
 		private textDocument: TextDocument, 
 		private XMLDocument: XMLDocument,
 		private nodeValidationParticipants: NodeValidationParticipant[],
-		readonly projectFiles?: ProjectFiles) {
+		readonly projectFiles?: ProjectFiles,
+		readonly defDatabase?: iDefDatabase) {
 		this.diagnostics = []
 	}
 

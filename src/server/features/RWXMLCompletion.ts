@@ -6,6 +6,7 @@ import { TokenType, ScannerState, Scanner } from '../htmlLanguageTypes';
 import { TypeInfo, isTypeNode, typeNode } from '../RW/TypeInfo'
 import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
+import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
 
 export interface filesQuery {
 	(path: URILike): Promise<URILike[]>
@@ -17,7 +18,10 @@ export class RWXMLCompletion {
 
 	}
 
-	doComplete(document: TextDocument, position: Position, XMLDocument: XMLDocument): CompletionList {
+	doComplete(document: TextDocument, 
+		position: Position, 
+		XMLDocument: XMLDocument,
+		defDatabase?: iDefDatabase): CompletionList {
 		const result: CompletionList = {
 			isIncomplete: false,
 			items: []
