@@ -2,8 +2,6 @@ import '../parser/XMLParser'
 import '../parser/XMLScanner'
 import { XMLDocument, Node } from '../parser/XMLParser'
 import { CompletionItem, MarkupContent, CompletionItemKind } from 'vscode-languageserver'
-import { type } from 'os'
-import { cachedDataVersionTag } from 'v8'
 import * as _ from 'lodash'
 
 export interface defInfo {
@@ -142,10 +140,15 @@ export interface GenericTypeInfo extends TypeInfo {
 	fields: null
 }
 
-export function getDefIdentifier(def: def): string | null {
-	const defName = def.children.find(node => node.tag === 'defName')?.text
-	if (defName)
-		return defName.content
-	const Name = def.attributes?.Name
-	return Name || null
+export function getDefName(def: def): string | null {
+	const defName = def.children.find(node => node.tag === 'defName')?.text?.content
+	return defName || null
+}
+
+/** 
+ * get value of attribute "Name"  
+ * note that this is not the identifier of the def itself
+ */
+export function getName(def: def): string | null {
+	return def.attributes?.Name || null
 }

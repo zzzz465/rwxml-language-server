@@ -173,7 +173,7 @@ function checkParentDefValid (this: NodeValidatorContext, node: typeNode): Valid
 	const typeInfo = node.typeInfo
 	if (node.attributes && node.attributes.ParentName) {
 		const parentName = node.attributes.ParentName
-		if (!isReferencedDef(node) || node.base?.tag !== parentName) {
+		if (!isReferencedDef(node) || (node.base?.attributes?.Name !== parentName)) {
 			result.completeValidation = true
 			const attrRange = this.getAttributeRange(node, 'ParentName')
 			result.diagnostics = [{
