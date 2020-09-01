@@ -3,7 +3,7 @@ import { XMLDocument, Node } from '../parser/XMLParser';
 import { CompletionList, CompletionItem } from 'vscode-languageserver';
 import { createScanner } from '../parser/XMLScanner';
 import { TokenType, ScannerState, Scanner } from '../htmlLanguageTypes';
-import { TypeInfo, isTypeNode, typeNode } from '../RW/TypeInfo'
+import { TypeInfo, isTypeNode, typeNode, isDef } from '../RW/TypeInfo'
 import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
 import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
@@ -12,7 +12,7 @@ export interface filesQuery {
 	(path: URILike): Promise<URILike[]>
 }
 
-// need code refactor
+// TODO - need code refactor
 export class RWXMLCompletion {
 	constructor () {
 
@@ -113,6 +113,22 @@ export class RWXMLCompletion {
 			return result
 		}
 
+		function collectParentNameValueSuggestions(node: Node): CompletionList {
+			const result: CompletionList = {
+				isIncomplete: false,
+				items: []
+			}
+			if (defDatabase && isDef(node)) {
+				const defType = node.tag
+				const names = defDatabase.getNames()
+				result.items = names.map(name => ({
+					label: name
+				}))
+			}
+
+			return result
+		}
+
 		const text = document.getText()
 		const offset = document.offsetAt(position) // line + offset 을 text offset으로 변경
 
@@ -121,7 +137,7 @@ export class RWXMLCompletion {
 
 		const scanner = createScanner(text, node.start)
 		let currentTag = ''
-		let currentAttributeName: string;
+		let currentAttributeName = ''
 
 		let token = scanner.scan()
 
@@ -141,7 +157,15 @@ export class RWXMLCompletion {
 					break
 				case TokenType.DelimiterAssign: // ????
 					break
+				case TokenType.AttributeName:
+					currentAttributeName = scanner.getTokenText()
+					break
 				case TokenType.AttributeValue:
+					if (currentAttributeName === 'ParentName') {
+						if(scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) {
+							return collectParentNameValueSuggestions(node)
+						}
+					}
 					break
 				case TokenType.Whitespace:
 					switch (scanner.getScannerState()) {

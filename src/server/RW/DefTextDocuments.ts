@@ -219,6 +219,11 @@ export interface iDefDatabase {
 	get(URIlike: URILike): def[]
 	get2(defType: defType, name: string): def | null
 	getDefs(defType: defType): def[]
+	/** 
+	 * returns Name candidate for inheritance
+	 * @param defType defType for the name, returns all if not specify
+	 */
+	getNames (): string[]
 }
 
 export class DefDatabase implements iDefDatabase {
@@ -258,6 +263,10 @@ export class DefDatabase implements iDefDatabase {
 			return defs
 		}
 		return []
+	}
+
+	getNames (): string[] {
+		return [...this._NameDatabase.keys()]
 	}
 
 	update(URILike: URILike, newDefs: def[]): void {
@@ -361,8 +370,6 @@ export class DefDatabase implements iDefDatabase {
 						if (map.size == 0)
 							this._defDatabase.delete(def.tag)
 					}
-					else
-						console.log(`unexpected error in deleteDefs`)
 				}
 
 				if (isReferencedDef(def)) {

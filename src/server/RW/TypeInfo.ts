@@ -57,9 +57,12 @@ export function objToTypeInfos(raw: any): TypeInfo[] {
 }
 
 export interface def extends typeNode {
-	defName?: string // not used?
 	closed: true
 	tag: string // it is important
+}
+
+export function isDef (obj: Node): obj is def {
+	return isTypeNode(obj) && !!obj.tag && obj.closed && obj.parent?.tag === 'Defs'
 }
 
 export interface typeNode extends Node {
