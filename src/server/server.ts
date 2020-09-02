@@ -99,7 +99,7 @@ connection.onInitialized(() => {
 });
 
 const mockDataPath = path.join(__dirname, './testData/output.json') // for development only
-const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
+const mockTypeData: any[] = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
 const typeInfos = objToTypeInfos(mockTypeData)
 const typeInfoMap = new TypeInfoMap(typeInfos)
 const injector = new TypeInfoInjector(typeInfoMap)

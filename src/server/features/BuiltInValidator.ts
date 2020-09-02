@@ -47,7 +47,8 @@ for (const data of TypeToFunction) {
 export const builtInValidationParticipant: NodeValidationParticipant = {
 	getValidator: ({ typeIdentifier }: TypeInfo) => {
 		const validators = builtInValidatorMap.get(typeIdentifier) || []
-		return [checkDuplicateNode, checkParentDefValid, ...validators]
+		const commonValidators = [checkDuplicateNode, checkInvalidNode, checkParentDefValid]
+		return [...commonValidators, ...validators]
 	}
 }
 
@@ -184,6 +185,24 @@ function checkParentDefValid (this: NodeValidatorContext, node: typeNode): Valid
 				message: 'invalid parent Name',
 				range: attrRange?.value || this.getRangeIncludingTag(node)
 			}]
+		}
+	}
+
+	return result
+}
+
+function checkInvalidNode (this: NodeValidatorContext, node: typeNode): ValidationResult {
+	const result: ValidationResult = { diagnostics: [] }
+	const typeInfo = node.typeInfo
+	for (const child of node.children) {
+		if (child.tag) {
+			if (typeInfo.isLeafNode || !typeInfo.childNodes?.has(child.tag)) {
+				result.diagnostics!.push({
+					message: 'invalid child node',
+					range: this.getRangeIncludingTag(child),
+					severity: DiagnosticSeverity.Error
+				})
+			}
 		}
 	}
 
