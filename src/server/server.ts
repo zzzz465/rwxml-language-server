@@ -372,29 +372,35 @@ connection.onCompletionResolve(handler => {
 // const diagnostics: Map<URILike, Diagnostic[]> = new Map()
 // need code refactor
 const key = {}
+
+function validateAll() {
+	for (const document of defTextDocuments.getDocuments()) {
+		const xmlDoc = defTextDocuments.getXMLDocument(document.uri)
+		if (!xmlDoc) continue
+		let files2: Set<string> | undefined = undefined
+		if (config) {
+			const version = getLoadFolders(config, document.uri)?.version
+			if (version)
+				files2 = files.get(version)
+		}
+		const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
+		const validator = new NodeValidator(typeInfoMap, document, xmlDoc,
+			[builtInValidationParticipant], 
+			files2, defDatabase)
+		const result = validator.validateNodes()
+		connection.sendDiagnostics({ uri: document.uri, diagnostics: result })
+	}
+}
+
+defTextDocuments.onReferenceDocumentsAdded.subscribe({}, () => {
+	console.log('defTextDocuments.onReferenceDocumentsAdded')
+	validateAll()
+})
+
 // todo - can we put a cancellation token here and prevent unneccesary events?
 defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs, xmlDocument }) => {
 	console.log('defTextDocuments.onDocumentAdded')
-	for (const document of defTextDocuments.getDocuments()) {
-		const xmlDocument = defTextDocuments.getXMLDocument(document.uri)
-		if (xmlDocument) {
-
-			let files2: Set<string> | undefined = undefined
-			if (config) {
-				const version = getLoadFolders(config, document.uri)?.version
-				if (version)
-					files2 = files.get(version)
-			}
-
-			const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
-
-			const validator = new NodeValidator(typeInfoMap, document, 
-				xmlDocument, [builtInValidationParticipant],
-				files2, defDatabase)
-			const result = validator.validateNodes()
-			connection.sendDiagnostics({ uri: document.uri, diagnostics: result })
-		}
-	}
+	validateAll()
 	/*
 	if (!xmlDocument) return
 	let files2: Set<string> | undefined = undefined

@@ -30,7 +30,7 @@ export interface DefTextDocumentChangedEvent {
 }
 
 // TODO - 레퍼런스 / 프로젝트 파일 구별하도록 해야함
-
+// TODO - version parsing을 클라이언트 단에서 하도록 하자
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
 	/** URILike - text Set, it contain textDocuments which is watched */
@@ -38,6 +38,7 @@ export class DefTextDocuments {
 	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<TextDocument>
 	private versionGetter: versionGetter | undefined // fixme - remove this?
+	onReferenceDocumentsAdded: Event<void>
 	onDocumentAdded: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
 	onDocumentDeleted: Event<URI>
@@ -50,6 +51,7 @@ export class DefTextDocuments {
 		this.onDocumentAdded = new Event()
 		this.onDocumentChanged = new Event()
 		this.onDocumentDeleted = new Event()
+		this.onReferenceDocumentsAdded = new Event()
 	}
 
 	// needs refactor
@@ -131,16 +133,16 @@ export class DefTextDocuments {
 		})
 		// 레퍼런스용 코드
 		connection.onNotification(ReferencedDefFileAddedNotificationType, params => {
-			console.log(`refDefAdd ${params.path}`)
-			const document = TextDocument.create(URI.parse(params.path).toString(), 'xml', 1, params.text)
-			this.watchedFiles.set(params.path, document)
-			this.updateReference(params.path, params.text)
-			this.onDocumentAdded?.Invoke({
-				defs: this.getDefs(params.path),
-				textDocument: document,
-				xmlDocument: this.getXMLDocument(params.path)
-			})
+			for (const param of params) {
+				for (const [uriLike, text] of Object.entries(param.files)) {
+					const document = TextDocument.create(URI.parse(uriLike).path.toString(), 'xml', 1, text)
+					this.watchedFiles.set(uriLike, document)
+					this.updateReference(param.version, uriLike, document.getText())
+				}
+			}
+			this.onReferenceDocumentsAdded.Invoke()
 		})
+
 		this.textDocuments.listen(connection)
 		this.textDocuments.onDidOpen(({ document }) => {
 			this.watchedFiles.set(document.uri, document)
@@ -193,11 +195,12 @@ export class DefTextDocuments {
 	}
 
 	// 레퍼런스용 노드는 공용 노드로 인식해야함, 즉 모든 버전에 추가되어야 함
-	private updateReference (path: URILike, content: string): void {
-		const { defs, xmlDocument } = this.parseText(content)
-		this.xmlDocuments.set(path, xmlDocument)
-		defs.map(def => Object.assign(def, { source: path }))
-		for (const [version, db] of this.databases.entries()) {
+	private updateReference (version: version, path: URILike, content: string): void {
+		const db = this.databases.get(version)
+		if (db) {
+			const { defs, xmlDocument } = this.parseText(content)
+			this.xmlDocuments.set(path, xmlDocument)
+			defs.map(def => Object.assign(def, { source: path }))
 			db.update(path, defs)
 		}
 	}

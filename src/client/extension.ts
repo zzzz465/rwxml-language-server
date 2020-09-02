@@ -2,33 +2,27 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-
+// this code was built based on Microsoft vscode lsp example.
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
 import { parseConfig } from './config'
 import { querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType } from '../common/config'
-import { URILike, absPath } from '../common/common'
-import { DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType } from '../common/Defs'
-import { glob } from 'glob'
+import { DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType, RefDefFilesChangedParams } from '../common/Defs'
+import { glob as glob_callback } from 'glob'
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	TransportKind,
-	DidChangeWorkspaceFoldersNotification,
-	DidChangeConfigurationNotification,
-	DidChangeWatchedFilesNotification,
-	DidChangeTextDocumentNotification,
-	NotificationType
+	TransportKind
 } from 'vscode-languageclient';
 import { DefFileAddedNotificationType } from '../common/Defs';
-import { flatten } from 'lodash';
-import { ClientCapabilities } from '../server/htmlLanguageTypes';
-import { WatchFileRequestType } from '../common/fileWatcher';
 import { FileWatcher } from './fileWatcher';
 import * as fs from 'fs'
+import * as util from 'util'
+
+const glob = util.promisify(glob_callback)
 
 let client: LanguageClient;
 let configWatcher: FileSystemWatcher
@@ -106,7 +100,7 @@ export async function activate(context: ExtensionContext) {
 		for (const [version, obj] of Object.entries(config.folders)) {
 
 			if (obj.Defs) {
-				glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(obj.Defs).fsPath },
+				glob_callback('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(obj.Defs).fsPath },
 				(err, files) => {
 					for (const path of files) {
 						const uri = vscode.Uri.file(path)
@@ -121,24 +115,30 @@ export async function activate(context: ExtensionContext) {
 				})
 			}
 			if (obj.DefReferences) {
-				for (const referencePath of obj.DefReferences) {
-					glob('**/*.xml', { 
-						absolute: true,
-						cwd: vscode.Uri.parse(referencePath).fsPath 
-					}, 
-					(err, files) => {
-						for (const path of files) {
-							const uri = vscode.Uri.file(path)
-							fs.promises.readFile(path, 'utf-8')
-							.then(text => {
-								client.sendNotification(ReferencedDefFileAddedNotificationType, {
-									path: vscode.Uri.file(path).toString(),
-									text
-								})
-							})
+				const defReferences = obj.DefReferences;
+				(async () => {
+					const messages: RefDefFilesChangedParams = []
+					const promises: Promise<void>[] = []
+					for await (const referencePath of defReferences) {
+						const files: Record<string, string> = {}
+						const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(referencePath).fsPath})
+						for (const path of paths) {
+							promises.push((async () => {
+								const text = await fs.promises.readFile(path, 'utf-8')
+								const uriPath = vscode.Uri.file(path).toString()
+								files[uriPath] = text
+							})())
 						}
-					})
-				}
+						messages.push({
+							version: version,
+							baseUri: referencePath,
+							files
+						})
+					}
+					await Promise.all(promises) // await until all data is loaded.
+					client.sendNotification(ReferencedDefFileAddedNotificationType, messages)
+				})()
+				
 			}
 		}
 	}
