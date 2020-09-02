@@ -72,7 +72,7 @@ describe('basic static type checking test', function () {
 		expect(maxNumToIngestAtOnce).toBeTruthy() // null check
 		
 		const validator = new NodeValidator(typeInfoMap, textDoc, xmlDoc, [builtInValidationParticipant])
-		const result = validator.validateNode()
+		const result = validator.validateNodes()
     
     const { start: textStart, end: textEnd } = maxNumToIngestAtOnce.text!
 

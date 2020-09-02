@@ -67,6 +67,10 @@ export class DefTextDocuments {
 		return this.textDocuments.get(URILike) || this.watchedFiles.get(URILike)
 	}
 
+	getDocuments(): TextDocument[] {
+		return [...this.watchedFiles.values()]
+	}
+
 	getXMLDocument (URILike: URILike): XMLDocument | undefined { 
 		return this.xmlDocuments.get(URILike)
 	}
@@ -83,7 +87,11 @@ export class DefTextDocuments {
 		return db.get(URILike) as sourcedDef[] // we already injected values when we add data
 	}
 
-	getDefDatabase(URILike: URILike): iDefDatabase | null {
+	/**
+	 * returns defDatabase of matching version
+	 * @param URILike uri string of the textDocument
+	 */
+	getDefDatabaseByUri(URILike: URILike): iDefDatabase | null {
 		const version = this.versionGetter?.(URILike)
 		if (version)
 			return this.databases.get(version) || null
@@ -221,7 +229,6 @@ export interface iDefDatabase {
 	getDefs(defType: defType): def[]
 	/** 
 	 * returns Name candidate for inheritance
-	 * @param defType defType for the name, returns all if not specify
 	 */
 	getNames (): string[]
 }
@@ -324,7 +331,6 @@ export class DefDatabase implements iDefDatabase {
 						}
 						const set = (<referencedDef>baseDef).derived
 						set.add(def)
-						assert(!def.base, 'trying to add parent to def which is already have a reference')
 						def.base = <referencedDef>baseDef
 						this._crossRefWanters.delete(def)
 					}

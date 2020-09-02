@@ -9,7 +9,8 @@ import {
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
 	InitializeResult,
-	Location
+	Location,
+	CancellationToken
 } from 'vscode-languageserver';
 
 import { URI } from 'vscode-uri'
@@ -356,10 +357,10 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 	console.log('completion request')
 	const document = defTextDocuments.getDocument(uri)
 	const xmlDocument = defTextDocuments.getXMLDocument(uri)
-	const defDatabase = defTextDocuments.getDefDatabase(uri) || undefined
+	const defDatabase = defTextDocuments.getDefDatabaseByUri(uri) || undefined
 	if (xmlDocument && document) {
 		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, defDatabase)
-		// console.log(result)
+		console.log('resolved')
 		return result
 	}
 })
@@ -371,8 +372,30 @@ connection.onCompletionResolve(handler => {
 // const diagnostics: Map<URILike, Diagnostic[]> = new Map()
 // need code refactor
 const key = {}
+// todo - can we put a cancellation token here and prevent unneccesary events?
 defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs, xmlDocument }) => {
-	console.log('defTextDocuments.onDocumentChanged')
+	console.log('defTextDocuments.onDocumentAdded')
+	for (const document of defTextDocuments.getDocuments()) {
+		const xmlDocument = defTextDocuments.getXMLDocument(document.uri)
+		if (xmlDocument) {
+
+			let files2: Set<string> | undefined = undefined
+			if (config) {
+				const version = getLoadFolders(config, document.uri)?.version
+				if (version)
+					files2 = files.get(version)
+			}
+
+			const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
+
+			const validator = new NodeValidator(typeInfoMap, document, 
+				xmlDocument, [builtInValidationParticipant],
+				files2, defDatabase)
+			const result = validator.validateNodes()
+			connection.sendDiagnostics({ uri: document.uri, diagnostics: result })
+		}
+	}
+	/*
 	if (!xmlDocument) return
 	let files2: Set<string> | undefined = undefined
 	if (config) {
@@ -385,15 +408,23 @@ defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs
 		xmlDocument,
 		[builtInValidationParticipant],
 		files2)
-	const validationResult = validator.validateNode()
+	const validationResult = validator.validateNodes()
 	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
+	*/
 }))
 
 defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument: document, defs, xmlDocument }) => {
 	console.log('defTextDocuments.onDocumentChanged + validate')
 	if (!xmlDocument) return
-	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant])
-	const validationResult = validator.validateNode()
+	const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
+	let files2: Set<string> | undefined = undefined
+	if (config) {
+		const version = getLoadFolders(config, document.uri)?.version
+		if (version)
+			files2 = files.get(version)
+	}
+	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant], files2, defDatabase)
+	const validationResult = validator.validateNodes()
 	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
 })
 
