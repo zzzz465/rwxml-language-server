@@ -359,7 +359,7 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 	const xmlDocument = defTextDocuments.getXMLDocument(uri)
 	const defDatabase = defTextDocuments.getDefDatabaseByUri(uri) || undefined
 	if (xmlDocument && document) {
-		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, defDatabase)
+		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, typeInfoMap, defDatabase)
 		console.log('resolved')
 		return result
 	}

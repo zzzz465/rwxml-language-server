@@ -3,7 +3,7 @@ import { XMLDocument, Node } from '../parser/XMLParser';
 import { CompletionList, CompletionItem } from 'vscode-languageserver';
 import { createScanner } from '../parser/XMLScanner';
 import { TokenType, ScannerState, Scanner } from '../htmlLanguageTypes';
-import { TypeInfo, isTypeNode, typeNode, isDef } from '../RW/TypeInfo'
+import { TypeInfo, isTypeNode, typeNode, isDef, TypeInfoMap } from '../RW/TypeInfo'
 import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
 import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
@@ -21,6 +21,7 @@ export class RWXMLCompletion {
 	doComplete(document: TextDocument, 
 		position: Position, 
 		XMLDocument: XMLDocument,
+		typeInfoMap: TypeInfoMap,
 		defDatabase?: iDefDatabase): CompletionList {
 		const result: CompletionList = {
 			isIncomplete: false,
@@ -129,6 +130,15 @@ export class RWXMLCompletion {
 			return result
 		}
 
+		function collectDefTagSuggestions (): CompletionList {
+			const result: CompletionList = { isIncomplete: false, items: [] }
+			result.items = typeInfoMap.getDefNames().map(name => ({
+				label: name
+			} as CompletionItem))
+
+			return result
+		}
+
 		const text = document.getText()
 		const offset = document.offsetAt(position) // line + offset 을 text offset으로 변경
 
@@ -145,8 +155,12 @@ export class RWXMLCompletion {
 			switch (token) {
 				case TokenType.StartTagOpen:
 					if(scanner.getTokenEnd() === offset) { // <
-						const endPos = scanNextForEndPos(TokenType.StartTag)
-						return collectOpenDefNameTagSuggestions(offset, endPos)
+						if (node.parent?.tag === 'Defs') { // XXXDef
+							return collectDefTagSuggestions()
+						} else {
+							const endPos = scanNextForEndPos(TokenType.StartTag)
+							return collectOpenDefNameTagSuggestions(offset, endPos)
+						}
 					}
 					break
 				case TokenType.StartTag:

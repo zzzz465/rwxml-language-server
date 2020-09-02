@@ -94,12 +94,24 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 		}
 	}
 
+	/**
+	 * 
+	 * @param id 
+	 */
 	getByTypeIdentifier (id: TypeIdentifier): TypeInfo | undefined {
 		return this.get(id)
 	}
 
-	getByTypeName (typeName: string) {
+	/**
+	 * 
+	 * @param typeName ThingDef, DamageDef, etc...
+	 */
+	getByDefName (typeName: string): TypeInfo | undefined {
 		return this.typeMap.get(typeName)
+	}
+
+	getDefNames (): string[] {
+		return [...this.typeMap.keys()]
 	}
 }
 
@@ -111,7 +123,7 @@ export class TypeInfoInjector {
 	public Inject(typeNode: Node): void {
 		const typeName = typeNode.tag
 		if(typeName) {
-			const typeInfo = this.typeInfoMap.getByTypeName(typeName)
+			const typeInfo = this.typeInfoMap.getByDefName(typeName)
 			if(typeInfo)
 				this._convertInternal(typeNode, typeInfo)
 		}
