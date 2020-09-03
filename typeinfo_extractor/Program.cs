@@ -63,6 +63,9 @@ namespace Program
                     typeDict.Add(type, typeInfo);
                 }
 
+                if (type.IsPrimitive || type == typeof(String))
+                    continue;
+
                 var name = type.Name;
     
                 var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
@@ -74,9 +77,6 @@ namespace Program
                     if (field.TryGetAttribute<UnsavedAttribute>(out var unsavedAttr))
                         if (!unsavedAttr.allowLoading)
                             continue;
-
-                    if (field.FieldType.IsPrimitive)
-                        continue;
 
                     if(!typeDict.ContainsKey(fieldType)) {
                         if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == listType)
@@ -146,9 +146,9 @@ namespace Program
                 if(type.IsSubclassOf(def)) {
                     ref var defType = ref typeInfo.specialTypes.defType;
                     if(type.IsArray)
-                        defType.defType = type.GetElementType().Name;
+                        defType.name = type.GetElementType().Name;
                     else
-                        defType.defType = type.Name;
+                        defType.name = type.Name;
                 }
             }
         }

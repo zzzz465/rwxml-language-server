@@ -101,7 +101,7 @@ namespace Program
 
         public struct def
         {
-            public string defType;
+            public string name;
         }
         
         public struct Enumerable
