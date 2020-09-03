@@ -88,7 +88,32 @@ export class RWXMLCompletion {
 			}
 			return result
 			*/
+
 			return { isIncomplete: false, items: [] } as CompletionList
+		}
+
+		function collectNodeTextValueSuggestions (): CompletionList {
+			if (isTypeNode(node)) {
+				const typeInfo = node.typeInfo
+				if (typeInfo.specialTypes) {
+					if (typeInfo.specialTypes.defType) { // suggest defNames...
+						if (defDatabase) {
+							const defs = defDatabase.getDefs(typeInfo.specialTypes.defType.name)
+							return {
+								isIncomplete: false,
+								items: defs.map(def => ({
+									label: def.children.find(node => node.tag === 'defName')?.text?.content!
+								}))
+							}
+						}
+					}
+				}
+			}
+
+			return {
+				isIncomplete: false,
+				items: []
+			}
 		}
 
 
@@ -145,6 +170,7 @@ export class RWXMLCompletion {
 		const node = XMLDocument.findNodeAt(offset)
 
 		const scanner = createScanner(text, node.start)
+		let lastToken = TokenType.Unknown
 		let currentTag = ''
 		let currentAttributeName = ''
 
@@ -168,6 +194,9 @@ export class RWXMLCompletion {
 					}
 					currentTag = scanner.getTokenText()
 					break
+				case TokenType.StartTagClose:
+
+					break
 				case TokenType.DelimiterAssign: // ????
 					break
 				case TokenType.AttributeName:
@@ -188,9 +217,16 @@ export class RWXMLCompletion {
 					}
 					break
 				case TokenType.EndTagOpen:
-					if (offset <= scanner.getTokenEnd()) {
-
+					if (lastToken === TokenType.StartTagClose && offset == scanner.getTokenOffset()) { // <tag>|</tag>
+						return collectNodeTextValueSuggestions()
 					}
+					/*
+					if (offset <= scanner.getTokenEnd()) {
+						if (scanner.getScannerState() === ScannerState.WithinContent) { // <Tag>|</tag>
+							return collectNodeTextValueSuggestions()
+						}
+					}
+					*/
 					break
 				case TokenType.EndTag:
 					break
@@ -198,12 +234,14 @@ export class RWXMLCompletion {
 					break
 				case TokenType.Content:
 					if(scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) {
-						return collectDefNodeValueSuggestions(scanner.getTokenOffset(), scanner.getTokenEnd())
+						// return collectDefNodeValueSuggestions(scanner.getTokenOffset(), scanner.getTokenEnd())
+						return collectNodeTextValueSuggestions()
 					}
 					break
 				default:
 					break
 			}
+			lastToken = token
 			token = scanner.scan()
 		}
 

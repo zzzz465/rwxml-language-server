@@ -230,6 +230,10 @@ export function isReferencedDef(obj: any): obj is referencedDef {
 export interface iDefDatabase {
 	get(URIlike: URILike): def[]
 	get2(defType: defType, name: string): def | null
+	/**
+	 * 
+	 * @param defType defType string
+	 */
 	getDefs(defType: defType): def[]
 	/** 
 	 * returns Name candidate for inheritance

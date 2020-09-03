@@ -47,7 +47,10 @@ for (const data of TypeToFunction) {
 export const builtInValidationParticipant: NodeValidationParticipant = {
 	getValidator: ({ typeIdentifier }: TypeInfo) => {
 		const validators = builtInValidatorMap.get(typeIdentifier) || []
-		const commonValidators = [checkDuplicateNode, checkInvalidNode, checkParentDefValid]
+		const commonValidators = [
+			checkDuplicateNode, checkInvalidNode, checkParentDefValid,
+			checkInvalidDefNode
+		]
 		return [...commonValidators, ...validators]
 	}
 }
@@ -208,6 +211,23 @@ function checkInvalidNode (this: NodeValidatorContext, node: typeNode): Validati
 		}
 	}
 
+	return result
+}
+
+function checkInvalidDefNode (this: NodeValidatorContext, node: typeNode): ValidationResult {
+	const result: ValidationResult = {}
+	const typeInfo = node.typeInfo
+	if (typeInfo.specialTypes?.defType) {
+		const defType = typeInfo.specialTypes.defType.name
+		const defName = node.text?.content
+		if (this.defDatabase && defName)
+			if (!this.defDatabase.get2(defType, defName))
+				result.diagnostics = [{
+					message: 'cannot find matching defName',
+					range: this.getTextRange(node),
+					severity: DiagnosticSeverity.Error
+				}]
+	}
 	return result
 }
 
