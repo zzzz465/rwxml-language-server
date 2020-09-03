@@ -133,6 +133,7 @@ export class DefTextDocuments {
 		})
 		// 레퍼런스용 코드
 		connection.onNotification(ReferencedDefFileAddedNotificationType, params => {
+			console.log('ReferencedDefFileAddedNotificationType')
 			for (const param of params) {
 				for (const [uriLike, text] of Object.entries(param.files)) {
 					const document = TextDocument.create(URI.parse(uriLike).path.toString(), 'xml', 1, text)
