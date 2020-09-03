@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace typeinfo_extractor
+namespace Program
 {
     public class TypeReader
     {
