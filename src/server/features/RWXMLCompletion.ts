@@ -143,7 +143,6 @@ export class RWXMLCompletion {
 		const offset = document.offsetAt(position) // line + offset 을 text offset으로 변경
 
 		const node = XMLDocument.findNodeAt(offset)
-		const node2 = XMLDocument.findNodeBefore(offset)
 
 		const scanner = createScanner(text, node.start)
 		let currentTag = ''

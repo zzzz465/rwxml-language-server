@@ -19,11 +19,11 @@ export type TypeIdentifier = string;
  */
 export interface specialType {
 	/** does it have an association with textures? */
-	texPath?: boolean
+	texPath?: string
 	/** does original class inherits Verse.Def class? */
-	def?: {
+	defType?: {
 		/** name of the class */
-		defType: string
+		name: string
 	}
 	enumerable?: {
 		genericType: TypeIdentifier
@@ -47,10 +47,7 @@ export interface TypeInfo { // 이거만 가져와보자
 
 export class TypeInfo implements TypeInfo {
 	constructor (data: any) { // only accepts
-		this.isLeafNode = data.isLeafNode === true
-		this.typeIdentifier = data.typeIdentifier
-		this.suggestedAttributes = data.suggestedAttributes
-		this.leafNodeCompletions = data.leafNodeCompletions ? data.leafNodeCompletions : undefined
+		Object.assign(this, data)
 
 		if(!_.isEmpty(data.childNodes)) {
 			const childNodes: Record<string, TypeIdentifier> = data.childNodes
@@ -88,15 +85,15 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 		this.typeMap = new Map()
 		for (const typeInfo of typeInfos) {
 			this.set(typeInfo.typeIdentifier, typeInfo)
-		}
 
-		for (const typeInfo of typeInfos) {
-			const defType = typeInfo.specialTypes?.def?.defType
-			if (defType) {
-				if (!this.typeMap.has(defType))
-					this.typeMap.set(defType, typeInfo)
-				else
-					console.log(`duplicate defType ${defType}`)
+			if (typeInfo.specialTypes) {
+				const defType = typeInfo.specialTypes.defType?.name
+				if (defType) {
+					if (!this.typeMap.has(defType))
+						this.typeMap.set(defType, typeInfo)
+					else
+						console.log(`duplicate defType ${defType}`)
+				}
 			}
 		}
 	}
