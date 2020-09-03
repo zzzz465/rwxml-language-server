@@ -25,7 +25,7 @@ export interface specialType {
 		/** name of the class */
 		defType: string
 	}
-	Enumerable?: {
+	enumerable?: {
 		genericType: TypeIdentifier
 		enumerableType: 'list' | 'array'
 		/** does it use <li></li> or deseralized differently? */
@@ -138,24 +138,39 @@ export class TypeInfoInjector {
 		const typeName = typeNode.tag
 		if(typeName) {
 			const typeInfo = this.typeInfoMap.getByDefName(typeName)
-			if(typeInfo)
-				this._convertInternal(typeNode, typeInfo)
+			if(typeInfo) {
+				const assigned = Object.assign(typeNode, { typeInfo })
+				this._convertInternal(assigned)
+			}
 		}
 	}
 
-	private _convertInternal(node: Node, typeInfo: TypeInfo): void {
-		const assigned = Object.assign(node, { typeInfo })
-		for (const childNode of assigned.children) { // TODO - refactor this ugly code
-			const childTagName = childNode.tag
-			if(!childTagName) continue
+	private _convertInternal(node: typeNode): void {
+		const queue: typeNode[] = [node]
+		while (queue.length > 0) {
+			const node = queue.pop()!
+			const typeInfo = node.typeInfo
 
-			const childTypeInfoIdentifier = typeInfo.childNodes?.get(childTagName)
-			if(!childTypeInfoIdentifier) continue
+			// if the node is List<T> and it's not treated as special (normal <li></li>)
+			// we inject genericType into the node.
+			if (typeInfo.specialTypes?.enumerable && typeInfo.specialTypes.enumerable.isSpecial !== true) {
+				const genericType = typeInfo.specialTypes.enumerable.genericType
+				const childType = this.typeInfoMap.getByTypeIdentifier(genericType)
+				if (!childType) continue
+				for (const childNode of node.children)
+					queue.push(Object.assign(childNode, { typeInfo: childType }))
+			}
 
-			const childTypeInfo = this.typeInfoMap.getByTypeIdentifier(childTypeInfoIdentifier)
-			if(!childTypeInfo) continue
+			for (const childNode of node.children) {
+				const childTag = childNode.tag
+				if (!childTag) continue
+				const childTypeInfoIdentifier = typeInfo.childNodes?.get(childTag)
+				if (!childTypeInfoIdentifier) continue
+				const childTypeInfo = this.typeInfoMap.getByTypeIdentifier(childTypeInfoIdentifier)
+				if (!childTypeInfo) continue
 
-			this._convertInternal(childNode, childTypeInfo)
+				queue.push(Object.assign(childNode, { typeInfo: childTypeInfo }))
+			}
 		}
 	}
 }
