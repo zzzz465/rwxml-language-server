@@ -18,7 +18,21 @@ export type TypeIdentifier = string;
  * it can have multiple flags
  */
 export interface specialType {
+	/** does it have an association with textures? */
 	texPath?: boolean
+	/** does original class inherits Verse.Def class? */
+	def?: {
+		/** name of the class */
+		defType: string
+	}
+	Enumerable?: {
+		genericType: TypeIdentifier
+		enumerableType: 'list' | 'array'
+		/** does it use <li></li> or deseralized differently? */
+		isSpecial?: boolean
+	}
+	/**  */
+	specialType?: boolean
 }
 
 export interface TypeInfo { // 이거만 가져와보자
