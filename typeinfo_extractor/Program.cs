@@ -9,7 +9,7 @@ using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Serialization;
 using System.IO;
 
-namespace typeinfo_extractor
+namespace Program
 {
     class Program
     {
@@ -22,7 +22,7 @@ namespace typeinfo_extractor
 
 
             // populateData(type);
-            LinkTempData(inheritedTypes);
+            CollectRelatedData_BFS(inheritedTypes);
             PopulateTempData();
             MarkDefNodes();
             // MoveTempToAppropriateNode();
@@ -43,12 +43,15 @@ namespace typeinfo_extractor
             // Console.WriteLine(serializedObject);
         }
 
-        static void LinkTempData(IEnumerable<Type> _types)
+        static void CollectRelatedData_BFS(IEnumerable<Type> _types)
         {
+            var listType = typeof(List<>).GetGenericTypeDefinition();
+
             Queue<Type> types = new Queue<Type>(_types);
             while(types.Count > 0)
             {
                 var type = types.Dequeue();
+
                 TypeInfo typeInfo;
                 if(!typeDict.TryGetValue(type, out typeInfo))
                 {
@@ -63,18 +66,38 @@ namespace typeinfo_extractor
                 {
                     var fieldType = field.FieldType;
                     var fieldName = field.Name;
+                    
+                    if (field.TryGetAttribute<UnsavedAttribute>(out var unsavedAttr))
+                        if (!unsavedAttr.allowLoading)
+                            continue;
+
+                    if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == listType)
+                    {
+                        if (typeDict.ContainsKey(fieldType))
+                        {
+                            Console.WriteLine("!!!!");
+                        }
+                        Console.WriteLine("asdf");
+                    }
+
                     if(!typeDict.ContainsKey(fieldType)) {
-                        typeDict.Add(fieldType, TypeInfo.Create(fieldType));
-                        types.Enqueue(fieldType);
+                        if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == listType)
+                        {
+                            var id = Util.GetListTypeIdentifier(fieldType);
+                            typeDict.Add(fieldType, TypeInfo.Create(id));
+                        }
+                        else
+                        {
+                            typeDict.Add(fieldType, TypeInfo.Create(fieldType));
+                            types.Enqueue(fieldType);
+                        }
                     }
                     if(fieldType.IsGenericType)
                     {
                         var identifier = string.Empty;
                         if(fieldType.GetGenericTypeDefinition() == typeof(List<>))
                         {
-                            var T = fieldType.GetGenericArguments()[0];
-                            var namespaceName = fieldType.Namespace;
-                            identifier = $"{namespaceName}.List<{T}>";
+                            identifier = Util.GetListTypeIdentifier(fieldType);
                         }
                         typeInfo.childNodes[fieldName] = identifier;
                     }
@@ -82,19 +105,15 @@ namespace typeinfo_extractor
                     {
                         typeInfo.childNodes[fieldName] = $"{fieldType.Namespace}.{fieldType.Name}";
                     }
-                    // Console.WriteLine();
                 }
             }
         }
 
         static void PopulateTempData()
         {
-            var targets = from data in typeDict
-                        where data.Key.IsArray ||
-                            data.Key.IsEnum || 
-                            data.Key.IsGenericType ||
-                            data.Key.IsPrimitive
-                        select data;
+            var targets = typeDict;
+
+            var def = typeof(Def);
             foreach(var (type, typeInfo) in targets)
             {
                 typeInfo.isLeafNode = true;
@@ -105,24 +124,46 @@ namespace typeinfo_extractor
                         .ToArray();
                     typeInfo.leafNodeCompletions = values;
                 }
-                else if(type.IsGenericType)
+                if(type.IsGenericType)
                 {
-                    // TODO
+                    if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>).GetGenericTypeDefinition())
+                    {
+                        var T = type.GetGenericArguments()[0];
+                        ref var enumerable = ref typeInfo.specialTypes.enumerable;
+                        enumerable.genericType = Util.GetTypeIdentifier(T);
+                        enumerable.enumerableType = "list";
+                    }
                 }
-                else if(type.IsPrimitive)
+                else if(type.IsArray)
+                {
+                    var T = type.GetElementType();
+                    ref var enumerable = ref typeInfo.specialTypes.enumerable;
+                    enumerable.genericType = Util.GetTypeIdentifier(T);
+                    enumerable.enumerableType = "array";
+                }
+                if(type.IsPrimitive)
                 {
                     typeInfo.leafNodeCompletions = new CompletionItem[] { new CompletionItem() { label = type.Name } };
+                }
+                if(type.IsSubclassOf(def)) {
+                    ref var defType = ref typeInfo.specialTypes.defType;
+                    if(type.IsArray)
+                        defType.defType = type.GetElementType().Name;
+                    else
+                        defType.defType = type.Name;
                 }
             }
         }
 
         static void MarkDefNodes()
         {
+            /*
             var targets = from data in typeDict
                         where data.Value.childNodes.ContainsKey("defName")
                         select data.Value;
             foreach(var typeInfo in targets)
                 typeInfo.isDefNode = true;
+            */
         }
         /*
         static void MoveTempToAppropriateNode()
