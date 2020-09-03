@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Program
 {
@@ -74,14 +75,16 @@ namespace Program
             return new TypeInfo() { typeIdentifier = id };
         }
         protected TypeInfo() { }
-        public Boolean isLeafNode { get; set; } = false;
-        public Boolean isDefNode { get; set; } = false;
+        public bool isLeafNode { get; set; }
+        public bool isDefNode { get; set; }
         public CompletionItem[] leafNodeCompletions { get; set; }
         public string typeIdentifier;
-        public specialType specialTypes;
+        public SpecialType specialTypes;
         public Dictionary<string, string> childNodes { get; set; } = new Dictionary<string, string>();
-        // public Dictionary<string, CompletionItem[]> leafNodes { get; set; } = new Dictionary<string, CompletionItem[]>();
-        // public Dictionary<string, TypeInfo> tempNodes { get; set; } = new Dictionary<string, TypeInfo>();
+        public bool ShouldSerializechildNodes()
+        {
+            return childNodes.Count > 0;
+        }
     }
 
     public class GenericTypeInfo : TypeInfo
@@ -89,7 +92,7 @@ namespace Program
         public TypeInfo genericType { get; set; } // TODO - recursive 지원하기
     }
 
-    public struct specialType
+    public struct SpecialType
     {
         public bool texPath;
         public def defType;

@@ -35,8 +35,12 @@ namespace Program
                 result.Add(typeInfo.typeIdentifier, typeInfo);
             }
             
+            var serializerSetting = new JsonSerializerSettings();
+            serializerSetting.Formatting = Formatting.Indented;
+            serializerSetting.NullValueHandling = NullValueHandling.Ignore;
+            serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
 
-            var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value));
+            var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
             // var typeInfos = typeDict.Select(d => d.Value);
             // var serializedObject = JsonConvert.SerializeObject(typeInfos);
             File.WriteAllText("./output.json", serializedObject);
@@ -71,14 +75,8 @@ namespace Program
                         if (!unsavedAttr.allowLoading)
                             continue;
 
-                    if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == listType)
-                    {
-                        if (typeDict.ContainsKey(fieldType))
-                        {
-                            Console.WriteLine("!!!!");
-                        }
-                        Console.WriteLine("asdf");
-                    }
+                    if (field.FieldType.IsPrimitive)
+                        continue;
 
                     if(!typeDict.ContainsKey(fieldType)) {
                         if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == listType)
