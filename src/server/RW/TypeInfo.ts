@@ -36,7 +36,6 @@ export interface specialType {
 }
 
 export interface TypeInfo { // 이거만 가져와보자
-	isDefNode: boolean
 	isLeafNode: boolean
 	typeIdentifier: TypeIdentifier
 	specialTypes?: specialType
@@ -49,7 +48,6 @@ export interface TypeInfo { // 이거만 가져와보자
 export class TypeInfo implements TypeInfo {
 	constructor (data: any) { // only accepts
 		this.isLeafNode = data.isLeafNode === true
-		this.isDefNode = data.isDefNode === true
 		this.typeIdentifier = data.typeIdentifier
 		this.suggestedAttributes = data.suggestedAttributes
 		this.leafNodeCompletions = data.leafNodeCompletions ? data.leafNodeCompletions : undefined
@@ -92,18 +90,13 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 			this.set(typeInfo.typeIdentifier, typeInfo)
 		}
 
-		const defTypeInfos = typeInfos.filter((info, index) => info.isDefNode)
-		for (const typeInfo of defTypeInfos) {
-			const result = typeInfo.typeIdentifier.match(/(?<=\.{0,1})[\w\d]+$/) // 중복되면 안됨
-			if(result && result[0]) {
-				const typeName = result[0]
-				if(!this.typeMap.has(typeName)) {
-					this.typeMap.set(typeName, typeInfo)
-				} else {
-					console.log(`duplicate defName ${typeName}`)
-				}
-			} else {
-				console.log(`type marked as def but it doesn't match defName regex, value: ${typeInfo.typeIdentifier}`)
+		for (const typeInfo of typeInfos) {
+			const defType = typeInfo.specialTypes?.def?.defType
+			if (defType) {
+				if (!this.typeMap.has(defType))
+					this.typeMap.set(defType, typeInfo)
+				else
+					console.log(`duplicate defType ${defType}`)
 			}
 		}
 	}
