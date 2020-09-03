@@ -122,16 +122,18 @@ function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult
 function checkDuplicateNode(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const diagnostics: Diagnostic[] = []
 	const marker: Set<string> = new Set() // tag marker
-	for (const childNode of node.children) {
-		if (!childNode.tag) continue
-		if (marker.has(childNode.tag)) {
-			diagnostics.push({
-				message: 'found duplicate node',
-				range: this.getRangeIncludingTag(childNode),
-				severity: DiagnosticSeverity.Error
-			})
-		} else {
-			marker.add(childNode.tag)
+	if (!node.typeInfo.specialTypes?.enumerable) {
+		for (const childNode of node.children) {
+			if (!childNode.tag) continue
+			if (marker.has(childNode.tag)) {
+				diagnostics.push({
+					message: 'found duplicate node',
+					range: this.getRangeIncludingTag(childNode),
+					severity: DiagnosticSeverity.Error
+				})
+			} else {
+				marker.add(childNode.tag)
+			}
 		}
 	}
 	const complete = diagnostics.length > 0
@@ -196,7 +198,7 @@ function checkInvalidNode (this: NodeValidatorContext, node: typeNode): Validati
 	const typeInfo = node.typeInfo
 	for (const child of node.children) {
 		if (child.tag) {
-			if (typeInfo.isLeafNode || !typeInfo.childNodes?.has(child.tag)) {
+			if (typeInfo.childNodes && !typeInfo.childNodes.has(child.tag)) {
 				result.diagnostics!.push({
 					message: 'invalid child node',
 					range: this.getRangeIncludingTag(child),
