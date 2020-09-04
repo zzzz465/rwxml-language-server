@@ -97,7 +97,7 @@ namespace Program
         public bool texPath;
         public def defType;
         public Enumerable enumerable;
-        public bool isSpecial;
+        public CompClass compClass;
 
         public struct def
         {
@@ -108,6 +108,12 @@ namespace Program
         {
             public string genericType, enumerableType;
             public bool isSpecial;
+        }
+
+        public struct CompClass
+        {
+            public bool isComp;
+            public string baseClass;
         }
     }
 }

@@ -17,13 +17,14 @@ namespace Program
         static void Main(string[] args)
         {
             var inheritedTypes = from type in typeof(Editable).Assembly.GetTypes().AsEnumerable()
-                                 where type.IsSubclassOf(typeof(Editable)) && !type.IsAbstract
+                                 where (type.IsSubclassOf(typeof(Editable)) ||
+                                 type.GetMember("compClass") != null ) && // get all compClass
+                                 !type.IsAbstract
                                  select type;
 
 
-            // populateData(type);
             CollectRelatedData_BFS(inheritedTypes);
-            PopulateTempData();
+            PopulateData();
             MarkDefNodes();
             // MoveTempToAppropriateNode();
             
@@ -107,7 +108,7 @@ namespace Program
             }
         }
 
-        static void PopulateTempData()
+        static void PopulateData()
         {
             var targets = typeDict;
 
@@ -149,6 +150,17 @@ namespace Program
                         defType.name = type.GetElementType().Name;
                     else
                         defType.name = type.Name;
+                }
+                if(type.GetField("compClass") != null)
+                {
+                    typeInfo.specialTypes.compClass.isComp = true;
+                    var baseType = type;
+                    var objType = typeof(object);
+                    while (baseType.BaseType != objType && baseType.GetField("compClass") != null)
+                    { // possible bug - baseType was not registered in static typeDict, maybe?
+                        baseType = baseType.BaseType;
+                    }
+                    typeInfo.specialTypes.compClass.baseClass = Util.GetTypeIdentifier(baseType);
                 }
             }
         }
