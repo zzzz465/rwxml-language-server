@@ -7,6 +7,7 @@ import { TypeInfo, isTypeNode, typeNode, isDef, TypeInfoMap } from '../RW/TypeIn
 import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
 import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
+import { AsEnumerable } from 'linq-es2015';
 
 export interface filesQuery {
 	(path: URILike): Promise<URILike[]>
@@ -14,12 +15,12 @@ export interface filesQuery {
 
 // TODO - need code refactor
 export class RWXMLCompletion {
-	constructor () {
+	constructor() {
 
 	}
 
-	doComplete(document: TextDocument, 
-		position: Position, 
+	doComplete(document: TextDocument,
+		position: Position,
 		XMLDocument: XMLDocument,
 		typeInfoMap: TypeInfoMap,
 		defDatabase?: iDefDatabase): CompletionList {
@@ -31,7 +32,7 @@ export class RWXMLCompletion {
 		function scanNextForEndPos(nextToken: TokenType): number {
 			if (offset === scanner.getTokenEnd()) {
 				token = scanner.scan()
-				if(token === nextToken && scanner.getTokenOffset() === offset) {
+				if (token === nextToken && scanner.getTokenOffset() === offset) {
 					return scanner.getTokenEnd()
 				}
 			}
@@ -44,9 +45,9 @@ export class RWXMLCompletion {
 			}
 			return { start: document.positionAt(replaceStart), end: document.positionAt(replaceEnd) }
 		}
-		
+
 		// TODO - fix this
-		const collectDefNodeValueSuggestions = (contentOffset: number, tagNameEnd?: number ) => {
+		const collectDefNodeValueSuggestions = (contentOffset: number, tagNameEnd?: number) => {
 			// TODO - performance alert!
 			// pretty sure this need to be cached...
 			/*
@@ -92,7 +93,7 @@ export class RWXMLCompletion {
 			return { isIncomplete: false, items: [] } as CompletionList
 		}
 
-		function collectNodeTextValueSuggestions (): CompletionList {
+		function collectNodeTextValueSuggestions(): CompletionList {
 			if (isTypeNode(node)) {
 				const typeInfo = node.typeInfo
 				if (typeInfo.specialTypes) {
@@ -117,7 +118,7 @@ export class RWXMLCompletion {
 		}
 
 
-		function collectOpenDefNameTagSuggestions(afterOpenBracket: number, tagNameEnd?: number): CompletionList {
+		function collectOpenTagSuggestions(afterOpenBracket: number, tagNameEnd?: number): CompletionList {
 			const range = getReplaceRange(afterOpenBracket, tagNameEnd)
 			// fill
 			const result: CompletionList = {
@@ -126,14 +127,20 @@ export class RWXMLCompletion {
 			}
 			const node = XMLDocument.findNodeAt(afterOpenBracket)
 			const parentNode = node.parent || XMLDocument.findNodeBefore(node.start)
-			if(isTypeNode(parentNode)) {
+			if (isTypeNode(parentNode)) {
 				const typeInfo = parentNode.typeInfo
-				if(typeInfo.childNodes) {
-					const nodes = [...typeInfo.childNodes.keys()].map<CompletionItem>(name => ({ label: name }))
-					result.items.push(...nodes)
-				}
-				if(typeInfo.suggestedAttributes) {
-					result.items.push(...typeInfo.suggestedAttributes)
+				if (typeInfo.specialTypes?.enumerable && !typeInfo.specialTypes.enumerable.isSpecial) {
+					result.items.push({
+						label: 'li'
+					})
+				} else {	
+					if (typeInfo.childNodes) {
+						const nodes = [...typeInfo.childNodes.keys()].map<CompletionItem>(name => ({ label: name }))
+						result.items = nodes
+					}
+					if (typeInfo.suggestedAttributes) {
+						result.items = typeInfo.suggestedAttributes
+					}
 				}
 			}
 			return result
@@ -155,12 +162,40 @@ export class RWXMLCompletion {
 			return result
 		}
 
-		function collectDefTagSuggestions (): CompletionList {
+		function collectDefTagSuggestions(): CompletionList {
 			const result: CompletionList = { isIncomplete: false, items: [] }
 			result.items = typeInfoMap.getDefNames().map(name => ({
 				label: name
 			} as CompletionItem))
 
+			return result
+		}
+
+		function collectAttributeSuggestions(attrName: string): CompletionList {
+			const result: CompletionList = { isIncomplete: false, items: [] }
+
+			const parent = node.parent
+
+			switch (attrName) {
+				case 'Class': {
+					if (node.tag === 'li' && parent && isTypeNode(parent) && parent.typeInfo.specialTypes?.enumerable) {
+						const genericType = parent.typeInfo.specialTypes.enumerable.genericType
+						const typeInfo = typeInfoMap.getByTypeIdentifier(genericType)
+						if (typeInfo) {
+							const name = typeInfo.specialTypes?.compClass?.baseClass
+							if (name) {
+								const suggestions = [...typeInfoMap.getComps(name)]
+								result.items = AsEnumerable(suggestions).Select(([name, _]) => name)
+									.Select(name => ({
+										label: name
+									} as CompletionItem))
+									.ToArray()
+							}
+						}
+					}
+				}
+					break
+			}
 			return result
 		}
 
@@ -179,18 +214,18 @@ export class RWXMLCompletion {
 		while (token !== TokenType.EOS && scanner.getTokenOffset() <= offset) {
 			switch (token) {
 				case TokenType.StartTagOpen:
-					if(scanner.getTokenEnd() === offset) { // <
+					if (scanner.getTokenEnd() === offset) { // <
 						if (node.parent?.tag === 'Defs') { // XXXDef
 							return collectDefTagSuggestions()
 						} else {
 							const endPos = scanNextForEndPos(TokenType.StartTag)
-							return collectOpenDefNameTagSuggestions(offset, endPos)
+							return collectOpenTagSuggestions(offset, endPos)
 						}
 					}
 					break
 				case TokenType.StartTag:
-					if(scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) { // 현재 offset이 token 의 중간일경우
-						return collectOpenDefNameTagSuggestions(scanner.getTokenOffset(), scanner.getTokenEnd())
+					if (scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) { // 현재 offset이 token 의 중간일경우
+						return collectOpenTagSuggestions(scanner.getTokenOffset(), scanner.getTokenEnd())
 					}
 					currentTag = scanner.getTokenText()
 					break
@@ -203,9 +238,13 @@ export class RWXMLCompletion {
 					currentAttributeName = scanner.getTokenText()
 					break
 				case TokenType.AttributeValue:
-					if (currentAttributeName === 'ParentName') {
-						if(scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) {
-							return collectParentNameValueSuggestions(node)
+					console.log('asdf')
+					if (scanner.getTokenOffset() < offset && offset < scanner.getTokenEnd()) { // <tag Attr="|">
+						switch (currentAttributeName) {
+							case 'ParentName':
+								return collectParentNameValueSuggestions(node)
+							default:
+								return collectAttributeSuggestions(currentAttributeName)
 						}
 					}
 					break
@@ -233,7 +272,7 @@ export class RWXMLCompletion {
 				case TokenType.StartTagClose:
 					break
 				case TokenType.Content:
-					if(scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) {
+					if (scanner.getTokenOffset() <= offset && offset <= scanner.getTokenEnd()) {
 						// return collectDefNodeValueSuggestions(scanner.getTokenOffset(), scanner.getTokenEnd())
 						return collectNodeTextValueSuggestions()
 					}

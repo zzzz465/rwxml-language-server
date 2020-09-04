@@ -33,10 +33,15 @@ export interface specialType {
 	}
 	/**  */
 	specialType?: boolean
+	/** true when type has compClass field */
+	compClass?: {
+		baseClass: TypeIdentifier
+	}
 }
 
 export interface TypeInfo { // 이거만 가져와보자
 	isLeafNode: boolean
+	/** ${namespace}.${classname} */
 	typeIdentifier: TypeIdentifier
 	specialTypes?: specialType
 	suggestedAttributes?: CompletionItem[]
@@ -80,9 +85,12 @@ export interface typeNode extends Node {
 
 export class TypeInfoMap extends Map<string, TypeInfo> {
 	private typeMap: Map<string, TypeInfo>
+	/** compMap class basetype - <name - typeinfo>, possible name conflict */
+	private compMap: Map<TypeIdentifier, Map<string, TypeInfo>>
 	constructor (typeInfos: TypeInfo[]) {
 		super()
 		this.typeMap = new Map()
+		this.compMap = new Map()
 		for (const typeInfo of typeInfos) {
 			this.set(typeInfo.typeIdentifier, typeInfo)
 
@@ -93,6 +101,24 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 						this.typeMap.set(defType, typeInfo)
 					else
 						console.log(`duplicate defType ${defType}`)
+				}
+
+				if (typeInfo.specialTypes.compClass) {
+					const match = typeInfo.typeIdentifier.match(/(?<=\.)[\w]+$/) // match className
+					if (match) {
+						const name = match[0]
+						const baseName = typeInfo.specialTypes.compClass.baseClass
+						let map = this.compMap.get(baseName)
+						if(!map) {
+							map = new Map()
+							this.compMap.set(baseName, map)
+						}
+						
+						if(!map.has(name))
+							map.set(name, typeInfo)
+						else
+							console.log(`duplicate comp className ${name}`)
+					}
 				}
 			}
 		}
@@ -117,6 +143,35 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 	getDefNames (): string[] {
 		return [...this.typeMap.keys()]
 	}
+
+	getComp (name: string, baseType?: TypeIdentifier): TypeInfo | undefined {
+		if (baseType) {
+			return this.compMap.get(baseType)?.get(name)
+		} else {
+			for (const map of this.compMap.values()) {
+				const type = map.get(name)
+				if (type) return type
+			}
+		}
+	}
+
+	/**
+	 * iterator of comp name - typeinfo pair
+	 * @param baseType 
+	 */
+	*getComps (baseType?: TypeIdentifier): Generator<[string, TypeInfo], void, unknown> {
+		if (baseType) {
+			const entries = this.compMap.get(baseType)
+			if (entries) {
+				for (const entry of entries)
+					yield entry
+			}
+		} else {
+			for (const map of this.compMap.values())
+				for (const entry of map)
+					yield entry
+		}
+	}
 }
 
 export class TypeInfoInjector {
@@ -140,6 +195,7 @@ export class TypeInfoInjector {
 		while (queue.length > 0) {
 			const node = queue.pop()!
 			const typeInfo = node.typeInfo
+			const specialTypes = typeInfo.specialTypes
 
 			// if the node is List<T> and it's not treated as special (normal <li></li>)
 			// we inject genericType into the node.
@@ -149,6 +205,22 @@ export class TypeInfoInjector {
 				if (!childType) continue
 				for (const childNode of node.children)
 					queue.push(Object.assign(childNode, { typeInfo: childType }))
+			}
+
+			// <li Class="CompProperties_name">...(nodes)...</li>
+			if (specialTypes?.compClass) {
+				const className = node.attributes?.Class
+				let injected = false
+				if (className) {
+					const childType = this.typeInfoMap.getComp(className)
+					if (childType) {
+						node.typeInfo = childType
+						injected = true
+					}
+				}
+
+				if (!injected)
+					delete node.typeInfo
 			}
 
 			for (const childNode of node.children) {
