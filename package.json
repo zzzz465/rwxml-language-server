@@ -17,6 +17,9 @@
 	"engines": {
 		"vscode": "^1.43.0"
 	},
+	"repository": {
+		"url": "https://github.com/zzzz465/rwxml-language-server"
+	},
 	"publisher": "madeline",
 	"jest": {
 		"transform": {
