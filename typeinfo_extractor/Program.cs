@@ -8,6 +8,8 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Serialization;
 using System.IO;
+using System.IO.Pipes;
+using System.Text;
 
 namespace Program
 {
@@ -16,36 +18,93 @@ namespace Program
         static Dictionary<Type, TypeInfo> typeDict = new Dictionary<Type, TypeInfo>();
         static void Main(string[] args)
         {
-            var inheritedTypes = from type in typeof(Editable).Assembly.GetTypes().AsEnumerable()
-                                 where (type.IsSubclassOf(typeof(Editable)) ||
-                                 type.GetMember("compClass") != null ) && // get all compClass
-                                 !type.IsAbstract
-                                 select type;
-
-
-            CollectRelatedData_BFS(inheritedTypes);
-            PopulateData();
-            MarkDefNodes();
-            // MoveTempToAppropriateNode();
-            
-            var result = new Dictionary<string, TypeInfo>();
-            foreach(var (_, typeInfo) in typeDict)
+            if (args.Length > 0)
             {
-                if(result.ContainsKey(typeInfo.typeIdentifier))
-                    continue;
-                result.Add(typeInfo.typeIdentifier, typeInfo);
-            }
-            
-            var serializerSetting = new JsonSerializerSettings();
-            serializerSetting.Formatting = Formatting.Indented;
-            serializerSetting.NullValueHandling = NullValueHandling.Ignore;
-            serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
+                var assemblies = new List<Assembly>();
+                Console.WriteLine("asdf");
+                var pipeStream = new NamedPipeClientStream(".", "rwxml", PipeDirection.InOut, PipeOptions.Asynchronous);
+                pipeStream.Connect(10);
+                Console.WriteLine("[C#]: stream connected");
+                
+                try
+                {
+                    foreach(var arg in args) // arg[0] is pipe name
+                    {
+                        var assem = Assembly.LoadFrom(arg);
+                        assemblies.Add(assem);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine(ex.Message);
+                    return;
+                }
 
-            var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
-            // var typeInfos = typeDict.Select(d => d.Value);
-            // var serializedObject = JsonConvert.SerializeObject(typeInfos);
-            File.WriteAllText("./output.json", serializedObject);
-            // Console.WriteLine(serializedObject);
+                var types = new HashSet<Type>();
+                var defType = typeof(Def);
+                foreach(var assem in assemblies)
+                {
+                    var targetTypes = assem.GetTypes().Where(type => type.IsSubclassOf(defType));
+                    foreach(var type in targetTypes)
+                    {
+                        types.Add(type);
+                    }
+                }
+
+                CollectRelatedData_BFS(types);
+                PopulateData();
+                MarkDefNodes();
+
+                var result = new Dictionary<string, TypeInfo>();
+                foreach (var (_, typeInfo) in typeDict)
+                {
+                    if (result.ContainsKey(typeInfo.typeIdentifier))
+                        continue;
+                    result.Add(typeInfo.typeIdentifier, typeInfo);
+                }
+
+                var serializerSetting = new JsonSerializerSettings();
+                serializerSetting.Formatting = Formatting.None;
+                serializerSetting.NullValueHandling = NullValueHandling.Ignore;
+                serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
+
+                var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
+                var utf8bytes = UTF8Encoding.UTF8.GetBytes(serializedObject);
+                pipeStream.Write(utf8bytes);
+                pipeStream.Close();
+            }
+            else
+            { // for test purpose
+                var inheritedTypes = from type in typeof(Editable).Assembly.GetTypes().AsEnumerable()
+                                     where (type.IsSubclassOf(typeof(Editable)) ||
+                                     type.GetMember("compClass") != null ) && // get all compClass
+                                     !type.IsAbstract
+                                     select type;
+
+                CollectRelatedData_BFS(inheritedTypes);
+                PopulateData();
+                MarkDefNodes();
+                // MoveTempToAppropriateNode();
+                
+                var result = new Dictionary<string, TypeInfo>();
+                foreach(var (_, typeInfo) in typeDict)
+                {
+                    if(result.ContainsKey(typeInfo.typeIdentifier))
+                        continue;
+                    result.Add(typeInfo.typeIdentifier, typeInfo);
+                }
+                
+                var serializerSetting = new JsonSerializerSettings();
+                serializerSetting.Formatting = Formatting.Indented;
+                serializerSetting.NullValueHandling = NullValueHandling.Ignore;
+                serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
+
+                var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
+                // var typeInfos = typeDict.Select(d => d.Value);
+                // var serializedObject = JsonConvert.SerializeObject(typeInfos);
+                File.WriteAllText("./output.json", serializedObject);
+                // Console.WriteLine(serializedObject);
+            }
         }
 
         static void CollectRelatedData_BFS(IEnumerable<Type> _types)
