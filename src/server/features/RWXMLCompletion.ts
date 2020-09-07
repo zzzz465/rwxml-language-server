@@ -108,6 +108,11 @@ export class RWXMLCompletion {
 							}
 						}
 					}
+				} else if (typeInfo.isLeafNode && typeInfo.leafNodeCompletions) {
+					return {
+						isIncomplete: false,
+						items: typeInfo.leafNodeCompletions
+					}
 				}
 			}
 
