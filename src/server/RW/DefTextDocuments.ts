@@ -7,15 +7,21 @@ import { parse, XMLDocument } from '../parser/XMLParser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { assert } from 'console';
+import { typeDB } from '../typeDB';
 
 type version = string;
 
 export interface versionGetter {
-	(path: URILike): version | null
+	(path: URILike): version | undefined
 }
 
 export interface sourcedDef extends def {
 	source: URILike
+}
+
+export interface VersionedTextDocument extends TextDocument {
+	/** rimworld version where this TextDocument belongs to */
+	rwVersion: string
 }
 
 export function isSourcedDef(obj: any): obj is sourcedDef {
@@ -37,12 +43,13 @@ export class DefTextDocuments {
 	private watchedFiles: Map<URILike, TextDocument> // URILike - text
 	private xmlDocuments: Map<URILike, XMLDocument>
 	private readonly textDocuments: TextDocuments<TextDocument>
+	/** @deprecated need to be removed */
 	private versionGetter: versionGetter | undefined // fixme - remove this?
 	onReferenceDocumentsAdded: Event<void>
 	onDocumentAdded: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
 	onDocumentDeleted: Event<URI>
-	typeInjector?: TypeInfoInjector
+	versionDB?: Map<string, typeDB>
 	constructor() {
 		this.databases = new Map()
 		this.watchedFiles = new Map()
@@ -78,7 +85,7 @@ export class DefTextDocuments {
 	}
 
 	getDefs (URILike: URILike): sourcedDef[] {
-		let version: string | null
+		let version: string | undefined
 		if (!this.versionGetter || !(version = this.versionGetter(URILike)))
 			return []
 		
@@ -106,40 +113,42 @@ export class DefTextDocuments {
 	// and we'll accept textDocument's event for a sync and incremental udpate
 	listen (connection: IConnection): void {
 		connection.onNotification(DefFileAddedNotificationType, params => {
-			console.log(`defFileAddEvent ${params.path}`)
-			const document = TextDocument.create(URI.parse(params.path).toString(), 'xml', 1, params.text)
-			this.watchedFiles.set(params.path, document)
-			this.update(params.path, params.text)
-			this.onDocumentAdded?.Invoke({
-				defs: this.getDefs(params.path),
-				textDocument: document,
-				xmlDocument: this.getXMLDocument(params.path)
-			})
+			for (const [path, text] of Object.entries(params.files)) {
+				console.log(`defFileAddEvent ${path}`)
+				const document = TextDocument.create(URI.parse(path).toString(), 'xml', 1, text)
+				this.watchedFiles.set(path, document)
+				this.update(params.version, path, text)
+				this.onDocumentAdded?.Invoke({
+					defs: this.getDefs(path),
+					textDocument: document,
+					xmlDocument: this.getXMLDocument(path)
+				})
+			}
 		})
 		connection.onNotification(DefFileChangedNotificationType, params => {		
 			// console.log('defFileChangedNotification event')	 // FIXME - 이거 업데이트 안되는데?
-			const uri = URI.parse(params.path)
-			// textDocuments 에 의하여 업데이트 될 경우, 무시
-			if (this.textDocuments.get(uri.toString()) !== undefined)
+			for (const [path, text] of Object.entries(params.files)) {
+				const uri = URI.parse(path)
+				// textDocuments 에 의하여 업데이트 될 경우, 무시
+				if (this.textDocuments.get(uri.toString()) !== undefined)
 				return
-
-			this.watchedFiles.set(params.path, 
-				TextDocument.create(URI.file(params.path).toString(), 'xml', 1, params.text))
-			this.update(params.path, params.text)
+				
+				this.watchedFiles.set(path, 
+					TextDocument.create(URI.file(path).toString(), 'xml', 1, text))
+					this.update(params.version, path, text)
+			}
 		})
 		connection.onNotification(DefFileRemovedNotificationType, path => {
 			this.watchedFiles.delete(path)
 			this.xmlDocuments.delete(path)
 		})
 		// 레퍼런스용 코드
-		connection.onNotification(ReferencedDefFileAddedNotificationType, params => {
+		connection.onNotification(ReferencedDefFileAddedNotificationType, param => {
 			console.log('ReferencedDefFileAddedNotificationType')
-			for (const param of params) {
-				for (const [uriLike, text] of Object.entries(param.files)) {
-					const document = TextDocument.create(URI.parse(uriLike).path.toString(), 'xml', 1, text)
-					this.watchedFiles.set(uriLike, document)
-					this.updateReference(param.version, uriLike, document.getText())
-				}
+			for (const [path, text] of Object.entries(param.files)) {
+				const document = TextDocument.create(URI.parse(path).path.toString(), 'xml', 1, text)
+				this.watchedFiles.set(path, document)
+				this.updateReference(param.version, path, document.getText())
 			}
 			this.onReferenceDocumentsAdded.Invoke()
 		})
@@ -151,22 +160,35 @@ export class DefTextDocuments {
 		this.textDocuments.onDidChangeContent(({ document }) => {
 			console.log('textDocuments/onDidChangeContent')
 			const text = document.getText()
-			this.update(document.uri, text)
-			// TODO - 데이터 채워넣기...
-			this.onDocumentChanged.Invoke({
+			const version = this.versionGetter?.(document.uri)
+			if (version) {
+				this.update(version, document.uri, text)
+				// TODO - 데이터 채워넣기...
+				this.onDocumentChanged.Invoke({
 					defs: this.getDefs(document.uri),
 					textDocument: document,
 					xmlDocument: this.getXMLDocument(document.uri)
-			})
+				})
+			}
 		})
 	}
 
-	private parseText(content: string): { xmlDocument: XMLDocument, defs: def[] } {
+	/**
+	 * clear internal documents.  
+	 * should be only called when [ConfigChanged](#) event is raised.
+	 */
+	clear () {
+		this.databases = new Map()
+		this.watchedFiles = new Map()
+		this.xmlDocuments = new Map()
+	}
+
+	private parseText(content: string, injector?: TypeInfoInjector): { xmlDocument: XMLDocument, defs: def[] } {
 		const defs: def[] = []
 		const parsed = parse(content)
-		if (this.typeInjector && parsed.root?.tag === 'Defs') {
+		if (injector && parsed.root?.tag === 'Defs') {
 			for (const node of parsed.root.children) {
-				this.typeInjector.Inject(node)
+				injector.Inject(node)
 				if (isTypeNode(node))
 					defs.push(node as def)
 			}
@@ -177,29 +199,26 @@ export class DefTextDocuments {
 		}
 	}
 
-	private update(path: URILike, content: string): void {
+	private update(version: string, path: URILike, content: string): void {
 		console.log('update')
-		if (this.versionGetter && this.typeInjector) {
-			const version = this.versionGetter(path)
-			if (version) {
-				let db = this.databases.get(version)
-				if (!db) {
-					db = new DefDatabase(version)
-					this.databases.set(version, db)
-				}
-				const { defs, xmlDocument } = this.parseText(content)
-				this.xmlDocuments.set(path, xmlDocument)
-				defs.map(def => Object.assign(def, { source: path }))
-				db.update(path, defs)
-			}
+		let db = this.databases.get(version)
+		if (!db) {
+			db = new DefDatabase(version)
+			this.databases.set(version, db)
 		}
+		const typeInfoInjector = this.versionDB?.get(version)?.injector
+		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
+		this.xmlDocuments.set(path, xmlDocument)
+		defs.map(def => Object.assign(def, { source: path }))
+		db.update(path, defs)
 	}
 
 	// 레퍼런스용 노드는 공용 노드로 인식해야함, 즉 모든 버전에 추가되어야 함
 	private updateReference (version: version, path: URILike, content: string): void {
 		const db = this.databases.get(version)
 		if (db) {
-			const { defs, xmlDocument } = this.parseText(content)
+			const typeInfoInjector = this.versionDB?.get(version)?.injector
+			const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
 			this.xmlDocuments.set(path, xmlDocument)
 			defs.map(def => Object.assign(def, { source: path }))
 			db.update(path, defs)
@@ -207,10 +226,10 @@ export class DefTextDocuments {
 	}
 
 	private async refreshDocuments() {
-		this.databases.clear()
-		for (const [key, textDocument] of this.watchedFiles.entries()) {
-			this.update(key, textDocument.getText())
-		}
+		// this.databases.clear()
+		// for (const [key, textDocument] of this.watchedFiles.entries()) {
+			// this.update(key, textDocument.getText())
+		// }
 	}
 }
 

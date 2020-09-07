@@ -2,7 +2,9 @@ import { spawn } from 'child_process'
 import { resolve } from 'path'
 import { createConnection, createServer } from 'net'
 
-const exractorPath = resolve(__dirname, '../extractor/extractor.exe')
+// the executable will be served in out or dist folder.
+console.log(!!__dirname)
+const exractorPath = resolve(__dirname, './extractor/extractor.exe')
 
 /**
  * extract typeInfo from given paths.
@@ -10,15 +12,16 @@ const exractorPath = resolve(__dirname, '../extractor/extractor.exe')
  */
 export function extractTypeInfos(dlls: string[]): Promise<any> {
 	// TODO - make a error routine when the client cannot run dotnet files.
-
 	return new Promise((resolve, err) => {
 		// create pipe to get raw typeinfos
 		const server = createServer(socket => {
 			console.log('connection established')
-			let object : any | undefined = undefined
+			let object : any[] | undefined = undefined
 			socket.on('data', (data: Buffer) => {
 				const utf8string = data.toString('utf-8') // we receive typeinfo json string(utf-8) as bytes
 				object = JSON.parse(utf8string)
+				console.log(`loaded typeInfo object count : ${object?.length}`)
+				console.log(`target files: ${dlls}`)
 				resolve(object)
 			})
 			socket.on('close', (flag) => {

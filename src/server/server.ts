@@ -19,9 +19,9 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { parse, Node, XMLDocument } from './parser/XMLParser';
-import { LoadFolders, querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType, getLoadFolders } from '../common/config'
+import { LoadFolders, ConfigDatum, ConfigChangedNotificationType, getLoadFolders, ConfigChangedRequestType } from '../common/config'
 import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
-import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def } from './RW/TypeInfo';
+import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo } from './RW/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
 import * as fs from 'fs'
 import * as path from 'path'
@@ -29,6 +29,7 @@ import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
 import { disposeWatchFileRequestType, WatchFileRequestParams, WatchFileRequestType, WatchFileAddedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher';
 import { assert } from 'console';
+import { typeDB } from './typeDB';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -98,172 +99,46 @@ connection.onInitialized(() => {
 
 });
 
-const mockDataPath = path.join(__dirname, './testData/output.json') // for development only
-const mockTypeData: any[] = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
-const typeInfos = objToTypeInfos(mockTypeData)
-const typeInfoMap = new TypeInfoMap(typeInfos)
-const injector = new TypeInfoInjector(typeInfoMap)
+// const mockDataPath = path.join(__dirname, './testData/output.json') // for development only
+// const mockTypeData: any[] = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
+// const typeInfos = objToTypeInfos(mockTypeData)
 
-/*
-documents.onDidChangeContent(async change => {
-	const filePath = URI.parse(change.document.uri).fsPath
-	const respond = await connection.sendRequest(LoadFoldersRequestType, filePath)
-	if (respond)
-		change.document.loadFolders = respond
-
-	textDoc = change.document
-	const text = change.document.getText()
-	if(text) {
-		xmlDoc = parse(text)
-		if(xmlDoc.root?.tag === 'Defs') {
-			for (const defNode of xmlDoc.root.children)
-				injector.Inject(defNode)
-		}
-	}
-
-	const nodeValidator = new NodeValidator(typeInfoMap, textDoc, xmlDoc, [builtInValidationParticipant])
-	const result = nodeValidator.validateNode()
-	connection.sendDiagnostics({ uri: textDoc.uri, diagnostics: result })
-	// validateTextDocument(change.document);
-});
-*/
-
-// connection.onDidChangeWatchedFiles(_change => {
-	// Monitored files have change in VSCode
-	// connection.console.log('We received an file change event');
-// });
-
-// This handler resolves additional information for the item selected in
-// the completion list.
-/*
-connection.onCompletionResolve(
-	(item: CompletionItem): CompletionItem => {
-		if(typeof item.data === 'object') {
-			if (item.data.type === 'image') {
-				const path = '/' + (<string>(item.data.absPath)).replace(/\\/g, '/')
-				// const value = '```html'
-				// 	+ `<image src="${path}" width="500" height="500" />`
-				// 	+ '```'
-				const markup: MarkupContent = {
-					kind: 'markdown',
-					value: `![image](${path})`
-					// value
-				}
-				item.documentation = markup
-			}
-		}
-
-		return item
-	}
-);
-*/
+let versionDB: Map<string, typeDB> = new Map()
 
 const defTextDocuments = new DefTextDocuments()
-defTextDocuments.typeInjector = injector
+defTextDocuments.versionDB = (function () {
+	const x = {
+		get versionDB() {
+			return versionDB
+		}
+	}
+	return x.versionDB
+})()
+
+defTextDocuments.setVersionGetter((path) => {
+	if (config)
+		return getLoadFolders(config, path)?.version
+})
 
 let config: ConfigDatum | null = null
-type relativePattern = string
-let watchers: WatchFileRequestParams[] = []
+
 /** version - URILike, 파일이 있는지 없는지 체크하기 위함 */
 const files: Map<string, Set<URILike>> = new Map()
 
-connection.onNotification(ConfigChangedNotificationType, async newConfig => {
-	config = newConfig
-
-	// request client to dispose all watchers
-	await Promise.all( watchers.map(p =>
-		connection.sendRequest(disposeWatchFileRequestType, p)))
-	
-	watchers = []
-	files.clear()
-	// update projectfiles cache
-	
-	if (config) {
-		const promises: (Promise<void>)[] = []
-		for (const [version, folder] of Object.entries(config.folders)) {
-			const set: Set<URILike> = new Set()
-			files.set(version, set)
-			
-			// eslint-disable-next-line no-inner-declarations
-			function registerInitialFiles(uris: string[]) {
-				for (const uri of uris)
-					set.add(uri)
-			}
-			
-			// About
-			// connection.sendRequest(WatchFileRequestType, {
-				// basePath: folder.About,
-				// globPattern: ''
-			// } as WatchFileRequestParams)
-
-			// Defs
-			if (folder.Defs) {
-				const p = connection.sendRequest(WatchFileRequestType, {
-					basePath: folder.Defs,
-					globPattern: '**/*.xml'
-				}).then(registerInitialFiles)
-				.catch(reason => console.log(reason))
-				promises.push(p)
-			}
-
-			if (folder.Textures) {
-				const p = connection.sendRequest(WatchFileRequestType, {
-					basePath: folder.Textures,
-					globPattern: '**/*.{png, jpeg, jpg, gif}'
-				})
-				.then(registerInitialFiles)
-				.catch(reason => console.log(reason))
-				promises.push(p)
-			}
-
-			// Textures
-
-			if (folder.DefReferences) {
-				for (const basePath of folder.DefReferences) {
-					const p = connection.sendRequest(WatchFileRequestType, {
-						basePath: basePath,
-						globPattern: '**/*.xml'
-					})
-					.then(registerInitialFiles)
-					.catch(reason => console.log(reason))
-					promises.push(p)
-				}
-			}
-		}
-		await Promise.all(promises)
-
-		// needs refactor
-		const conf2 = config
-		defTextDocuments.setVersionGetter(path => {
-			return getLoadFolders(conf2, path)?.version || null
+// re-initialize everything when the config changes.
+connection.onRequest(ConfigChangedRequestType, ({ configDatum, typeInfoDatum }) => {
+	console.log('server: received config changed event')
+	config = configDatum
+	versionDB = new Map() // FIXME - delete this
+	for (const [version, datum] of Object.entries(typeInfoDatum)) {
+		const map = new TypeInfoMap ( objToTypeInfos(datum) )
+		versionDB.set(version, {
+			injector: new TypeInfoInjector(map),
+			typeInfoMap: map
 		})
-	} else {
-		defTextDocuments.setVersionGetter(path => null)
 	}
-})
-
-connection.onNotification(WatchFileAddedNotificationType, uri => {
-	if (!config) return
-	const version = getLoadFolders(config, uri)?.version
-	if (version) {
-		const set = files.get(version)
-		if (set) {
-			assert(!set.has(uri), 'tried to add file which is already added')
-			set.add(uri)
-		}
-	}
-})
-
-connection.onNotification(WatchFileDeletedNotificationType, uri => {
-	if (!config) return
-	const version = getLoadFolders(config, uri)?.version
-	if (version) {
-		const set = files.get(version)
-		if (set) {
-			const result = set.delete(uri)
-			assert(result)
-		}
-	}
+	defTextDocuments.clear()
+	defTextDocuments.versionDB = versionDB
 })
 
 connection.onDeclaration(request => {
@@ -358,10 +233,16 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 	const document = defTextDocuments.getDocument(uri)
 	const xmlDocument = defTextDocuments.getXMLDocument(uri)
 	const defDatabase = defTextDocuments.getDefDatabaseByUri(uri) || undefined
-	if (xmlDocument && document) {
-		const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, typeInfoMap, defDatabase)
-		console.log('resolved')
-		return result
+	if (xmlDocument && document && config) {
+		const version = getLoadFolders(config, document.uri)?.version
+		if (version) {
+			const typeInfoMap = versionDB.get(version)?.typeInfoMap
+			if (typeInfoMap) {
+				const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, typeInfoMap, defDatabase)
+				console.log('resolved')
+				return result
+			}
+		}
 	}
 })
 
@@ -377,18 +258,24 @@ function validateAll() {
 	for (const document of defTextDocuments.getDocuments()) {
 		const xmlDoc = defTextDocuments.getXMLDocument(document.uri)
 		if (!xmlDoc) continue
+		let version: string | undefined = undefined
 		let files2: Set<string> | undefined = undefined
 		if (config) {
-			const version = getLoadFolders(config, document.uri)?.version
+			version = getLoadFolders(config, document.uri)?.version
 			if (version)
 				files2 = files.get(version)
 		}
-		const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
-		const validator = new NodeValidator(typeInfoMap, document, xmlDoc,
-			[builtInValidationParticipant], 
-			files2, defDatabase)
-		const result = validator.validateNodes()
-		connection.sendDiagnostics({ uri: document.uri, diagnostics: result })
+		if (version) {
+			const typeInfoMap = versionDB.get(version)?.typeInfoMap
+			if (typeInfoMap) {
+				const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
+				const validator = new NodeValidator(typeInfoMap, document, xmlDoc,
+					[builtInValidationParticipant], 
+					files2, defDatabase)
+					const result = validator.validateNodes()
+					connection.sendDiagnostics({ uri: document.uri, diagnostics: result })
+			}
+		}
 	}
 }
 
@@ -424,14 +311,20 @@ defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument: document, defs
 	if (!xmlDocument) return
 	const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
 	let files2: Set<string> | undefined = undefined
+	let version: string | undefined = undefined
 	if (config) {
-		const version = getLoadFolders(config, document.uri)?.version
+		version = getLoadFolders(config, document.uri)?.version
 		if (version)
 			files2 = files.get(version)
 	}
-	const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant], files2, defDatabase)
-	const validationResult = validator.validateNodes()
-	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
+	if (version) {
+		const typeInfoMap = versionDB.get(version)?.typeInfoMap
+		if (typeInfoMap) {
+			const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant], files2, defDatabase)
+			const validationResult = validator.validateNodes()
+			connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
+		}
+	}
 })
 
 // Listen on the connection

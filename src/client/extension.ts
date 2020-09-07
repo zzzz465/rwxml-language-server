@@ -6,9 +6,10 @@
 import * as path from 'path';
 import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
+import { Uri } from 'vscode'
 import { parseConfig } from './config'
-import { querySubFilesRequestType, ConfigDatum, ConfigChangedNotificationType } from '../common/config'
-import { DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType, RefDefFilesChangedParams } from '../common/Defs'
+import { ConfigDatum, ConfigChangedNotificationType, ConfigChangedRequestType, ConfigChangedParams } from '../common/config'
+import { DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType, RefDefFilesChangedParams, DefFilesChanged } from '../common/Defs'
 import { glob as glob_callback } from 'glob'
 
 import {
@@ -21,8 +22,12 @@ import { DefFileAddedNotificationType } from '../common/Defs';
 import { FileWatcher } from './fileWatcher';
 import * as fs from 'fs'
 import * as util from 'util'
+import { extractTypeInfos } from './extractor';
+import { Event } from '../common/event';
+import watch from 'node-watch'
 
 const glob = util.promisify(glob_callback)
+const exists = util.promisify(fs.exists)
 
 let client: LanguageClient;
 let configWatcher: FileSystemWatcher
@@ -51,7 +56,7 @@ export async function activate(context: ExtensionContext) {
 		// Register the server for plain text documents
 		documentSelector: [{ scheme: 'file', language: 'xml' }],
 	};
-	
+
 	// Create the language client and start the client.
 	client = new LanguageClient(
 		'rwxmlLangServer',
@@ -59,117 +64,133 @@ export async function activate(context: ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
-		
+
 	// Start the client. This will also launch the server
 	client.start();
-	const _fileWatcher = new FileWatcher()
-	// client.registerFeature()
 	await client.onReady()
-	
-	_fileWatcher.listen(client)
 
-	let config: ConfigDatum | null = null
-	
-	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
-	const configFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
-	
-	if (configFile.length > 0) {
-		const object = JSON.parse((await vscode.workspace.fs.readFile(configFile[0])).toString())
-		config = parseConfig(object, configFile[0])
+	/** called when onConfigfileChanged is called, it can be used to dispose watchers when reload */
+	console.log('disposeEvent initialized')
+	let disposeEvent: Event<void> = new Event<void>()
+
+	const initialFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
+	if (initialFile) {
+		const file = initialFile[0]
+		console.log('initial config read')
+		await onConfigfileChanged(file)
 	}
-	
-	configWatcher.onDidCreate(async uri => {
-		const text = (await vscode.workspace.fs.readFile(uri)).toString()
-		const object = JSON.parse(text)
-		config = parseConfig(object, uri)
-		client.sendNotification(ConfigChangedNotificationType, config)
-	})
-	configWatcher.onDidChange(async uri => {
-		const text = (await vscode.workspace.fs.readFile(uri)).toString()
-		const object = JSON.parse(text)
-		config = parseConfig(object, uri)
-		client.sendNotification(ConfigChangedNotificationType, config)
-	})
-	configWatcher.onDidDelete(uri => {
-		client.sendNotification(ConfigChangedNotificationType, config)
-	})
 
-	if (config) {
-		client.sendNotification(ConfigChangedNotificationType, config)
-		// 임시로 넣은 코드, 첫 실행할때만 Def을 전송하게 될 것
-		for (const [version, obj] of Object.entries(config.folders)) {
+	configWatcher = vscode.workspace.createFileSystemWatcher('**/rwconfigrc.json')
 
-			if (obj.Defs) {
-				glob_callback('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(obj.Defs).fsPath },
-				(err, files) => {
-					for (const path of files) {
-						const uri = vscode.Uri.file(path)
-						fs.promises.readFile(path, 'utf-8')
-						.then(text => {
-							client.sendNotification(DefFileAddedNotificationType, {
-								path: uri.toString(),
-								text
-							})
-						})
+	configWatcher.onDidCreate(onConfigfileChanged)
+	configWatcher.onDidChange(onConfigfileChanged)
+	// configWatcher.onDidDelete(onConfigfileChanged) // should we handle this?
+
+
+	async function checkPathValid(paths: string[]): Promise<{ valid: boolean, invalidItems: string[] }> {
+		const promises: Promise<void>[] = []
+		let valid = true
+		const invalidItems: string[] = []
+		for (const path of paths) {
+			const p = exists(path)
+				.then(flag => { 
+					if (!flag) {
+						valid = false
+						invalidItems.push(path)
 					}
 				})
+			promises.push(p)
+		}
+		
+		await Promise.all(promises)
+		return { valid, invalidItems }
+	}
+
+	async function queryFiles(paths: string[]): Promise<{ [path: string]: string }> {
+		const result: { [path: string]: string } = {}
+		const promises: Promise<void>[] = []
+		paths.map(path => {
+			promises.push(fs.promises.readFile(path, 'utf-8')
+				.then(text => {
+					result[path] = text
+			}))
+		})
+		await Promise.all(promises)
+		return result
+	}
+
+	async function onConfigfileChanged (configUri: Uri) {
+		console.log('client: reload config')
+		disposeEvent.Invoke()
+		disposeEvent = new Event<void>()
+		const text = (await fs.promises.readFile(configUri.fsPath)).toString()
+		let object: any | undefined = undefined
+		try {
+			object = JSON.parse(text)
+		} catch (err) {
+			return
+		}
+
+		const configDatum = parseConfig(object, configUri)
+
+		const parms: ConfigChangedParams = { configDatum, typeInfoDatum: {} }
+
+		for (const [version, obj] of Object.entries(configDatum.folders)) {
+			if (obj.AssemblyReferences) {
+				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath)
+				const res = await checkPathValid(assemRefs)
+				if (res.valid) {
+					const raw_typeinfo = await extractTypeInfos(assemRefs)
+					parms.typeInfoDatum[version] = raw_typeinfo
+				} else {
+					const errmsg = `invalid path:${res.invalidItems}`
+					vscode.window.showErrorMessage(errmsg)
+				}
 			}
-			if (obj.DefReferences) {
-				const defReferences = obj.DefReferences;
+		}
+
+		// await server to be ready.
+		await client.sendRequest(ConfigChangedRequestType, parms)
+
+		for (const [version, obj] of Object.entries(configDatum.folders)) {
+			if (obj.Defs) {
+				const defPath = obj.Defs;
 				(async () => {
-					const messages: RefDefFilesChangedParams = []
-					const promises: Promise<void>[] = []
-					for await (const referencePath of defReferences) {
-						const files: Record<string, string> = {}
-						const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(referencePath).fsPath})
-						for (const path of paths) {
-							promises.push((async () => {
-								const text = await fs.promises.readFile(path, 'utf-8')
-								const uriPath = vscode.Uri.file(path).toString()
-								files[uriPath] = text
-							})())
-						}
-						messages.push({
-							version: version,
-							baseUri: referencePath,
-							files
-						})
-					}
-					await Promise.all(promises) // await until all data is loaded.
-					client.sendNotification(ReferencedDefFileAddedNotificationType, messages)
+					const params: DefFilesChanged = { version, files: {} }
+					const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(defPath).fsPath })
+					params.files =  await queryFiles(paths)
+					client.sendNotification(DefFileAddedNotificationType, params)
 				})()
-				
+
+				// const defWatcher = watch(obj.Defs, { recursive: true, filter: /\.xml$/ }, (event, filename) => {
+					// switch (event) {
+						// case 'update': {
+// 
+						// }
+						// break
+						// case 'remove': {
+// 
+						// }
+						// break
+					// }
+				// })
+// 
+				// disposeEvent.subscribe({}, () => defWatcher.close())
+			}
+
+			if (obj.DefReferences) {
+				const refPaths = obj.DefReferences
+				for (const refPath of refPaths) {
+					(async () => {
+						const params: RefDefFilesChangedParams = { version, files: {} }
+						const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(refPath).fsPath })
+						params.files = await queryFiles(paths)
+						client.sendNotification(ReferencedDefFileAddedNotificationType, params)
+					})()
+				}
 			}
 		}
 	}
-	
-	client.onRequest(querySubFilesRequestType, async (absPath, token) => {
-		const files = await vscode.workspace.findFiles(
-			new vscode.RelativePattern(absPath, '**')
-			)
-			return files.map(uri => uri.toString())
-	})
-	
-	const DefsWatcher = vscode.workspace.createFileSystemWatcher('**/Defs/**/*.xml')
-	
-	DefsWatcher.onDidCreate(async (uri) => {
-		client.sendNotification(DefFileAddedNotificationType, {
-			path: uri.toString(),
-			text: (await vscode.workspace.fs.readFile(uri)).toString()
-		})
-	})
-
-	DefsWatcher.onDidChange(async uri => {
-		client.sendNotification(DefFileChangedNotificationType, {
-			path: uri.toString(),
-			text: (await vscode.workspace.fs.readFile(uri)).toString()
-		})
-	})
-
-	DefsWatcher.onDidDelete(uri => {
-		client.sendNotification(DefFileRemovedNotificationType, uri.toString())
-	})
-	
 }
 
 export function deactivate(): Thenable<void> | undefined {

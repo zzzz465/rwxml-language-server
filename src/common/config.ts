@@ -1,6 +1,7 @@
 // no vscode module allowed in here!!!!!!!
 import { RequestType, NotificationType } from 'vscode-languageserver'
 import { URILike, relativePath, absPath } from './common'
+import { DefFilesChanged } from './Defs'
 // import { absPath } from './common'
 
 export interface LoadFolders {
@@ -13,6 +14,7 @@ export interface LoadFolders {
 	readonly Sounds?: URILike
 	readonly Patches?: URILike
 	readonly DefReferences?: URILike[]
+	readonly AssemblyReferences?: URILike[]
 }
 
 export interface ConfigDatum {
@@ -21,8 +23,19 @@ export interface ConfigDatum {
 	}
 }
 
-export const querySubFilesRequestType = new RequestType<URILike, URILike[], undefined>('temp2')
+/** any that can be parsed as typeInfo */
+type typeInfoDatum = any[]
+
+/** re-initialize everything when the config changes */
+export interface ConfigChangedParams {
+	configDatum: ConfigDatum
+	typeInfoDatum: { [version: string]: any }
+}
+
+/** @deprecated replaced to ConfigChangedRequestType */
 export const ConfigChangedNotificationType = new NotificationType<ConfigDatum>('config/changed')
+
+export const ConfigChangedRequestType = new RequestType<ConfigChangedParams, void, undefined>('config/changed')
 
 export function getLoadFolders (config: ConfigDatum, path: URILike): LoadFolders | undefined {
 	for (const [version, object] of Object.entries(config.folders))
