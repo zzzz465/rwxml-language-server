@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy $(TargetDir)* $(SolutionDir)..\src\extractor /h /i /c /k /e /r /y" />
+    <Exec Command="xcopy $(TargetDir)* $(SolutionDir)..\out\client\extractor /h /i /c /k /e /r /y&#xD;&#xA;xcopy $(TargetDir)* $(SolutionDir)..\dist\extractor /h /i /c /k /e /r /y" />
   </Target>
 
 </Project>
