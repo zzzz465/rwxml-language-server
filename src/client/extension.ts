@@ -19,7 +19,7 @@ import {
 	TransportKind
 } from 'vscode-languageclient';
 import { DefFileAddedNotificationType } from '../common/Defs';
-import { FileWatcher } from './fileWatcher';
+import { ProjectWatcher } from './projectWatcher';
 import * as fs from 'fs'
 import * as util from 'util'
 import { extractTypeInfos } from './extractor';
@@ -69,8 +69,9 @@ export async function activate(context: ExtensionContext) {
 	client.start();
 	await client.onReady()
 
-	/** called when onConfigfileChanged is called, it can be used to dispose watchers when reload */
-	console.log('disposeEvent initialized')
+	const projectWatcher = new ProjectWatcher(client)
+
+	/** @deprecated (moved into projectWatcher) called when onConfigfileChanged is called */
 	let disposeEvent: Event<void> = new Event<void>()
 
 	const initialFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
@@ -154,28 +155,13 @@ export async function activate(context: ExtensionContext) {
 
 		for (const [version, obj] of Object.entries(configDatum.folders)) {
 			if (obj.Defs) {
-				const defPath = obj.Defs;
+				const defPath = vscode.Uri.parse(obj.Defs).fsPath;
 				(async () => {
 					const params: DefFilesChanged = { version, files: {} }
-					const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(defPath).fsPath })
+					const paths = await glob('**/*.xml', { absolute: true, cwd: defPath })
 					params.files =  await queryFiles(paths)
 					client.sendNotification(DefFileAddedNotificationType, params)
 				})()
-
-				// const defWatcher = watch(obj.Defs, { recursive: true, filter: /\.xml$/ }, (event, filename) => {
-					// switch (event) {
-						// case 'update': {
-// 
-						// }
-						// break
-						// case 'remove': {
-// 
-						// }
-						// break
-					// }
-				// })
-// 
-				// disposeEvent.subscribe({}, () => defWatcher.close())
 			}
 
 			if (obj.DefReferences) {
@@ -190,6 +176,8 @@ export async function activate(context: ExtensionContext) {
 				}
 			}
 		}
+
+		projectWatcher.watch(configDatum)
 	}
 }
 
