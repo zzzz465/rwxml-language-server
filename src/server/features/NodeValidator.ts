@@ -4,8 +4,7 @@ import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
 import { URILike } from '../../common/common';
 import { assert } from 'console';
-import { createScanner } from '../parser/XMLScanner';
-import { TokenType } from '../htmlLanguageTypes';
+import { createScanner, TokenType } from '../parser/XMLScanner';
 import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
 
 const _WHS = ' '.charCodeAt(0)

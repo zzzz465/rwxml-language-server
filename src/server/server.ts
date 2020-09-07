@@ -9,8 +9,7 @@ import {
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
 	InitializeResult,
-	Location,
-	CancellationToken
+	Location
 } from 'vscode-languageserver';
 
 import { URI } from 'vscode-uri'
@@ -18,19 +17,14 @@ import { URI } from 'vscode-uri'
 import './parser/XMLParser'
 import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
-import { parse, Node, XMLDocument } from './parser/XMLParser';
-import { LoadFolders, ConfigDatum, ConfigChangedNotificationType, getLoadFolders, ConfigChangedRequestType } from '../common/config'
-import { DefTextDocuments, isReferencedDef, sourcedDef, isSourcedDef } from './RW/DefTextDocuments';
+import { ConfigDatum, getLoadFolders, ConfigChangedRequestType } from '../common/config'
+import { DefTextDocuments, isReferencedDef, isSourcedDef } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo } from './RW/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
-import * as fs from 'fs'
-import * as path from 'path'
 import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
-import { disposeWatchFileRequestType, WatchFileRequestParams, WatchFileRequestType, WatchFileAddedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher';
-import { assert } from 'console';
 import { typeDB } from './typeDB';
-
+import { DecoRequestType, DecoRequestRespond } from '../common/decoration';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -250,10 +244,6 @@ connection.onCompletionResolve(handler => {
 	return handler
 })
 
-// const diagnostics: Map<URILike, Diagnostic[]> = new Map()
-// need code refactor
-const key = {}
-
 function validateAll() {
 	for (const document of defTextDocuments.getDocuments()) {
 		const xmlDoc = defTextDocuments.getXMLDocument(document.uri)
@@ -285,7 +275,7 @@ defTextDocuments.onReferenceDocumentsAdded.subscribe({}, () => {
 })
 
 // todo - can we put a cancellation token here and prevent unneccesary events?
-defTextDocuments.onDocumentAdded.subscribe(key, (({ textDocument: document, defs, xmlDocument }) => {
+defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs, xmlDocument }) => {
 	console.log('defTextDocuments.onDocumentAdded')
 	validateAll()
 	/*
@@ -325,6 +315,20 @@ defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument: document, defs
 			connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
 		}
 	}
+})
+
+connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
+	const result: DecoRequestRespond = {
+		document: { uri },
+		items: []
+	}
+
+	const xmlDoc = defTextDocuments.getXMLDocument(uri)
+	if (xmlDoc) {
+		// bfs
+	}
+
+	return result
 })
 
 // Listen on the connection

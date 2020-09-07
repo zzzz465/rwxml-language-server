@@ -3,10 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createScanner } from './XMLScanner';
+import { createScanner, TokenType } from './XMLScanner';
 import { findFirst } from '../utils/arrays';
-import { TokenType } from '../htmlLanguageTypes';
-import { Range } from 'vscode-languageserver';
 // import { isVoidElement } from '../languageFacts/fact';
 
 export class Node {

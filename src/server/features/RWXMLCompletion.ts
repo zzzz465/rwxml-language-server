@@ -1,8 +1,7 @@
 import { TextDocument, Position, Range } from 'vscode-languageserver-textdocument';
 import { XMLDocument, Node } from '../parser/XMLParser';
 import { CompletionList, CompletionItem } from 'vscode-languageserver';
-import { createScanner } from '../parser/XMLScanner';
-import { TokenType, ScannerState, Scanner } from '../htmlLanguageTypes';
+import { createScanner, TokenType, ScannerState } from '../parser/XMLScanner';
 import { TypeInfo, isTypeNode, typeNode, isDef, TypeInfoMap } from '../RW/TypeInfo'
 import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
