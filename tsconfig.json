@@ -9,12 +9,7 @@
         "strict": true,
         "resolveJsonModule": true,
         "moduleResolution": "Node",
-        // "baseUrl": "src",
-        // "paths": {
-        //     "@common/*": [
-        //         "./common/*"
-        //     ]
-        // }
+        "skipLibCheck": true
     },
     "repository": {
 
