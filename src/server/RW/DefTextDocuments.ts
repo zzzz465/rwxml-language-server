@@ -62,7 +62,7 @@ export class DefTextDocuments {
 	}
 
 	// needs refactor
-	setVersionGetter (getter: versionGetter): void {
+	setVersionGetter(getter: versionGetter): void {
 		this.versionGetter = getter
 		this.databases.clear()
 		this.refreshDocuments()
@@ -72,7 +72,7 @@ export class DefTextDocuments {
 	 * return opened / watched textDocument
 	 * @param URILike string that can be parsed with URI.parse
 	 */
-	getDocument (URILike: URILike): TextDocument | undefined {
+	getDocument(URILike: URILike): TextDocument | undefined {
 		return this.textDocuments.get(URILike) || this.watchedFiles.get(URILike)
 	}
 
@@ -80,15 +80,15 @@ export class DefTextDocuments {
 		return [...this.watchedFiles.values()]
 	}
 
-	getXMLDocument (URILike: URILike): XMLDocument | undefined { 
+	getXMLDocument(URILike: URILike): XMLDocument | undefined {
 		return this.xmlDocuments.get(URILike)
 	}
 
-	getDefs (URILike: URILike): sourcedDef[] {
+	getDefs(URILike: URILike): sourcedDef[] {
 		let version: string | undefined
 		if (!this.versionGetter || !(version = this.versionGetter(URILike)))
 			return []
-		
+
 		let db: DefDatabase | undefined
 		if (!(db = this.databases.get(version)))
 			return []
@@ -111,7 +111,7 @@ export class DefTextDocuments {
 	// 1) we accept any global event, which is raised by Defs/**/*.xml watcher
 	// 2) if the same file is watched textDocument, then previous event will be ignored
 	// and we'll accept textDocument's event for a sync and incremental udpate
-	listen (connection: IConnection): void {
+	listen(connection: IConnection): void {
 		connection.onNotification(DefFileAddedNotificationType, params => {
 			for (const [path, text] of Object.entries(params.files)) {
 				console.log(`defFileAddEvent ${path}`)
@@ -125,17 +125,22 @@ export class DefTextDocuments {
 				})
 			}
 		})
-		connection.onNotification(DefFileChangedNotificationType, params => {		
-			// console.log('defFileChangedNotification event')	 // FIXME - 이거 업데이트 안되는데?
+		connection.onNotification(DefFileChangedNotificationType, params => {
+			console.log('defFileChangedNotification event')	 // FIXME - 이거 업데이트 안되는데?
 			for (const [path, text] of Object.entries(params.files)) {
-				const uri = URI.parse(path)
-				// textDocuments 에 의하여 업데이트 될 경우, 무시
-				if (this.textDocuments.get(uri.toString()) !== undefined)
-				return
-				
-				this.watchedFiles.set(path, 
-					TextDocument.create(URI.file(path).toString(), 'xml', 1, text))
-					this.update(params.version, path, text)
+				// ignore if the document is managed by TextDocument (which is faster than node-watch)
+				if (this.textDocuments.get(path) !== undefined)
+					return
+
+				const textDocument = TextDocument.create(path, 'xml', 1, text)
+				this.watchedFiles.set(path, textDocument)
+				this.update(params.version, path, text)
+
+				this.onDocumentChanged?.Invoke({
+					defs: this.getDefs(path),
+					textDocument,
+					xmlDocument: this.getXMLDocument(path)
+				})
 			}
 		})
 		connection.onNotification(DefFileRemovedNotificationType, path => {
@@ -146,7 +151,7 @@ export class DefTextDocuments {
 		connection.onNotification(ReferencedDefFileAddedNotificationType, param => {
 			console.log('ReferencedDefFileAddedNotificationType')
 			for (const [path, text] of Object.entries(param.files)) {
-				const document = TextDocument.create(URI.parse(path).path.toString(), 'xml', 1, text)
+				const document = TextDocument.create(path, 'xml', 1, text)
 				this.watchedFiles.set(path, document)
 				this.updateReference(param.version, path, document.getText())
 			}
@@ -177,7 +182,7 @@ export class DefTextDocuments {
 	 * clear internal documents.  
 	 * should be only called when [ConfigChanged](#) event is raised.
 	 */
-	clear () {
+	clear(): void {
 		this.databases = new Map()
 		this.watchedFiles = new Map()
 		this.xmlDocuments = new Map()
@@ -199,13 +204,19 @@ export class DefTextDocuments {
 		}
 	}
 
-	private update(version: string, path: URILike, content: string): void {
-		console.log('update')
+	private GetOrCreateDB(version: string): DefDatabase {
 		let db = this.databases.get(version)
 		if (!db) {
 			db = new DefDatabase(version)
 			this.databases.set(version, db)
 		}
+
+		return db
+	}
+
+	private update(version: string, path: URILike, content: string): void {
+		console.log('update')
+		const db = this.GetOrCreateDB(version)
 		const typeInfoInjector = this.versionDB?.get(version)?.injector
 		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
 		this.xmlDocuments.set(path, xmlDocument)
@@ -213,22 +224,19 @@ export class DefTextDocuments {
 		db.update(path, defs)
 	}
 
-	// 레퍼런스용 노드는 공용 노드로 인식해야함, 즉 모든 버전에 추가되어야 함
-	private updateReference (version: version, path: URILike, content: string): void {
-		const db = this.databases.get(version)
-		if (db) {
-			const typeInfoInjector = this.versionDB?.get(version)?.injector
-			const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
-			this.xmlDocuments.set(path, xmlDocument)
-			defs.map(def => Object.assign(def, { source: path }))
-			db.update(path, defs)
-		}
+	private updateReference(version: version, path: URILike, content: string): void {
+		const db = this.GetOrCreateDB(version)
+		const typeInfoInjector = this.versionDB?.get(version)?.injector
+		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
+		this.xmlDocuments.set(path, xmlDocument)
+		defs.map(def => Object.assign(def, { source: path }))
+		db.update(path, defs)
 	}
 
 	private async refreshDocuments() {
 		// this.databases.clear()
 		// for (const [key, textDocument] of this.watchedFiles.entries()) {
-			// this.update(key, textDocument.getText())
+		// this.update(key, textDocument.getText())
 		// }
 	}
 }
@@ -257,7 +265,7 @@ export interface iDefDatabase {
 	/** 
 	 * returns Name candidate for inheritance
 	 */
-	getNames (): string[]
+	getNames(): string[]
 }
 
 export class DefDatabase implements iDefDatabase {
@@ -299,7 +307,7 @@ export class DefDatabase implements iDefDatabase {
 		return []
 	}
 
-	getNames (): string[] {
+	getNames(): string[] {
 		return [...this._NameDatabase.keys()]
 	}
 
@@ -308,7 +316,7 @@ export class DefDatabase implements iDefDatabase {
 		for (const def of newDefs) {
 			if (!def.tag || !def.closed)
 				continue
-			
+
 			// FIXME - 이거 상속 아니어도 defDataBase는 만들어둬야할듯!!!
 			const defType = def.tag // defType
 			const defName = getDefName(def)
@@ -409,7 +417,7 @@ export class DefDatabase implements iDefDatabase {
 					this.disconnectReferences(def)
 					// remove references
 					this._crossRefWanters.delete(def)
-					
+
 					const Name = getName(def)
 					if (Name) {
 						const set = this._NameDatabase.get(Name)
@@ -430,7 +438,7 @@ export class DefDatabase implements iDefDatabase {
 
 	private disconnectReferences(def: referencedDef): void {
 		if (def.base) // remove cross-reference with parent
-			assert(def.base.derived.delete(def), 
+			assert(def.base.derived.delete(def),
 				`tried to remove parent reference ${def.tag} which is not valid`)
 
 		for (const derived of def.derived.values()) { // remove cross-reference with child
@@ -441,7 +449,7 @@ export class DefDatabase implements iDefDatabase {
 	}
 
 	// private getKey(def: def): string {
-		// const key = `start:${def.start}-end:${def.end}`
-		// return key
+	// const key = `start:${def.start}-end:${def.end}`
+	// return key
 	// }
 }

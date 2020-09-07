@@ -54,11 +54,7 @@ rwconfigrc.json will be an anchor to resolve relative path.
 - [ ] invalid (typo) / duplicate node validation
 - [ ] whitespace error validation
 - [ ] Texture path validation
+
 # Documentation
 
-we're looking for peoples to contribute documentation!
-any pull request are welcome.
-
-# Contribution
-any pull request are welcome!  
-// TODO - complete readme.md
+TODO

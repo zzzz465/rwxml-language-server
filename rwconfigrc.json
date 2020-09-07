@@ -9,6 +9,10 @@
             "Patches": "./1.1/Patches",
             "DefReferences": [
                 "path/to/defs" 
+            ],
+            "AssemblyReferences": [
+                "path/to/assemblies/Assembly-CSharp.dll",
+                "your/mod/assembly.dll"
             ]
         },
         "1.2" : {
