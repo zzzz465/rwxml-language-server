@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import '../parser/XMLParser';
-import { RWXMLCompletion } from '../features/RWXMLCompletion';
 import { parse, Node } from '../parser/XMLParser';
 import { BFS } from './utils';
 

@@ -25,7 +25,7 @@ import * as util from 'util'
 import { extractTypeInfos } from './extractor';
 import { Event } from '../common/event';
 import { DecoRequestType } from '../common/decoration';
-import { applyDecos } from './features/highlighter';
+import { applyDecos } from './features/decoration';
 
 const glob = util.promisify(glob_callback)
 const exists = util.promisify(fs.exists)

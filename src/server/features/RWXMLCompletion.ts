@@ -13,12 +13,9 @@ export interface filesQuery {
 }
 
 // TODO - need code refactor
-export class RWXMLCompletion {
-	constructor() {
 
-	}
 
-	doComplete(document: TextDocument,
+export function	doComplete(document: TextDocument,
 		position: Position,
 		XMLDocument: XMLDocument,
 		typeInfoMap: TypeInfoMap,
@@ -290,4 +287,3 @@ export class RWXMLCompletion {
 
 		return result
 	}
-}
