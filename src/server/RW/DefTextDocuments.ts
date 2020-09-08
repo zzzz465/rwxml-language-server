@@ -7,7 +7,7 @@ import { parse, XMLDocument } from '../parser/XMLParser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { assert } from 'console';
-import { typeDB } from '../typeDB';
+import { versionDB } from '../versionDB';
 
 type version = string;
 
@@ -51,7 +51,7 @@ export class DefTextDocuments {
 	onDocumentAdded: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
 	onDocumentDeleted: Event<URI>
-	versionDB?: Map<string, typeDB>
+	versionDB?: Map<string, versionDB>
 	constructor() {
 		this.databases = new Map()
 		this.watchedFiles = new Map()

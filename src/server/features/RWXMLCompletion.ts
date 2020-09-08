@@ -7,6 +7,7 @@ import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
 import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
 import { AsEnumerable } from 'linq-es2015';
+import { versionDB } from '../versionDB';
 
 export interface filesQuery {
 	(path: URILike): Promise<URILike[]>
@@ -14,6 +15,13 @@ export interface filesQuery {
 
 // TODO - need code refactor
 
+export interface validationParams {
+	version: string
+	document: TextDocument
+	position: Position
+	xmlDocument: XMLDocument
+	DB: versionDB
+}
 
 export function	doComplete(document: TextDocument,
 		position: Position,

@@ -23,7 +23,7 @@ import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNod
 import { /* absPath */ URILike } from '../common/common';
 import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
-import { typeDB } from './typeDB';
+import { versionDB } from './versionDB';
 import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decoration';
 import { BFS } from './utils/nodes';
 import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
@@ -99,7 +99,7 @@ connection.onInitialized(() => {
 // const mockTypeData: any[] = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
 // const typeInfos = objToTypeInfos(mockTypeData)
 
-let versionDB: Map<string, typeDB> = new Map()
+let versionDB: Map<string, versionDB> = new Map()
 
 const defTextDocuments = new DefTextDocuments()
 defTextDocuments.versionDB = (function () {
