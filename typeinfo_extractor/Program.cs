@@ -10,6 +10,7 @@ using Newtonsoft.Json.Serialization;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
+using RimWorld;
 
 namespace Program
 {
@@ -169,6 +170,17 @@ namespace Program
 
         static void PopulateData()
         {
+            var integers = new HashSet<Type>(new Type[] {
+                        typeof(byte), typeof(sbyte), typeof(Int16), typeof(UInt16), typeof(Int32), typeof(UInt32),
+                        typeof(Int64), typeof(UInt64)
+                    });
+
+            var floats = new HashSet<Type>(new Type[]
+            {
+                        typeof(Single), typeof(double)
+            });
+            var stringType = typeof(string);
+
             var targets = typeDict;
 
             var def = typeof(Def);
@@ -181,13 +193,14 @@ namespace Program
                         .Select(name => new CompletionItem() { label = name, kind = CompletionItemKind.EnumMember })
                         .ToArray();
                     typeInfo.leafNodeCompletions = values;
+                    typeInfo.specialType.@enum = true;
                 }
                 if(type.IsGenericType)
                 {
                     if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>).GetGenericTypeDefinition())
                     {
                         var T = type.GetGenericArguments()[0];
-                        ref var enumerable = ref typeInfo.specialTypes.enumerable;
+                        ref var enumerable = ref typeInfo.specialType.enumerable;
                         enumerable.genericType = Util.GetTypeIdentifier(T);
                         enumerable.enumerableType = "list";
                     }
@@ -195,16 +208,30 @@ namespace Program
                 else if(type.IsArray)
                 {
                     var T = type.GetElementType();
-                    ref var enumerable = ref typeInfo.specialTypes.enumerable;
+                    ref var enumerable = ref typeInfo.specialType.enumerable;
                     enumerable.genericType = Util.GetTypeIdentifier(T);
                     enumerable.enumerableType = "array";
                 }
-                if(type.IsPrimitive)
+                if (type == stringType)
+                {
+                    typeInfo.specialType.@string = true;
+                }
+                if (type.IsPrimitive)
                 {
                     typeInfo.leafNodeCompletions = new CompletionItem[] { new CompletionItem() { label = type.Name } };
+                    if (integers.Contains(type))
+                    {
+                        typeInfo.specialType.number = true;
+                        typeInfo.specialType.integer = true;
+                    }
+                    else if(floats.Contains(type))
+                    {
+                        typeInfo.specialType.number = true;
+                        typeInfo.specialType.@float = true;
+                    }
                 }
                 if(type.IsSubclassOf(def)) {
-                    ref var defType = ref typeInfo.specialTypes.defType;
+                    ref var defType = ref typeInfo.specialType.defType;
                     if(type.IsArray)
                         defType.name = type.GetElementType().Name;
                     else
@@ -212,14 +239,14 @@ namespace Program
                 }
                 if(type.GetField("compClass") != null)
                 {
-                    typeInfo.specialTypes.compClass.isComp = true;
+                    typeInfo.specialType.compClass.isComp = true;
                     var baseType = type;
                     var objType = typeof(object);
                     while (baseType.BaseType != objType && baseType.GetField("compClass") != null)
                     { // possible bug - baseType was not registered in static typeDict, maybe?
                         baseType = baseType.BaseType;
                     }
-                    typeInfo.specialTypes.compClass.baseClass = Util.GetTypeIdentifier(baseType);
+                    typeInfo.specialType.compClass.baseClass = Util.GetTypeIdentifier(baseType);
                 }
             }
         }

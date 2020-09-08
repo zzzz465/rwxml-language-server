@@ -79,7 +79,7 @@ namespace Program
         public bool isDefNode { get; set; }
         public CompletionItem[] leafNodeCompletions { get; set; }
         public string typeIdentifier;
-        public SpecialType specialTypes;
+        public SpecialType specialType;
         public Dictionary<string, string> childNodes { get; set; } = new Dictionary<string, string>();
         public bool ShouldSerializechildNodes()
         {
@@ -98,6 +98,13 @@ namespace Program
         public def defType;
         public Enumerable enumerable;
         public CompClass compClass;
+        [JsonProperty("enum")]
+        public bool @enum;
+        public bool number, integer;
+        [JsonProperty("float")]
+        public bool @float;
+        [JsonProperty("string")]
+        public bool @string;
 
         public struct def
         {

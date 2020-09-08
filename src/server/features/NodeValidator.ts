@@ -1,4 +1,4 @@
-import { TypeInfoMap, typeNode, def, TypeIdentifier, isTypeNode, TypeInfo } from '../RW/TypeInfo';
+import { TypeInfoMap, typeNode, def, TypeIdentifier, isTypeNode, TypeInfo } from '../../common/TypeInfo';
 import { Node, XMLDocument } from '../parser/XMLParser';
 import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';

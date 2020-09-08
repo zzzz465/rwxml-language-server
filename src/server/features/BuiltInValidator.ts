@@ -1,5 +1,5 @@
 import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from './NodeValidator';
-import { TypeIdentifier, typeNode, TypeInfo } from '../RW/TypeInfo';
+import { TypeIdentifier, typeNode, TypeInfo } from '../../common/TypeInfo';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import { Node } from '../parser/XMLParser';
 import { Range } from 'vscode-languageserver-textdocument';
@@ -125,7 +125,7 @@ function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult
 function checkDuplicateNode(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const diagnostics: Diagnostic[] = []
 	const marker: Set<string> = new Set() // tag marker
-	if (!node.typeInfo.specialTypes?.enumerable) {
+	if (!node.typeInfo.specialType?.enumerable) {
 		for (const childNode of node.children) {
 			if (!childNode.tag) continue
 			if (marker.has(childNode.tag)) {
@@ -217,8 +217,8 @@ function checkInvalidNode (this: NodeValidatorContext, node: typeNode): Validati
 function checkInvalidDefNode (this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const result: ValidationResult = {}
 	const typeInfo = node.typeInfo
-	if (typeInfo.specialTypes?.defType) {
-		const defType = typeInfo.specialTypes.defType.name
+	if (typeInfo.specialType?.defType) {
+		const defType = typeInfo.specialType.defType.name
 		const defName = node.text?.content
 		if (this.defDatabase && defName)
 			if (!this.defDatabase.get2(defType, defName))

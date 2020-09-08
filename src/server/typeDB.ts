@@ -1,4 +1,4 @@
-import { TypeInfoMap, TypeInfoInjector } from './RW/TypeInfo';
+import { TypeInfoMap, TypeInfoInjector } from '../common/TypeInfo';
 
 // TODO - rename this, please
 export interface typeDB {

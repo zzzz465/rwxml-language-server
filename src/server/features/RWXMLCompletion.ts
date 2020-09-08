@@ -2,7 +2,7 @@ import { TextDocument, Position, Range } from 'vscode-languageserver-textdocumen
 import { XMLDocument, Node } from '../parser/XMLParser';
 import { CompletionList, CompletionItem } from 'vscode-languageserver';
 import { createScanner, TokenType, ScannerState } from '../parser/XMLScanner';
-import { TypeInfo, isTypeNode, typeNode, isDef, TypeInfoMap } from '../RW/TypeInfo'
+import { TypeInfo, isTypeNode, typeNode, isDef, TypeInfoMap } from '../../common/TypeInfo'
 import { URILike } from '../../common/common'
 import { relative, basename } from 'path';
 import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
@@ -95,10 +95,10 @@ export class RWXMLCompletion {
 		function collectNodeTextValueSuggestions(): CompletionList {
 			if (isTypeNode(node)) {
 				const typeInfo = node.typeInfo
-				if (typeInfo.specialTypes) {
-					if (typeInfo.specialTypes.defType) { // suggest defNames...
+				if (typeInfo.specialType) {
+					if (typeInfo.specialType.defType) { // suggest defNames...
 						if (defDatabase) {
-							const defs = defDatabase.getDefs(typeInfo.specialTypes.defType.name)
+							const defs = defDatabase.getDefs(typeInfo.specialType.defType.name)
 							return {
 								isIncomplete: false,
 								items: defs.map(def => ({
@@ -110,7 +110,7 @@ export class RWXMLCompletion {
 				} else if (typeInfo.isLeafNode && typeInfo.leafNodeCompletions) {
 					return {
 						isIncomplete: false,
-						items: typeInfo.leafNodeCompletions
+						items: [...typeInfo.leafNodeCompletions.values()]  // typeInfo.leafNodeCompletions
 					}
 				}
 			}
@@ -133,7 +133,7 @@ export class RWXMLCompletion {
 			const parentNode = node.parent || XMLDocument.findNodeBefore(node.start)
 			if (isTypeNode(parentNode)) {
 				const typeInfo = parentNode.typeInfo
-				if (typeInfo.specialTypes?.enumerable && !typeInfo.specialTypes.enumerable.isSpecial) {
+				if (typeInfo.specialType?.enumerable && !typeInfo.specialType.enumerable.isSpecial) {
 					result.items.push({
 						label: 'li'
 					})
@@ -143,7 +143,7 @@ export class RWXMLCompletion {
 						result.items = nodes
 					}
 					if (typeInfo.suggestedAttributes) {
-						result.items = typeInfo.suggestedAttributes
+						result.items = [...typeInfo.suggestedAttributes.values()]
 					}
 				}
 			}
@@ -182,11 +182,11 @@ export class RWXMLCompletion {
 
 			switch (attrName) {
 				case 'Class': {
-					if (node.tag === 'li' && parent && isTypeNode(parent) && parent.typeInfo.specialTypes?.enumerable) {
-						const genericType = parent.typeInfo.specialTypes.enumerable.genericType
+					if (node.tag === 'li' && parent && isTypeNode(parent) && parent.typeInfo.specialType?.enumerable) {
+						const genericType = parent.typeInfo.specialType.enumerable.genericType
 						const typeInfo = typeInfoMap.getByTypeIdentifier(genericType)
 						if (typeInfo) {
-							const name = typeInfo.specialTypes?.compClass?.baseClass
+							const name = typeInfo.specialType?.compClass?.baseClass
 							if (name) {
 								const suggestions = [...typeInfoMap.getComps(name)]
 								result.items = AsEnumerable(suggestions).Select(([name, _]) => name)

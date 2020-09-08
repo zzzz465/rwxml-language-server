@@ -1,6 +1,6 @@
 import { RequestType, NotificationType } from 'vscode-languageserver';
 // import { absPath } from './common'
-import { def } from '../server/RW/TypeInfo';
+import { def } from './TypeInfo';
 import { URILike } from './common';
 import { type } from 'os';
 

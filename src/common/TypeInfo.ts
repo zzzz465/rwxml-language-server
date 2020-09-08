@@ -37,22 +37,43 @@ export interface specialType {
 	compClass?: {
 		baseClass: TypeIdentifier
 	}
+	enum?: boolean
+	number?: boolean // not supported yet
+	integer?: boolean // not supported yet
+	float?: boolean // not supported yet
+	string?: boolean // not supported yet
 }
 
-export interface TypeInfo { // 이거만 가져와보자
-	isLeafNode: boolean
+export interface TypeInfo {
+	isLeafNode: boolean // does we really need this? maybe.
 	/** ${namespace}.${classname} */
 	typeIdentifier: TypeIdentifier
-	specialTypes?: specialType
-	suggestedAttributes?: CompletionItem[]
-	leafNodeCompletions?: CompletionItem[]
+	specialType?: specialType
+	suggestedAttributes?: Map<string, CompletionItem> // CompletionItem[]
+	leafNodeCompletions?: Map<string, CompletionItem> // CompletionItem[]
 	childNodes?: Map<string, TypeIdentifier>
 	// 하위 노드는 string key을 suggestion, 그리고 CompletionItem[]은 말단노드의 string 값을 추천할때 사용됨
+}
+
+function ObjToMap(object: any): Map<string, CompletionItem> {
+	const result = new Map<string, CompletionItem>()
+	for (const value of Object.values<CompletionItem>(object))
+		result.set(value.label, value)
+
+	return result
 }
 
 export class TypeInfo implements TypeInfo {
 	constructor (data: any) { // only accepts
 		Object.assign(this, data)
+
+		if (this.suggestedAttributes) {
+			this.suggestedAttributes = ObjToMap(this.suggestedAttributes)
+		}
+
+		if (this.leafNodeCompletions) {
+			this.leafNodeCompletions = ObjToMap(this.leafNodeCompletions)
+		}
 
 		if(!_.isEmpty(data.childNodes)) {
 			const childNodes: Record<string, TypeIdentifier> = data.childNodes
@@ -94,8 +115,8 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 		for (const typeInfo of typeInfos) {
 			this.set(typeInfo.typeIdentifier, typeInfo)
 
-			if (typeInfo.specialTypes) {
-				const defType = typeInfo.specialTypes.defType?.name
+			if (typeInfo.specialType) {
+				const defType = typeInfo.specialType.defType?.name
 				if (defType) {
 					if (!this.typeMap.has(defType))
 						this.typeMap.set(defType, typeInfo)
@@ -103,11 +124,11 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 						console.log(`duplicate defType ${defType}`)
 				}
 
-				if (typeInfo.specialTypes.compClass) {
+				if (typeInfo.specialType.compClass) {
 					const match = typeInfo.typeIdentifier.match(/(?<=\.)[\w]+$/) // match className
 					if (match) {
 						const name = match[0]
-						const baseName = typeInfo.specialTypes.compClass.baseClass
+						const baseName = typeInfo.specialType.compClass.baseClass
 						let map = this.compMap.get(baseName)
 						if(!map) {
 							map = new Map()
@@ -195,12 +216,12 @@ export class TypeInfoInjector {
 		while (queue.length > 0) {
 			const node = queue.pop()!
 			const typeInfo = node.typeInfo
-			const specialTypes = typeInfo.specialTypes
+			const specialTypes = typeInfo.specialType
 
 			// if the node is List<T> and it's not treated as special (normal <li></li>)
 			// we inject genericType into the node.
-			if (typeInfo.specialTypes?.enumerable && typeInfo.specialTypes.enumerable.isSpecial !== true) {
-				const genericType = typeInfo.specialTypes.enumerable.genericType
+			if (typeInfo.specialType?.enumerable && typeInfo.specialType.enumerable.isSpecial !== true) {
+				const genericType = typeInfo.specialType.enumerable.genericType
 				const childType = this.typeInfoMap.getByTypeIdentifier(genericType)
 				if (!childType) continue
 				for (const childNode of node.children)
