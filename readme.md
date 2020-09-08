@@ -2,13 +2,6 @@
 Language Server implementation for rimworld xml modding  
 ![preview](./Images/gif1.gif)
 
-## but why?
-
-As the limitation of xml modding, most modders have similar problems.  
-Searching defs, open decompiler and read what field the class have,  
-use time figuring out what this node does, continuously re-open the game just to find typo...  
-these things make modding difficult, ** which can be avoided. **
-
 ## Installation
 install via vscode marketspace
 
@@ -27,7 +20,7 @@ note that only one config file is allowed in the entire project file.
 			"DefReferences": [ // refernece to core, or other dependency mods.
 				"absolute/path/to/def", 
 				"realtive/path/to/def"
-			],
+      ],
 			"AssemblyReferences": [ // referencing dll files to extract typeInfos.
 				"absoulte/path/to/Rimworld/Assembly-CSharp.dll", // use absolute path
 				"relative/path/to/your/assemblies/my-assembly.dll", // use relative path
@@ -44,28 +37,39 @@ note that only one config file is allowed in the entire project file.
 you can use absolute or relative path.  
 rwconfigrc.json will be an anchor to resolve relative path.
 
-# features
-
+# TO-DO features
 - [x] XML Node tag suggestion
 - [x] dynamic type extraction
 - [x] Inheritance Attribute suggestion
+- [x] AlienRace / Garam support
+- [x] text decoration
+- [ ] codelens functionality
 - [ ] Texture preview
 - [ ] Texture path suggestion
-- [ ] Rename defName / Name in all files
 - [ ] find parent / childrens
-- [x] AlienRace / Garam support
+- [ ] Rename defName / Name in all files
+- [ ] patch operation snippets
 
 # Validation
 
 - [x] Def reference validation
-- [ ] primitive value validation
 - [x] invalid (typo) / duplicate node validation
+- [ ] primitive value validation
 - [ ] whitespace error validation
 - [ ] Texture path validation
+... and more!  
 
 # Documentation
 
 TODO
+
+## but why? - motivations, etc...
+
+As the limitation of xml modding, most modders have similar problems.  
+Searching defs, open decompiler and read what field the class have,  
+use time figuring out what this node does, continuously re-open the game just to find typo...  
+these things make modding difficult, **which can be avoided.**
+
 
 # Development
 ### Prerequisites
