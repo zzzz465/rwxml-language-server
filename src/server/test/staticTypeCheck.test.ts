@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { parse } from '../parser/XMLParser'
-import { objToTypeInfos, TypeInfoInjector, TypeInfoMap, isTypeNode } from '../RW/TypeInfo'
+import { objToTypeInfos, TypeInfoInjector, TypeInfoMap, isTypeNode } from '../../common/TypeInfo'
 import * as fs from 'fs'
 import * as path from 'path'
 import { BFS2 } from './utils'

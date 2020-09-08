@@ -1,5 +1,5 @@
 import { URILike } from '../../common/common'
-import { def, getDefName, TypeInfoInjector, isTypeNode, getName } from './TypeInfo';
+import { def, getDefName, TypeInfoInjector, isTypeNode, getName } from '../../common/TypeInfo';
 import { IConnection, TextDocuments } from 'vscode-languageserver';
 import { Event } from '../../common/event'
 import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType } from '../../common/Defs';
@@ -160,6 +160,7 @@ export class DefTextDocuments {
 
 		this.textDocuments.listen(connection)
 		this.textDocuments.onDidOpen(({ document }) => {
+			console.log('textDocument.onDidOpen')
 			this.watchedFiles.set(document.uri, document)
 		})
 		this.textDocuments.onDidChangeContent(({ document }) => {

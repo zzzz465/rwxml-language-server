@@ -1,7 +1,7 @@
-import '../parser/XMLParser'
-import '../parser/XMLScanner'
-import { XMLDocument, Node } from '../parser/XMLParser'
-import { CompletionItem, MarkupContent, CompletionItemKind } from 'vscode-languageserver'
+import '../server/parser/XMLParser'
+import '../server/parser/XMLScanner'
+import { Node } from '../server/parser/XMLParser'
+import { CompletionItem } from 'vscode-languageserver'
 import * as _ from 'lodash'
 
 export interface defInfo {
