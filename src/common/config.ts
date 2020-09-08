@@ -33,13 +33,10 @@ export interface ConfigChangedParams {
 	data: {
 		[version: string]: {
 			/** array of typeinfo */
-			typeInfoDatum: any
+			rawTypeInfo: any
 		}
 	}
 }
-
-/** @deprecated replaced to ConfigChangedRequestType */
-export const ConfigChangedNotificationType = new NotificationType<ConfigDatum>('config/changed')
 
 export const ConfigChangedRequestType = new RequestType<ConfigChangedParams, void, undefined>('config/changed')
 

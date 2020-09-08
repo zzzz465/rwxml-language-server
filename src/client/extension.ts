@@ -8,7 +8,7 @@ import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
 import * as vscode from 'vscode'
 import { Uri } from 'vscode'
 import { parseConfig } from './config'
-import { ConfigDatum, ConfigChangedNotificationType, ConfigChangedRequestType, ConfigChangedParams } from '../common/config'
+import { ConfigDatum, ConfigChangedRequestType, ConfigChangedParams } from '../common/config'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType, RefDefFilesChangedParams, DefFilesChanged } from '../common/Defs'
 import { glob as glob_callback } from 'glob'
 
@@ -144,8 +144,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 				const p = (async () => {
 					const res = await checkPathValid(assemRefs)
 					if (res.valid) {
-						const raw_typeinfo = await extractTypeInfos(assemRefs)
-						parms.data[version] = raw_typeinfo
+						const rawTypeInfo = await extractTypeInfos(assemRefs)
+						parms.data[version] = { rawTypeInfo }
 					} else {
 						const errmsg = `invalid path:${res.invalidItems}`
 						vscode.window.showErrorMessage(errmsg)
