@@ -70,8 +70,9 @@ describe('basic static type checking test', function () {
 		expect(ingestible).toBeTruthy() // null check
 		const maxNumToIngestAtOnce = ingestible.children.find(n => n.tag === 'maxNumToIngestAtOnce')!
 		expect(maxNumToIngestAtOnce).toBeTruthy() // null check
-		
-		const validator = new NodeValidator(typeInfoMap, textDoc, xmlDoc, [builtInValidationParticipant])
+    
+    // FIXME - first parameter is not a valid one... it still pass tests though.
+		const validator = new NodeValidator(<any>undefined, textDoc, xmlDoc, [builtInValidationParticipant])
 		const result = validator.validateNodes()
     
     const { start: textStart, end: textEnd } = maxNumToIngestAtOnce.text!

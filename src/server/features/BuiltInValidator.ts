@@ -145,7 +145,7 @@ function checkDuplicateNode(this: NodeValidatorContext, node: typeNode): Validat
 
 function checkTexPathValid (this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const type = node.typeInfo
-	if (!this.projectFiles) {
+	if (!this.textureFiles) {
 		return {
 			completeValidation: true,
 			diagnostics: [{
@@ -156,7 +156,7 @@ function checkTexPathValid (this: NodeValidatorContext, node: typeNode): Validat
 		}
 	} else if (node.text) {
 		const text = node.text
-		if ((!this.projectFiles.has(text.content))) {
+		if ((!this.textureFiles.has(text.content))) {
 			return {
 				completeValidation: true,
 				diagnostics: [{

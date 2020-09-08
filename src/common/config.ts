@@ -40,22 +40,39 @@ export interface ConfigChangedParams {
 
 export const ConfigChangedRequestType = new RequestType<ConfigChangedParams, void, undefined>('config/changed')
 
-export function getLoadFolders (config: ConfigDatum, path: URILike): LoadFolders | undefined {
-	for (const [version, object] of Object.entries(config.folders))
-		if (isSubFile(object, path))
-			return object
+export const enum fileKind {
+	about,
+	def,
+	texture,
+	referencedDef
 }
 
-export function isSubFile (folders: LoadFolders, path: URILike): boolean {
-	for (const dir of getDirs(folders)) {
-		if (dir !== undefined) {
-			if (path.startsWith(dir)) // only works when two paths are absolute path
-				return true
+function isSubFile(parent: URILike, child: URILike): boolean {
+	return child.startsWith(parent)
+}
+
+export function getVersion (config: ConfigDatum, uri: URILike): { kind: fileKind, version: string } | undefined {
+	let result: { kind: fileKind, version: string } | undefined = undefined
+
+	for (const [version, object] of Object.entries(config.folders)) {
+		if (object.Defs) {
+			if (isSubFile(object.Defs, uri))
+				result = { kind: fileKind.def, version }
+		} else if (object.Textures) {
+			if (isSubFile(object.Textures, uri))
+				result = { kind: fileKind.texture, version }
+		} else if (object.DefReferences) {
+			for (const path of object.DefReferences) {
+				if (isSubFile(path, uri)) {
+					result = { kind: fileKind.referencedDef, version }
+					break
+				}
+			}
 		}
-	}
-	return false
-}
 
-function getDirs (folders: LoadFolders) {
-	return [folders.About, folders.Assemblies, folders.Languages, folders.Defs, folders.Textures, folders.Sounds, folders.Patches]
+		if (result)
+			break
+	}
+
+	return result
 }

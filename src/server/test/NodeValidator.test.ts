@@ -43,7 +43,8 @@ const mockData = ([ // note that on each line, \n character is appended at the e
 
 const textDoc = TextDocument.create('', '', 1, mockData)
 const xmlDoc = parse(mockData)
-const nodeValidator = new NodeValidator(new TypeInfoMap([]), textDoc, xmlDoc, [])
+// FIXME - the first parameter is not a valid one, it still pass tests though.
+const nodeValidator = new NodeValidator(<any>undefined, textDoc, xmlDoc, [])
 
 test('getRange test', function () {
 	const node = BFS2(xmlDoc.root!, 'ThingDef')!

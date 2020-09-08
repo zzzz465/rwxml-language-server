@@ -1,16 +1,17 @@
-import { TypeInfoMap, typeNode, def, TypeIdentifier, isTypeNode, TypeInfo } from '../../common/TypeInfo';
+import { TypeInfoMap, typeNode, def, isTypeNode, TypeInfo } from '../../common/TypeInfo';
 import { Node, XMLDocument } from '../parser/XMLParser';
 import { Diagnostic } from 'vscode-languageserver';
 import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
 import { URILike } from '../../common/common';
 import { assert } from 'console';
 import { createScanner, TokenType } from '../parser/XMLScanner';
-import { DefDatabase, iDefDatabase } from '../RW/DefTextDocuments';
+import { iDefDatabase } from '../RW/DefTextDocuments';
+import { versionDB } from '../versionDB';
 
 const _WHS = ' '.charCodeAt(0)
 
 export interface NodeValidatorContext {
-	projectFiles?: ProjectFiles
+	textureFiles?: Set<URILike>
 	defDatabase?: iDefDatabase
 	getRangeIncludingTag (node: Node): Range
 	getRange (start: number, end: number): Range
@@ -33,19 +34,12 @@ export interface NodeValidationParticipant {
 	getValidator (typeId: TypeInfo): NodeValidateFunction[]
 }
 
-export type ProjectFiles = Set<URILike>
-
 export class NodeValidator implements NodeValidatorContext {
 	private diagnostics: Diagnostic[]
-	/** 
-	 * @param projectFiles which contain all files in the specific version project folders
-	 * this is used to check the file exists, it can be undefined
-	 */
-	constructor (private map: TypeInfoMap, 
+	constructor (private versionDB: versionDB, 
 		private textDocument: TextDocument, 
 		private XMLDocument: XMLDocument,
 		private nodeValidationParticipants: NodeValidationParticipant[],
-		readonly projectFiles?: ProjectFiles,
 		readonly defDatabase?: iDefDatabase) {
 		this.diagnostics = []
 	}

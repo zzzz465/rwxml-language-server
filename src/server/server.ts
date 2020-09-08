@@ -17,8 +17,8 @@ import { URI } from 'vscode-uri'
 import './parser/XMLParser'
 import './testData/output.json'
 import { doComplete } from './features/RWXMLCompletion'
-import { ConfigDatum, getLoadFolders, ConfigChangedRequestType } from '../common/config'
-import { DefTextDocuments, isReferencedDef, isSourcedDef } from './RW/DefTextDocuments';
+import { ConfigDatum, ConfigChangedRequestType, getVersion } from '../common/config'
+import { DefTextDocuments, isReferencedDef, isSourcedDef, DefTextDocument } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode } from '../common/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
 import { NodeValidator } from './features/NodeValidator';
@@ -27,6 +27,7 @@ import { versionDB } from './versionDB';
 import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decoration';
 import { BFS } from './utils/nodes';
 import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
+import { XMLDocument } from './parser/XMLParser';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -61,7 +62,7 @@ connection.onInitialize((params: InitializeParams) => {
 			// Tell the client that this server supports code completion.
 			completionProvider: {
 				resolveProvider: true,
-				triggerCharacters: [ '<' ]
+				triggerCharacters: ['<']
 			},
 			// definitionProvider: true,
 			declarationProvider: true,
@@ -100,23 +101,12 @@ connection.onInitialized(() => {
 // const typeInfos = objToTypeInfos(mockTypeData)
 
 let versionDB: Map<string, versionDB> = new Map()
+let config: ConfigDatum = { folders: {} }
 
 const defTextDocuments = new DefTextDocuments()
-defTextDocuments.versionDB = (function () {
-	const x = {
-		get versionDB() {
-			return versionDB
-		}
-	}
-	return x.versionDB
-})()
+defTextDocuments.getVersionDB = (version) => versionDB.get(version)
 
-defTextDocuments.setVersionGetter((path) => {
-	if (config)
-		return getLoadFolders(config, path)?.version
-})
-
-let config: ConfigDatum | null = null
+defTextDocuments.getVersion = (uri) => getVersion(config, uri)?.version
 
 /** version - URILike, 파일이 있는지 없는지 체크하기 위함 */
 const files: Map<string, Set<URILike>> = new Map()
@@ -127,7 +117,7 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 	config = configDatum
 	versionDB = new Map() // FIXME - delete this
 	for (const [version, props] of Object.entries(data)) {
-		const map = new TypeInfoMap ( objToTypeInfos(props.rawTypeInfo) )
+		const map = new TypeInfoMap(objToTypeInfos(props.rawTypeInfo))
 		versionDB.set(version, {
 			injector: new TypeInfoInjector(map),
 			typeInfoMap: map,
@@ -135,7 +125,6 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 		})
 	}
 	defTextDocuments.clear()
-	defTextDocuments.versionDB = versionDB
 })
 
 connection.onNotification(TextureChangedNotificaionType, ({ files, version }) => {
@@ -256,48 +245,42 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 	console.log('completion request')
 	const document = defTextDocuments.getDocument(uri)
 	const xmlDocument = defTextDocuments.getXMLDocument(uri)
-	const defDatabase = defTextDocuments.getDefDatabaseByUri(uri) || undefined
+	const defDatabase = defTextDocuments.getDefDatabaseByUri(uri)
 	if (xmlDocument && document && config) {
-		const version = getLoadFolders(config, document.uri)?.version
-		if (version) {
-			const typeInfoMap = versionDB.get(version)?.typeInfoMap
-			if (typeInfoMap) {
-				const result = doComplete(document, position, xmlDocument, typeInfoMap, defDatabase)
-				console.log('resolved')
-				return result
-			}
-		}
+		const version = document.rwVersion
+		const DB = versionDB.get(version)
+		if (DB)
+			return doComplete({ DB, defDatabase, document, position, version, xmlDocument })
 	}
 })
 
 connection.onCompletionResolve(handler => {
 	return handler
 })
+/**
+ * 
+ * @param document 
+ * @param xmldoc null -> no document found | undefined -> not given (try find internally)
+ */
+function doValidate(document: DefTextDocument, xmldoc?: XMLDocument | null) {
+	const xmlDoc = xmldoc !== null ? ( xmldoc || defTextDocuments.getXMLDocument(document.uri) ) : null
+	if (!xmlDoc) return
+	const version = document.rwVersion
+	const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri)
+	const DB = versionDB.get(version)
+	if (DB) {
+		const validator = new NodeValidator(DB, document, xmlDoc, [builtInValidationParticipant], defDatabase)
+		const diagnostics = validator.validateNodes()
+		connection.sendDiagnostics({ uri: document.uri, diagnostics })
+	}
+}
 
 function validateAll() {
 	for (const document of defTextDocuments.getDocuments()) {
-		const xmlDoc = defTextDocuments.getXMLDocument(document.uri)
-		if (!xmlDoc) continue
-		let version: string | undefined = undefined
-		let files2: Set<string> | undefined = undefined
-		if (config) {
-			version = getLoadFolders(config, document.uri)?.version
-			if (version)
-				files2 = files.get(version)
-		}
-		if (version) {
-			const typeInfoMap = versionDB.get(version)?.typeInfoMap
-			if (typeInfoMap) {
-				const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
-				const validator = new NodeValidator(typeInfoMap, document, xmlDoc,
-					[builtInValidationParticipant], 
-					files2, defDatabase)
-					const result = validator.validateNodes()
-					connection.sendDiagnostics({ uri: document.uri, diagnostics: result })
-			}
-		}
+		doValidate(document)
 	}
 }
+
 
 defTextDocuments.onReferenceDocumentsAdded.subscribe({}, () => {
 	console.log('defTextDocuments.onReferenceDocumentsAdded')
@@ -308,43 +291,10 @@ defTextDocuments.onReferenceDocumentsAdded.subscribe({}, () => {
 defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs, xmlDocument }) => {
 	console.log('defTextDocuments.onDocumentAdded')
 	validateAll()
-	/*
-	if (!xmlDocument) return
-	let files2: Set<string> | undefined = undefined
-	if (config) {
-		const version = getLoadFolders(config, document.uri)?.version
-		if (version)
-			files2 = files.get(version)
-	}
-	const validator = new NodeValidator(typeInfoMap,
-		document,
-		xmlDocument,
-		[builtInValidationParticipant],
-		files2)
-	const validationResult = validator.validateNodes()
-	connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
-	*/
 }))
 
-defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument: document, defs, xmlDocument }) => {
-	console.log('defTextDocuments.onDocumentChanged + validate')
-	if (!xmlDocument) return
-	const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri) || undefined
-	let files2: Set<string> | undefined = undefined
-	let version: string | undefined = undefined
-	if (config) {
-		version = getLoadFolders(config, document.uri)?.version
-		if (version)
-			files2 = files.get(version)
-	}
-	if (version) {
-		const typeInfoMap = versionDB.get(version)?.typeInfoMap
-		if (typeInfoMap) {
-			const validator = new NodeValidator(typeInfoMap, document, xmlDocument, [builtInValidationParticipant], files2, defDatabase)
-			const validationResult = validator.validateNodes()
-			connection.sendDiagnostics({ uri: document.uri, diagnostics: validationResult })
-		}
-	}
+defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocument }) => {
+	doValidate(textDocument, xmlDocument || null)
 })
 
 connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
@@ -364,7 +314,7 @@ connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
 					if (node.text) {
 						const text = node.text.content
 						// only check exact match
-						if(typeInfo.leafNodeCompletions.has(text)) {
+						if (typeInfo.leafNodeCompletions.has(text)) {
 							items.push({
 								range: {
 									start: textDoc.positionAt(node.text.start),
