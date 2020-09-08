@@ -13,12 +13,3 @@ export type URILike = string
 
 /** relative path string */
 export type relativePath = string
-
-export type respond = {
-	URILike: URILike,
-	text: string
-}
-
-export const FileRequestType = new RequestType<URILike, Uint8Array, undefined>('File2/Request')
-
-// export const TextReuqestType = new RequestType<URILike[], respond[], undefined>('text/request')

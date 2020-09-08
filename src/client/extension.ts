@@ -134,21 +134,28 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 		const configDatum = parseConfig(object, configUri)
 
-		const parms: ConfigChangedParams = { configDatum, typeInfoDatum: {} }
+		const parms: ConfigChangedParams = { configDatum, data: {} }
+
+		const promises: Promise<void>[] = []
 
 		for (const [version, obj] of Object.entries(configDatum.folders)) {
 			if (obj.AssemblyReferences) {
-				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath)
-				const res = await checkPathValid(assemRefs)
-				if (res.valid) {
-					const raw_typeinfo = await extractTypeInfos(assemRefs)
-					parms.typeInfoDatum[version] = raw_typeinfo
-				} else {
-					const errmsg = `invalid path:${res.invalidItems}`
-					vscode.window.showErrorMessage(errmsg)
-				}
+				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath);
+				const p = (async () => {
+					const res = await checkPathValid(assemRefs)
+					if (res.valid) {
+						const raw_typeinfo = await extractTypeInfos(assemRefs)
+						parms.data[version] = raw_typeinfo
+					} else {
+						const errmsg = `invalid path:${res.invalidItems}`
+						vscode.window.showErrorMessage(errmsg)
+					}
+				})()
+				promises.push(p)
 			}
 		}
+
+		await Promise.all(promises)
 
 		// await server to be ready.
 		await client.sendRequest(ConfigChangedRequestType, parms)

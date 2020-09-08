@@ -29,7 +29,13 @@ type typeInfoDatum = any[]
 /** re-initialize everything when the config changes */
 export interface ConfigChangedParams {
 	configDatum: ConfigDatum
-	typeInfoDatum: { [version: string]: any }
+	/** data arguments for each version */
+	data: {
+		[version: string]: {
+			/** array of typeinfo */
+			typeInfoDatum: any
+		}
+	}
 }
 
 /** @deprecated replaced to ConfigChangedRequestType */

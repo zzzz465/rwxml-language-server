@@ -1,5 +1,4 @@
-import { disposeWatchFileRequestType, disposeResult, WatchFileRequestType, WatchFileRequestParams, WatchFileAddedNotificationType, WatchFileChangedNotificationType, WatchFileDeletedNotificationType } from '../common/fileWatcher'
-import { LanguageClient, VersionedTextDocumentIdentifier } from 'vscode-languageclient';
+import { LanguageClient, VersionedTextDocumentIdentifier, NotificationType } from 'vscode-languageclient';
 import { GlobPattern, FileSystemWatcher, workspace, RelativePattern } from 'vscode';
 const { createFileSystemWatcher, findFiles } = workspace
 import { ConfigDatum } from '../common/config';
@@ -8,13 +7,12 @@ import { Uri } from 'vscode'
 import watch from 'node-watch'
 import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs';
 import { readFile } from 'fs';
+import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
 
 export class ProjectWatcher {
-	private watchers: Map<GlobPattern, FileSystemWatcher>
 	private client: LanguageClient
 	private disposeEvent: Event<void>
 	constructor(client: LanguageClient) {
-		this.watchers = new Map()
 		this.client = client
 		this.disposeEvent = new Event<void>()
 	}
@@ -27,14 +25,22 @@ export class ProjectWatcher {
 				const defPath = Uri.parse(obj.Defs).fsPath
 				const defWatcher = watch(defPath,
 					{ recursive: true, filter: /\.xml$/ },
-					(event, filename) => this.updateHandler(event, filename, version))
+					(event, filename) => this.defHandler(event, filename, version))
 
 				this.disposeEvent.subscribe({}, () => defWatcher.close())
+			}
+
+			if (obj.Textures) {
+				const texturesPath = Uri.parse(obj.Textures).fsPath
+				const textureWatcher = watch(texturesPath,
+					{ recursive: true, filter: /\.((png)|(jpg)|(jpeg)|(gif))$/ },
+					(event, filename) => this.texHandler(event, filename, version))
+				this.disposeEvent.subscribe({}, () => textureWatcher.close())
 			}
 		}
 	}
 
-	private updateHandler(event: 'update' | 'remove', filename: string, version: string) {
+	private defHandler(event: 'update' | 'remove', filename: string, version: string) {
 		const uriPath = Uri.file(filename).toString()
 		switch (event) {
 			case 'update': {
@@ -48,12 +54,33 @@ export class ProjectWatcher {
 						}
 					})
 				})
-			}
 				break
+			}
 			case 'remove': {
 				this.client.sendNotification(DefFileRemovedNotificationType, uriPath)
-			}
 				break
+			}
+		}
+	}
+
+	private texHandler(event: 'update' | 'remove', filename: string, version: string) {
+		const uriPath = Uri.file(filename).toString()
+		switch (event) {
+			case 'update': {
+				this.client.sendNotification(TextureChangedNotificaionType, {
+					files: [uriPath],
+					version
+				})
+				break
+			}
+
+			case 'remove': {
+				this.client.sendNotification(TextureRemovedNotificationType, {
+					files: [uriPath],
+					version
+				})
+				break
+			}
 		}
 	}
 }

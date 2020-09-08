@@ -14,9 +14,10 @@ export interface DefFilesChanged {
 }
 
 /** DefReferences 내의 paths 를 쿼리한 결과를 보냄, delete일수도 있고, add일수도 있음 -> 서버단에서 관리 */
+// will be expanded later.
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface RefDefFilesChangedParams extends DefFilesChanged {
-	/** 림월드 어느 버전에 속해있는지(컨픽기준) 예) 1.1, 1.2 */
-	version: string
+	
 }
 
 export const DefFileAddedNotificationType = new NotificationType<DefFilesChanged>('Defs/added')

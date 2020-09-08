@@ -16,7 +16,7 @@ import { URI } from 'vscode-uri'
 
 import './parser/XMLParser'
 import './testData/output.json'
-import { RWXMLCompletion } from './features/RWXMLCompletion'
+import { doComplete } from './features/RWXMLCompletion'
 import { ConfigDatum, getLoadFolders, ConfigChangedRequestType } from '../common/config'
 import { DefTextDocuments, isReferencedDef, isSourcedDef } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode } from '../common/TypeInfo';
@@ -26,6 +26,7 @@ import { builtInValidationParticipant } from './features/BuiltInValidator';
 import { typeDB } from './typeDB';
 import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decoration';
 import { BFS } from './utils/nodes';
+import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -121,19 +122,47 @@ let config: ConfigDatum | null = null
 const files: Map<string, Set<URILike>> = new Map()
 
 // re-initialize everything when the config changes.
-connection.onRequest(ConfigChangedRequestType, ({ configDatum, typeInfoDatum }) => {
+connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 	console.log('server: received config changed event')
 	config = configDatum
 	versionDB = new Map() // FIXME - delete this
-	for (const [version, datum] of Object.entries(typeInfoDatum)) {
-		const map = new TypeInfoMap ( objToTypeInfos(datum) )
+	for (const [version, props] of Object.entries(data)) {
+		const map = new TypeInfoMap ( objToTypeInfos(props.typeInfoDatum) )
 		versionDB.set(version, {
 			injector: new TypeInfoInjector(map),
-			typeInfoMap: map
+			typeInfoMap: map,
+			textureFileSet: new Set() // we'll receive texture paths in incoming events after this event.
 		})
 	}
 	defTextDocuments.clear()
 	defTextDocuments.versionDB = versionDB
+})
+
+connection.onNotification(TextureChangedNotificaionType, ({ files, version }) => {
+	const db = versionDB.get(version)
+	if (!db) return
+
+	for (const file of files) {
+		if (db.textureFileSet.has(version)) {
+			// textureFileChanged event
+		} else {
+			// textureFileAdded event
+			db.textureFileSet.add(file)
+		}
+	}
+})
+
+connection.onNotification(TextureRemovedNotificationType, ({ files, version }) => {
+	const db = versionDB.get(version)
+	if (!db) return
+
+	const deletedFiles: string[] = []
+	for (const file of files) {
+		const flag = db.textureFileSet.delete(file)
+		if (flag)
+			deletedFiles.push(file)
+	}
+	// textureRemoved event
 })
 
 connection.onDeclaration(request => {
@@ -233,7 +262,7 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 		if (version) {
 			const typeInfoMap = versionDB.get(version)?.typeInfoMap
 			if (typeInfoMap) {
-				const result = new RWXMLCompletion().doComplete(document, position, xmlDocument, typeInfoMap, defDatabase)
+				const result = doComplete(document, position, xmlDocument, typeInfoMap, defDatabase)
 				console.log('resolved')
 				return result
 			}
