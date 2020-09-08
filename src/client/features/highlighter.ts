@@ -4,18 +4,50 @@ const { createTextEditorDecorationType } = window
 import { DecoItem, DecoType } from '../../common/decoration';
 import { Range } from 'vscode-languageserver';
 
+const inlayHint = {
+	background: new ThemeColor('rwxml.decorator.inlayHints.backgroundColor'),
+	foreground: new ThemeColor('rwxml.decorator.inlayHints.foregroundColor')
+}
+
 const content_enum_decos = createTextEditorDecorationType({
-	color: new ThemeColor('symbolIcon.enumeratorForeground'),
+	color: new ThemeColor('rwxml.decorator.content.enum.foregroundColor'),
 	before: {
-		contentText: 'enum',
-		color: 'gray',
+		contentText: 'enum: ',
+		color: inlayHint.foreground,
 		fontWeight: '600',
-		margin: '3px'
+		backgroundColor: inlayHint.background
+		// backgroundColor: new ThemeColor("rwxml.decorator.backgroundColor")
+	}
+})
+
+const content_integer_decos = createTextEditorDecorationType({
+	color: new ThemeColor('rwxml.decorator.content.integer.foregroundColor'),
+	before: {
+		contentText: 'int: ',
+		color: inlayHint.foreground,
+		fontWeight: '600',
+		backgroundColor: inlayHint.background
+	}
+})
+
+const content_float_decos = createTextEditorDecorationType({
+	color: new ThemeColor('rwxml.decorator.content.float.foregroundColor'),
+	before: {
+		contentText: 'float: ',
+		color: inlayHint.foreground,
+		fontWeight: '600',
+		backgroundColor: inlayHint.background
 	}
 })
 
 const content_defName_decos = createTextEditorDecorationType({
 	color: 'green'
+})
+
+const content_image_decos = createTextEditorDecorationType({
+	before: {
+		// contentIconPath: 
+	}
 })
 
 export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]): void {

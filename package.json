@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.1.3",
+	"version": "0.2.0",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -27,7 +27,55 @@
 	"repository": {
 		"url": "https://github.com/zzzz465/rwxml-language-server"
 	},
-	"contributes": {},
+	"contributes": {
+		"colors": [
+			{
+				"id": "rwxml.decorator.inlayHints.backgroundColor",
+				"description": "default background color for inlay-hints (same as rust-inlay-hints)",
+				"defaults": {
+					"dark": "#61616191",
+					"highContrast": "#FFFFFF",
+					"light": "#FFFFFF"
+				}
+			},
+			{
+				"id": "rwxml.decorator.inlayHints.foregroundColor",
+				"description": "default foreground color for inlay-hints (same as rust-inlay-hints)",
+				"defaults": {
+					"dark": "#a0a0a0f0",
+					"highContrast": "#FFFFFF",
+					"light": "#FFFFFF"
+				}
+			},
+			{
+				"id": "rwxml.decorator.content.enum.foregroundColor",
+				"description": "foreground color for enum variables",
+				"defaults": {
+					"dark": "symbolIcon.enumeratorMemberForeground",
+					"highContrast": "#FFFFFF",
+					"light": "#FFFFFF"
+				}
+			},
+			{
+				"id": "rwxml.decorator.integer",
+				"description": "foreground color for integer",
+				"defaults": {
+					"dark": "#b5cea8",
+					"highContrast": "#FFFFFF",
+					"light": "#FFFFFF"
+				}
+			},
+			{
+				"id": "rwxml.decorator.content.float.foregroundColor",
+				"description": "foreground color for float",
+				"defaults": {
+					"dark": "#c586c0",
+					"highContrast": "#FFFFFF",
+					"light": "#FFFFFF"
+				}
+			}
+		]
+	},
 	"publisher": "madeline",
 	"jest": {
 		"transform": {

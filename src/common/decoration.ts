@@ -12,6 +12,11 @@ export interface DecoItem {
 	type: DecoType
 }
 
+export interface ImageDecoItem extends DecoItem {
+	/** valid uri starts with file:/ */
+	uri: string
+}
+
 export interface DecoRequestRespond {
 	document: {
 		uri: URILike
@@ -27,6 +32,9 @@ export const enum DecoType {
 	node_attrValue,
 	content_Enum, //
 	content_defName, //
+	content_integer,
+	content_float,
+	content_image
 }
 
 export const DecoRequestType = new RequestType<DecoRequestParams, DecoRequestRespond, void>('rwxml/request/decoration')
