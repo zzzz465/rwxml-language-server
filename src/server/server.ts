@@ -294,7 +294,8 @@ defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs,
 }))
 
 defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocument }) => {
-	doValidate(textDocument, xmlDocument || null)
+	validateAll() // temp code
+	// doValidate(textDocument, xmlDocument || null)
 })
 
 connection.onRequest(DecoRequestType, ({ document: { uri } }) => {

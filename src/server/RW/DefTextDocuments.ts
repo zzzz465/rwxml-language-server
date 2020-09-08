@@ -8,6 +8,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { assert } from 'console';
 import { versionDB } from '../versionDB';
+import { ConfigDatum, getVersion } from '../../common/config';
 
 type version = string;
 
@@ -19,21 +20,48 @@ export interface sourcedDef extends def {
 	source: URILike
 }
 
-export interface VersionedTextDocument extends TextDocument {
+export interface DefTextDocument extends TextDocument {
 	/** rimworld version where this TextDocument belongs to */
-	rwVersion: string
+	rwVersion: string // cannot use version which is already used in TextDocument interface
+}
+
+function convertToDefTextdocument(doc: TextDocument, version: string): DefTextDocument {
+	return Object.assign(doc, { rwVersion: version })
 }
 
 export function isSourcedDef(obj: any): obj is sourcedDef {
 	return 'source' in obj && typeof obj.source === 'string'
 }
+
 export interface DefTextDocumentChangedEvent {
-	textDocument: TextDocument
+	textDocument: DefTextDocument
 	/** parsed textDocument to the XMLDocument */
 	xmlDocument?: XMLDocument
 	/** parsed defs within corresponding xmlDocument */
 	defs: sourcedDef[]
 }
+
+interface getVersion {
+	(uri: string): string | undefined
+}
+
+interface getVersionDB {
+	(version: string): versionDB | undefined
+}
+
+/*
+1) TextDocuments에서 onAdd일경우, watch보다 빠름 -> 경로를 모름
+1-1) 값을 서치해서, 찾도록 할까?
+1-2) Thenable로 기다리게 하면.. 복잡하다... X
+2) TextDocuments에서 onChange일 경우, 이미 registered일수도 있고, 아닐수도 있음
+2-1) registered 일 경우 -> 기존 path 재활용 하면 문제가 생기진 않나? 안생길듯
+2-2) unregistered 일 경우 -> 1-1) 과 동일하다
+3) 그냥 textDocuments 쓰지말고, 내가 따로 implementation 해버릴까?
+이게 가장 나은거같은데?
+
+TextDocument versioning을 해야하는데... given 에서는 version이 없음
+그냥 이것도 같이 줄까?
+*/
 
 // TODO - 레퍼런스 / 프로젝트 파일 구별하도록 해야함
 // TODO - version parsing을 클라이언트 단에서 하도록 하자
@@ -41,45 +69,42 @@ export interface DefTextDocumentChangedEvent {
 // TODO - make a "dirty mark" for definitions and do a increment evaluation, instead of re-evaluate all
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
-	/** URILike - text Set, it contain textDocuments which is watched */
-	private watchedFiles: Map<URILike, TextDocument> // URILike - text
+	/** URILike - text map */
+	private defDocuments: Map<URILike, DefTextDocument> // URILike - text
+	private editorDocuments: Map<URILike, DefTextDocument>
 	private xmlDocuments: Map<URILike, XMLDocument>
-	private readonly textDocuments: TextDocuments<TextDocument>
-	/** @deprecated need to be removed */
-	private versionGetter: versionGetter | undefined // fixme - remove this?
+	// private readonly textDocuments: TextDocuments<TextDocument>
 	onReferenceDocumentsAdded: Event<void>
 	onDocumentAdded: Event<DefTextDocumentChangedEvent>
 	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
 	onDocumentDeleted: Event<URI>
-	versionDB?: Map<string, versionDB>
+	getVersionDB: getVersionDB
+	getVersion: getVersion // DI
+
 	constructor() {
 		this.databases = new Map()
-		this.watchedFiles = new Map()
-		this.textDocuments = new TextDocuments(TextDocument)
+		this.defDocuments = new Map()
+		// this.textDocuments = new TextDocuments(TextDocument)
 		this.xmlDocuments = new Map()
 		this.onDocumentAdded = new Event()
 		this.onDocumentChanged = new Event()
 		this.onDocumentDeleted = new Event()
 		this.onReferenceDocumentsAdded = new Event()
-	}
-
-	// needs refactor
-	setVersionGetter(getter: versionGetter): void {
-		this.versionGetter = getter
-		this.databases.clear()
-		this.refreshDocuments()
+		this.editorDocuments = new Map()
+		this.getVersion = () => undefined
+		this.getVersionDB = () => undefined
 	}
 
 	/**
 	 * return opened / watched textDocument
 	 * @param URILike string that can be parsed with URI.parse
 	 */
-	getDocument(URILike: URILike): TextDocument | undefined {
-		return this.textDocuments.get(URILike) || this.watchedFiles.get(URILike)
+	getDocument(URILike: URILike): DefTextDocument | undefined {
+		return this.editorDocuments.get(URILike) || this.defDocuments.get(URILike)
 	}
 
-	getDocuments(): TextDocument[] {
-		return [...this.watchedFiles.values()]
+	getDocuments(): DefTextDocument[] {
+		return [...this.defDocuments.values()]
 	}
 
 	getXMLDocument(URILike: URILike): XMLDocument | undefined {
@@ -87,26 +112,25 @@ export class DefTextDocuments {
 	}
 
 	getDefs(URILike: URILike): sourcedDef[] {
-		let version: string | undefined
-		if (!this.versionGetter || !(version = this.versionGetter(URILike)))
-			return []
-
-		let db: DefDatabase | undefined
-		if (!(db = this.databases.get(version)))
-			return []
-
-		return db.get(URILike) as sourcedDef[] // we already injected values when we add data
+		const version = this.getVersion(URILike)
+		if (version) {
+			const db = this.databases.get(version)
+			if (db) {
+				db.get(URILike) as sourcedDef[] // we already injected values when we add data
+			}
+		}
+		return []
 	}
 
 	/**
 	 * returns defDatabase of matching version
 	 * @param URILike uri string of the textDocument
 	 */
-	getDefDatabaseByUri(URILike: URILike): iDefDatabase | null {
-		const version = this.versionGetter?.(URILike)
-		if (version)
-			return this.databases.get(version) || null
-		return null
+	getDefDatabaseByUri(URILike: URILike): iDefDatabase | undefined {
+		const version = this.getVersion(URILike)
+		if (version) {
+			return this.databases.get(version)
+		}
 	}
 
 	// two strategies here
@@ -117,8 +141,10 @@ export class DefTextDocuments {
 		connection.onNotification(DefFileAddedNotificationType, params => {
 			for (const [path, text] of Object.entries(params.files)) {
 				console.log(`defFileAddEvent ${path}`)
-				const document = TextDocument.create(URI.parse(path).toString(), 'xml', 1, text)
-				this.watchedFiles.set(path, document)
+				const document = convertToDefTextdocument(
+					TextDocument.create(URI.parse(path).toString(), 'xml', 1, text),
+					params.version)
+				this.defDocuments.set(path, document)
 				this.update(params.version, path, text)
 				this.onDocumentAdded?.Invoke({
 					defs: this.getDefs(path),
@@ -130,12 +156,13 @@ export class DefTextDocuments {
 		connection.onNotification(DefFileChangedNotificationType, params => {
 			console.log('defFileChangedNotification event')	 // FIXME - 이거 업데이트 안되는데?
 			for (const [path, text] of Object.entries(params.files)) {
-				// ignore if the document is managed by TextDocument (which is faster than node-watch)
-				if (this.textDocuments.get(path) !== undefined)
-					return
+				if (this.editorDocuments.has(path))
+					continue
 
-				const textDocument = TextDocument.create(path, 'xml', 1, text)
-				this.watchedFiles.set(path, textDocument)
+				const textDocument = convertToDefTextdocument(
+					TextDocument.create(path, 'xml', 1, text),
+					params.version)
+				this.defDocuments.set(path, textDocument)
 				this.update(params.version, path, text)
 
 				this.onDocumentChanged?.Invoke({
@@ -146,38 +173,54 @@ export class DefTextDocuments {
 			}
 		})
 		connection.onNotification(DefFileRemovedNotificationType, path => {
-			this.watchedFiles.delete(path)
+			this.defDocuments.delete(path)
 			this.xmlDocuments.delete(path)
 		})
 		// 레퍼런스용 코드
 		connection.onNotification(ReferencedDefFileAddedNotificationType, param => {
 			console.log('ReferencedDefFileAddedNotificationType')
 			for (const [path, text] of Object.entries(param.files)) {
-				const document = TextDocument.create(path, 'xml', 1, text)
-				this.watchedFiles.set(path, document)
+				const document = convertToDefTextdocument(
+					TextDocument.create(path, 'xml', 1, text),
+					param.version)
+				this.defDocuments.set(path, document)
 				this.updateReference(param.version, path, document.getText())
 			}
 			this.onReferenceDocumentsAdded.Invoke()
 		})
 
-		this.textDocuments.listen(connection)
-		this.textDocuments.onDidOpen(({ document }) => {
-			console.log('textDocument.onDidOpen')
-			this.watchedFiles.set(document.uri, document)
-		})
-		this.textDocuments.onDidChangeContent(({ document }) => {
-			console.log('textDocuments/onDidChangeContent')
-			const text = document.getText()
-			const version = this.versionGetter?.(document.uri)
+		connection.onDidOpenTextDocument(({ textDocument }) => {
+			console.log(`editor.onDidOpenTextDocument ${textDocument.uri}`)
+			const version = this.getVersion(textDocument.uri)
 			if (version) {
-				this.update(version, document.uri, text)
-				// TODO - 데이터 채워넣기...
+				console.log(`version ${version}`)
+				const document = convertToDefTextdocument(
+				TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text),
+				version)
+
+				this.defDocuments.set(document.uri, document)
+				this.editorDocuments.set(document.uri, document)
+			}
+		})
+
+		connection.onDidChangeTextDocument(({ contentChanges, textDocument }) => {
+			console.log('editor.onDidChangeTextDocument')
+			const document = this.editorDocuments.get(textDocument.uri)
+			if (document) { // if not, it isn't included any of def/referencedDef folders
+				TextDocument.update(document, contentChanges, document.version + 1)
+				this.defDocuments.set(document.uri, document)
+				this.update(document.rwVersion, document.uri, document.getText())
 				this.onDocumentChanged.Invoke({
 					defs: this.getDefs(document.uri),
 					textDocument: document,
 					xmlDocument: this.getXMLDocument(document.uri)
 				})
 			}
+		})
+
+		connection.onDidCloseTextDocument(({ textDocument: { uri } }) => {
+			console.log('editor.onDidCloseTextDocument')
+			assert(this.editorDocuments.delete(uri), `unexpected: ${uri} was not in editorDocuments`)
 		})
 	}
 
@@ -187,7 +230,7 @@ export class DefTextDocuments {
 	 */
 	clear(): void {
 		this.databases = new Map()
-		this.watchedFiles = new Map()
+		this.defDocuments = new Map()
 		this.xmlDocuments = new Map()
 	}
 
@@ -220,7 +263,7 @@ export class DefTextDocuments {
 	private update(version: string, path: URILike, content: string): void {
 		console.log('update')
 		const db = this.GetOrCreateDB(version)
-		const typeInfoInjector = this.versionDB?.get(version)?.injector
+		const typeInfoInjector = this.getVersionDB(version)?.injector
 		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
 		this.xmlDocuments.set(path, xmlDocument)
 		defs.map(def => Object.assign(def, { source: path }))
@@ -229,18 +272,11 @@ export class DefTextDocuments {
 
 	private updateReference(version: version, path: URILike, content: string): void {
 		const db = this.GetOrCreateDB(version)
-		const typeInfoInjector = this.versionDB?.get(version)?.injector
+		const typeInfoInjector = this.getVersionDB(version)?.injector
 		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
 		this.xmlDocuments.set(path, xmlDocument)
 		defs.map(def => Object.assign(def, { source: path }))
 		db.update(path, defs)
-	}
-
-	private async refreshDocuments() {
-		// this.databases.clear()
-		// for (const [key, textDocument] of this.watchedFiles.entries()) {
-		// this.update(key, textDocument.getText())
-		// }
 	}
 }
 
