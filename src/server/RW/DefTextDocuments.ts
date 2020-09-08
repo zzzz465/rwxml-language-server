@@ -37,6 +37,8 @@ export interface DefTextDocumentChangedEvent {
 
 // TODO - 레퍼런스 / 프로젝트 파일 구별하도록 해야함
 // TODO - version parsing을 클라이언트 단에서 하도록 하자
+// TODO - create event for doc add and re-evaluate all documents
+// TODO - make a "dirty mark" for definitions and do a increment evaluation, instead of re-evaluate all
 export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
 	/** URILike - text Set, it contain textDocuments which is watched */

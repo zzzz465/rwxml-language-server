@@ -127,7 +127,7 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 	config = configDatum
 	versionDB = new Map() // FIXME - delete this
 	for (const [version, props] of Object.entries(data)) {
-		const map = new TypeInfoMap ( objToTypeInfos(props.typeInfoDatum) )
+		const map = new TypeInfoMap ( objToTypeInfos(props.rawTypeInfo) )
 		versionDB.set(version, {
 			injector: new TypeInfoInjector(map),
 			typeInfoMap: map,
