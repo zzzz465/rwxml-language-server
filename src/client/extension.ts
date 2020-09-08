@@ -24,7 +24,8 @@ import * as fs from 'fs'
 import * as util from 'util'
 import { extractTypeInfos } from './extractor';
 import { Event } from '../common/event';
-import watch from 'node-watch'
+import { DecoRequestType } from '../common/decoration';
+import { applyDecos } from './features/highlighter';
 
 const glob = util.promisify(glob_callback)
 const exists = util.promisify(fs.exists)
@@ -32,7 +33,7 @@ const exists = util.promisify(fs.exists)
 let client: LanguageClient;
 let configWatcher: FileSystemWatcher
 
-export async function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext): Promise<void> {
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(
 		path.join('out', 'server', 'server.js')
@@ -53,7 +54,6 @@ export async function activate(context: ExtensionContext) {
 	};
 
 	const clientOptions: LanguageClientOptions = {
-		// Register the server for plain text documents
 		documentSelector: [{ scheme: 'file', language: 'xml' }],
 	};
 
@@ -179,6 +179,47 @@ export async function activate(context: ExtensionContext) {
 
 		projectWatcher.watch(configDatum)
 	}
+
+	let timeout: NodeJS.Timer | undefined = undefined
+	let activeEditor = vscode.window.activeTextEditor
+
+	async function updateDecorations() {
+		if (!activeEditor)
+			return;
+
+		const { document: { uri }, items } = await client.sendRequest(DecoRequestType, {
+			document: { uri: activeEditor.document.uri.toString() }
+		})
+		
+		// need to ensure activeEditor isn't changed while async
+		if (activeEditor && activeEditor.document.uri.toString() === uri)
+			applyDecos(activeEditor, items)
+	}
+
+	function triggerUpdateDecorations() {
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = undefined;
+		}
+		timeout = setTimeout(updateDecorations, 100);
+	}
+
+	if (activeEditor) {
+		triggerUpdateDecorations();
+	}
+
+	vscode.window.onDidChangeActiveTextEditor(editor => {
+		activeEditor = editor;
+		if (editor) {
+			triggerUpdateDecorations();
+		}
+	}, null, context.subscriptions);
+
+	vscode.workspace.onDidChangeTextDocument(event => {
+		if (activeEditor && event.document === activeEditor.document) {
+			triggerUpdateDecorations();
+		}
+	}, null, context.subscriptions);
 }
 
 export function deactivate(): Thenable<void> | undefined {

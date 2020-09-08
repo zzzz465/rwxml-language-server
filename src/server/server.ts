@@ -19,12 +19,13 @@ import './testData/output.json'
 import { RWXMLCompletion } from './features/RWXMLCompletion'
 import { ConfigDatum, getLoadFolders, ConfigChangedRequestType } from '../common/config'
 import { DefTextDocuments, isReferencedDef, isSourcedDef } from './RW/DefTextDocuments';
-import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo } from './RW/TypeInfo';
+import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode } from '../common/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
 import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
 import { typeDB } from './typeDB';
-import { DecoRequestType, DecoRequestRespond } from '../common/decoration';
+import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decoration';
+import { BFS } from './utils/nodes';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -322,10 +323,36 @@ connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
 		document: { uri },
 		items: []
 	}
-
+	const items = result.items
+	const textDoc = defTextDocuments.getDocument(uri)
 	const xmlDoc = defTextDocuments.getXMLDocument(uri)
-	if (xmlDoc) {
-		// bfs
+	if (textDoc && xmlDoc) {
+		const nodes = BFS(xmlDoc)
+		for (const node of nodes) {
+			if (isTypeNode(node)) {
+				const typeInfo = node.typeInfo
+				if (typeInfo.specialType?.enum && typeInfo.leafNodeCompletions) {
+					if (node.text) {
+						const text = node.text.content
+						// only check exact match
+						if(typeInfo.leafNodeCompletions.has(text)) {
+							items.push({
+								range: {
+									start: textDoc.positionAt(node.text.start),
+									end: textDoc.positionAt(node.text.end)
+								},
+								type: DecoType.content_Enum
+							})
+						}
+					}
+				}
+				/*
+				1) enum인지 체크하고
+				2) enum value == text 인지 체크한다음
+				3) 값 넘겨주기
+				*/
+			}
+		}
 	}
 
 	return result
