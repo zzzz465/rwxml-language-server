@@ -107,13 +107,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
 		return { valid, invalidItems }
 	}
 
-	async function queryFiles(paths: string[]): Promise<{ [path: string]: string }> {
+	async function populateDefFiles(paths: string[]): Promise<{ [path: string]: string }> {
 		const result: { [path: string]: string } = {}
 		const promises: Promise<void>[] = []
 		paths.map(path => {
 			promises.push(fs.promises.readFile(path, 'utf-8')
 				.then(text => {
-					result[path] = text
+					const uri = Uri.file(path).toString()
+					result[uri] = text
 			}))
 		})
 		await Promise.all(promises)
@@ -166,7 +167,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 				(async () => {
 					const params: DefFilesChanged = { version, files: {} }
 					const paths = await glob('**/*.xml', { absolute: true, cwd: defPath })
-					params.files =  await queryFiles(paths)
+					params.files =  await populateDefFiles(paths)
 					client.sendNotification(DefFileAddedNotificationType, params)
 				})()
 			}
@@ -177,7 +178,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 					(async () => {
 						const params: RefDefFilesChangedParams = { version, files: {} }
 						const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(refPath).fsPath })
-						params.files = await queryFiles(paths)
+						params.files = await populateDefFiles(paths)
 						client.sendNotification(ReferencedDefFileAddedNotificationType, params)
 					})()
 				}

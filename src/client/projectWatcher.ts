@@ -1,6 +1,4 @@
-import { LanguageClient, VersionedTextDocumentIdentifier, NotificationType } from 'vscode-languageclient';
-import { GlobPattern, FileSystemWatcher, workspace, RelativePattern } from 'vscode';
-const { createFileSystemWatcher, findFiles } = workspace
+import { LanguageClient } from 'vscode-languageclient';
 import { ConfigDatum } from '../common/config';
 import { Event } from '../common/event';
 import { Uri } from 'vscode'

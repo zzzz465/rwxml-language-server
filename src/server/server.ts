@@ -275,10 +275,19 @@ function doValidate(document: DefTextDocument, xmldoc?: XMLDocument | null) {
 	}
 }
 
+let timeout: NodeJS.Timer | undefined = undefined
+
 function validateAll() {
-	for (const document of defTextDocuments.getDocuments()) {
-		doValidate(document)
+	if (timeout) {
+		clearTimeout(timeout)
+		timeout = undefined
 	}
+
+	timeout = setTimeout(() => {
+		for (const document of defTextDocuments.getDocuments()) {
+			doValidate(document)
+		}
+	}, 50)
 }
 
 
