@@ -106,11 +106,11 @@ export class RWXMLCompletion {
 								}))
 							}
 						}
-					}
-				} else if (typeInfo.isLeafNode && typeInfo.leafNodeCompletions) {
-					return {
-						isIncomplete: false,
-						items: [...typeInfo.leafNodeCompletions.values()]  // typeInfo.leafNodeCompletions
+					} else if (typeInfo.isLeafNode && typeInfo.leafNodeCompletions) {
+						return {
+							isIncomplete: false,
+							items: [...typeInfo.leafNodeCompletions.values()]  // typeInfo.leafNodeCompletions
+						}
 					}
 				}
 			}
