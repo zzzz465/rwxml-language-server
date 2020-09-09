@@ -25,6 +25,10 @@ export interface DefTextDocument extends TextDocument {
 	rwVersion: string // cannot use version which is already used in TextDocument interface
 }
 
+function isDefTextDocument(document: TextDocument): document is DefTextDocument {
+	return 'rwVersion' in document && !!(<any>document).rwVersion
+}
+
 function convertToDefTextdocument(doc: TextDocument, version: string): DefTextDocument {
 	return Object.assign(doc, { rwVersion: version })
 }
@@ -71,7 +75,7 @@ export class DefTextDocuments {
 	private databases: Map<string, DefDatabase>
 	/** URILike - text map */
 	private defDocuments: Map<URILike, DefTextDocument> // URILike - text
-	private editorDocuments: Map<URILike, DefTextDocument>
+	private editorDocuments: Map<URILike, TextDocument>
 	private xmlDocuments: Map<URILike, XMLDocument>
 	// private readonly textDocuments: TextDocuments<TextDocument>
 	onReferenceDocumentsAdded: Event<void>
@@ -100,7 +104,11 @@ export class DefTextDocuments {
 	 * @param URILike string that can be parsed with URI.parse
 	 */
 	getDocument(URILike: URILike): DefTextDocument | undefined {
-		return this.editorDocuments.get(URILike) || this.defDocuments.get(URILike)
+		const doc = this.editorDocuments.get(URILike)
+		if (doc && isDefTextDocument(doc))
+			return doc
+		
+		return this.defDocuments.get(URILike)
 	}
 
 	getDocuments(): DefTextDocument[] {
@@ -191,6 +199,7 @@ export class DefTextDocuments {
 
 		connection.onDidOpenTextDocument(({ textDocument }) => {
 			console.log(`editor.onDidOpenTextDocument ${textDocument.uri}`)
+			const document = TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text)
 			const version = this.getVersion(textDocument.uri)
 			if (version) {
 				console.log(`version ${version}`)
@@ -199,15 +208,30 @@ export class DefTextDocuments {
 				version)
 
 				this.defDocuments.set(document.uri, document)
-				this.editorDocuments.set(document.uri, document)
 			}
+
+			this.editorDocuments.set(document.uri, document)
 		})
 
 		connection.onDidChangeTextDocument(({ contentChanges, textDocument }) => {
-			console.log('editor.onDidChangeTextDocument')
-			const document = this.editorDocuments.get(textDocument.uri)
-			if (document) { // if not, it isn't included any of def/referencedDef folders
-				TextDocument.update(document, contentChanges, document.version + 1)
+			console.log('editor.onDidChangeTextDocument' + ` ver: ${textDocument.version}`)
+			const document = this.editorDocuments.get(textDocument.uri)!
+			assert(document, 'unexpected: document is null in connection: onDidChangeTextDocument event')
+			TextDocument.update(document, contentChanges, document.version + 1)
+			
+			if (!isDefTextDocument(document)) {
+				const version = this.getVersion(document.uri)
+				if (version) {
+					const doc = Object.assign(document, { rwVersion: version } as DefTextDocument)
+					this.defDocuments.set(document.uri, doc)
+					this.update(doc.rwVersion, doc.uri, doc.getText())
+					this.onDocumentChanged.Invoke({
+						defs: this.getDefs(document.uri),
+						textDocument: doc,
+						xmlDocument: this.getXMLDocument(document.uri)
+					})
+				}
+			} else {
 				this.defDocuments.set(document.uri, document)
 				this.update(document.rwVersion, document.uri, document.getText())
 				this.onDocumentChanged.Invoke({
@@ -306,6 +330,8 @@ export interface iDefDatabase {
 	 */
 	getNames(): string[]
 }
+
+// TODO - add weakReference
 
 export class DefDatabase implements iDefDatabase {
 	private _defs: Map<URILike, (referencedDef | def)[]>

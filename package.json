@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -51,13 +51,13 @@
 				"id": "rwxml.decorator.content.enum.foregroundColor",
 				"description": "foreground color for enum variables",
 				"defaults": {
-					"dark": "symbolIcon.enumeratorMemberForeground",
+					"dark": "symbolIcon.enumeratorForeground",
 					"highContrast": "#FFFFFF",
 					"light": "#FFFFFF"
 				}
 			},
 			{
-				"id": "rwxml.decorator.integer",
+				"id": "rwxml.decorator.content.integer.foregroundColor",
 				"description": "foreground color for integer",
 				"defaults": {
 					"dark": "#b5cea8",

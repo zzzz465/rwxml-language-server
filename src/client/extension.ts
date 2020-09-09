@@ -69,6 +69,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	client.start();
 	await client.onReady()
 
+	let timeout: NodeJS.Timer | undefined = undefined
+	let activeEditor = vscode.window.activeTextEditor
+
 	const projectWatcher = new ProjectWatcher(client)
 
 	/** @deprecated (moved into projectWatcher) called when onConfigfileChanged is called */
@@ -94,7 +97,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 		const invalidItems: string[] = []
 		for (const path of paths) {
 			const p = exists(path)
-				.then(flag => { 
+				.then(flag => {
 					if (!flag) {
 						valid = false
 						invalidItems.push(path)
@@ -102,7 +105,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 				})
 			promises.push(p)
 		}
-		
+
 		await Promise.all(promises)
 		return { valid, invalidItems }
 	}
@@ -115,13 +118,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
 				.then(text => {
 					const uri = Uri.file(path).toString()
 					result[uri] = text
-			}))
+				}))
 		})
 		await Promise.all(promises)
 		return result
 	}
 
-	async function onConfigfileChanged (configUri: Uri) {
+	async function onConfigfileChanged(configUri: Uri) {
 		console.log('client: reload config')
 		disposeEvent.Invoke()
 		disposeEvent = new Event<void>()
@@ -167,7 +170,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 				(async () => {
 					const params: DefFilesChanged = { version, files: {} }
 					const paths = await glob('**/*.xml', { absolute: true, cwd: defPath })
-					params.files =  await populateDefFiles(paths)
+					params.files = await populateDefFiles(paths)
 					client.sendNotification(DefFileAddedNotificationType, params)
 				})()
 			}
@@ -186,19 +189,22 @@ export async function activate(context: ExtensionContext): Promise<void> {
 		}
 
 		projectWatcher.watch(configDatum)
-	}
 
-	let timeout: NodeJS.Timer | undefined = undefined
-	let activeEditor = vscode.window.activeTextEditor
+
+		if (activeEditor)
+			triggerUpdateDecorations();
+	}
 
 	async function updateDecorations() {
 		if (!activeEditor)
 			return;
 
+		console.log('client: updateDecorations')
+
 		const { document: { uri }, items } = await client.sendRequest(DecoRequestType, {
 			document: { uri: activeEditor.document.uri.toString() }
 		})
-		
+
 		// need to ensure activeEditor isn't changed while async
 		if (activeEditor && activeEditor.document.uri.toString() === uri)
 			applyDecos(activeEditor, items)
@@ -209,11 +215,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
-		timeout = setTimeout(updateDecorations, 100);
-	}
-
-	if (activeEditor) {
-		triggerUpdateDecorations();
+		timeout = setTimeout(updateDecorations, 250);
 	}
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -224,6 +226,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	}, null, context.subscriptions);
 
 	vscode.workspace.onDidChangeTextDocument(event => {
+		console.log('client: textDocument changed' + ` ver: ${event.document.version}`)
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations();
 		}

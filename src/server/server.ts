@@ -28,6 +28,7 @@ import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decorat
 import { BFS } from './utils/nodes';
 import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
 import { XMLDocument } from './parser/XMLParser';
+import { decoration } from './features/Decoration';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -308,45 +309,21 @@ defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocum
 })
 
 connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
+	console.log('server: DecoRequest')
 	const result: DecoRequestRespond = {
 		document: { uri },
 		items: []
 	}
-	const items = result.items
-	const textDoc = defTextDocuments.getDocument(uri)
+
+	const doc = defTextDocuments.getDocument(uri)
 	const xmlDoc = defTextDocuments.getXMLDocument(uri)
-	if (textDoc && xmlDoc) {
-		const nodes = BFS(xmlDoc)
-		for (const node of nodes) {
-			if (isTypeNode(node)) {
-				const typeInfo = node.typeInfo
-				if (typeInfo.specialType?.enum && typeInfo.leafNodeCompletions) {
-					if (node.text) {
-						const text = node.text.content
-						// only check exact match
-						if (typeInfo.leafNodeCompletions.has(text)) {
-							items.push({
-								range: {
-									start: textDoc.positionAt(node.text.start),
-									end: textDoc.positionAt(node.text.end)
-								},
-								type: DecoType.content_Enum
-							})
-						}
-					}
-				}
-				/*
-				1) enum인지 체크하고
-				2) enum value == text 인지 체크한다음
-				3) 값 넘겨주기
-				*/
-			}
-		}
+	if (xmlDoc && doc) {
+		result.items = decoration({ doc, xmlDoc })
 	}
 
 	return result
 })
 
 // Listen on the connection
-connection.listen();
 defTextDocuments.listen(connection)
+connection.listen();
