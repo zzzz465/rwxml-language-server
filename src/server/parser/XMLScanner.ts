@@ -62,7 +62,7 @@ export enum ScannerState {
 }
 
 
-class MultiLineStream {
+export class MultiLineStream {
 
 	private source: string;
 	private len: number;
