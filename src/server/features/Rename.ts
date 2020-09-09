@@ -42,7 +42,7 @@ export class XMLRename {
 			case TokenType.AttributeValue: {
 				// 루트 노드여야함
 				// Name="" attribute 를 바꾸려고 할 때 -> derived 노드들의 이름도 바꿔야함
-				if (currentAttributeName === 'Name' && node.parent?.tag === 'Defs') { // Name="something" <-something
+				if (currentAttributeName === 'Name' && node.parent?.tag?.content === 'Defs') { // Name="something" <-something
 					// const range: Range = {
 						// 
 					// }

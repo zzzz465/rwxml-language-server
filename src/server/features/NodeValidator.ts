@@ -47,7 +47,7 @@ export class NodeValidator implements NodeValidatorContext {
 	validateNodes (): Diagnostic[] {
 		this.diagnostics = []
 		const root = this.XMLDocument.root
-		if(root?.tag === 'Defs') {
+		if(root?.tag?.content === 'Defs') {
 			for (const def of root.children) {
 				// todo - check if node is actual def, or not
 				if (isTypeNode(def))

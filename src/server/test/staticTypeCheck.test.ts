@@ -66,9 +66,9 @@ describe('basic static type checking test', function () {
 	test('ThingDef/statBases/Mass should be checked as float', function () {
 		const textDoc = TextDocument.create('', 'xml', 1, DefData)
 		
-		const ingestible = ThingDef.children.find(n => n.tag === 'ingestible')!
+		const ingestible = ThingDef.children.find(n => n.tag?.content === 'ingestible')!
 		expect(ingestible).toBeTruthy() // null check
-		const maxNumToIngestAtOnce = ingestible.children.find(n => n.tag === 'maxNumToIngestAtOnce')!
+		const maxNumToIngestAtOnce = ingestible.children.find(n => n.tag?.content === 'maxNumToIngestAtOnce')!
 		expect(maxNumToIngestAtOnce).toBeTruthy() // null check
     
     // FIXME - first parameter is not a valid one... it still pass tests though.

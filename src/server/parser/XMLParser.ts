@@ -5,29 +5,43 @@
 
 import { createScanner, TokenType } from './XMLScanner';
 import { findFirst } from '../utils/arrays';
+
+export interface textRange {
+	start: number
+	end: number
+	content: string
+}
 // import { isVoidElement } from '../languageFacts/fact';
 
 export class Node {
 	public document?: XMLDocument
-	public tag: string | undefined;
+	public tag?: textRange // <|Defs| ...>
 	public closed = false; // is validate closed? ex) <tag></tag>
 	public startTagEnd: number | undefined;
 	public endTagStart: number | undefined;
 	public attributes: { [name: string]: string | null } | undefined;
-	public text?: {
-		start: number
-		content: string
-		end: number
-	}
+	public text?: textRange // node content (including whitespace) <tag> content </tag>
 	public get attributeNames(): string[] { return this.attributes ? Object.keys(this.attributes) : []; }
 	constructor(public start: number, public end: number, public children: Node[], public parent?: Node) {
 	}
 	public isSameTag(tagString: string): boolean {
 		// return this.tag && tagInLowerCase && this.tag.length === tagInLowerCase.length && this.tag.toLowerCase() === tagInLowerCase;
-		return !!this.tag && this.tag === tagString
+		return !!this.tag && this.tag.content === tagString
 	}
 	public get firstChild(): Node | undefined { return this.children[0]; }
 	public get lastChild(): Node | undefined { return this.children.length ? this.children[this.children.length - 1] : void 0; }
+
+	get endTag(): textRange | undefined {
+		if (this.closed && this.tag) {
+			return {
+				content: this.tag.content,
+				start: this.endTagStart! + 2, // </ = 2개
+				end: this.end - 1
+			}
+		} else {
+			return undefined
+		}
+	}
 
 	public findNodeBefore(offset: number): Node {
 		const idx = findFirst(this.children, c => offset <= c.start) - 1;
@@ -91,7 +105,11 @@ export function parse(text: string): XMLDocument {
 				break;
 			}
 			case TokenType.StartTag:
-				curr.tag = scanner.getTokenText();
+				curr.tag = {
+					content: scanner.getTokenText(),
+					start: scanner.getTokenOffset(),
+					end: scanner.getTokenEnd()
+				}
 				break;
 			case TokenType.StartTagClose:
 				if (curr.parent) {

@@ -104,7 +104,7 @@ export function doComplete({
 						return {
 							isIncomplete: false,
 							items: defs.map(def => ({
-								label: def.children.find(node => node.tag === 'defName')?.text?.content!
+								label: def.children.find(node => node.tag?.content === 'defName')?.text?.content!
 							}))
 						}
 					}
@@ -184,7 +184,7 @@ export function doComplete({
 
 		switch (attrName) {
 			case 'Class': {
-				if (node.tag === 'li' && parent && isTypeNode(parent) && parent.typeInfo.specialType?.enumerable) {
+				if (node.tag?.content === 'li' && parent && isTypeNode(parent) && parent.typeInfo.specialType?.enumerable) {
 					const genericType = parent.typeInfo.specialType.enumerable.genericType
 					const typeInfo = DB.typeInfoMap.getByTypeIdentifier(genericType)
 					if (typeInfo) {
@@ -221,7 +221,7 @@ export function doComplete({
 		switch (token) {
 			case TokenType.StartTagOpen:
 				if (scanner.getTokenEnd() === offset) { // <
-					if (node.parent?.tag === 'Defs') { // XXXDef
+					if (node.parent?.tag?.content === 'Defs') { // XXXDef
 						return collectDefTagSuggestions()
 					} else {
 						const endPos = scanNextForEndPos(TokenType.StartTag)

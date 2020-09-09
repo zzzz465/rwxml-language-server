@@ -261,7 +261,7 @@ export class DefTextDocuments {
 	private parseText(content: string, injector?: TypeInfoInjector): { xmlDocument: XMLDocument, defs: def[] } {
 		const defs: def[] = []
 		const parsed = parse(content)
-		if (injector && parsed.root?.tag === 'Defs') {
+		if (injector && parsed.root?.tag?.content === 'Defs') {
 			for (const node of parsed.root.children) {
 				injector.Inject(node)
 				if (isTypeNode(node))
@@ -383,7 +383,7 @@ export class DefDatabase implements iDefDatabase {
 				continue
 
 			// FIXME - 이거 상속 아니어도 defDataBase는 만들어둬야할듯!!!
-			const defType = def.tag // defType
+			const defType = def.tag.content // defType
 			const defName = getDefName(def)
 			if (defName && defType) {
 				let map = this._defDatabase.get(defType)
@@ -468,13 +468,13 @@ export class DefDatabase implements iDefDatabase {
 		const defs = this._defs.get(URILike)
 		if (defs) {
 			for (const def of defs) {
-				const map = this._defDatabase.get(def.tag)
+				const map = this._defDatabase.get(def.tag.content)
 				if (map) {
 					const defName = getDefName(def)
 					if (defName) {
 						map.delete(defName)
 						if (map.size == 0)
-							this._defDatabase.delete(def.tag)
+							this._defDatabase.delete(def.tag.content)
 					}
 				}
 

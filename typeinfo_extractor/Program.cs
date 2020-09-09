@@ -227,6 +227,10 @@ namespace Program
                         typeInfo.specialType.@float = true;
                     }
                 }
+                if(type == typeof(bool))
+                {
+                    typeInfo.specialType.@bool = true;
+                }
                 if(type.IsSubclassOf(typeof(UnityEngine.Color)))
                 {
                     typeInfo.specialType.color = true;

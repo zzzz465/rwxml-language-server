@@ -1,6 +1,6 @@
 import '../server/parser/XMLParser'
 import '../server/parser/XMLScanner'
-import { Node } from '../server/parser/XMLParser'
+import { Node, textRange } from '../server/parser/XMLParser'
 import { CompletionItem } from 'vscode-languageserver'
 import * as _ from 'lodash'
 
@@ -40,6 +40,7 @@ export interface specialType {
 	enum?: boolean
 	integer?: boolean
 	float?: boolean
+	bool?: boolean
 	string?: boolean
 	color?: boolean
 	intVec3?: boolean
@@ -103,11 +104,11 @@ export function objToTypeInfos(raw: any): TypeInfo[] {
 
 export interface def extends typeNode {
 	closed: true
-	tag: string // it is important
+	tag: textRange // it is important
 }
 
 export function isDef(obj: Node): obj is def {
-	return isTypeNode(obj) && !!obj.tag && obj.closed && obj.parent?.tag === 'Defs'
+	return isTypeNode(obj) && !!obj.tag && obj.closed && obj.parent?.tag?.content === 'Defs'
 }
 
 export interface typeNode extends Node {
@@ -211,7 +212,7 @@ export class TypeInfoInjector {
 	}
 
 	public Inject(typeNode: Node): void {
-		const typeName = typeNode.tag
+		const typeName = typeNode.tag?.content
 		if (typeName) {
 			const typeInfo = this.typeInfoMap.getByDefName(typeName)
 			if (typeInfo) {
@@ -255,7 +256,7 @@ export class TypeInfoInjector {
 			}
 
 			for (const childNode of node.children) {
-				const childTag = childNode.tag
+				const childTag = childNode.tag?.content
 				if (!childTag) continue
 				const childTypeInfoIdentifier = typeInfo.childNodes?.get(childTag)
 				if (!childTypeInfoIdentifier) continue
@@ -278,7 +279,7 @@ export interface GenericTypeInfo extends TypeInfo {
 }
 
 export function getDefName(def: def): string | null {
-	const defName = def.children.find(node => node.tag === 'defName')?.text?.content
+	const defName = def.children.find(node => node.tag?.content === 'defName')?.text?.content
 	return defName || null
 }
 

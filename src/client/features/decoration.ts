@@ -40,6 +40,20 @@ const content_float_decos = createTextEditorDecorationType({
 	}
 })
 
+const content_bool_decos = createTextEditorDecorationType({
+	color: new ThemeColor('rwxml.decorator.content.boolean.foregroundColor'),
+	before: {
+		contentText: 'bool: ',
+		color: inlayHint.foreground,
+		fontWeight: '600',
+		backgroundColor: inlayHint.background
+	}
+})
+
+const node_tag_decos = createTextEditorDecorationType({
+	color: new ThemeColor('rwxml.decorator.node.tag.foregroundColor')
+})
+
 const content_defName_decos = createTextEditorDecorationType({
 	color: 'green'
 })
@@ -74,5 +88,7 @@ export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]):
 	activeEditor.setDecorations(content_float_decos, map.get(DecoType.content_float)!)
 	activeEditor.setDecorations(content_defName_decos, map.get(DecoType.content_defName)!)
 	activeEditor.setDecorations(content_image_decos, map.get(DecoType.content_image)!)
+	activeEditor.setDecorations(content_bool_decos, map.get(DecoType.content_boolean)!)
+	activeEditor.setDecorations(node_tag_decos, map.get(DecoType.node_tag)!)
 	// activeEditor.setDecorations(content_integer_decos, map.get(DecoType.content_integer)!)
 }

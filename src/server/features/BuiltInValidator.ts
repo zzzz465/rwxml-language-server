@@ -74,7 +74,7 @@ function checkInappropriateNode(this: NodeValidatorContext, node: typeNode): Val
 	const childNodes = node.typeInfo.childNodes
 	if(childNodes && childNodes.size > 0) {
 		result.diagnostics = []
-		const wrongChilds = node.children.filter(c => c.closed && c.tag && !childNodes.has(c.tag))
+		const wrongChilds = node.children.filter(c => c.closed && c.tag && !childNodes.has(c.tag.content))
 			.map<Diagnostic>(n => ({ 
 				message: 'inappropriate node', 
 				range: this.getRangeIncludingTag(n) 
@@ -128,14 +128,14 @@ function checkDuplicateNode(this: NodeValidatorContext, node: typeNode): Validat
 	if (!node.typeInfo.specialType?.enumerable) {
 		for (const childNode of node.children) {
 			if (!childNode.tag) continue
-			if (marker.has(childNode.tag)) {
+			if (marker.has(childNode.tag.content)) {
 				diagnostics.push({
 					message: 'found duplicate node',
 					range: this.getRangeIncludingTag(childNode),
 					severity: DiagnosticSeverity.Error
 				})
 			} else {
-				marker.add(childNode.tag)
+				marker.add(childNode.tag.content)
 			}
 		}
 	}
@@ -201,7 +201,7 @@ function checkInvalidNode (this: NodeValidatorContext, node: typeNode): Validati
 	const typeInfo = node.typeInfo
 	for (const child of node.children) {
 		if (child.tag) {
-			if (typeInfo.childNodes && !typeInfo.childNodes.has(child.tag)) {
+			if (typeInfo.childNodes && !typeInfo.childNodes.has(child.tag.content)) {
 				result.diagnostics!.push({
 					message: 'invalid child node',
 					range: this.getRangeIncludingTag(child),

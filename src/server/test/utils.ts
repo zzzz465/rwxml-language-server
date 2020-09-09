@@ -13,5 +13,5 @@ export function BFS (node: Node, matcher: (node: Node) => boolean): Node | null 
 }
 
 export function BFS2 (node: Node, tag: string): Node | null {
-	return BFS(node, (node) => node.tag === tag)
+	return BFS(node, (node) => node.tag?.content === tag)
 }

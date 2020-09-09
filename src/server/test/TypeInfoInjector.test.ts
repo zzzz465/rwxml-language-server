@@ -119,15 +119,15 @@ describe('TypeInfo json to object converter test', function () {
 
 test('TypeInfoInjector base injection test', function () {
 	const parser = parse(data)
-	expect(parser.root!.tag).toBe('Defs')
+	expect(parser.root!.tag?.content).toBe('Defs')
 	const bodyDef = parser.root!.children[0]!
-	expect(bodyDef.tag).toBe('ThingDef')
+	expect(bodyDef.tag?.content).toBe('ThingDef')
 	const typeInfos = objToTypeInfos(mockTypeData)
 	const injector = new TypeInfoInjector(new TypeInfoMap(typeInfos))
 	injector.Inject(bodyDef)
 	const injectedBodyDef = bodyDef as typeNode
 	expect(isTypeNode(injectedBodyDef)).toBeTruthy()
-	const ingestible = bodyDef.children.find(d => d.tag === 'ingestible')
+	const ingestible = bodyDef.children.find(d => d.tag?.content === 'ingestible')
 	expect(ingestible).toBeTruthy()
 	expect(isTypeNode(ingestible)).toBeTruthy()
 	const ingestible_defNode = ingestible as typeNode

@@ -143,3 +143,7 @@ export function parseColor(input: string): color | parseColorErrorCode {
 export function hasWhitespace(input: string): boolean {
 	return !!input.match(/^\s+|\s+$/)
 }
+
+export function isBool(input: string): boolean {
+	return input === 'true' || input === 'false'
+}

@@ -106,6 +106,8 @@ namespace Program
         public bool @float;
         [JsonProperty("string")]
         public bool @string;
+        [JsonProperty("bool")]
+        public bool @bool;
 
         public struct def
         {

@@ -3,7 +3,7 @@ import { XMLDocument } from '../parser/XMLParser';
 import { BFS } from '../utils/nodes';
 import { DecoItem, DecoType } from '../../common/decoration';
 import { isTypeNode, typeNode, TypeInfo } from '../../common/TypeInfo';
-import { isInteger, isFloat } from './textParser';
+import { isInteger, isFloat, isBool, parseColor } from './textParser';
 import { TextDocument } from 'vscode-languageserver';
 import { Range } from 'vscode-languageserver-textdocument';
 
@@ -28,6 +28,16 @@ export function decoration({ doc, xmlDoc }: decoParams): DecoItem[] {
 
 	const nodes = BFS(xmlDoc.root).filter(node => isTypeNode(node)) as typeNode[]
 	for (const node of nodes) {
+		if (node.closed && node.tag && node.endTag) {
+			result.push(...[{
+				range: textToRange(node.tag),
+				type: DecoType.node_tag
+			}, {
+				range: textToRange(node.endTag),
+				type: DecoType.node_tag
+			}])
+		}
+
 		const typeInfo = node.typeInfo
 		const { specialType } = typeInfo
 		if (specialType) {
@@ -52,6 +62,12 @@ export function decoration({ doc, xmlDoc }: decoParams): DecoItem[] {
 						// let defNode = node
 						// while ()
 					// }
+				} else if (specialType.bool) {
+					if (isBool(text))
+						result.push({ range, type: DecoType.content_boolean })
+				} else if (specialType.color) {
+					if (parseColor(text))
+						result.push({ range, type: DecoType.content_color })
 				}
 			}
 		}

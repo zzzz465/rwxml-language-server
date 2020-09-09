@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -34,8 +34,8 @@
 				"description": "default background color for inlay-hints (same as rust-inlay-hints)",
 				"defaults": {
 					"dark": "#61616191",
-					"highContrast": "#FFFFFF",
-					"light": "#FFFFFF"
+					"highContrast": "#61616191",
+					"light": "#61616191"
 				}
 			},
 			{
@@ -43,8 +43,8 @@
 				"description": "default foreground color for inlay-hints (same as rust-inlay-hints)",
 				"defaults": {
 					"dark": "#a0a0a0f0",
-					"highContrast": "#FFFFFF",
-					"light": "#FFFFFF"
+					"highContrast": "#a0a0a0f0",
+					"light": "#a0a0a0f0"
 				}
 			},
 			{
@@ -52,8 +52,8 @@
 				"description": "foreground color for enum variables",
 				"defaults": {
 					"dark": "symbolIcon.enumeratorForeground",
-					"highContrast": "#FFFFFF",
-					"light": "#FFFFFF"
+					"highContrast": "symbolIcon.enumeratorForeground",
+					"light": "symbolIcon.enumeratorForeground"
 				}
 			},
 			{
@@ -61,8 +61,8 @@
 				"description": "foreground color for integer",
 				"defaults": {
 					"dark": "#b5cea8",
-					"highContrast": "#FFFFFF",
-					"light": "#FFFFFF"
+					"highContrast": "#b5cea8",
+					"light": "#b5cea8"
 				}
 			},
 			{
@@ -70,8 +70,26 @@
 				"description": "foreground color for float",
 				"defaults": {
 					"dark": "#c586c0",
-					"highContrast": "#FFFFFF",
-					"light": "#FFFFFF"
+					"highContrast": "#c586c0",
+					"light": "#c586c0"
+				}
+			},
+			{
+				"id": "rwxml.decorator.node.tag.foregroundColor",
+				"description": "foreground color for node tag",
+				"defaults": {
+					"dark": "#9B518B",
+					"highContrast": "#9B518B",
+					"light": "#9B518B"
+				}
+			},
+			{
+				"id": "rwxml.decorator.content.boolean.foregroundColor",
+				"description": "foreground color for bool",
+				"defaults": {
+					"dark": "#569CD6",
+					"highContrast": "#569CD6",
+					"light": "#569CD6"
 				}
 			}
 		]
