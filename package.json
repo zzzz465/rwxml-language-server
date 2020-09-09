@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.2",
+	"version": "0.4.3",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -12,7 +12,7 @@
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
 		"prepublish": "tsc && dotnet build ./typeinfo_extractor/typeinfo_extractor.sln",
 		"webpack": "webpack --mode development",
-		"vscode:prepublish": "webpack --mode production",
+		"vscode:prepublish": "npm run prepublish && webpack --mode production",
 		"webpack-dev": "webpack --mode development --watch"
 	},
 	"author": "madeline",

@@ -19,17 +19,18 @@ namespace Program
         static Dictionary<Type, TypeInfo> typeDict = new Dictionary<Type, TypeInfo>();
         static void Main(string[] args)
         {
-            if (args.Length > 0)
+            if (args.Length > 0 && args[0] == "--stdout")
             {
+                var stdout = Console.OpenStandardOutput();
                 var assemblies = new List<Assembly>();
-                Console.WriteLine("asdf");
-                var pipeStream = new NamedPipeClientStream(".", "rwxml", PipeDirection.InOut, PipeOptions.Asynchronous);
-                pipeStream.Connect(10);
-                Console.WriteLine("[C#]: stream connected");
+                // Console.WriteLine("asdf");
+                // var pipeStream = new NamedPipeClientStream(".", "rwxml", PipeDirection.InOut, PipeOptions.Asynchronous);
+                // pipeStream.Connect(10);
+                // Console.WriteLine("[C#]: stream connected");
                 
                 try
                 {
-                    foreach(var arg in args) // arg[0] is pipe name
+                    foreach(var arg in args.Skip(1)) // arg[0] is pipe name
                     {
                         var assem = Assembly.LoadFrom(arg);
                         assemblies.Add(assem);
@@ -71,8 +72,9 @@ namespace Program
 
                 var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
                 var utf8bytes = UTF8Encoding.UTF8.GetBytes(serializedObject);
-                pipeStream.Write(utf8bytes);
-                pipeStream.Close();
+                stdout.Write(utf8bytes);
+                // pipeStream.Write(utf8bytes);
+                // pipeStream.Close();
             }
             else
             { // for test purpose
