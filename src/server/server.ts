@@ -29,6 +29,7 @@ import { BFS } from './utils/nodes';
 import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
 import { XMLDocument } from './parser/XMLParser';
 import { decoration } from './features/Decoration';
+import { doHover } from './features/Hover';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -70,7 +71,8 @@ connection.onInitialize((params: InitializeParams) => {
 			referencesProvider: true,
 			renameProvider: {
 				prepareProvider: false,
-			}
+			},
+			hoverProvider: true
 			// typeDefinitionProvider: true,
 		}
 	};
@@ -322,6 +324,18 @@ connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
 	}
 
 	return result
+})
+
+connection.onHover(({ position, textDocument }) => {
+	const doc = defTextDocuments.getDocument(textDocument.uri)
+	const xmlDoc = defTextDocuments.getXMLDocument(textDocument.uri)
+
+	if (doc && xmlDoc) {
+		const offset = doc.offsetAt(position)
+		return doHover({ document: doc, xmlDocument: xmlDoc, offset })
+	}
+
+	return undefined
 })
 
 // Listen on the connection

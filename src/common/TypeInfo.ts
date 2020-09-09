@@ -67,7 +67,7 @@ function ObjToMap(object: any): Map<string, CompletionItem> {
 }
 
 export class TypeInfo implements TypeInfo {
-	constructor (data: any) { // only accepts
+	constructor(data: any) { // only accepts
 		Object.assign(this, data)
 
 		if (this.suggestedAttributes) {
@@ -78,13 +78,20 @@ export class TypeInfo implements TypeInfo {
 			this.leafNodeCompletions = ObjToMap(this.leafNodeCompletions)
 		}
 
-		if(!_.isEmpty(data.childNodes)) {
+		if (!_.isEmpty(data.childNodes)) {
 			const childNodes: Record<string, TypeIdentifier> = data.childNodes
 			this.childNodes = new Map()
 			for (const [key, typeIdentifier] of Object.entries(childNodes)) {
 				this.childNodes.set(key, typeIdentifier) // 이게 별도의 Object일수도 있다는 점을 주의하자, 값은 같고 ref 은 다름
 			}
 		}
+	}
+
+	toString(): string {
+		const text = `
+typeId: ${this.typeIdentifier}
+`
+		return text
 	}
 }
 
@@ -99,7 +106,7 @@ export interface def extends typeNode {
 	tag: string // it is important
 }
 
-export function isDef (obj: Node): obj is def {
+export function isDef(obj: Node): obj is def {
 	return isTypeNode(obj) && !!obj.tag && obj.closed && obj.parent?.tag === 'Defs'
 }
 
@@ -111,7 +118,7 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 	private typeMap: Map<string, TypeInfo>
 	/** compMap class basetype - <name - typeinfo>, possible name conflict */
 	private compMap: Map<TypeIdentifier, Map<string, TypeInfo>>
-	constructor (typeInfos: TypeInfo[]) {
+	constructor(typeInfos: TypeInfo[]) {
 		super()
 		this.typeMap = new Map()
 		this.compMap = new Map()
@@ -133,12 +140,12 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 						const name = match[0]
 						const baseName = typeInfo.specialType.compClass.baseClass
 						let map = this.compMap.get(baseName)
-						if(!map) {
+						if (!map) {
 							map = new Map()
 							this.compMap.set(baseName, map)
 						}
-						
-						if(!map.has(name))
+
+						if (!map.has(name))
 							map.set(name, typeInfo)
 						else
 							console.log(`duplicate comp className ${name}`)
@@ -152,7 +159,7 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 	 * 
 	 * @param id 
 	 */
-	getByTypeIdentifier (id: TypeIdentifier): TypeInfo | undefined {
+	getByTypeIdentifier(id: TypeIdentifier): TypeInfo | undefined {
 		return this.get(id)
 	}
 
@@ -160,15 +167,15 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 	 * 
 	 * @param typeName ThingDef, DamageDef, etc...
 	 */
-	getByDefName (typeName: string): TypeInfo | undefined {
+	getByDefName(typeName: string): TypeInfo | undefined {
 		return this.typeMap.get(typeName)
 	}
 
-	getDefNames (): string[] {
+	getDefNames(): string[] {
 		return [...this.typeMap.keys()]
 	}
 
-	getComp (name: string, baseType?: TypeIdentifier): TypeInfo | undefined {
+	getComp(name: string, baseType?: TypeIdentifier): TypeInfo | undefined {
 		if (baseType) {
 			return this.compMap.get(baseType)?.get(name)
 		} else {
@@ -183,7 +190,7 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 	 * iterator of comp name - typeinfo pair
 	 * @param baseType 
 	 */
-	*getComps (baseType?: TypeIdentifier): Generator<[string, TypeInfo], void, unknown> {
+	*getComps(baseType?: TypeIdentifier): Generator<[string, TypeInfo], void, unknown> {
 		if (baseType) {
 			const entries = this.compMap.get(baseType)
 			if (entries) {
@@ -199,15 +206,15 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 }
 
 export class TypeInfoInjector {
-	constructor (private typeInfoMap: TypeInfoMap) {
+	constructor(private typeInfoMap: TypeInfoMap) {
 
 	}
 
 	public Inject(typeNode: Node): void {
 		const typeName = typeNode.tag
-		if(typeName) {
+		if (typeName) {
 			const typeInfo = this.typeInfoMap.getByDefName(typeName)
-			if(typeInfo) {
+			if (typeInfo) {
 				const assigned = Object.assign(typeNode, { typeInfo })
 				this._convertInternal(assigned)
 			}

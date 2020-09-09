@@ -34,6 +34,7 @@ export const enum DecoType {
 	content_defName, //
 	content_integer,
 	content_float,
+	content_boolean,
 	content_image
 }
 

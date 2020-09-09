@@ -53,6 +53,7 @@ const content_image_decos = createTextEditorDecorationType({
 export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]): void {
 	const map = new Map<any, vscode.Range[]>()
 	map.set(DecoType.content_Enum, [])
+	map.set(DecoType.content_boolean, [])
 	map.set(DecoType.content_defName, [])
 	map.set(DecoType.content_float, [])
 	map.set(DecoType.content_image, [])
