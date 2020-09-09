@@ -38,10 +38,13 @@ export interface specialType {
 		baseClass: TypeIdentifier
 	}
 	enum?: boolean
-	number?: boolean // not supported yet
-	integer?: boolean // not supported yet
-	float?: boolean // not supported yet
-	string?: boolean // not supported yet
+	integer?: boolean
+	float?: boolean
+	string?: boolean
+	color?: boolean
+	intVec3?: boolean
+	intRange?: boolean
+	floatRange?: boolean
 }
 
 export interface TypeInfo {

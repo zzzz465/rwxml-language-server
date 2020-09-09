@@ -1,6 +1,6 @@
 import { spawn } from 'child_process'
 import { resolve } from 'path'
-import { createConnection, createServer } from 'net'
+import { createServer } from 'net'
 
 // the executable will be served in out or dist folder.
 console.log(!!__dirname)

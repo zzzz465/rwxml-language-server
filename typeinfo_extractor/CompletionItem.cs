@@ -98,9 +98,10 @@ namespace Program
         public def defType;
         public Enumerable enumerable;
         public CompClass compClass;
+
+        public bool integer, color, intVec3, intRange, floatRange;
         [JsonProperty("enum")]
         public bool @enum;
-        public bool number, integer;
         [JsonProperty("float")]
         public bool @float;
         [JsonProperty("string")]

@@ -75,9 +75,14 @@ these things make modding difficult, **which can be avoided.**
 ### Prerequisites
 1. node.js
 2. dotnet Core
+3. rimworld dll, UnityEngine.dll, UnityEngine_CoreModule.dll
+
+for legal problems, including these dlls are not permitted
+usually all of them are served by installing rimworld game.
 
 ### Setup
 ```
 git clone https://github.com/zzzz465/rwxml-language-server
 npm install
+*fix reference in sln project*
 ```

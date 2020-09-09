@@ -10,7 +10,7 @@
 		"watch": "tsc -b -w",
 		"test": "jest",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
-		"prepublish": "tsc",
+		"prepublish": "tsc && dotnet build ./typeinfo_extractor/typeinfo_extractor.sln",
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "webpack --mode production",
 		"webpack-dev": "webpack --mode development --watch"

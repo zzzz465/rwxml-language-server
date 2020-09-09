@@ -218,17 +218,30 @@ namespace Program
                 }
                 if (type.IsPrimitive)
                 {
-                    typeInfo.leafNodeCompletions = new CompletionItem[] { new CompletionItem() { label = type.Name } };
                     if (integers.Contains(type))
                     {
-                        typeInfo.specialType.number = true;
                         typeInfo.specialType.integer = true;
                     }
                     else if(floats.Contains(type))
                     {
-                        typeInfo.specialType.number = true;
                         typeInfo.specialType.@float = true;
                     }
+                }
+                if(type.IsSubclassOf(typeof(UnityEngine.Color)))
+                {
+                    typeInfo.specialType.color = true;
+                }
+                if(type == typeof(IntRange))
+                {
+                    typeInfo.specialType.intRange = true;
+                }
+                if(type == typeof(FloatRange))
+                {
+                    typeInfo.specialType.floatRange = true;
+                }
+                if(type == typeof(IntVec3))
+                {
+                    typeInfo.specialType.intVec3 = true;
                 }
                 if(type.IsSubclassOf(def)) {
                     ref var defType = ref typeInfo.specialType.defType;
