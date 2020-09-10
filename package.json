@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.12",
+	"version": "0.4.13",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -10,7 +10,7 @@
 		"watch": "tsc -b -w",
 		"test": "jest",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
-		"prepublish": "tsc && dotnet build ./typeinfo_extractor/typeinfo_extractor.sln",
+		"prepublish": "tsc && dotnet publish ./typeinfo_extractor/typeinfo_extractor.sln",
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "npm run prepublish && webpack --mode production",
 		"webpack-dev": "webpack --mode development --watch"
