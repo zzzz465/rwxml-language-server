@@ -215,7 +215,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
-		timeout = setTimeout(updateDecorations, 250);
+		timeout = setTimeout(updateDecorations, 300);
 	}
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {

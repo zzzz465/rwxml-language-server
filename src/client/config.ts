@@ -1,23 +1,39 @@
 import * as vscode from 'vscode'
 import { Uri } from 'vscode'
-import { relative } from 'path'
-import * as path from 'path'
+import { relative, isAbsolute, dirname, resolve } from 'path'
+import { homedir } from 'os'
 // import { absPath } from '../common/common'
 import { NotificationType } from 'vscode-languageserver'
 import { URILike, relativePath } from '../common/common'
 import { ConfigDatum, LoadFolders } from '../common/config'
 
-function resolveRelativeToUri (baseUri: Uri, relative: relativePath | undefined): URILike | undefined {
-	if (relative) {
-		const dir = path.dirname(baseUri.fsPath)
-		const result = path.resolve(dir, relative)
-		return Uri.file(result).toString()
+function sanitizeString(input: string): string {
+	// windows forbidden char 0~31
+	return [...input].filter(char => (31 <= char.charCodeAt(0) && char.charCodeAt(0) <= 126)).join('')
+}
+
+function convertToUri (baseUri: Uri, filePath: string | undefined): URILike | undefined {
+	if (filePath) {
+		const path = sanitizeString(filePath)
+		if (isAbsolute(path)) {
+			return Uri.file(path).toString()
+		} else {
+			const dir = dirname(baseUri.fsPath)
+			const result = resolve(dir, path)
+			return Uri.file(result).toString()
+		}
 	}
 }
 
-function resolveRelativeToUris (baseUri: Uri, p: string[] | undefined): URILike[] | undefined {
+function convertToUris (baseUri: Uri, p: string[] | undefined): URILike[] | undefined {
 	if (p) {
-		return p.map(p2 => resolveRelativeToUri(baseUri, p2)!)
+		const result: string[] = []
+		for (const path of p) {
+			const parse = convertToUri(baseUri, path)
+			if (parse)
+				result.push(parse)
+		}
+		return result
 	}
 }
 
@@ -28,17 +44,17 @@ export function parseConfig(configLike: any, configFilePath: Uri): ConfigDatum {
 			if (typeof object !== 'object')
 				continue
 			
-			const About = resolveRelativeToUri(configFilePath, object.About)
+			const About = convertToUri(configFilePath, object.About)
 			if (About === undefined)
 				continue
-			const Assemblies = resolveRelativeToUri(configFilePath, object.Assemblies)
-			const Defs = resolveRelativeToUri(configFilePath, object.Defs)
-			const Textures = resolveRelativeToUri(configFilePath, object.Textures)
-			const Sounds = resolveRelativeToUri(configFilePath, object.Sounds)
-			const Patches = resolveRelativeToUri(configFilePath, object.Patches)
-			const Languages = resolveRelativeToUri(configFilePath, object.Languages)
-			const DefReferences = resolveRelativeToUris(configFilePath, object.DefReferences)
-			const AssemblyReferences = resolveRelativeToUris(configFilePath, object.AssemblyReferences)
+			const Assemblies = convertToUri(configFilePath, object.Assemblies)
+			const Defs = convertToUri(configFilePath, object.Defs)
+			const Textures = convertToUri(configFilePath, object.Textures)
+			const Sounds = convertToUri(configFilePath, object.Sounds)
+			const Patches = convertToUri(configFilePath, object.Patches)
+			const Languages = convertToUri(configFilePath, object.Languages)
+			const DefReferences = convertToUris(configFilePath, object.DefReferences)
+			const AssemblyReferences = convertToUris(configFilePath, object.AssemblyReferences)
 
 			const loadFolders: LoadFolders = { version, About, Assemblies, Languages,
 					Defs, Textures, Sounds, Patches, DefReferences, AssemblyReferences }
