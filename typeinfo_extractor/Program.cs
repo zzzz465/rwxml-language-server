@@ -23,10 +23,6 @@ namespace Program
             {
                 var stdout = Console.OpenStandardOutput();
                 var assemblies = new List<Assembly>();
-                // Console.WriteLine("asdf");
-                // var pipeStream = new NamedPipeClientStream(".", "rwxml", PipeDirection.InOut, PipeOptions.Asynchronous);
-                // pipeStream.Connect(10);
-                // Console.WriteLine("[C#]: stream connected");
                 
                 try
                 {
@@ -42,18 +38,20 @@ namespace Program
                     return;
                 }
 
-                var types = new HashSet<Type>();
+                var modTypes = new HashSet<Type>();
                 var defType = typeof(Def);
                 foreach(var assem in assemblies)
                 {
                     var targetTypes = assem.GetTypes().Where(type => type.IsSubclassOf(defType));
                     foreach(var type in targetTypes)
                     {
-                        types.Add(type);
+                        modTypes.Add(type);
                     }
                 }
 
-                CollectRelatedData_BFS(types);
+                var rwTypes = typeof(Def).Assembly.GetTypes().Where(type => type.IsSubclassOf(defType));
+
+                CollectRelatedData_BFS(rwTypes.Concat(modTypes));
                 PopulateData();
                 MarkDefNodes();
 
