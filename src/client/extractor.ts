@@ -1,6 +1,7 @@
 import { spawn } from 'child_process'
 import { resolve } from 'path'
 import { createServer } from 'net'
+import * as vscode from 'vscode'
 
 // the executable will be served in out or dist folder.
 console.log(!!__dirname)
@@ -20,7 +21,6 @@ export function extractTypeInfos(dlls: string[]): Promise<any> {
 		process.stdout.on('data', (buffer: Buffer) => {
 			try {
 				const obj = JSON.parse(buffer.toString('utf-8'))
-				console.log(`loaded typeInfo object count : ${obj.length}`)
 				resolve(obj)
 			} catch (err) {
 				console.log(err)
@@ -29,17 +29,21 @@ export function extractTypeInfos(dlls: string[]): Promise<any> {
 		})
 
 		process.stderr.on('data', (buffer: Buffer) => {
-			console.log(buffer.toString())
+			const errmsg = buffer.toString()
+			console.log(errmsg)
+			err(errmsg)
 		})
 
 		process.on('exit', (code) => {
 			if (code !== 0) {
+				vscode.window.showErrorMessage(`extractor exit code with ${code}`)
 				console.log(`extractor exit code ${code}`)
 				err(code)
 			}
 		})
 
 		process.on('error', (errmsg) => { // catch stderr
+			vscode.window.showErrorMessage(`extractor exit code with ${errmsg}`)
 			console.log(errmsg)
 			err(errmsg)
 		})

@@ -148,8 +148,12 @@ export async function activate(context: ExtensionContext): Promise<void> {
 				const p = (async () => {
 					const res = await checkPathValid(assemRefs)
 					if (res.valid) {
-						const rawTypeInfo = await extractTypeInfos(assemRefs)
-						parms.data[version] = { rawTypeInfo }
+						try {
+							const rawTypeInfo = await extractTypeInfos(assemRefs)
+							parms.data[version] = { rawTypeInfo }
+						} catch (err) {
+							vscode.window.showErrorMessage(`failed extracting data, err: ${err}`)
+						}
 					} else {
 						const errmsg = `invalid path:${res.invalidItems}`
 						vscode.window.showErrorMessage(errmsg)
