@@ -16,9 +16,19 @@ namespace Program
 {
     class Program
     {
+        static Assembly handler(object sender, ResolveEventArgs e)
+        {
+            var name = e.Name.Split(',')[0].Trim();
+            if (name == "Assembly-CSharp")
+                return typeof(Def).Assembly;
+
+            return null;
+        }
+
         static Dictionary<Type, TypeInfo> typeDict = new Dictionary<Type, TypeInfo>();
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.AssemblyResolve += handler;
             if (args.Length > 0 && args[0] == "--stdout")
             {
                 var stdout = Console.OpenStandardOutput();
