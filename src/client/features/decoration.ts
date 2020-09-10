@@ -64,6 +64,10 @@ const content_image_decos = createTextEditorDecorationType({
 	}
 })
 
+const invalid_node_tag_decos = createTextEditorDecorationType({
+	color: new ThemeColor("rwxml.decorator.invalid.node.tag.foregroundColor")
+})
+
 export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]): void {
 	const map = new Map<any, vscode.Range[]>()
 	map.set(DecoType.content_Enum, [])
@@ -75,6 +79,7 @@ export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]):
 	map.set(DecoType.node_attrName, [])
 	map.set(DecoType.node_attrValue, [])
 	map.set(DecoType.node_tag, [])
+	map.set(DecoType.invalid_node_tag, [])
 
 	for (const item of items) {
 		const start = new vscode.Position(item.range.start.line, item.range.start.character)
@@ -90,5 +95,6 @@ export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]):
 	activeEditor.setDecorations(content_image_decos, map.get(DecoType.content_image)!)
 	activeEditor.setDecorations(content_bool_decos, map.get(DecoType.content_boolean)!)
 	activeEditor.setDecorations(node_tag_decos, map.get(DecoType.node_tag)!)
+	activeEditor.setDecorations(invalid_node_tag_decos, map.get(DecoType.invalid_node_tag)!)
 	// activeEditor.setDecorations(content_integer_decos, map.get(DecoType.content_integer)!)
 }

@@ -26,49 +26,61 @@ export function decoration({ doc, xmlDoc }: decoParams): DecoItem[] {
 	const result: DecoItem[] = []
 	if (!xmlDoc.root) return result
 
-	const nodes = BFS(xmlDoc.root).filter(node => isTypeNode(node)) as typeNode[]
+	const nodes = BFS(xmlDoc.root)
 	for (const node of nodes) {
-		if (node.closed && node.tag && node.endTag) {
-			result.push(...[{
-				range: textToRange(node.tag),
-				type: DecoType.node_tag
-			}, {
-				range: textToRange(node.endTag),
-				type: DecoType.node_tag
-			}])
-		}
+		if (isTypeNode(node)) {
+			if (node.closed && node.tag && node.endTag) {
+				result.push(...[{
+					range: textToRange(node.tag),
+					type: DecoType.node_tag
+				}, {
+					range: textToRange(node.endTag),
+					type: DecoType.node_tag
+				}])
+			}
 
-		const typeInfo = node.typeInfo
-		const { specialType } = typeInfo
-		if (specialType) {
-			const { // enum can't be destroyed because it is a reserved word.
-				color, float, floatRange, intRange, intVec3, integer, string
-			} = specialType
+			const typeInfo = node.typeInfo
+			const { specialType } = typeInfo
+			if (specialType) {
+				const { // enum can't be destroyed because it is a reserved word.
+					color, float, floatRange, intRange, intVec3, integer, string
+				} = specialType
 
-			if (node.text) {
-				const text = node.text.content
-				const range = textToRange(node.text)
-				if (integer) {
-					if (isInteger(text))
-						result.push({ range, type: DecoType.content_integer })
-				} else if (float) {
-					if (isFloat(text))
-						result.push({ range, type: DecoType.content_float })
-				} else if (specialType.enum) {
-					if (textIsEnum(typeInfo, text))
-						result.push({ range, type: DecoType.content_Enum })
-				} else if (specialType.defType) {
-					// if (text) {
+				if (node.text) {
+					const text = node.text.content
+					const range = textToRange(node.text)
+					if (integer) {
+						if (isInteger(text))
+							result.push({ range, type: DecoType.content_integer })
+					} else if (float) {
+						if (isFloat(text))
+							result.push({ range, type: DecoType.content_float })
+					} else if (specialType.enum) {
+						if (textIsEnum(typeInfo, text))
+							result.push({ range, type: DecoType.content_Enum })
+					} else if (specialType.defType) {
+						// if (text) {
 						// let defNode = node
 						// while ()
-					// }
-				} else if (specialType.bool) {
-					if (isBool(text))
-						result.push({ range, type: DecoType.content_boolean })
-				} else if (specialType.color) {
-					if (parseColor(text))
-						result.push({ range, type: DecoType.content_color })
+						// }
+					} else if (specialType.bool) {
+						if (isBool(text))
+							result.push({ range, type: DecoType.content_boolean })
+					} else if (specialType.color) {
+						if (parseColor(text))
+							result.push({ range, type: DecoType.content_color })
+					}
 				}
+			}
+		} else {
+			if (node.closed && node.tag && node.endTag) {
+				result.push(...[{
+					range: textToRange(node.tag),
+					type: DecoType.invalid_node_tag
+				}, {
+					range: textToRange(node.endTag),
+					type: DecoType.invalid_node_tag
+				}])
 			}
 		}
 	}

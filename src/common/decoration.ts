@@ -26,7 +26,9 @@ export interface DecoRequestRespond {
 
 // content_ -> text inside node
 // node_ -> text inside < >
+// invalid_ -> node that doesn't have typeInfo
 export const enum DecoType {
+	invalid_node_tag,
 	node_tag,
 	node_attrName,
 	node_attrValue,

@@ -91,6 +91,15 @@
 					"highContrast": "#569CD6",
 					"light": "#569CD6"
 				}
+			},
+			{
+				"id": "rwxml.decorator.invalid.node.tag.foregroundColor",
+				"description": "foreground color for invalid node tag",
+				"defaults": {
+					"dark": "#757575",
+					"light": "#757575",
+					"highContrast": "#757575"
+				}
 			}
 		]
 	},
