@@ -9,7 +9,8 @@ import { ConfigDatum, LoadFolders } from '../common/config'
 
 function sanitizeString(input: string): string {
 	// windows forbidden char 0~31
-	return [...input].filter(char => (31 <= char.charCodeAt(0) && char.charCodeAt(0) <= 126)).join('')
+	// return [...input].filter(char => (31 <= char.charCodeAt(0) && char.charCodeAt(0) <= 126)).join('')
+	return input.replace(String.fromCharCode(8234), '').trim()
 }
 
 function convertToUri (baseUri: Uri, filePath: string | undefined): URILike | undefined {
