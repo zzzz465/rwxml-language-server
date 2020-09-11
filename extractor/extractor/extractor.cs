@@ -14,6 +14,7 @@ namespace extractor
 
         static class RWTypes
         {
+            public static Assembly assembly;
             public static Type Def;
             public static Type UnsavedAttribute;
             public static Type IntRange, FloatRange, IntVec3;
@@ -30,6 +31,7 @@ namespace extractor
             var UnityAssem = assemblies.FirstOrDefault(assembly => assembly.GetName().Name == "UnityEngine");
             if (RWAssem != null && UnityAssem != null)
             {
+                RWTypes.assembly = RWAssem;
                 RWTypes.Def = RWAssem.GetType("Verse.Def");
                 RWTypes.UnsavedAttribute = RWAssem.GetType("Verse.UnsavedAttribute");
                 RWTypes.IntRange = RWAssem.GetType("Verse.IntRange");
@@ -76,6 +78,7 @@ namespace extractor
             while (types.Count > 0)
             {
                 var type = types.Dequeue();
+                var typeName = type.Name;
 
                 TypeInfo typeInfo;
                 if (!typeDict.TryGetValue(type, out typeInfo))
@@ -222,9 +225,20 @@ namespace extractor
                 {
                     ref var defType = ref typeInfo.specialType.defType;
                     if (type.IsArray)
-                        defType.name = type.GetElementType().Name;
+                    {
+                        if(type.Assembly == RWTypes.assembly)
+                            defType.name = type.GetElementType().Name;
+                        else
+                            defType.name = Util.GetArrayTypeIdentifier(type);
+                    }
                     else
-                        defType.name = type.Name;
+                    {
+                        if(type.Assembly == RWTypes.assembly)
+                            defType.name = type.Name;
+                        else
+                            defType.name = Util.GetTypeIdentifier(type);
+
+                    }
                 }
                 if (type.GetField("compClass") != null)
                 {

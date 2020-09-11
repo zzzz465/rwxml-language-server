@@ -50,8 +50,14 @@ namespace extractor
         public static string GetListTypeIdentifier(Type type)
         {
             var T = type.GetGenericArguments()[0];
-            var name = $"{T.Namespace}.{T.Name}";
+            var name = GetTypeIdentifier(T);
             return $"System.Collections.Generic.List<{name}>";
+        }
+        public static string GetArrayTypeIdentifier(Type type)
+        {
+            var T = type.GetElementType();
+            var name = GetTypeIdentifier(T);
+            return $"{name}[]";
         }
     }
 

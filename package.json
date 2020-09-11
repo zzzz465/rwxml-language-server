@@ -9,8 +9,9 @@
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"test": "jest",
+		"extractor:build": "dotnet build ./extractor/extractor.sln",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
-		"prepublish": "tsc && dotnet build ./extractor/extractor.sln",
+		"prepublish": "tsc && npm run extractor:build",
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "npm run prepublish && webpack --mode production",
 		"webpack-dev": "webpack --mode development --watch"
