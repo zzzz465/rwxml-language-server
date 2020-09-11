@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.14",
+	"version": "0.4.15",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {

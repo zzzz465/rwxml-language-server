@@ -145,6 +145,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 		for (const [version, obj] of Object.entries(configDatum.folders)) {
 			if (obj.AssemblyReferences) {
 				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath);
+				if (assemRefs.length == 0) continue;
 				const p = (async () => {
 					const res = await checkPathValid(assemRefs)
 					if (res.valid) {

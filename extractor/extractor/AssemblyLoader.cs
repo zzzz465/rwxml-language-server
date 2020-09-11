@@ -40,8 +40,15 @@ namespace extractor
                 return assem;
 
             // 3) try to load
+            if (e.RequestingAssembly == null)
+            {
+                Log.Error($"DLL [{e.Name}] was not provided to AssemblyReference, you should include it.");
+                throw new DllNotFoundException($"DLL {e.Name} was not provided");
+            }
+
             var assem2 = Assembly.Load(e.Name); // it is now registered to appdomain, so we don't have to store it.
-            return assem2;
+            if (assem2 != null)
+                return assem2;
 
             // unused
             if (assem != null)

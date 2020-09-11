@@ -49,6 +49,7 @@ namespace extractor
                     {
                         unfiltered = ex.Types;
                     }*/
+                    Log.Info($"Extracting data from {assembly.GetName().FullName}");
 
                     var types = from type in assembly.GetTypes()
                                 where type != null && type.IsSubclassOf(RWTypes.Def)
