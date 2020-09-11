@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
 
-namespace Program
+namespace extractor
 {
     public enum CompletionItemKind
     {
@@ -39,7 +41,8 @@ namespace Program
         // public defNodeInfo[] children { get; set; }
     }
 
-    public class Util {
+    public class Util
+    {
         public static string GetTypeIdentifier(Type T)
         {
             return $"{T.Namespace}.{T.Name}";
@@ -51,17 +54,6 @@ namespace Program
             return $"System.Collections.Generic.List<{name}>";
         }
     }
-    /*
-    public struct TypeIdentifier
-    {
-        public string namespaceName { get; set; }
-        public string className { get; set; }
-        public override string ToString()
-        {
-            return $"{namespaceName}.{className}";
-        }
-    }
-    */
 
     public class TypeInfo
     {
@@ -113,7 +105,7 @@ namespace Program
         {
             public string name;
         }
-        
+
         public struct Enumerable
         {
             public string genericType, enumerableType;

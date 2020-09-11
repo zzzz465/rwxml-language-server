@@ -15,7 +15,7 @@ const exractorPath = resolve(__dirname, './extractor/extractor.exe')
 export function extractTypeInfos(dlls: string[]): Promise<any> {
 	// TODO - make a error routine when the client cannot run dotnet files.
 	return new Promise((resolve, err) => {
-		const process = spawn(exractorPath, ['--stdout', ...dlls])
+		const process = spawn(exractorPath, ['--OutputMode', 'stdoutBytes', '--log', 'D:\\log.txt', ...dlls])
 
 		// receive data over stdout
 		process.stdout.on('data', (buffer: Buffer) => {

@@ -252,7 +252,7 @@ export class TypeInfoInjector {
 				}
 
 				if (!injected)
-					delete node.typeInfo
+					delete (<any>node).typeInfo
 			}
 
 			for (const childNode of node.children) {
