@@ -33,7 +33,7 @@
 			"name": "Attach to Server",
 			"port": 6009,
 			"restart": true,
-			"outFiles": ["${workspaceRoot}/out/client/**/*.js"]
+			"outFiles": ["${workspaceRoot}/out/**/*.js"]
 		},
 		{
 			"name": "Language Server E2E Test",

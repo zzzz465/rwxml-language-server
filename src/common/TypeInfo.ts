@@ -136,21 +136,23 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 				}
 
 				if (typeInfo.specialType.compClass) {
-					const match = typeInfo.typeIdentifier.match(/(?<=\.)[\w]+$/) // match className
-					if (match) {
-						const name = match[0]
-						const baseName = typeInfo.specialType.compClass.baseClass
-						let map = this.compMap.get(baseName)
-						if (!map) {
-							map = new Map()
-							this.compMap.set(baseName, map)
-						}
+					let name: string
+					if (typeInfo.typeIdentifier.match(/^Verse|^RimWorld/))
+						name = typeInfo.typeIdentifier.split('.').reverse()[0]
+					else
+						name = typeInfo.typeIdentifier
 
-						if (!map.has(name))
-							map.set(name, typeInfo)
-						else
-							console.log(`duplicate comp className ${name}`)
+					const baseName = typeInfo.specialType.compClass.baseClass
+					let map = this.compMap.get(baseName)
+					if (!map) {
+						map = new Map()
+						this.compMap.set(baseName, map)
 					}
+
+					if (!map.has(name))
+						map.set(name, typeInfo)
+					else
+						console.log(`duplicate comp className ${name}`)
 				}
 			}
 		}
@@ -191,7 +193,7 @@ export class TypeInfoMap extends Map<string, TypeInfo> {
 	 * iterator of comp name - typeinfo pair
 	 * @param baseType 
 	 */
-	*getComps(baseType?: TypeIdentifier): Generator<[string, TypeInfo], void, unknown> {
+	* getComps(baseType?: TypeIdentifier): Generator<[string, TypeInfo], void, unknown> {
 		if (baseType) {
 			const entries = this.compMap.get(baseType)
 			if (entries) {
@@ -226,7 +228,7 @@ export class TypeInfoInjector {
 		const queue: typeNode[] = [node]
 		while (queue.length > 0) {
 			const node = queue.pop()!
-			const typeInfo = node.typeInfo
+			let typeInfo = node.typeInfo // it can be replaced during compClass injection
 			const specialTypes = typeInfo.specialType
 
 			// if the node is List<T> and it's not treated as special (normal <li></li>)
@@ -239,19 +241,36 @@ export class TypeInfoInjector {
 					queue.push(Object.assign(childNode, { typeInfo: childType }))
 			}
 
-			// <li Class="CompProperties_name">...(nodes)...</li>
-			if (specialTypes?.compClass) {
-				const className = node.attributes?.Class
+			// Class="Value"
+			const ClassValue = node.attributes?.Class
+			if (ClassValue) {
+				// <li Class="CompProperties_name">...(nodes)...</li>
 				let injected = false
-				if (className) {
-					const childType = this.typeInfoMap.getComp(className)
+				if (specialTypes?.compClass) {
+					const childType = this.typeInfoMap.getComp(ClassValue)
 					if (childType) {
 						node.typeInfo = childType
+						typeInfo = node.typeInfo // notice
+						injected = true
+					}
+				} else {
+					const values = ClassValue.split('.')
+					let newType: TypeInfo | undefined = undefined
+					// assume if we have a namespace, then it is not in Rimworld / Verse namespace = custom one
+					if (values.length > 1) {
+						newType = this.typeInfoMap.getByTypeIdentifier(ClassValue)
+					} else { // Find in Verse / RimWorld
+						newType = this.typeInfoMap.getByTypeIdentifier(`RimWorld.${ClassValue}`) ||
+							this.typeInfoMap.getByTypeIdentifier(`Verse.${ClassValue}`)
+					}
+
+					if (newType) {
+						node.typeInfo = newType
+						typeInfo = node.typeInfo
 						injected = true
 					}
 				}
-
-				if (!injected)
+				if (!injected) // do we have to delete this? really?
 					delete (<any>node).typeInfo
 			}
 

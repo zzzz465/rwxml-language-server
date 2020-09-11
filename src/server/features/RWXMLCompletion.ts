@@ -1,6 +1,6 @@
 import { TextDocument, Position, Range } from 'vscode-languageserver-textdocument';
 import { XMLDocument, Node } from '../parser/XMLParser';
-import { CompletionList, CompletionItem } from 'vscode-languageserver';
+import { CompletionList, CompletionItem, CompletionItemKind } from 'vscode-languageserver';
 import { createScanner, TokenType, ScannerState } from '../parser/XMLScanner';
 import { isTypeNode, isDef } from '../../common/TypeInfo'
 import { iDefDatabase } from '../RW/DefTextDocuments';
@@ -141,7 +141,7 @@ export function doComplete({
 				})
 			} else {
 				if (typeInfo.childNodes) {
-					const nodes = [...typeInfo.childNodes.keys()].map<CompletionItem>(name => ({ label: name }))
+					const nodes = [...typeInfo.childNodes.keys()].map<CompletionItem>(name => ({ label: name, kind: CompletionItemKind.Field }))
 					result.items = nodes
 				}
 				if (typeInfo.suggestedAttributes) {
@@ -161,7 +161,7 @@ export function doComplete({
 			const defType = node.tag
 			const names = defDatabase.getNames()
 			result.items = names.map(name => ({
-				label: name
+				label: name, kind: CompletionItemKind.Enum
 			}))
 		}
 
@@ -171,7 +171,7 @@ export function doComplete({
 	function collectDefTagSuggestions(): CompletionList {
 		const result: CompletionList = { isIncomplete: false, items: [] }
 		result.items = DB.typeInfoMap.getDefNames().map(name => ({
-			label: name
+			label: name, kind: CompletionItemKind.Constructor
 		} as CompletionItem))
 
 		return result
@@ -193,7 +193,7 @@ export function doComplete({
 							const suggestions = [...DB.typeInfoMap.getComps(name)]
 							result.items = AsEnumerable(suggestions).Select(([name, _]) => name)
 								.Select(name => ({
-									label: name
+									label: name, kind: CompletionItemKind.Class
 								} as CompletionItem))
 								.ToArray()
 						}

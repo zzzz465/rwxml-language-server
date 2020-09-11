@@ -53,13 +53,15 @@ namespace extractor
                     }*/
                     Log.Info($"Extracting data from {assembly.GetName().FullName}");
 
+                    // collect Def or CompProperties (naming convention)
                     var types = from type in assembly.GetTypes()
-                                where type != null && type.IsSubclassOf(RWTypes.Def)
+                                where type != null && (type.IsSubclassOf(RWTypes.Def) || type.Name.Contains("CompProperties"))
                                 select type;
                     var name = assembly.GetName().Name;
                     CollectData_BFS(types);
                 }
-
+                var relatedTypes = SearchDerivedClasses(assemblies);
+                CollectData_BFS(relatedTypes);
                 PopulateData();
 
                 return typeDict;
@@ -86,6 +88,9 @@ namespace extractor
                     typeInfo = TypeInfo.Create(type);
                     typeDict.Add(type, typeInfo);
                 }
+
+                if (typeInfo.childNodes.Count != 0)
+                    continue; // already collected
 
                 if (type.IsPrimitive || type == typeof(String))
                     continue;
@@ -135,6 +140,7 @@ namespace extractor
                         var genericTypeDefinition = fieldType.GetGenericArguments();
                         foreach(var GType in genericTypeDefinition)
                         {
+                            var GTypename = GType.Name;
                             if (!GType.IsGenericParameter)
                                 if(!typeDict.ContainsKey(GType))
                                     types.Enqueue(GType);
@@ -146,6 +152,30 @@ namespace extractor
                     }
                 }
             }
+        }
+
+        static IEnumerable<Type> SearchDerivedClasses(IEnumerable<Assembly> assemblies)
+        {
+            var objType = typeof(object);
+            Func<Type, bool> isRelated = (type) => // upstream to find base class in typeDict, if exists it is related.
+            {
+                var baseType = type;
+                while (baseType != null && baseType != objType)
+                {
+                    if (typeDict.ContainsKey(baseType))
+                        return true;
+                    baseType = baseType.BaseType;
+                }
+                return false;
+            };
+
+            var relatedTypes = from assem in AppDomain.CurrentDomain.GetAssemblies()
+                           let types = assem.GetTypes()
+                           from type in types
+                           where type != null && isRelated(type)
+                           select type;
+
+            return relatedTypes;
         }
 
         static void PopulateData()
@@ -172,7 +202,7 @@ namespace extractor
                 if (type.IsEnum)
                 {
                     var values = type.GetEnumValues().Cast<Object>().Select(obj => obj.ToString())
-                        .Select(name => new CompletionItem() { label = name, kind = CompletionItemKind.EnumMember })
+                        .Select(name => new CompletionItem() { label = name, kind = CompletionItemKind.Enum })
                         .ToArray();
                     typeInfo.leafNodeCompletions = values;
                     typeInfo.specialType.@enum = true;
@@ -248,13 +278,15 @@ namespace extractor
 
                     }
                 }
-                if (type.GetField("compClass") != null)
+                if (type.Name.Contains("CompProperties"))
                 {
                     typeInfo.specialType.compClass.isComp = true;
                     var baseType = type;
                     var objType = typeof(object);
-                    while (baseType.BaseType != objType && baseType.GetField("compClass") != null)
-                    { // possible bug - baseType was not registered in static typeDict, maybe?
+                    while (baseType != null && baseType.BaseType != objType && baseType.Name.Contains("CompProperties"))
+                    { // possible bug - baseType was not registered in static typeDict, maybe
+                        // also if CompProperties have interface, then it will throw the error cuz baseType is null
+                        // I'm just adding baseType != null to avoid critical issues, fix this later
                         baseType = baseType.BaseType;
                     }
                     typeInfo.specialType.compClass.baseClass = Util.GetTypeIdentifier(baseType);
