@@ -20,10 +20,12 @@ export function extractTypeInfos(dlls: string[]): Promise<any> {
 		const process = spawn(exractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
 
 		// receive data over stdout
+		let resolved = false;
 		process.stdout.on('data', (buffer: Buffer) => {
 			try {
 				const obj = JSON.parse(buffer.toString('utf-8'))
 				resolve(obj)
+				resolved = true;
 			} catch (err) {
 				console.log(err)
 				err(err)
@@ -41,6 +43,11 @@ export function extractTypeInfos(dlls: string[]): Promise<any> {
 				vscode.window.showErrorMessage(`extractor exit code with ${code}`)
 				console.log(`extractor exit code ${code}`)
 				err(code)
+			} else {
+				if (!resolved) {
+					resolve([])
+					resolved = true
+				}
 			}
 		})
 

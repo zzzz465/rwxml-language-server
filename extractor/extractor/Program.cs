@@ -83,7 +83,7 @@ namespace extractor
 
                         case OutputMode.stdoutBytes:
                             var utf8bytes = UTF8Encoding.UTF8.GetBytes(serializedObject);
-                            Log.Info($"serialized text bytes length: {utf8bytes.Length}");
+                            Log.Info($"serialized text bytes length: {utf8bytes.Length}");  
                             Console.OpenStandardOutput().Write(utf8bytes, 0, utf8bytes.Length);       
                             break;
 
