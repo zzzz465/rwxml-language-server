@@ -56,7 +56,7 @@ namespace extractor
                     var types = from type in assembly.GetTypes()
                                 where type != null && type.IsSubclassOf(RWTypes.Def)
                                 select type;
-
+                    var name = assembly.GetName().Name;
                     CollectData_BFS(types);
                 }
 
@@ -131,6 +131,14 @@ namespace extractor
                             identifier = Util.GetListTypeIdentifier(fieldType);
                         }
                         typeInfo.childNodes[fieldName] = identifier;
+
+                        var genericTypeDefinition = fieldType.GetGenericArguments();
+                        foreach(var GType in genericTypeDefinition)
+                        {
+                            if (!GType.IsGenericParameter)
+                                if(!typeDict.ContainsKey(GType))
+                                    types.Enqueue(GType);
+                        }
                     }
                     else
                     {

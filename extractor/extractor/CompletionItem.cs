@@ -59,6 +59,24 @@ namespace extractor
             var name = GetTypeIdentifier(T);
             return $"{name}[]";
         }
+        public static string GetGenericTypeIdentifier(Type type)
+        {
+            var generics = type.GetGenericArguments();
+            var Namespace = type.Namespace;
+            var name = type.Name.Split('`')[0];
+
+            var text = $"{Namespace}.{name}<";
+            if (generics.Length > 1)
+            {
+                text += String.Join(", ", generics.Select(t => t.Name));
+                text += ">";
+            }
+            else
+            {
+                text += $"{generics[0].Name}>";
+            }
+            return text;
+        }
     }
 
     public class TypeInfo
