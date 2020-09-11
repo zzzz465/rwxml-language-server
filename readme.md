@@ -22,9 +22,8 @@ note that only one config file is allowed in the entire project file.
 				"realtive/path/to/def"
       ],
 			"AssemblyReferences": [ // referencing dll files to extract typeInfos.
-				// do not reference Assembly-CSharp, rimworld's typeinfo is already built-in
+				"Path/To/Assembly_Folder_Path", // give folder path to load all
 				"relative/path/to/your/assemblies/my-assembly.dll", // use relative path
-				// not supported yet "path/to/folder/loadall" // take all dlls from given path
 			]
 		},
 		"1.2" : { // 1.2 mod

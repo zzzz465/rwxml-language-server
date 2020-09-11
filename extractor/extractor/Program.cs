@@ -73,7 +73,7 @@ namespace extractor
                     serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
 
                     var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
-                    Log.Info($"serialized Object string length: {serializedObject}");
+                    Log.Info($"serialized Object string length: {serializedObject.Length}");
 
                     switch(option.outputMode)
                     {

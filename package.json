@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.13",
+	"version": "0.4.14",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -10,7 +10,7 @@
 		"watch": "tsc -b -w",
 		"test": "jest",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
-		"prepublish": "tsc && dotnet publish ./typeinfo_extractor/typeinfo_extractor.sln",
+		"prepublish": "tsc && dotnet build ./extractor/extractor.sln",
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "npm run prepublish && webpack --mode production",
 		"webpack-dev": "webpack --mode development --watch"
@@ -28,6 +28,14 @@
 		"url": "https://github.com/zzzz465/rwxml-language-server"
 	},
 	"contributes": {
+		"configuration": {
+			"title": "RWXML Language Server Configurations",
+			"properties": {
+				"rwxml.extractor.args": {
+					"type":"array"
+				}
+			}
+		},
 		"colors": [
 			{
 				"id": "rwxml.decorator.inlayHints.backgroundColor",
