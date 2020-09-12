@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.20",
+	"version": "0.4.21",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -78,18 +78,18 @@
 				"id": "rwxml.decorator.content.float.foregroundColor",
 				"description": "foreground color for float",
 				"defaults": {
-					"dark": "#c586c0",
-					"highContrast": "#c586c0",
-					"light": "#c586c0"
+					"dark": "#65b33b",
+					"highContrast": "#65b33b",
+					"light": "#65b33b"
 				}
 			},
 			{
 				"id": "rwxml.decorator.node.tag.foregroundColor",
 				"description": "foreground color for node tag",
 				"defaults": {
-					"dark": "#9B518B",
-					"highContrast": "#9B518B",
-					"light": "#9B518B"
+					"dark": "#8aa7e7",
+					"highContrast": "#8aa7e7",
+					"light": "#8aa7e7"
 				}
 			},
 			{
@@ -105,9 +105,9 @@
 				"id": "rwxml.decorator.invalid.node.tag.foregroundColor",
 				"description": "foreground color for invalid node tag",
 				"defaults": {
-					"dark": "#757575",
-					"light": "#757575",
-					"highContrast": "#757575"
+					"dark": "#cccccc0a",
+					"light": "#cccccc0a",
+					"highContrast": "#cccccc0a"
 				}
 			}
 		]
