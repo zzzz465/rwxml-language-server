@@ -88,7 +88,7 @@ namespace extractor
                     typeDict.Add(type, typeInfo);
                 }
 
-                if (typeInfo.childNodes.Count != 0)
+                if (typeInfo.childCollected)
                     continue; // already collected
 
                 if (type.IsPrimitive || type == typeof(String))
@@ -122,11 +122,12 @@ namespace extractor
                         {
                             if(fieldType.GetGenericTypeDefinition() == listType)
                             {
-                                var id = Util.GetListTypeIdentifier(fieldType);
+                                var id = Util.GetListTypeIdentifier(fieldType); // don't need to fill child nodes.
                                 typeDict.Add(fieldType, TypeInfo.Create(id));
                             }
                             else
                             {
+                                types.Enqueue(fieldType); // need to fill child nodes
                                 var genericTArgs = fieldType.GetGenericArguments();
                                 foreach(var T in genericTArgs)
                                 {
@@ -134,9 +135,8 @@ namespace extractor
                                         continue;
 
                                     if (!typeDict.ContainsKey(T))
-                                    {
-                                        typeDict.Add(T, TypeInfo.Create(T));
-                                    }
+                                        types.Enqueue(T);
+                                        // typeDict.Add(T, TypeInfo.Create(T));
                                 }
                             }
                         }
@@ -166,6 +166,7 @@ namespace extractor
                         typeInfo.childNodes[fieldName] = Util.GetTypeIdentifier(fieldType);
                     }
                 }
+                typeInfo.childCollected = true;
             }
         }
 
@@ -306,6 +307,8 @@ namespace extractor
                     }
                     typeInfo.specialType.compClass.baseClass = Util.GetTypeIdentifier(baseType);
                 }
+
+                typeInfo.populated = true;
             }
         }
     }

@@ -83,10 +83,23 @@ namespace extractor
     {
         public static TypeInfo Create(Type type)
         {
-            var name = type.Name;
-            return new TypeInfo() { typeIdentifier = Util.GetTypeIdentifier(type) };
+            string typeId = "undefined";
+            if (type.IsGenericType)
+            {
+                if (type.GetGenericTypeDefinition() == typeof(List<>))
+                    typeId = Util.GetListTypeIdentifier(type);
+                else
+                    typeId = Util.GetGenericTypeIdentifier(type);
+            }
+            else if (type.IsArray)
+            {
+                typeId = Util.GetArrayTypeIdentifier(type);
+            }
+            else
+                typeId = Util.GetTypeIdentifier(type);
+            return new TypeInfo() { typeIdentifier = typeId };
         }
-        // deprecated??
+
         public static TypeInfo Create(string id)
         {
             return new TypeInfo() { typeIdentifier = id };
@@ -97,6 +110,13 @@ namespace extractor
         public CompletionItem[] leafNodeCompletions { get; set; }
         public string typeIdentifier;
         public SpecialType specialType;
+
+        // marker
+        [JsonIgnore]
+        public bool childCollected;
+        [JsonIgnore]
+        public bool populated;
+
         public Dictionary<string, string> childNodes { get; set; } = new Dictionary<string, string>();
         public bool ShouldSerializechildNodes()
         {
