@@ -18,7 +18,7 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { doComplete } from './features/RWXMLCompletion'
 import { ConfigDatum, ConfigChangedRequestType, getVersion } from '../common/config'
-import { DefTextDocuments, isReferencedDef, isSourcedDef, DefTextDocument } from './RW/DefTextDocuments';
+import { DefTextDocuments, isReferencedDef, isSourcedDef, DefTextDocument, DirtyNode } from './RW/DefTextDocuments';
 import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode } from '../common/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
 import { NodeValidator } from './features/NodeValidator';
@@ -30,6 +30,7 @@ import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '.
 import { XMLDocument } from './parser/XMLParser';
 import { decoration } from './features/Decoration';
 import { doHover } from './features/Hover';
+import { AsEnumerable } from 'linq-es2015';
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -260,8 +261,22 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 connection.onCompletionResolve(handler => {
 	return handler
 })
-/**
- * 
+
+function updateDirtyNodes(dirtyNodes: Set<DirtyNode>) {
+	const documents = AsEnumerable(dirtyNodes.values())
+		.GroupBy(node => node.document.Uri)
+
+	for (const document of documents) {
+		const documentUri = document.key
+		if (documentUri) {
+			const defDoc = defTextDocuments.getDocument(documentUri)
+			if (defDoc)
+				doValidate(defDoc)
+		}
+	}
+}
+
+/** 
  * @param document 
  * @param xmldoc null -> no document found | undefined -> not given (try find internally)
  */
@@ -293,21 +308,26 @@ function validateAll() {
 	}, 50)
 }
 
-
 defTextDocuments.onReferenceDocumentsAdded.subscribe({}, () => {
 	console.log('defTextDocuments.onReferenceDocumentsAdded')
 	validateAll()
 })
 
 // todo - can we put a cancellation token here and prevent unneccesary events?
-defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs, xmlDocument }) => {
+defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs, xmlDocument, dirtyNodes }) => {
 	console.log('defTextDocuments.onDocumentAdded')
+
+	updateDirtyNodes(dirtyNodes)
+	/*
+	dirtyNodes.values()
 	validateAll()
+	*/
 }))
 
-defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocument }) => {
+defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocument, dirtyNodes }) => {
 	// validateAll() // temp code
-	doValidate(textDocument, xmlDocument || null)
+	// doValidate(textDocument, xmlDocument || null)
+	updateDirtyNodes(dirtyNodes)
 })
 
 connection.onRequest(DecoRequestType, ({ document: { uri } }) => {

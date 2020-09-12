@@ -5,6 +5,7 @@
 
 import { createScanner, TokenType } from './XMLScanner';
 import { findFirst } from '../utils/arrays';
+import { uriToFilePath } from 'vscode-languageserver/lib/files';
 
 export interface textRange {
 	start: number
@@ -14,7 +15,6 @@ export interface textRange {
 // import { isVoidElement } from '../languageFacts/fact';
 
 export class Node {
-	public document?: XMLDocument
 	public tag?: textRange // <|Defs| ...>
 	public closed = false; // is validate closed? ex) <tag></tag>
 	public startTagEnd: number | undefined;
@@ -22,7 +22,7 @@ export class Node {
 	public attributes: { [name: string]: string | null } | undefined;
 	public text?: textRange // node content (including whitespace) <tag> content </tag>
 	public get attributeNames(): string[] { return this.attributes ? Object.keys(this.attributes) : []; }
-	constructor(public start: number, public end: number, public children: Node[], public parent?: Node) {
+	constructor(public document: XMLDocument, public start: number, public end: number, public children: Node[], public parent?: Node) {
 	}
 	public isSameTag(tagString: string): boolean {
 		// return this.tag && tagInLowerCase && this.tag.length === tagInLowerCase.length && this.tag.toLowerCase() === tagInLowerCase;
@@ -74,17 +74,19 @@ export class Node {
 }
 
 export interface XMLDocument extends Node {
+	Uri?: string
 	rawXmlDefinition: string;
 	root?: Node;
 	findNodeBefore(offset: number): Node;
 	findNodeAt(offset: number): Node;
 }
 
-export function parse(text: string): XMLDocument {
+export function parse(text: string, Uri?: string): XMLDocument {
 	const scanner = createScanner(text, undefined, undefined, true);
 
-	const XMLDocument = new Node(0, text.length, [], void 0) as XMLDocument;
+	const XMLDocument = new Node(<any>{}, 0, text.length, [], void 0) as XMLDocument;
 	XMLDocument.document = XMLDocument
+	XMLDocument.Uri = Uri
 	let curr = XMLDocument as Node;
 	let endTagStart = -1;
 	let endTagName: string | null = null;
@@ -98,7 +100,7 @@ export function parse(text: string): XMLDocument {
 				break;
 			}
 			case TokenType.StartTagOpen: {
-				const child = new Node(scanner.getTokenOffset(), text.length, [], curr);
+				const child = new Node(XMLDocument, scanner.getTokenOffset(), text.length, [], curr);
 				child.document = XMLDocument
 				curr.children.push(child);
 				curr = child;
@@ -153,13 +155,13 @@ export function parse(text: string): XMLDocument {
 						node = node.parent;
 					}
 					if (node.parent) { // match
-						
+
 						while (curr !== node) {
 							curr.end = endTagStart;
 							curr.closed = false;
 							curr = curr.parent!;
 						}
-						
+
 						curr.closed = true;
 						curr.endTagStart = endTagStart;
 						curr.end = scanner.getTokenEnd();
@@ -204,15 +206,15 @@ export function parse(text: string): XMLDocument {
 	const queue: Node[] = [XMLDocument]
 	while (queue.length > 0) { // node that have children can't have text value
 		const item = queue.pop()! // so it removes them
-		if(item.children.length > 0) {
+		if (item.children.length > 0) {
 			delete item.text
 			queue.push(...item.children)
 		}
 	}
 
-	if(XMLDocument.children.length > 0)
+	if (XMLDocument.children.length > 0)
 		XMLDocument.root = XMLDocument.children[0]
-	
+
 	// root에 대해서, XML 선언 + root 재조정
 	return XMLDocument;
 	/*

@@ -3,7 +3,7 @@
 import { URILike } from '../../common/common'
 import { def, getDefName, TypeInfoInjector, isTypeNode, getName, typeNode } from '../../common/TypeInfo';
 import { IConnection, TextDocuments } from 'vscode-languageserver';
-import { Event } from '../../common/event'
+import { Event, iEvent } from '../../common/event'
 import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType } from '../../common/Defs';
 import { Node, parse, XMLDocument } from '../parser/XMLParser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -48,6 +48,10 @@ export interface DefTextDocumentChangedEvent {
 	defs: sourcedDef[]
 }
 
+interface DirtyNodeOccurEvent {
+	dirtyNodes: Set<DirtyNode>
+}
+
 interface getVersion {
 	(uri: string): string | undefined
 }
@@ -81,10 +85,14 @@ export class DefTextDocuments {
 	private editorDocuments: Map<URILike, TextDocument>
 	private xmlDocuments: Map<URILike, XMLDocument>
 	// private readonly textDocuments: TextDocuments<TextDocument>
-	onReferenceDocumentsAdded: Event<void>
-	onDocumentAdded: Event<DefTextDocumentChangedEvent>
-	onDocumentChanged: Event<DefTextDocumentChangedEvent> // event handler
-	onDocumentDeleted: Event<URI>
+	private _onReferenceDocumentsAdded: Event<DirtyNodeOccurEvent>
+	get onReferenceDocumentsAdded(): iEvent<DirtyNodeOccurEvent> { return this._onReferenceDocumentsAdded }
+	private _onDocumentAdded: Event<DefTextDocumentChangedEvent & DirtyNodeOccurEvent>
+	get onDocumentAdded(): iEvent<DefTextDocumentChangedEvent & DirtyNodeOccurEvent> { return this._onDocumentAdded }
+	private _onDocumentChanged: Event<DefTextDocumentChangedEvent & DirtyNodeOccurEvent> // event handler
+	get onDocumentChanged(): iEvent<DefTextDocumentChangedEvent & DirtyNodeOccurEvent> { return this._onDocumentChanged }
+	private _onDocumentDeleted: Event<{ Uri: URILike } & DirtyNodeOccurEvent>
+	get onDocumentDeleted(): iEvent<{ Uri: URILike } & DirtyNodeOccurEvent> { return this._onDocumentDeleted }
 	getVersionDB: getVersionDB
 	getVersion: getVersion // DI
 
@@ -93,10 +101,10 @@ export class DefTextDocuments {
 		this.defDocuments = new Map()
 		// this.textDocuments = new TextDocuments(TextDocument)
 		this.xmlDocuments = new Map()
-		this.onDocumentAdded = new Event()
-		this.onDocumentChanged = new Event()
-		this.onDocumentDeleted = new Event()
-		this.onReferenceDocumentsAdded = new Event()
+		this._onDocumentAdded = new Event()
+		this._onDocumentChanged = new Event()
+		this._onDocumentDeleted = new Event()
+		this._onReferenceDocumentsAdded = new Event()
 		this.editorDocuments = new Map()
 		this.getVersion = () => undefined
 		this.getVersionDB = () => undefined
@@ -156,11 +164,12 @@ export class DefTextDocuments {
 					TextDocument.create(URI.parse(path).toString(), 'xml', 1, text),
 					params.version)
 				this.defDocuments.set(path, document)
-				this.update(params.version, path, text)
-				this.onDocumentAdded?.Invoke({
+				const dirtyNodes = this.update(params.version, path, text)
+				this._onDocumentAdded?.Invoke({
 					defs: this.getDefs(path),
 					textDocument: document,
-					xmlDocument: this.getXMLDocument(path)
+					xmlDocument: this.getXMLDocument(path),
+					dirtyNodes
 				})
 			}
 		})
@@ -174,15 +183,25 @@ export class DefTextDocuments {
 					TextDocument.create(path, 'xml', 1, text),
 					params.version)
 				this.defDocuments.set(path, textDocument)
-				this.update(params.version, path, text)
+				const dirtyNodes = this.update(params.version, path, text)
 
-				this.onDocumentChanged?.Invoke({
+				this._onDocumentChanged?.Invoke({
 					defs: this.getDefs(path),
 					textDocument,
-					xmlDocument: this.getXMLDocument(path)
+					xmlDocument: this.getXMLDocument(path),
+					dirtyNodes
 				})
 			}
 		})
+		connection.onNotification(DefFileRemovedNotificationType, path => {
+			console.log('defFileRemovedNotification event')
+			const version = this.getVersion(path)
+			if (version) {
+				const dirtyNodes = this.GetOrCreateDB(version).delete(path)
+				this._onDocumentDeleted.Invoke({ Uri: path, dirtyNodes })
+			}
+		})
+
 		connection.onNotification(DefFileRemovedNotificationType, path => {
 			this.defDocuments.delete(path)
 			this.xmlDocuments.delete(path)
@@ -190,14 +209,16 @@ export class DefTextDocuments {
 		// 레퍼런스용 코드
 		connection.onNotification(ReferencedDefFileAddedNotificationType, param => {
 			console.log('ReferencedDefFileAddedNotificationType')
+			const dirtyNodes = new Set<DirtyNode>()
 			for (const [path, text] of Object.entries(param.files)) {
 				const document = convertToDefTextdocument(
 					TextDocument.create(path, 'xml', 1, text),
 					param.version)
 				this.defDocuments.set(path, document)
 				this.updateReference(param.version, path, document.getText())
+					.forEach(node => dirtyNodes.add(node))
 			}
-			this.onReferenceDocumentsAdded.Invoke()
+			this._onReferenceDocumentsAdded.Invoke({ dirtyNodes })
 		})
 
 		connection.onDidOpenTextDocument(({ textDocument }) => {
@@ -227,20 +248,22 @@ export class DefTextDocuments {
 				if (version) {
 					const doc = Object.assign(document, { rwVersion: version } as DefTextDocument)
 					this.defDocuments.set(document.uri, doc)
-					this.update(doc.rwVersion, doc.uri, doc.getText())
-					this.onDocumentChanged.Invoke({
+					const dirtyNodes = this.update(doc.rwVersion, doc.uri, doc.getText())
+					this._onDocumentChanged.Invoke({
 						defs: this.getDefs(document.uri),
 						textDocument: doc,
-						xmlDocument: this.getXMLDocument(document.uri)
+						xmlDocument: this.getXMLDocument(document.uri),
+						dirtyNodes
 					})
 				}
 			} else {
 				this.defDocuments.set(document.uri, document)
-				this.update(document.rwVersion, document.uri, document.getText())
-				this.onDocumentChanged.Invoke({
+				const dirtyNodes = this.update(document.rwVersion, document.uri, document.getText())
+				this._onDocumentChanged.Invoke({
 					defs: this.getDefs(document.uri),
 					textDocument: document,
-					xmlDocument: this.getXMLDocument(document.uri)
+					xmlDocument: this.getXMLDocument(document.uri),
+					dirtyNodes
 				})
 			}
 		})
@@ -287,23 +310,24 @@ export class DefTextDocuments {
 		return db
 	}
 
-	private update(version: string, path: URILike, content: string): void {
+	private update(version: string, path: URILike, content: string): Set<DirtyNode> {
 		console.log('update')
 		const db = this.GetOrCreateDB(version)
 		const typeInfoInjector = this.getVersionDB(version)?.injector
 		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
 		this.xmlDocuments.set(path, xmlDocument)
 		defs.map(def => Object.assign(def, { source: path }))
-		db.update(path, defs)
+		return db.update(path, defs)
 	}
 
-	private updateReference(version: version, path: URILike, content: string): void {
+	// TODO - merge with update maybe??
+	private updateReference(version: version, path: URILike, content: string): Set<DirtyNode> {
 		const db = this.GetOrCreateDB(version)
 		const typeInfoInjector = this.getVersionDB(version)?.injector
 		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
 		this.xmlDocuments.set(path, xmlDocument)
 		defs.map(def => Object.assign(def, { source: path }))
-		db.update(path, defs)
+		return db.update(path, defs)
 	}
 }
 
@@ -358,6 +382,14 @@ interface iDirtyNode {
 export function isDirtyNode(obj: Node): obj is DirtyNode {
 	return 'dirtyStage' in obj
 }
+
+function castOrConvertToDirtyNode(node: typeNode): DirtyNode {
+	if (!isDirtyNode(node))
+		return Object.assign(node, { dirtyStage: 'dirty' } as iDirtyNode)
+	else
+		return node
+}
+
 /** typenode which need to be re-evaluated */
 export type DirtyNode = iDirtyNode & typeNode
 
@@ -481,8 +513,17 @@ export class DefDatabase implements iDefDatabase {
 		return dirty1
 	}
 
+	/** delete file from defDatabase
+	 *  
+	 * */
+	delete(URILike: URILike): Set<DirtyNode> {
+		const result = this.update(URILike, [])
+		this._defs.delete(URILike)
+		return result
+	}
+
 	/** resolve inheritance interanlly
-	 * @returns Nodes marked as dirty
+	 * @returns dirty nodes which need to be re-evaluated
 	 */
 	private resolveInheritWanters(): Set<DirtyNode> {
 		const dirtyNodes: Set<DirtyNode> = new Set()
@@ -502,8 +543,8 @@ export class DefDatabase implements iDefDatabase {
 						def.base = <InheritDef>baseDef
 						this._inheritWanters.delete(def)
 
-						dirtyNodes.add(Object.assign(baseDef, { dirtyStage: 'dirty' } as iDirtyNode))
-						dirtyNodes.add(Object.assign(def, { dirtyStage: 'dirty' } as iDirtyNode))
+						dirtyNodes.add(castOrConvertToDirtyNode(baseDef))
+						dirtyNodes.add(castOrConvertToDirtyNode(def))
 					}
 				}
 			}
@@ -521,7 +562,7 @@ export class DefDatabase implements iDefDatabase {
 	}
 
 	/** resolve weakReference internally
-	 * @returns return dirty nodes.
+	 * @returns dirty nodes which need to be re-evaluated
 	 */
 	private resolveWeakRefWanters(): Set<DirtyNode> {
 		const dirtyNodes = new Set<DirtyNode>()
@@ -538,8 +579,8 @@ export class DefDatabase implements iDefDatabase {
 						other.weakReference.in.add(refNode)
 						this._weakDefRefWanters.delete(refNode)
 
-						dirtyNodes.add(Object.assign(refNode, { dirtyStage: 'dirty' } as iDirtyNode))
-						dirtyNodes.add(Object.assign(other, { dirtyStage: 'dirty' } as iDirtyNode))
+						dirtyNodes.add(castOrConvertToDirtyNode(refNode))
+						dirtyNodes.add(castOrConvertToDirtyNode(other))
 					}
 				}
 			}
@@ -564,7 +605,13 @@ export class DefDatabase implements iDefDatabase {
 		return refNode
 	}
 
-	private deleteDefs(URILike: URILike): void {
+	/**
+	 * internal cleanup process before adding/updating new defs
+	 * @param URILike 
+	 * @returns dirty nodes which need to be re-evaluated
+	 */
+	private deleteDefs(URILike: URILike): Set<DirtyNode> {
+		const dirtyNodes = new Set<DirtyNode>()
 		const defs = this._defs.get(URILike)
 		if (defs) {
 			for (const def of defs) {
@@ -580,6 +627,7 @@ export class DefDatabase implements iDefDatabase {
 
 				if (isReferencedDef(def)) {
 					this.disconnectReferences(def)
+						.map(node => dirtyNodes.add(node))
 					// remove references
 					this._inheritWanters.delete(def)
 
@@ -613,6 +661,7 @@ export class DefDatabase implements iDefDatabase {
 						assert(refNode.weakReference.in.has(other), `tried to remove origin reference, ${other} to ${refNode}`)
 						refNode.weakReference.in.delete(other)
 						GCIfZero(other)
+						dirtyNodes.add(castOrConvertToDirtyNode(other))
 					}
 
 					// disconnect outgoing pointers
@@ -622,14 +671,22 @@ export class DefDatabase implements iDefDatabase {
 						assert(refNode.weakReference.out.has(other), `tried to remove origin reference, ${refNode} to ${other}`)
 						refNode.weakReference.out.delete(other)
 						GCIfZero(other)
+						dirtyNodes.add(castOrConvertToDirtyNode(other))
 					}
 				}
 			}
 			this._defs.delete(URILike)
 		}
+
+		return dirtyNodes
 	}
 
-	private disconnectReferences(def: InheritDef): void {
+	/**
+	 * internal cleanup process
+	 * @param def 
+	 */
+	private disconnectReferences(def: InheritDef): DirtyNode[] {
+		const result: DirtyNode[] = []
 		if (def.base) // remove cross-reference with parent
 			assert(def.base.derived.delete(def),
 				`tried to remove parent reference ${def.tag} which is not valid`)
@@ -638,6 +695,9 @@ export class DefDatabase implements iDefDatabase {
 			assert(derived.base === def)
 			derived.base = undefined
 			this.registerInheritWanter(derived)
+			result.push(castOrConvertToDirtyNode(derived))
 		}
+
+		return result
 	}
 }
