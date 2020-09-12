@@ -266,7 +266,7 @@ connection.onCompletionResolve(handler => {
  * @param xmldoc null -> no document found | undefined -> not given (try find internally)
  */
 function doValidate(document: DefTextDocument, xmldoc?: XMLDocument | null) {
-	const xmlDoc = xmldoc !== null ? ( xmldoc || defTextDocuments.getXMLDocument(document.uri) ) : null
+	const xmlDoc = xmldoc !== null ? (xmldoc || defTextDocuments.getXMLDocument(document.uri)) : null
 	if (!xmlDoc) return
 	const version = document.rwVersion
 	const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri)
@@ -306,8 +306,8 @@ defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs,
 }))
 
 defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocument }) => {
-	validateAll() // temp code
-	// doValidate(textDocument, xmlDocument || null)
+	// validateAll() // temp code
+	doValidate(textDocument, xmlDocument || null)
 })
 
 connection.onRequest(DecoRequestType, ({ document: { uri } }) => {

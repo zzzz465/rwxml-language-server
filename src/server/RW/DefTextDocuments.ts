@@ -1,14 +1,17 @@
+/* eslint-disable no-inner-declarations */
+/* eslint-disable @typescript-eslint/no-namespace */
 import { URILike } from '../../common/common'
-import { def, getDefName, TypeInfoInjector, isTypeNode, getName } from '../../common/TypeInfo';
+import { def, getDefName, TypeInfoInjector, isTypeNode, getName, typeNode } from '../../common/TypeInfo';
 import { IConnection, TextDocuments } from 'vscode-languageserver';
 import { Event } from '../../common/event'
 import { DefFileAddedNotificationType, DefFileChangedNotificationType, DefFileRemovedNotificationType, ReferencedDefFileAddedNotificationType } from '../../common/Defs';
-import { parse, XMLDocument } from '../parser/XMLParser';
+import { Node, parse, XMLDocument } from '../parser/XMLParser';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { assert } from 'console';
 import { versionDB } from '../versionDB';
 import { ConfigDatum, getVersion } from '../../common/config';
+import { BFS } from '../utils/nodes';
 
 type version = string;
 
@@ -107,7 +110,7 @@ export class DefTextDocuments {
 		const doc = this.editorDocuments.get(URILike)
 		if (doc && isDefTextDocument(doc))
 			return doc
-		
+
 		return this.defDocuments.get(URILike)
 	}
 
@@ -124,7 +127,7 @@ export class DefTextDocuments {
 		if (version) {
 			const db = this.databases.get(version)
 			if (db) {
-				db.get(URILike) as sourcedDef[] // we already injected values when we add data
+				db.getByURI(URILike) as sourcedDef[] // we already injected values when we add data
 			}
 		}
 		return []
@@ -204,8 +207,8 @@ export class DefTextDocuments {
 			if (version) {
 				console.log(`version ${version}`)
 				const document = convertToDefTextdocument(
-				TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text),
-				version)
+					TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text),
+					version)
 
 				this.defDocuments.set(document.uri, document)
 			}
@@ -218,7 +221,7 @@ export class DefTextDocuments {
 			const document = this.editorDocuments.get(textDocument.uri)!
 			assert(document, 'unexpected: document is null in connection: onDidChangeTextDocument event')
 			TextDocument.update(document, contentChanges, document.version + 1)
-			
+
 			if (!isDefTextDocument(document)) {
 				const version = this.getVersion(document.uri)
 				if (version) {
@@ -304,22 +307,63 @@ export class DefTextDocuments {
 	}
 }
 
-type defIdentifier = string
+/** defName */
+type defName = string
 type defType = string
 
-interface defCrossReference {
-	base?: referencedDef
-	derived: Set<referencedDef>
+interface iInherit {
+	base?: InheritDef
+	derived: Set<InheritDef>
 }
 
-export type referencedDef = defCrossReference & def
-export function isReferencedDef(obj: any): obj is referencedDef {
+interface iWeakRef {
+	weakReference: {
+		/** set of nodes which is pointing this node */
+		in: Set<WeakRefNode>
+		/** set of nodes that this node is pointing */
+		out: Set<WeakRefNode>
+	}
+}
+
+export namespace WeakRefNode {
+	export function toString(obj: WeakRefNode): string {
+		return `out: ${obj.weakReference.out.size}, in: ${obj.weakReference.in.size}`
+	}
+}
+
+export function isWeakRefNode(node: Node): node is WeakRefNode {
+	if (!isTypeNode(node))
+		return false
+
+	if ('weakReference' in node) {
+		const weakRef = (<any>node).weakReference
+		return 'in' in weakRef && 'out' in weakRef
+	} else {
+		return false
+	}
+}
+
+/** def that have relations with inheritance */
+export type InheritDef = iInherit & def
+/** def that have in-out reference */
+export type WeakRefNode = iWeakRef & typeNode
+export function isReferencedDef(obj: any): obj is InheritDef {
 	return 'derived' in obj
 }
 
+interface iDirtyNode {
+	dirtyStage: 'dirty' | 'handled'
+}
+
+export function isDirtyNode(obj: Node): obj is DirtyNode {
+	return 'dirtyStage' in obj
+}
+/** typenode which need to be re-evaluated */
+export type DirtyNode = iDirtyNode & typeNode
+
 export interface iDefDatabase {
-	get(URIlike: URILike): def[]
-	get2(defType: defType, name: string): def | null
+	getByURI(URIlike: URILike): def[]
+	getByName(defType: defType, name: string): def | null
 	/**
 	 * 
 	 * @param defType defType string
@@ -334,22 +378,24 @@ export interface iDefDatabase {
 // TODO - add weakReference
 
 export class DefDatabase implements iDefDatabase {
-	private _defs: Map<URILike, (referencedDef | def)[]>
-	private _defDatabase: Map<defType, Map<defIdentifier, Set<(referencedDef | def)>>> // todo - 이거 리스트로 바꾸고 중복되는것도 담도록 하자
-	private _NameDatabase: Map<string, Set<(referencedDef | def)>> // note that Name is global thing-y
-	private _crossRefWanters: Set<referencedDef>
+	private _defs: Map<URILike, (InheritDef | def)[]>
+	private _defDatabase: Map<defType, Map<defName, Set<(InheritDef | def)>>>
+	private _NameDatabase: Map<string, Set<(InheritDef | def)>> // note that Name is global thing-y
+	private _inheritWanters: Set<InheritDef>
+	private _weakDefRefWanters: Set<WeakRefNode>
 	constructor(readonly version: string) {
 		this._defs = new Map()
 		this._defDatabase = new Map()
-		this._crossRefWanters = new Set()
+		this._inheritWanters = new Set()
 		this._NameDatabase = new Map()
+		this._weakDefRefWanters = new Set()
 	}
 
-	get(URILike: URILike): def[] { // only returns valid def
+	getByURI(URILike: URILike): def[] { // only returns valid def
 		return this._defs.get(URILike) || []
 	}
 
-	get2(defType: defType, name: string): def | null { // defName or Name property
+	getByName(defType: defType, name: string): def | null { // defName or Name property
 		const defs = this._defDatabase.get(defType)?.get(name)
 		if (defs) {
 			const res = defs.values().next()
@@ -376,7 +422,13 @@ export class DefDatabase implements iDefDatabase {
 		return [...this._NameDatabase.keys()]
 	}
 
-	update(URILike: URILike, newDefs: def[]): void {
+	/**
+	 * update defDatabase, returning dirty nodes which need to be re-evaluated
+	 * @param URILike 
+	 * @param newDefs 
+	 * @returns dirty nodes which need to be re-evaluated
+	 */
+	update(URILike: URILike, newDefs: def[]): Set<DirtyNode> {
 		this.deleteDefs(URILike)
 		for (const def of newDefs) {
 			if (!def.tag || !def.closed)
@@ -412,56 +464,104 @@ export class DefDatabase implements iDefDatabase {
 			}
 
 			if (def.attributes?.ParentName)
-				this.registerCrossRefWanter(def)
+				this.registerInheritWanter(def)
+
+			const weakRefWanters = BFS(def).filter<typeNode>(isTypeNode)
+				.filter(node => node.typeInfo.specialType?.defType && node.text)
+			weakRefWanters.map(node => this.registerWeakRefWanter(node))
 		}
 
-		this.resolveCrossRefWanters()
 		this._defs.set(URILike, newDefs)
+		const dirty1 = this.resolveInheritWanters()
+		const dirty2 = this.resolveWeakRefWanters()
+		// merging two sets
+		for (const val of dirty2)
+			dirty1.add(val)
+
+		return dirty1
 	}
 
-	private resolveCrossRefWanters(): void {
-		for (const def of this._crossRefWanters.values()) {
+	/** resolve inheritance interanlly
+	 * @returns Nodes marked as dirty
+	 */
+	private resolveInheritWanters(): Set<DirtyNode> {
+		const dirtyNodes: Set<DirtyNode> = new Set()
+		for (const def of this._inheritWanters.values()) {
 			const ParentName = def.attributes?.ParentName
 			if (ParentName) {
 				const baseDefs = this._NameDatabase.get(ParentName)
 				if (baseDefs) {
 					for (const baseDef of baseDefs) {
 						if (!isReferencedDef(baseDef)) {
-							Object.assign(baseDef, { derived: new Set() })
+							const inherit: iInherit = { derived: new Set() }
+							Object.assign(baseDef, inherit)
 						}
-						const set = (<referencedDef>baseDef).derived
+						const baseDef2 = baseDef as InheritDef
+						const set = baseDef2.derived
 						set.add(def)
-						def.base = <referencedDef>baseDef
-						this._crossRefWanters.delete(def)
+						def.base = <InheritDef>baseDef
+						this._inheritWanters.delete(def)
+
+						dirtyNodes.add(Object.assign(baseDef, { dirtyStage: 'dirty' } as iDirtyNode))
+						dirtyNodes.add(Object.assign(def, { dirtyStage: 'dirty' } as iDirtyNode))
 					}
 				}
 			}
-			/*
-			const map = this._defDatabase.get(def.tag)
-			if (map) {
-				const ParentName = def.attributes?.ParentName
-				if (ParentName) {
-					const baseDef = map.get(ParentName)
-					if (baseDef) {
-						if (!isReferencedDef(baseDef)) {
-							Object.assign(baseDef, { derived: new Set() })
-						}
-						const set = (<referencedDef>baseDef).derived
-						set.add(def)
-						assert(!def.base, 'trying to add parent to def which is already have a reference')
-						def.base = <referencedDef>baseDef
-						this._crossRefWanters.delete(def)
-					}
-				}
-			}
-			*/
 		}
+
+		return dirtyNodes;
 	}
 
-	private registerCrossRefWanter(def: def | referencedDef): void {
-		if (!isReferencedDef(def))
-			def = Object.assign(def, { derived: new Set() })
-		this._crossRefWanters.add(<referencedDef>def)
+	private registerInheritWanter(def: def | InheritDef): void {
+		if (!isReferencedDef(def)) {
+			const crossRef: iInherit = { derived: new Set() }
+			def = Object.assign(def, crossRef)
+		}
+		this._inheritWanters.add(<InheritDef>def)
+	}
+
+	/** resolve weakReference internally
+	 * @returns return dirty nodes.
+	 */
+	private resolveWeakRefWanters(): Set<DirtyNode> {
+		const dirtyNodes = new Set<DirtyNode>()
+		for (const refNode of this._weakDefRefWanters.values()) {
+			const tag = refNode.tag
+			if (refNode.typeInfo.specialType?.defType) {
+				const defType = refNode.typeInfo.specialType.defType.name // class or namespace.class
+				if (refNode.text && refNode.text.content) { // check tag is not empty
+					const defName = refNode.text.content
+					const def = this.getByName(defType, defName)
+					if (def) {
+						const other = this.CastOrConvertToWeakRefNode(def)
+						refNode.weakReference.out.add(other)
+						other.weakReference.in.add(refNode)
+						this._weakDefRefWanters.delete(refNode)
+
+						dirtyNodes.add(Object.assign(refNode, { dirtyStage: 'dirty' } as iDirtyNode))
+						dirtyNodes.add(Object.assign(other, { dirtyStage: 'dirty' } as iDirtyNode))
+					}
+				}
+			}
+		}
+
+		return dirtyNodes
+	}
+
+	private registerWeakRefWanter(node: typeNode): void {
+		const refNode = this.CastOrConvertToWeakRefNode(node)
+		this._weakDefRefWanters.add(refNode)
+	}
+
+	/** assign values and return same instance but casted to WeakRefNode */
+	private CastOrConvertToWeakRefNode(node: typeNode): WeakRefNode {
+		let refNode: WeakRefNode
+		if (!isWeakRefNode(node))
+			refNode = Object.assign(node, { weakReference: { in: new Set(), out: new Set() } } as iWeakRef)
+		else
+			refNode = node
+
+		return refNode
 	}
 
 	private deleteDefs(URILike: URILike): void {
@@ -481,7 +581,7 @@ export class DefDatabase implements iDefDatabase {
 				if (isReferencedDef(def)) {
 					this.disconnectReferences(def)
 					// remove references
-					this._crossRefWanters.delete(def)
+					this._inheritWanters.delete(def)
 
 					const Name = getName(def)
 					if (Name) {
@@ -496,12 +596,40 @@ export class DefDatabase implements iDefDatabase {
 
 					delete def.base, def.derived
 				}
+
+				// eslint-disable-next-line no-inner-declarations
+				function GCIfZero(node: WeakRefNode): void {
+					if (node.weakReference.in.size == 0 && node.weakReference.out.size == 0)
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						delete (<any>node).weakReference
+				}
+
+				const weakRefNodes = BFS(def).filter(isWeakRefNode)
+				for (const refNode of weakRefNodes) {
+					// disconnect incoming pointers
+					for (const other of refNode.weakReference.in.values()) {
+						assert(other.weakReference.out.has(refNode), `tried to remove remote reference, ${other} to ${refNode}`)
+						other.weakReference.out.delete(refNode)
+						assert(refNode.weakReference.in.has(other), `tried to remove origin reference, ${other} to ${refNode}`)
+						refNode.weakReference.in.delete(other)
+						GCIfZero(other)
+					}
+
+					// disconnect outgoing pointers
+					for (const other of refNode.weakReference.out.values()) {
+						assert(other.weakReference.in.has(refNode), `tried to remove remote reference, ${refNode} to ${other}`)
+						other.weakReference.in.has(refNode)
+						assert(refNode.weakReference.out.has(other), `tried to remove origin reference, ${refNode} to ${other}`)
+						refNode.weakReference.out.delete(other)
+						GCIfZero(other)
+					}
+				}
 			}
 			this._defs.delete(URILike)
 		}
 	}
 
-	private disconnectReferences(def: referencedDef): void {
+	private disconnectReferences(def: InheritDef): void {
 		if (def.base) // remove cross-reference with parent
 			assert(def.base.derived.delete(def),
 				`tried to remove parent reference ${def.tag} which is not valid`)
@@ -509,12 +637,7 @@ export class DefDatabase implements iDefDatabase {
 		for (const derived of def.derived.values()) { // remove cross-reference with child
 			assert(derived.base === def)
 			derived.base = undefined
-			this.registerCrossRefWanter(derived)
+			this.registerInheritWanter(derived)
 		}
 	}
-
-	// private getKey(def: def): string {
-	// const key = `start:${def.start}-end:${def.end}`
-	// return key
-	// }
 }

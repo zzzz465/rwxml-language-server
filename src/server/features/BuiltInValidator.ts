@@ -8,7 +8,7 @@ import { isReferencedDef } from '../RW/DefTextDocuments';
 const builtInValidatorMap = new Map<string, NodeValidateFunction[]>()
 
 function getOrCreate(key: string): NodeValidateFunction[] {
-	if(!builtInValidatorMap.has(key))
+	if (!builtInValidatorMap.has(key))
 		builtInValidatorMap.set(key, [])
 	return builtInValidatorMap.get(key)!
 }
@@ -72,12 +72,12 @@ function checkOpenNode(this: NodeValidatorContext, node: Node): ValidationResult
 function checkInappropriateNode(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const result: ValidationResult = { completeValidation: true }
 	const childNodes = node.typeInfo.childNodes
-	if(childNodes && childNodes.size > 0) {
+	if (childNodes && childNodes.size > 0) {
 		result.diagnostics = []
 		const wrongChilds = node.children.filter(c => c.closed && c.tag && !childNodes.has(c.tag.content))
-			.map<Diagnostic>(n => ({ 
-				message: 'inappropriate node', 
-				range: this.getRangeIncludingTag(n) 
+			.map<Diagnostic>(n => ({
+				message: 'inappropriate node',
+				range: this.getRangeIncludingTag(n)
 			}))
 		result.diagnostics.push(...wrongChilds)
 	}
@@ -85,10 +85,10 @@ function checkInappropriateNode(this: NodeValidatorContext, node: typeNode): Val
 	return result
 }
 
-function checkWhitespaceError (this: NodeValidatorContext, node: Node): ValidationResult {
-	if(node.text) {
+function checkWhitespaceError(this: NodeValidatorContext, node: Node): ValidationResult {
+	if (node.text) {
 		const match = node.text.content.match(/ +$|^ +/) // match start/end whitespace
-		if(match) {
+		if (match) {
 			const textOffset = node.text.end - match[0].length
 			return {
 				diagnostics: [{
@@ -96,7 +96,8 @@ function checkWhitespaceError (this: NodeValidatorContext, node: Node): Validati
 					range: {
 						start: this.positionAt(textOffset),
 						end: this.positionAt(node.text.end)
-					}}]
+					}
+				}]
 			}
 		}
 	}
@@ -105,10 +106,10 @@ function checkWhitespaceError (this: NodeValidatorContext, node: Node): Validati
 
 const floatRegex = / *[0-9]*\.[0-9]+ */
 
-function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult {
-	if(node.text) {
+function checkInteger(this: NodeValidatorContext, node: Node): ValidationResult {
+	if (node.text) {
 		const matching = node.text.content.match(floatRegex)
-		if(matching) { // check it can contains float number
+		if (matching) { // check it can contains float number
 			const num = parseFloat(matching[0])
 			if (num % 1 !== 0) { // check it is integer
 				return {
@@ -117,8 +118,11 @@ function checkInteger (this: NodeValidatorContext, node: Node): ValidationResult
 						range: this.getTextRange(node),
 						severity: DiagnosticSeverity.Warning,
 						source: 'ex'
-					}]}}}
+					}]
+				}
 			}
+		}
+	}
 	return {}
 }
 
@@ -143,7 +147,7 @@ function checkDuplicateNode(this: NodeValidatorContext, node: typeNode): Validat
 	return { completeValidation: complete, diagnostics: diagnostics }
 }
 
-function checkTexPathValid (this: NodeValidatorContext, node: typeNode): ValidationResult {
+function checkTexPathValid(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const type = node.typeInfo
 	if (!this.textureFiles) {
 		return {
@@ -167,16 +171,16 @@ function checkTexPathValid (this: NodeValidatorContext, node: typeNode): Validat
 			}
 		}
 	}
-	return { }
+	return {}
 }
 
-function checkDefReference (this: NodeValidatorContext, node: typeNode): ValidationResult {
+function checkDefReference(this: NodeValidatorContext, node: typeNode): ValidationResult {
 
 
-	return { }
+	return {}
 }
 
-function checkParentDefValid (this: NodeValidatorContext, node: typeNode): ValidationResult {
+function checkParentDefValid(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const result: ValidationResult = {}
 	const typeInfo = node.typeInfo
 	if (node.attributes && node.attributes.ParentName) {
@@ -196,7 +200,7 @@ function checkParentDefValid (this: NodeValidatorContext, node: typeNode): Valid
 	return result
 }
 
-function checkInvalidNode (this: NodeValidatorContext, node: typeNode): ValidationResult {
+function checkInvalidNode(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const result: ValidationResult = { diagnostics: [] }
 	const typeInfo = node.typeInfo
 	for (const child of node.children) {
@@ -214,14 +218,14 @@ function checkInvalidNode (this: NodeValidatorContext, node: typeNode): Validati
 	return result
 }
 
-function checkInvalidDefNode (this: NodeValidatorContext, node: typeNode): ValidationResult {
+function checkInvalidDefNode(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const result: ValidationResult = {}
 	const typeInfo = node.typeInfo
 	if (typeInfo.specialType?.defType) {
 		const defType = typeInfo.specialType.defType.name
 		const defName = node.text?.content
 		if (this.defDatabase && defName)
-			if (!this.defDatabase.get2(defType, defName))
+			if (!this.defDatabase.getByName(defType, defName))
 				result.diagnostics = [{
 					message: 'cannot find matching defName',
 					range: this.getTextRange(node),
