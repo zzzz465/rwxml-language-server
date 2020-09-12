@@ -75,7 +75,6 @@ namespace extractor
         static void CollectData_BFS(IEnumerable<Type> _types)
         {
             var listType = typeof(List<>).GetGenericTypeDefinition();
-
             Queue<Type> types = new Queue<Type>(_types);
             while (types.Count > 0)
             {
@@ -103,10 +102,12 @@ namespace extractor
                     var fieldType = field.FieldType;
                     var fieldName = field.Name;
 
-                    var unsavedAttr = fieldType.CustomAttributes.FirstOrDefault(attr => attr.AttributeType == RWTypes.UnsavedAttribute);
+                    var unsavedAttr = field.CustomAttributes.FirstOrDefault(attr => attr.AttributeType == RWTypes.UnsavedAttribute);
                     if (unsavedAttr != null)
                     {
-                        Console.WriteLine("asdf");
+                        var allowLoading = (bool)unsavedAttr.ConstructorArguments[0].Value;
+                        if (allowLoading == false)
+                            continue;
                     }
 
                     /*
@@ -115,12 +116,29 @@ namespace extractor
                             continue;
                     */
 
-                    if (!typeDict.ContainsKey(fieldType))
+                    if (!typeDict.ContainsKey(fieldType)) // if it is not registered
                     {
-                        if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == listType)
+                        if (fieldType.IsGenericType)
                         {
-                            var id = Util.GetListTypeIdentifier(fieldType);
-                            typeDict.Add(fieldType, TypeInfo.Create(id));
+                            if(fieldType.GetGenericTypeDefinition() == listType)
+                            {
+                                var id = Util.GetListTypeIdentifier(fieldType);
+                                typeDict.Add(fieldType, TypeInfo.Create(id));
+                            }
+                            else
+                            {
+                                var genericTArgs = fieldType.GetGenericArguments();
+                                foreach(var T in genericTArgs)
+                                {
+                                    if (T.IsGenericParameter) // example) K of List<K>, we don't need that
+                                        continue;
+
+                                    if (!typeDict.ContainsKey(T))
+                                    {
+                                        typeDict.Add(T, TypeInfo.Create(T));
+                                    }
+                                }
+                            }
                         }
                         else
                         {
@@ -128,27 +146,24 @@ namespace extractor
                             types.Enqueue(fieldType);
                         }
                     }
+                    // set child type's typeId
                     if (fieldType.IsGenericType)
                     {
                         var identifier = string.Empty;
-                        if (fieldType.GetGenericTypeDefinition() == typeof(List<>))
+                        if (fieldType.GetGenericTypeDefinition() == listType)
                         {
                             identifier = Util.GetListTypeIdentifier(fieldType);
                         }
-                        typeInfo.childNodes[fieldName] = identifier;
-
-                        var genericTypeDefinition = fieldType.GetGenericArguments();
-                        foreach(var GType in genericTypeDefinition)
+                        else
                         {
-                            var GTypename = GType.Name;
-                            if (!GType.IsGenericParameter)
-                                if(!typeDict.ContainsKey(GType))
-                                    types.Enqueue(GType);
+                            identifier = Util.GetGenericTypeIdentifier(fieldType);
                         }
+                        typeInfo.childNodes[fieldName] = identifier;
                     }
                     else
                     {
-                        typeInfo.childNodes[fieldName] = $"{fieldType.Namespace}.{fieldType.Name}";
+                        // typeInfo.childNodes[fieldName] = $"{fieldType.Namespace}.{fieldType.Name}";
+                        typeInfo.childNodes[fieldName] = Util.GetTypeIdentifier(fieldType);
                     }
                 }
             }

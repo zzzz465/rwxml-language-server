@@ -86,6 +86,7 @@ namespace extractor
             var name = type.Name;
             return new TypeInfo() { typeIdentifier = Util.GetTypeIdentifier(type) };
         }
+        // deprecated??
         public static TypeInfo Create(string id)
         {
             return new TypeInfo() { typeIdentifier = id };
