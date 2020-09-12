@@ -3,6 +3,7 @@ import '../server/parser/XMLScanner'
 import { Node, textRange } from '../server/parser/XMLParser'
 import { CompletionItem } from 'vscode-languageserver'
 import * as _ from 'lodash'
+import { EOL } from 'os'
 
 export interface defInfo {
 	isAbstract: boolean
@@ -24,6 +25,8 @@ export interface specialType {
 	defType?: {
 		/** name of the class */
 		name: string
+		/** indicate def is served by external mod, not RimWorld assembly */
+		customModClass?: boolean
 	}
 	enumerable?: {
 		genericType: TypeIdentifier
@@ -89,10 +92,11 @@ export class TypeInfo implements TypeInfo {
 	}
 
 	toString(): string {
-		const text = `
-typeId: ${this.typeIdentifier}
-`
-		return text
+		const text = [
+			`typeId: ${this.typeIdentifier}`
+		]
+
+		return text.join(EOL)
 	}
 }
 
