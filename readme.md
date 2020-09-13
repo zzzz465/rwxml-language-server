@@ -1,9 +1,17 @@
 # rwxml language server
+
+[insert image here]  
+![GitHub last commit](https://img.shields.io/github/last-commit/zzzz465/rwxml-language-server)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/zzzz465/rwxml-language-server?color=blue)
+![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/madeline.rwxml-lang-serv)
+![David](https://img.shields.io/david/zzzz465/rwxml-language-server)
+
 Language Server implementation for rimworld xml modding  
-![preview](./Images/gif1.gif)
+![preview](./Images/readme_title.gif)
 
 ## Installation
 install via vscode marketspace
+![download](./Images/download.png)
 
 ## Getting started
 
@@ -18,16 +26,16 @@ note that only one config file is allowed in the entire project file.
 			"About": "path/to/def", // absoulte or relative path
 			"Defs": "C:/path/to/mod/def", // note that you should replace "\\" to "/"
 			"DefReferences": [ // refernece to core, or other dependency mods.
-				"absolute/path/to/def", 
+				"absolute/path/to/def", // provide folder path
 				"realtive/path/to/def"
       ],
 			"AssemblyReferences": [ // referencing dll files to extract typeInfos.
-				"Path/To/Assembly_Folder_Path", // give folder path to load all
-				"relative/path/to/your/assemblies/my-assembly.dll", // use relative path
+				"C:/Path/To/Assembly_Folder_Path", // give folder path to load all dlls
+				"relative/path/to/your/assemblies/my-assembly.dll", // give exact dll
 			]
 		},
 		"1.2" : { // 1.2 mod
-			// ...
+			// ... fill your datas...
 		}
 	}
 }
@@ -36,16 +44,17 @@ note that only one config file is allowed in the entire project file.
 you can use absolute or relative path.  
 rwconfigrc.json will be an anchor to resolve relative path.
 
-# TO-DO features
-- [x] XML Node tag suggestion
+# (TO-DO) requested features
+- [x] [XML Node tag suggestion]
 - [x] dynamic type extraction
 - [x] Inheritance Attribute suggestion
 - [x] AlienRace / Garam support
 - [x] text decoration
+- [x] incremental update & validation
 - [ ] codelens functionality
 - [ ] Texture preview
 - [ ] Texture path suggestion
-- [ ] find parent / childrens
+- [x] find parent / childrens
 - [ ] Rename defName / Name in all files
 - [ ] patch operation snippets
 
@@ -53,9 +62,10 @@ rwconfigrc.json will be an anchor to resolve relative path.
 
 - [x] Def reference validation
 - [x] invalid (typo) / duplicate node validation
-- [ ] primitive value validation
-- [ ] whitespace error validation
+- [x] primitive value validation
+- [x] whitespace error validation
 - [ ] Texture path validation
+- [ ] essential node validation  
 ... and more!  
 
 # Documentation
@@ -72,12 +82,10 @@ these things make modding difficult, **which can be avoided.**
 
 # Development
 ### Prerequisites
-1. node.js
-2. dotnet Core
-3. rimworld dll, UnityEngine.dll, UnityEngine_CoreModule.dll
+1. node.js 10 or higher
+2. dotnet framework 4.7.1 or higher
 
-for legal problems, including these dlls are not permitted
-usually all of them are served by installing rimworld game.
+additionaly, RimWorld is required to debug C# extractor
 
 ### Setup
 ```
