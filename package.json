@@ -1,6 +1,6 @@
 {
 	"name": "rwxml-lang-serv",
-	"version": "0.4.21",
+	"version": "0.4.22",
 	"description": "dev build (experimental)",
 	"main": "out/client/extension.js",
 	"scripts": {
@@ -42,9 +42,9 @@
 				"id": "rwxml.decorator.inlayHints.backgroundColor",
 				"description": "default background color for inlay-hints (same as rust-inlay-hints)",
 				"defaults": {
-					"dark": "#61616191",
-					"highContrast": "#61616191",
-					"light": "#61616191"
+					"dark": "#cccccc0a",
+					"highContrast": "#cccccc0a",
+					"light": "#cccccc0a"
 				}
 			},
 			{
@@ -105,9 +105,9 @@
 				"id": "rwxml.decorator.invalid.node.tag.foregroundColor",
 				"description": "foreground color for invalid node tag",
 				"defaults": {
-					"dark": "#cccccc0a",
-					"light": "#cccccc0a",
-					"highContrast": "#cccccc0a"
+					"dark": "#757575",
+					"light": "#757575",
+					"highContrast": "#757575"
 				}
 			}
 		]
