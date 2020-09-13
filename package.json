@@ -1,8 +1,10 @@
 {
+	"displayName": "RWXML language server",
 	"name": "rwxml-lang-serv",
-	"version": "0.4.23",
-	"description": "dev build (experimental)",
+	"version": "0.4.24",
+	"description": "LSP compliant language server for rimworld XML modding, editing. support custom mods.",
 	"main": "out/client/extension.js",
+	"icon": "Images/icon_128.png",
 	"scripts": {
 		"pkgvars": "node ./node_modules/vscode/bin/install",
 		"postinstall": "node ./node_modules/vscode/bin/install",
@@ -15,6 +17,10 @@
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "npm run prepublish && webpack --mode production",
 		"webpack-dev": "webpack --mode development --watch"
+	},
+	"homepage": "https://github.com/zzzz465/rwxml-language-server",
+	"bugs": {
+		"url": "https://github.com/zzzz465/rwxml-language-server/issues"
 	},
 	"author": "madeline",
 	"contributors": [
@@ -29,6 +35,12 @@
 		"url": "https://github.com/zzzz465/rwxml-language-server"
 	},
 	"contributes": {
+		"jsonValidation": [
+			{
+				"fileMatch": "rwconfigrc.json",
+				"url": "./src/configSchema.json"
+			}
+		],
 		"configuration": {
 			"title": "RWXML Language Server Configurations",
 			"properties": {
