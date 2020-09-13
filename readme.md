@@ -106,5 +106,5 @@ npm install
 ```
 
 # Donations
-if you like my work, please consider buy me a coffie!  
+if you like my work, please consider buy me a coffee!  
 https://ko-fi.com/madeline_modding  
