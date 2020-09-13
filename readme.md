@@ -1,13 +1,21 @@
 # rwxml language server
+<h1 align="center">
+  <br>
+  <a href="https://marketplace.visualstudio.com/items?itemName=madeline.rwxml-lang-serv"><img src="./Images/icon.png" alt="asdf" width="400"></a>
+  <br>
+RWXML language server
+  <br>
+  <img src="https://img.shields.io/github/last-commit/zzzz465/rwxml-language-server"/>
+  <img src="https://img.shields.io/github/package-json/v/zzzz465/rwxml-language-server?color=blue"/>
+  <img src="https://img.shields.io/visual-studio-marketplace/last-updated/madeline.rwxml-lang-serv"/>
+  <img src="https://img.shields.io/david/zzzz465/rwxml-language-server"/>
+</h1>
 
-[insert image here]  
-![GitHub last commit](https://img.shields.io/github/last-commit/zzzz465/rwxml-language-server)
-![GitHub package.json version](https://img.shields.io/github/package-json/v/zzzz465/rwxml-language-server?color=blue)
-![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/madeline.rwxml-lang-serv)
-![David](https://img.shields.io/david/zzzz465/rwxml-language-server)
-
-Language Server implementation for rimworld xml modding  
-![preview](./Images/readme_title.gif)
+<h3 align="center">
+LSP compliant language server for rimworld XML modding, editing. support custom mods.  
+</h3>
+<br>
+<br>
 
 ## Installation
 install via vscode marketspace
@@ -16,7 +24,7 @@ install via vscode marketspace
 ## Getting started
 
 you have to put `rwconfigrc.json` in the root directory of your mod.  
-note that only one config file is allowed in the entire project file.
+note that `only one config file` is allowed in the entire project file.
 
 ### Config file schema
 ```json5
@@ -42,7 +50,7 @@ note that only one config file is allowed in the entire project file.
 ```
 
 you can use absolute or relative path.  
-rwconfigrc.json will be an anchor to resolve relative path.
+**`rwconfigrc.json` will be an `anchor` to resolve relative path.**
 
 # (TO-DO) requested features
 - [x] [XML Node tag suggestion]
@@ -95,5 +103,5 @@ npm install
 ```
 
 # Donations
-this is free, open-source. but if you like my work, please consider buy me a coffie!  
+if you like my work, please consider buy me a coffie!  
 https://ko-fi.com/madeline_modding  
