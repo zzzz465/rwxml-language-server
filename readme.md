@@ -14,7 +14,10 @@ RWXML language server
 <h3 align="center">
 LSP compliant language server for rimworld XML modding, editing. support custom mods.  
 </h3>
-<br>
+<br><br>
+
+![preview](./Images/readme_title.gif)
+
 <br>
 
 ## Installation
