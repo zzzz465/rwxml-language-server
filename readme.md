@@ -85,3 +85,7 @@ git clone https://github.com/zzzz465/rwxml-language-server
 npm install
 *fix reference in sln project*
 ```
+
+# Donations
+this is free, open-source. but if you like my work, please consider buy me a coffie!  
+https://ko-fi.com/madeline_modding  
