@@ -3,7 +3,7 @@ import { TypeIdentifier, typeNode, TypeInfo } from '../../common/TypeInfo';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
 import { Node } from '../parser/XMLParser';
 import { Range } from 'vscode-languageserver-textdocument';
-import { isReferencedDef } from '../RW/DefTextDocuments';
+import { isReferencedDef, isWeakRefNode } from '../RW/DefTextDocuments';
 // function pipeline 을 만들어야하나?
 const builtInValidatorMap = new Map<string, NodeValidateFunction[]>()
 
@@ -224,8 +224,8 @@ function checkInvalidDefNode(this: NodeValidatorContext, node: typeNode): Valida
 	if (typeInfo.specialType?.defType) {
 		const defType = typeInfo.specialType.defType.name
 		const defName = node.text?.content
-		if (this.defDatabase && defName)
-			if (!this.defDatabase.getByName(defType, defName))
+		if (this.defDatabase && defName) // root Def node is not a target
+			if (node.parent?.tag?.content !== 'Defs' && isWeakRefNode(node) && node.weakReference.out.size == 0)
 				result.diagnostics = [{
 					message: 'cannot find matching defName',
 					range: this.getTextRange(node),
