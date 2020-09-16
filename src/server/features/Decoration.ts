@@ -26,7 +26,7 @@ export function decoration({ doc, xmlDoc }: decoParams): DecoItem[] {
 	const result: DecoItem[] = []
 	if (!xmlDoc.root) return result
 
-	const nodes = BFS(xmlDoc.root)
+	const nodes = BFS(xmlDoc.root, true)
 	for (const node of nodes) {
 		if (isTypeNode(node)) {
 			if (node.closed && node.tag && node.endTag) {

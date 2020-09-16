@@ -1,9 +1,10 @@
 
 import { Node } from '../parser/XMLParser'
 
-export function BFS(root: Node): Node[] {
+export function BFS(root: Node, excludeRoot?: boolean): Node[] {
 	const marker: Set<Node> = new Set()
-	marker.add(root)
+	if (excludeRoot !== true)
+		marker.add(root)
 	const queue: Node[] = [root]
 	while (queue.length > 0) {
 		const curr = queue.pop()!
