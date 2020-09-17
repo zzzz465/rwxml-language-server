@@ -223,8 +223,8 @@ export class DefTextDocuments {
 
 		connection.onDidOpenTextDocument(({ textDocument }) => {
 			console.log(`editor.onDidOpenTextDocument ${textDocument.uri}`)
-			const document = TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text)
 			const version = this.getVersion(textDocument.uri)
+			const document = TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text)
 			if (version) {
 				console.log(`version ${version}`)
 				const document = convertToDefTextdocument(

@@ -29,14 +29,16 @@ export function decoration({ doc, xmlDoc }: decoParams): DecoItem[] {
 	const nodes = BFS(xmlDoc.root, true)
 	for (const node of nodes) {
 		if (isTypeNode(node)) {
-			if (node.closed && node.tag && node.endTag) {
-				result.push(...[{
+			if (node.closed && node.tag) {
+				result.push({
 					range: textToRange(node.tag),
 					type: DecoType.node_tag
-				}, {
-					range: textToRange(node.endTag),
-					type: DecoType.node_tag
-				}])
+				})
+				if (node.endTag) // because of <tag />, no endTag can be a valid node
+					result.push({
+						range: textToRange(node.endTag),
+						type: DecoType.node_tag
+					})
 			}
 
 			const typeInfo = node.typeInfo
