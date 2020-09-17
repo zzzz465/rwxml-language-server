@@ -32,10 +32,10 @@ export class Node {
 	public get lastChild(): Node | undefined { return this.children.length ? this.children[this.children.length - 1] : void 0; }
 
 	get endTag(): textRange | undefined {
-		if (this.closed && this.tag) {
+		if (this.closed && this.tag && this.endTagStart) {
 			return {
 				content: this.tag.content,
-				start: this.endTagStart! + 2, // </ = 2개
+				start: this.endTagStart + 2, // </ = 2개
 				end: this.end - 1
 			}
 		} else {
