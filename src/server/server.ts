@@ -9,7 +9,7 @@ import {
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
 	InitializeResult,
-	Location
+	Location, CodeLens
 } from 'vscode-languageserver';
 
 import { URI } from 'vscode-uri'
@@ -18,8 +18,8 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { doComplete } from './features/RWXMLCompletion'
 import { ConfigDatum, ConfigChangedRequestType, getVersion } from '../common/config'
-import { DefTextDocuments, isReferencedDef, isSourcedDef, DefTextDocument, DirtyNode } from './RW/DefTextDocuments';
-import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode } from '../common/TypeInfo';
+import { DefTextDocuments, isReferencedDef, isSourcedDef, DefTextDocument, DirtyNode, isWeakRefNode } from './RW/DefTextDocuments';
+import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode, isDef, typeNode } from '../common/TypeInfo';
 import { /* absPath */ URILike } from '../common/common';
 import { NodeValidator } from './features/NodeValidator';
 import { builtInValidationParticipant } from './features/BuiltInValidator';
@@ -73,7 +73,10 @@ connection.onInitialize((params: InitializeParams) => {
 			renameProvider: {
 				prepareProvider: false,
 			},
-			hoverProvider: true
+			hoverProvider: true,
+			codeLensProvider: {
+				resolveProvider: true
+			}
 			// typeDefinitionProvider: true,
 		}
 	};
@@ -355,6 +358,44 @@ connection.onHover(({ position, textDocument }) => {
 		return doHover({ document: doc, xmlDocument: xmlDoc, offset })
 	}
 
+	return undefined
+})
+
+connection.onCodeLens(({ textDocument }) => {
+	console.log(textDocument.uri)
+	const root = defTextDocuments.getXMLDocument(textDocument.uri)?.root
+	const doc = defTextDocuments.getDocument(textDocument.uri)
+	if (doc && root?.tag?.content == 'Defs') {
+		const defs = root.children.filter(def => isDef(def) && def.closed)
+		const results = defs.map(def => {
+			const _in: typeNode[] = []
+			const _out: typeNode[] = []
+			if (isWeakRefNode(def)) {
+				_in.push(...def.weakReference.in.values())
+				_out.push(...def.weakReference.out.values())
+			}
+
+			if (isReferencedDef(def)) {
+				_in.push(...def.derived.values())
+				if (def.base)
+					_out.push(def.base)
+			}
+
+			const result: CodeLens = {
+				range: {
+					start: doc.positionAt(def.start),
+					end: def.startTagEnd ? doc.positionAt(def.startTagEnd) : doc.positionAt(def.start)
+				},
+				command: {
+					title: `${_in.length} references`,
+
+				}
+			}
+
+			return result
+		})
+		return results
+	}
 	return undefined
 })
 
