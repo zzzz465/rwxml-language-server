@@ -34,8 +34,7 @@
     "tests/**/*.tsx"
   ],
   "exclude": [
-    "node_modules",
-    "../"
+    "node_modules"
   ],
   "engines": {
     "vscode": "^1.47.0"

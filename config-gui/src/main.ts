@@ -6,13 +6,11 @@ Vue.config.productionTip = false
 //@ts-ignore
 const vscode = acquireVsCodeApi()
 
-setInterval(() => {
-  vscode.postMessage({
-    command: 'alert',
-    text: 'hello world!!!!!!!!'
-  })
-  console.log(vscode)
-}, 1000)
+Vue.use({
+  install: function (vue, options) {
+    vue.prototype.$vscode = vscode
+  }
+})
 
 new Vue({
   render: h => h(App),
