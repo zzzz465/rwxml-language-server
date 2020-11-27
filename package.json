@@ -139,7 +139,10 @@
 			"ts"
 		],
 		"preset": "ts-jest",
-		"testMatch": null
+		"testMatch": null,
+		"modulePathIgnorePatterns": [
+			"<rootDir>/config-gui"
+		]
 	},
 	"activationEvents": [
 		"onLanguage:xml",

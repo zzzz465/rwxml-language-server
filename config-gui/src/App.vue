@@ -7,6 +7,7 @@
 <script lang="ts">
 import Vue from "vue";
 
+// @ts-ignore
 import HelloWorld from "./components/HelloWorld.vue";
 
 export default Vue.extend({
