@@ -385,11 +385,11 @@ connection.onCodeLens(({ textDocument }) => {
 				range: {
 					start: doc.positionAt(def.start),
 					end: def.startTagEnd ? doc.positionAt(def.startTagEnd) : doc.positionAt(def.start)
-				},
+				}, /*
 				command: {
 					title: `${_in.length} references`,
 
-				}
+				} */
 			}
 
 			return result
