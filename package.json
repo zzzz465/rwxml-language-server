@@ -6,17 +6,14 @@
 	"main": "out/client/extension.js",
 	"icon": "Images/icon_128.png",
 	"scripts": {
-		"pkgvars": "node ./node_modules/vscode/bin/install",
-		"postinstall": "node ./node_modules/vscode/bin/install",
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"test": "jest",
 		"extractor:build": "dotnet build ./extractor/extractor.sln",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
-		"prepublish": "tsc && npm run extractor:build",
+		"upload-only": "tsc && npm run extractor:build",
 		"webpack": "webpack --mode development",
-		"vscode:prepublish": "npm run prepublish && webpack --mode production",
-		"webpack-dev": "webpack --mode development --watch"
+		"vscode:prepublish": "npm run upload-only && webpack --mode production"
 	},
 	"homepage": "https://github.com/zzzz465/rwxml-language-server",
 	"bugs": {
@@ -29,7 +26,7 @@
 	"license": "ISC",
 	"categories": [],
 	"engines": {
-		"vscode": "^1.43.0"
+		"vscode": "^1.47.0"
 	},
 	"repository": {
 		"url": "https://github.com/zzzz465/rwxml-language-server"
@@ -156,12 +153,12 @@
 		"jest": "^26.3.0",
 		"ts-loader": "^8.0.3",
 		"typescript": "^3.9.4",
-		"vscode": "^1.1.37",
 		"webpack": "^4.44.1",
 		"webpack-cli": "^3.3.12"
 	},
 	"dependencies": {
 		"@types/glob": "^7.1.3",
+		"@types/vscode": "^1.51.0",
 		"glob": "^7.1.6",
 		"linq-es2015": "^2.5.1",
 		"lodash": "^4.17.19",
