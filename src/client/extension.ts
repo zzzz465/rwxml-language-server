@@ -26,6 +26,8 @@ import { extractTypeInfos } from './extractor';
 import { Event } from '../common/event';
 import { DecoRequestType } from '../common/decoration';
 import { applyDecos } from './features/decoration';
+import configGUI from './features/createConfig'
+import installGUI from './features/createConfig';
 
 const glob = util.promisify(glob_callback)
 const exists = util.promisify(fs.exists)
@@ -68,6 +70,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	// Start the client. This will also launch the server
 	client.start();
 	await client.onReady()
+
+	installGUI(context)
 
 	let timeout: NodeJS.Timer | undefined = undefined
 	let activeEditor = vscode.window.activeTextEditor

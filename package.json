@@ -119,6 +119,13 @@
 					"highContrast": "#757575"
 				}
 			}
+		],
+		"commands": [
+			{
+				"command": "RWXML.makeConfig",
+				"title": "create new rwxml configuration",
+				"category": "RWXML"
+			}
 		]
 	},
 	"publisher": "madeline",
@@ -135,7 +142,9 @@
 		"testMatch": null
 	},
 	"activationEvents": [
-		"onLanguage:xml"
+		"onLanguage:xml",
+		"onCommand:RWXML.makeConfig",
+		"onCustomEditor:RWXML.config"
 	],
 	"devDependencies": {
 		"@babel/core": "^7.11.1",
