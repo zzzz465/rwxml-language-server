@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 
 class ConfigGUIPanel {
 	private static currentPanel: ConfigGUIPanel | undefined
-	public static showPanel(extensionUri: vscode.Uri): void {
+	public static showPanel(extensionUri: vscode.Uri, configObj: any, configPath?: vscode.Uri): void {
 		if (this.currentPanel) {
 			this.currentPanel._panel.reveal()
 		} else {
@@ -17,17 +17,21 @@ class ConfigGUIPanel {
 				}
 			)
 
-			this.currentPanel = new ConfigGUIPanel(panel, extensionUri)
+			this.currentPanel = new ConfigGUIPanel(panel, extensionUri, configObj, configPath)
 		}
 	}
 
 	private readonly _panel: vscode.WebviewPanel
 	private readonly _extensionUri: vscode.Uri
+	private readonly _configPath?: vscode.Uri
 	private _disposables: vscode.Disposable[] = []
+	private _configObj: Object
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, configObj: any, configPath?: vscode.Uri) {
 		this._extensionUri = extensionUri
 		this._panel = panel
+		this._configPath = configPath
+		this._configObj = configObj
 		panel.onDidDispose(() => this.dispose(), this._disposables)
 
 		this._panel.onDidChangeViewState(e => {
@@ -43,6 +47,7 @@ class ConfigGUIPanel {
 
 				case 'openDialog': {
 					const entry = message.entry
+					vscode.window.showErrorMessage(entry)
 					vscode.window.showOpenDialog(message.options)
 						.then((uri) => {
 							const fsPaths = uri?.map(d => d.fsPath)
@@ -53,10 +58,26 @@ class ConfigGUIPanel {
 							})
 						})
 				} break
+
+				case 'getConfig': {
+					this._panel.webview.postMessage({
+						type: 'getConfigRespond',
+						config: this._configObj
+					})
+				} break
+
+				case 'save': {
+					console.log(message.type)
+					console.log(message.config)
+				} break
 			}
 		}, null, this._disposables)
 
 		this._panel.webview.html = this.GetHTML(panel.webview)
+		this._panel.webview.postMessage({
+			type: 'changeRoute',
+			path: '/config'
+		})
 	}
 
 	public dispose() {
@@ -100,10 +121,7 @@ class ConfigGUIPanel {
 export default function installGUI(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('RWXML.makeConfig', () => {
-			ConfigGUIPanel.showPanel(context.extensionUri)
-			vscode.window.showOpenDialog({
-
-			})
+			ConfigGUIPanel.showPanel(context.extensionUri, undefined)
 		})
 	)
 }
