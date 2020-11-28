@@ -1,20 +1,18 @@
-<template>
-  <div id="app">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
-  </div>
+<template lang="pug">
+  div
+    router-view
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-
-// @ts-ignore
-import HelloWorld from "./components/HelloWorld.vue";
+import Vue from "vue"
+import 'vuex'
+import 'vue-router'
 
 export default Vue.extend({
   name: "App",
-  components: {
-    HelloWorld,
-  },
+  mounted() {
+    this.$router.push('/config/create')
+  }
 });
 </script>
 

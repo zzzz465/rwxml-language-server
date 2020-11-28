@@ -35,9 +35,23 @@ class ConfigGUIPanel {
 		})
 
 		this._panel.webview.onDidReceiveMessage(message => {
-			switch (message.command) {
+			console.log(message)
+			switch (message.type) {
 				case 'alert': {
 					vscode.window.showInformationMessage(message.text)
+				} break
+
+				case 'openDialog': {
+					const entry = message.entry
+					vscode.window.showOpenDialog(message.options)
+						.then((uri) => {
+							const fsPaths = uri?.map(d => d.fsPath)
+							this._panel.webview.postMessage({
+								type: 'openDialogRespond',
+								entry,
+								paths: fsPaths
+							})
+						})
 				} break
 			}
 		}, null, this._disposables)
@@ -87,6 +101,9 @@ export default function installGUI(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('RWXML.makeConfig', () => {
 			ConfigGUIPanel.showPanel(context.extensionUri)
+			vscode.window.showOpenDialog({
+
+			})
 		})
 	)
 }
