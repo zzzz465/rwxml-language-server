@@ -1,8 +1,11 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import 'element-ui/lib/theme-chalk/index.css'
+import ElementUI from 'element-ui'
 import App from './App.vue'
 import router from './router'
 import { vscode } from './vscode'
+
 
 Vue.config.productionTip = false
 
@@ -22,6 +25,8 @@ Vue.use({
   }
 })
 
+Vue.use(ElementUI)
+
 Vue.use(Vuex)
 
 interface store {
@@ -30,8 +35,8 @@ interface store {
 }
 const store = new Vuex.Store<store>({
   state: {
-    path: '/',
-    data: undefined
+    path: '/config',
+    data: {}
   },
   mutations: {
     update (state: any, payload: any) {

@@ -1,11 +1,11 @@
 import Vue from 'vue'
-import CreateConfig from './components/CreateConfig.vue'
+import ConfigPanel from './components/ConfigPanel.vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
 Vue.use(VueRouter)
 
 const routes: RouteConfig[] = [
-    { path: '/config/create', component: CreateConfig }
+    { path: '/config', component: ConfigPanel }
 ]
 
 const router = new VueRouter({
