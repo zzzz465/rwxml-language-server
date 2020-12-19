@@ -12,7 +12,7 @@
     align-items: center;
   }
   .title {
-    color: white;
+    color: white; 
   }
   .paths {
     margin-top: 10px;
@@ -42,7 +42,7 @@
   .root-folders
     .header
       h3.title {{ title }}
-      button.folder-add(type="button" @click="$emit('addFolder')") ADD
+      button.folder-add(type="button" @click="openFileDialog") ADD
     .paths
       div.row(v-for="(path, i) in paths")
         .path {{ path }}
@@ -50,25 +50,58 @@
 </template>
 
 <script lang="ts">
+import { OpenDialogOptions } from 'vscode'
 import Vue, { PropType } from 'vue'
+import { } from '../vscode'
+import _ from 'lodash'
+
 export default Vue.extend({
-  model: {
-    prop: 'paths',
-    event: 'change'
-  },
   props: {
     paths: {
       type: Array as PropType<string[]>,
       required: true
     },
-    title: {
-      type: String
-    }
+    title: { type: String, required: true },
+    version: { type: String, required: true }
   },
-
+  data() {
+    return { requestId: '' }
+  },
+  mounted() {
+    this.requestId = `${this.version}/${this.title}`
+    this.$window.addEventListener('message', (event: any) => {
+      switch(event.data.type) {
+        case 'openDialogRespond':
+          this.openDialogRespond(event.data)
+          break
+      }
+    })
+  },
   methods: {
+    openFileDialog(): void {
+      const options: OpenDialogOptions = {
+        defaultUri: undefined,
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: true
+      }
+      this.$vscode.postMessage({ type: 'openDialog', requestId: this.requestId, options })
+
+      // this.openDialogRespond({
+        // requestId: this.requestId,
+      // })
+    },
+    openDialogRespond (message: any): void { // paths: Array<string>
+      if (message.requestId === this.requestId) {
+        const newData = _.union(message.paths, this.paths)
+        this.$emit('update', newData)
+
+        // debug
+        console.log(`add ${message.paths.length} paths to ${this.title}`)
+      }
+    },
     remove(i: number): void {
-      this.$emit('change', this.paths.filter((_, index) => index != i))
+      this.$emit('update', this.paths.filter((_, index) => index != i))
     }
   }
 })

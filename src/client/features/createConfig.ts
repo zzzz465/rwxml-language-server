@@ -1,99 +1,91 @@
 import { readFileSync } from 'fs'
+import { TextDecoder, TextEncoder } from 'util'
 import * as vscode from 'vscode'
 
-class ConfigGUIPanel {
-	private static currentPanel: ConfigGUIPanel | undefined
-	public static showPanel(extensionUri: vscode.Uri, configObj: any, configPath?: vscode.Uri): void {
-		if (this.currentPanel) {
-			this.currentPanel._panel.reveal()
-		} else {
+export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
+	private static readonly viewType = 'RWXML.config'
 
-			const panel = vscode.window.createWebviewPanel(
-				'RWXML.config',
-				'configuration GUI',
-				vscode.ViewColumn.Active,
-				{
-					enableScripts: true
-				}
-			)
-
-			this.currentPanel = new ConfigGUIPanel(panel, extensionUri, configObj, configPath)
-		}
+	public static register(context: vscode.ExtensionContext): vscode.Disposable {
+		const provider = new ConfigGUIPanel(context)
+		const providerRegistration = vscode.window.registerCustomEditorProvider(ConfigGUIPanel.viewType, provider);
+		return providerRegistration;
 	}
 
-	private readonly _panel: vscode.WebviewPanel
-	private readonly _extensionUri: vscode.Uri
-	private readonly _configPath?: vscode.Uri
+	private _configPath?: vscode.Uri
 	private _disposables: vscode.Disposable[] = []
 	private _configObj: Object
+	private readonly context: vscode.ExtensionContext
 
-	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, configObj: any, configPath?: vscode.Uri) {
-		this._extensionUri = extensionUri
-		this._panel = panel
-		this._configPath = configPath
-		this._configObj = configObj
-		panel.onDidDispose(() => this.dispose(), this._disposables)
+	private constructor(context: vscode.ExtensionContext) {
+		this.context = context
+		this._configObj = {}
+	}
 
-		this._panel.onDidChangeViewState(e => {
+	public async resolveCustomTextEditor(
+		document: vscode.TextDocument,
+		webviewPanel: vscode.WebviewPanel,
+		_token: vscode.CancellationToken
+	): Promise<void> {
+		try {
+			this._configObj = JSON.parse(document.getText())
+		} catch (err) {
+			this._configObj = {}
+		}
 
-		})
+		webviewPanel.webview.options = {
+			enableScripts: true
+		}
 
-		this._panel.webview.onDidReceiveMessage(message => {
-			console.log(message)
+		const onReceiveMessage = (message: any) => {
 			switch (message.type) {
 				case 'alert': {
 					vscode.window.showInformationMessage(message.text)
 				} break
 
 				case 'openDialog': {
-					const entry = message.entry
-					vscode.window.showErrorMessage(entry)
 					vscode.window.showOpenDialog(message.options)
 						.then((uri) => {
 							const fsPaths = uri?.map(d => d.fsPath)
-							this._panel.webview.postMessage({
+							webviewPanel.webview.postMessage({
 								type: 'openDialogRespond',
-								entry,
+								requestId: message.requestId,
+								entry: message.entry,
 								paths: fsPaths
 							})
 						})
 				} break
 
 				case 'getConfig': {
-					this._panel.webview.postMessage({
+					webviewPanel.webview.postMessage({
 						type: 'getConfigRespond',
 						config: this._configObj
 					})
 				} break
 
 				case 'save': {
-					console.log(message.type)
-					console.log(message.config)
+					this._configObj = message.config
+					const edit = new vscode.WorkspaceEdit()
+					edit.replace(document.uri, // just replace whole content
+						new vscode.Range(0, 0, document.lineCount, 0),
+						JSON.stringify(message.config, null, 4))
+
+					vscode.workspace.applyEdit(edit).then(() => document.save())
 				} break
 			}
-		}, null, this._disposables)
+		}
 
-		this._panel.webview.html = this.GetHTML(panel.webview)
-		this._panel.webview.postMessage({
-			type: 'changeRoute',
-			path: '/config'
+		// webviewPanel.onDidDispose(() => this.dispose(), this._disposables)
+		webviewPanel.webview.onDidReceiveMessage(onReceiveMessage, null, this._disposables)
+		webviewPanel.webview.html = this.GetHTML(webviewPanel.webview)
+		webviewPanel.webview.postMessage({
+			type: 'update',
+			data: this._configObj
 		})
 	}
 
-	public dispose() {
-		ConfigGUIPanel.currentPanel = undefined
-		this._panel.dispose()
-
-		this._disposables.map(d => d.dispose())
-	}
-
 	private GetHTML(webview: vscode.Webview) {
-		const js = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'config-gui', 'dist', 'main.js'))
-		const chunk = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'config-gui', 'dist', 'chunk.js'))
-		// const css = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'config-gui', 'dist', 'css', 'app.5361237a.css'))
-		// const html = readFileSync(vscode.Uri.joinPath(this._extensionUri, 'config-gui', 'dist', 'index.html').fsPath)
-
-		// return html
+		const js = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'config-gui', 'dist', 'main.js'))
+		const chunk = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'config-gui', 'dist', 'chunk.js'))
 
 		return `<!DOCTYPE html>
 		<html lang="en">
@@ -115,13 +107,4 @@ class ConfigGUIPanel {
 		
 		</html>`
 	}
-}
-
-
-export default function installGUI(context: vscode.ExtensionContext): void {
-	context.subscriptions.push(
-		vscode.commands.registerCommand('RWXML.makeConfig', () => {
-			ConfigGUIPanel.showPanel(context.extensionUri, undefined)
-		})
-	)
 }

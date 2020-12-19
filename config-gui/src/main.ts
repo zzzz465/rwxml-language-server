@@ -4,6 +4,7 @@ import 'element-ui/lib/theme-chalk/index.css'
 import ElementUI from 'element-ui'
 import App from './App.vue'
 import router from './router'
+import store from './vuex/config'
 import { vscode } from './vscode'
 
 
@@ -27,30 +28,11 @@ Vue.use({
 
 Vue.use(ElementUI)
 
-Vue.use(Vuex)
-
-interface store {
-  path: string
-  data: any
-}
-const store = new Vuex.Store<store>({
-  state: {
-    path: '/config',
-    data: {}
-  },
-  mutations: {
-    update (state: any, payload: any) {
-      state.path = payload.path
-      state.data = payload.data
-    }
-  }
-})
-
 window.addEventListener('message', event => {
+  console.log(event.data)
   switch (event.data.type) {
-    case 'update':
-    case 'routeChange': {
-      store.commit('update', event.data)
+    case 'update': {
+      store.commit('update', event.data.data)
     } break
 
     case 'fetch': {

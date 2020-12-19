@@ -84,49 +84,46 @@
       .entry.About
         h3.title About folder
         .path
-          input.input(v-model="data.About")
+          input.input(v-model="data.About" readonly)
           button(type="button" @click="openFileDialog('About', false, true, false)") browse
       .entry.Assemblies
         h3.title Assemblies folder
         .path 
-          input.input(v-model="data.Assemblies")
+          input.input(v-model="data.Assemblies" readonly)
           button(type="button" @click="openFileDialog('Assemblies', false, true, false)") browse
       .entry.Defs
         h3.title Defs folder
         .path
-          input.input(v-model="data.Defs")
+          input.input(v-model="data.Defs" readonly)
           button(type="button" @click="openFileDialog('Defs', false, true, false)") browse
       .entry.Textures
         h3.title Textures folder
         .path
-          input.input(v-model="data.Textures")
+          input.input(v-model="data.Textures" readonly)
           button(type="button" @click="openFileDialog('Textures', false, true, false)") browse
       .entry.Sounds
         h3.title Sounds folder
         .path
-          input.input(v-model="data.Sounds")
+          input.input(v-model="data.Sounds" readonly)
           button(type="button" @click="openFileDialog('Sounds', false, true, false)") browse
       .entry.Patches
         h3.title Patches folder
         .path
-          input.input(v-model="data.Patches")
+          input.input(v-model="data.Patches" readonly)
           button(type="button" @click="openFileDialog('Patches', false, true, false)") browse
       .entry.DefReferences
         Folders(
-          v-model="data.DefReferences" title="Def References"
-          @addFolder="openFileDialog('DefReferences', false, true, true)")
+          :paths="data.DefReferences" title="Def References"
+          :version="version" @update="(data) => emitUpdate('DefReferences', data)")
       .entry.AssemblyReferences
         Folders(
-          v-model="data.AssemblyReferences" title="Assembly References"
-          @addFolder="openFileDialog('AssemblyReferences', false, true, true)")
+          :paths="data.AssemblyReferences" title="Assembly References"
+          :version="version" @update="(data) => emitUpdate('AssemblyReferences', data)")
 </template>
 
 <script lang="ts">
-
 import { OpenDialogOptions } from "vscode"
 import Vue, { PropType } from "vue"
-import Router from "vue-router"
-import 'vuex'
 import { } from '../vscode'
 // @ts-ignore
 import Folders from './folders.vue'
@@ -134,18 +131,12 @@ import Folders from './folders.vue'
 import { Data } from './IConfig'
 
 export default Vue.extend({
-  model: {
-    prop: 'data',
-    event: 'change'
-  },
   components: {
     Folders
   },
   props: {
-    data: {
-      type: Object as PropType<Data>,
-      required: true
-    }
+    version: { type: String, required: true },
+    data: { type: Object as PropType<Data>, required: true }
   },
   mounted() {
     this.$window.addEventListener('message', (event: any) => {
@@ -164,24 +155,19 @@ export default Vue.extend({
         canSelectFolders: folder,
         canSelectMany: selectMany
       }
-      this.$vscode.postMessage({ type: 'openDialog', entry, options })
-      this.openDialogRespond({
-        entry: 'DefReferences',
-        paths: [
-          'asdf',
-          'asdf2'
-        ]
-      })
+      this.$vscode.postMessage({ type: 'openDialog', requestId: this.version, entry, options })
     },
-
     openDialogRespond (event: any): void {
-      const newData: any = { ...this.data }
-      if (event.entry === 'DefReferences' || event.entry === 'AssemblyReferences')
-        newData[event.entry] = event.paths
-      else
-        newData[event.entry] = event.paths.length > 0 ? event.paths[0] : ''
-      console.log(newData)
-      this.$emit('change', newData)
+      if (event.requestId === this.version) {
+        const path = event.paths.length > 0 ? event.paths[0] : ''
+        console.log(event)
+        this.emitUpdate(event.entry, path)
+      }
+    },
+    emitUpdate (key: string, data: any): void {
+      const newData: any = { ...this.data } // because allocating in child is not allowed.
+      newData[key] = data
+      this.$emit('update', newData)
     }
   }
 });

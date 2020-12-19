@@ -27,13 +27,11 @@
       .header
         h4 folders
         button(@click="addFolder") add folder
-      Config(v-model="config.folders['new-version']")
-      //- div(v-for="(item, key) in config.folders")
-        //- .folder-header
-          //- Config(v-model="config.folders[key]")
-        
-    .save-section
-      button.save(@click="save") Save
+      div(v-for="(item, key) in folders")
+        .folder-header
+          Config(@update="(data) => onUpdate(key, data)" :version="key" :data="folders[key]")
+    .update
+      button(@click="save") Save
 </template>
 
 <script lang="ts">
@@ -41,74 +39,54 @@ import Vue from 'vue'
 // @ts-ignore
 import Config from './Config.vue'
 import { } from '../vscode'
+// @ts-ignore
 import { Data } from './IConfig'
+import Vuex from 'vuex'
 
 export default Vue.extend({
   components: {
     Config
   },
-  data() {
-    return {
-      config: {
-        folders: {} as Record<string, Data> // version - config
-      }
+  watch: {
+    '$store.state.data': function (): void {
+      this.folders = this.$store.state.data.folders || {}
     }
   },
-  beforeMount() {
-    this.config.folders['new-version'] = {
-        About: undefined,
-        DefReferences: [],
-        AssemblyReferences: [],
-        Assemblies: undefined,
-        Defs: undefined,
-        Textures: undefined,
-        Sounds: undefined,
-        Patches: undefined
-      }
-  }, 
-  mounted() {
-    this.$window.addEventListener('message', (event: any) => {
-      switch (event.data.type) {
-        case 'getConfigRespond':
-          this.handleConfigRespond(event.data)
-          break
-      }
-    })
-    this.$vscode.postMessage({ type: 'getConfig' })
+  data() {
+    return {
+      folders: {} as Record<string, any>
+    }
   },
   methods: {
-    handleConfigRespond(data: any): void {
-      console.log('(handleConfigRespond)received data')
-      console.log(data) 
-      if (!data.config.folders)
-        data.config.folders = {}
-    },
     addFolder(): void {
-      if (this.config.folders['new-version']) {
+      if (this.folders['new-version']) { // if temp folder is already exist
         this.$vscode.postMessage({
           type: 'alert',
           text: 'duplication'
         })
-        return
+      } else {
+        this.onUpdate('new-version', {
+          About: "",
+          DefReferences: [],
+          AssemblyReferences: [],
+          Assemblies: "",
+          Defs: "",
+          Textures: "",
+          Sounds: "",
+          Patches: ""
+        })
       }
-
-      this.config.folders['new-version'] = {
-        About: undefined,
-        DefReferences: [],
-        AssemblyReferences: [],
-        Assemblies: undefined,
-        Defs: undefined,
-        Textures: undefined,
-        Sounds: undefined,
-        Patches: undefined
-      }
-
-      this.$forceUpdate()
     },
-    save(): void {
+    onUpdate(key: string, data: any): void {
+      const newObj = { ...this.folders }
+      newObj[key] = data
+      this.folders = newObj
+      this.$store.commit('updateFolder', newObj)
+    },
+    save() {
       this.$vscode.postMessage({
         type: 'save',
-        config: this.config
+        config: this.$store.state.data
       })
     }
   }
