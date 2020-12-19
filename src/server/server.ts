@@ -75,7 +75,7 @@ connection.onInitialize((params: InitializeParams) => {
 			},
 			hoverProvider: true,
 			codeLensProvider: {
-				resolveProvider: true
+				resolveProvider: false // true
 			}
 			// typeDefinitionProvider: true,
 		}
