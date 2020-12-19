@@ -18,16 +18,15 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient';
-import { DefFileAddedNotificationType } from '../common/Defs';
-import { ProjectWatcher } from './projectWatcher';
+import { DefFileAddedNotificationType } from '../common/Defs'
+import { ProjectWatcher } from './projectWatcher'
 import * as fs from 'fs'
 import * as util from 'util'
-import { extractTypeInfos } from './extractor';
-import { Event } from '../common/event';
-import { DecoRequestType } from '../common/decoration';
-import { applyDecos } from './features/decoration';
-import configGUI from './features/createConfig'
-import installGUI from './features/createConfig';
+import { extractTypeInfos } from './extractor'
+import { Event } from '../common/event'
+import { DecoRequestType } from '../common/decoration'
+import { applyDecos } from './features/decoration'
+import { ConfigGUIPanel } from './features/createConfig'
 
 const glob = util.promisify(glob_callback)
 const exists = util.promisify(fs.exists)
@@ -71,7 +70,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	client.start();
 	await client.onReady()
 
-	installGUI(context)
+	ConfigGUIPanel.register(context) // disposable?
 
 	let timeout: NodeJS.Timer | undefined = undefined
 	let activeEditor = vscode.window.activeTextEditor
@@ -93,7 +92,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	configWatcher.onDidCreate(onConfigfileChanged)
 	configWatcher.onDidChange(onConfigfileChanged)
 	// configWatcher.onDidDelete(onConfigfileChanged) // should we handle this?
-
 
 	async function checkPathValid(paths: string[]): Promise<{ valid: boolean, invalidItems: string[] }> {
 		const promises: Promise<void>[] = []

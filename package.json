@@ -46,6 +46,17 @@
 				}
 			}
 		},
+		"customEditors": [
+			{
+				"viewType": "RWXML.config",
+				"displayName": "rwxml configuration",
+				"selector": [
+					{
+						"filenamePattern": "rwconfigrc.json"
+					}
+				]
+			}
+		],
 		"colors": [
 			{
 				"id": "rwxml.decorator.inlayHints.backgroundColor",
