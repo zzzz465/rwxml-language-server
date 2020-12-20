@@ -42,40 +42,37 @@ export function extractTypeInfos(dlls: string[], isDevelopment: boolean): Promis
 
 		if (extractorProcess) {
 			// receive data over stdout
-			let resolved = false;
-			extractorProcess.stdout.on('data', (buffer: Buffer) => {
-				try {
-					const obj = JSON.parse(buffer.toString('utf-8'))
-					resolve(obj)
-					resolved = true;
-				} catch (err) {
-					console.log(err)
-					err(err)
-				}
+			const buffers: Uint8Array[] = []
+			extractorProcess.stdout.on('data', (data: Buffer) => {
+				buffers.push(data) // on linux, the stdout buffer is limited to 65536, so we have to concat multiple writes
 			})
 
 			extractorProcess.stderr.on('data', (buffer: Buffer) => {
 				const errmsg = buffer.toString()
-				console.log(errmsg)
+				vscode.window.showErrorMessage(`encounted an error while parsing data, ${errmsg}`)
 				err(errmsg)
 			})
 
 			extractorProcess.on('exit', (code) => {
-				if (code !== 0) {
+				if (code === 0) {
+					const buffer = Buffer.concat(buffers)
+					try { // is stdout still alive after the process exit???
+						const convertedString = buffer.toString('utf-8')
+						const object = JSON.parse(convertedString)
+						resolve(object)
+					} catch (error) {
+						vscode.window.showErrorMessage(`encounted an error while parsing data, ${error}`)
+						err(error)
+					}
+				} else {
 					vscode.window.showErrorMessage(`extractor exit code with ${code}`)
 					console.log(`extractor exit code ${code}`)
 					err(code)
-				} else {
-					if (!resolved) {
-						resolve([])
-						resolved = true
-					}
 				}
 			})
 
 			extractorProcess.on('error', (errmsg) => { // catch stderr
-				vscode.window.showErrorMessage(`extractor exit code with ${errmsg}`)
-				console.log(errmsg)
+				vscode.window.showErrorMessage(`cannot create extractor process, err: ${errmsg}`)
 				err(errmsg)
 			})
 		} else {
