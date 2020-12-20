@@ -1,0 +1,14 @@
+!dist
+!dist/**/*.*
+config-gui
+coverage
+.github
+.vscode
+extractor
+node_modules
+out
+src
+*.code-workspace
+*.js
+!package.json
+*.json
