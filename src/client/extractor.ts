@@ -4,7 +4,7 @@ import { createServer } from 'net'
 import * as vscode from 'vscode'
 import { platform } from 'os'
 
-// the executable will be served in out or dist folder.
+// the executable will be served in out folder.
 let platformSpecificPath = ''
 switch (platform()) {
 	case 'win32':
@@ -18,9 +18,8 @@ switch (platform()) {
 	default:
 		console.error(`platform ${platformSpecificPath} is not supported`)
 }
+// __dirname = "out/client/"
 const extractorPath = resolve(__dirname, './extractor', platformSpecificPath, 'extractor.exe')
-// <root>/dist/extractor/windows/extractor.exe
-const devExtractorPath = resolve(__dirname, '../../', 'dist', 'extractor', 'windows', 'extractor.exe')
 
 /**
  * extract typeInfo from given paths.  
@@ -33,18 +32,12 @@ export function extractTypeInfos(dlls: string[], isDevelopment: boolean): Promis
 
 	return new Promise((resolve, err) => {
 		let extractorProcess: ChildProcessWithoutNullStreams | undefined = undefined
-		console.log(`isdev?: ${isDevelopment}`)
-		console.log(`path: ${devExtractorPath}`)
-		if (isDevelopment) {
-			extractorProcess = spawn(devExtractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
-		} else {
-			switch (platform()) {
-				case 'win32':
-					extractorProcess = spawn(extractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
-					break
-				case 'linux':
-					extractorProcess = spawn(`mono ${extractorPath}`, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
-			}
+		switch (platform()) {
+			case 'win32':
+				extractorProcess = spawn(extractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
+				break
+			case 'linux':
+				extractorProcess = spawn(`mono ${extractorPath}`, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
 		}
 
 		if (extractorProcess) {
