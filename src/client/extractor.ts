@@ -1,60 +1,92 @@
-import { spawn } from 'child_process'
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 import { resolve } from 'path'
 import { createServer } from 'net'
 import * as vscode from 'vscode'
+import { platform } from 'os'
 
 // the executable will be served in out or dist folder.
-console.log(!!__dirname)
-const exractorPath = resolve(__dirname, './extractor/extractor.exe')
+let platformSpecificPath = ''
+switch (platform()) {
+	case 'win32':
+		platformSpecificPath = 'windows'
+		break
+
+	case 'linux':
+		platformSpecificPath = 'linux'
+		break
+
+	default:
+		console.error(`platform ${platformSpecificPath} is not supported`)
+}
+const extractorPath = resolve(__dirname, './extractor', platformSpecificPath, 'extractor.exe')
+// <root>/dist/extractor/windows/extractor.exe
+const devExtractorPath = resolve(__dirname, '../../', 'dist', 'extractor', 'windows', 'extractor.exe')
 
 /**
  * extract typeInfo from given paths.  
  * note: it cannot be asynchronized! you must wait to call a new one after the previous one is completed.
  * @param dlls absolute paths of target dll
  */
-export function extractTypeInfos(dlls: string[]): Promise<any> {
+export function extractTypeInfos(dlls: string[], isDevelopment: boolean): Promise<any> {
 	// TODO - make a error routine when the client cannot run dotnet files.
 	const args = vscode.workspace.getConfiguration().get<string[]>('rwxml.extractor.args') || []
 
 	return new Promise((resolve, err) => {
-		const process = spawn(exractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
-
-		// receive data over stdout
-		let resolved = false;
-		process.stdout.on('data', (buffer: Buffer) => {
-			try {
-				const obj = JSON.parse(buffer.toString('utf-8'))
-				resolve(obj)
-				resolved = true;
-			} catch (err) {
-				console.log(err)
-				err(err)
+		let extractorProcess: ChildProcessWithoutNullStreams | undefined = undefined
+		console.log(`isdev?: ${isDevelopment}`)
+		console.log(`path: ${devExtractorPath}`)
+		if (isDevelopment) {
+			extractorProcess = spawn(devExtractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
+		} else {
+			switch (platform()) {
+				case 'win32':
+					extractorProcess = spawn(extractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
+					break
+				case 'linux':
+					extractorProcess = spawn(`mono ${extractorPath}`, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
 			}
-		})
+		}
 
-		process.stderr.on('data', (buffer: Buffer) => {
-			const errmsg = buffer.toString()
-			console.log(errmsg)
-			err(errmsg)
-		})
-
-		process.on('exit', (code) => {
-			if (code !== 0) {
-				vscode.window.showErrorMessage(`extractor exit code with ${code}`)
-				console.log(`extractor exit code ${code}`)
-				err(code)
-			} else {
-				if (!resolved) {
-					resolve([])
-					resolved = true
+		if (extractorProcess) {
+			// receive data over stdout
+			let resolved = false;
+			extractorProcess.stdout.on('data', (buffer: Buffer) => {
+				try {
+					const obj = JSON.parse(buffer.toString('utf-8'))
+					resolve(obj)
+					resolved = true;
+				} catch (err) {
+					console.log(err)
+					err(err)
 				}
-			}
-		})
+			})
 
-		process.on('error', (errmsg) => { // catch stderr
-			vscode.window.showErrorMessage(`extractor exit code with ${errmsg}`)
-			console.log(errmsg)
-			err(errmsg)
-		})
+			extractorProcess.stderr.on('data', (buffer: Buffer) => {
+				const errmsg = buffer.toString()
+				console.log(errmsg)
+				err(errmsg)
+			})
+
+			extractorProcess.on('exit', (code) => {
+				if (code !== 0) {
+					vscode.window.showErrorMessage(`extractor exit code with ${code}`)
+					console.log(`extractor exit code ${code}`)
+					err(code)
+				} else {
+					if (!resolved) {
+						resolve([])
+						resolved = true
+					}
+				}
+			})
+
+			extractorProcess.on('error', (errmsg) => { // catch stderr
+				vscode.window.showErrorMessage(`extractor exit code with ${errmsg}`)
+				console.log(errmsg)
+				err(errmsg)
+			})
+		} else {
+			vscode.window.showErrorMessage(`current platform ${platform()} is not supported.`)
+		}
 	})
 }
