@@ -68,7 +68,5 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>xcopy $(TargetDir)* $(SolutionDir)..\out\client\extractor /h /i /c /k /e /r /y</PostBuildEvent>
-  </PropertyGroup>
+  <PropertyGroup></PropertyGroup>
 </Project>

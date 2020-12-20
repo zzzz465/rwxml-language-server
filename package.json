@@ -9,8 +9,10 @@
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"test": "jest",
-		"extractor:build": "dotnet build ./extractor/extractor.sln",
+		"extractor:build:window": "dotnet build ./extractor/extractor.sln /p:OutputPath=../../dist/extractor/windows",
+		"extractor:build:mono": "xbuild ./extractor/extractor.sln /p:OutputPath=../../dist/extractor/linux",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
+		"extractor:build": "npm run extractor:build:window && extractor:build:mono",
 		"upload-only": "tsc && npm run extractor:build",
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "npm run upload-only && webpack --mode production"
