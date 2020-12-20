@@ -1,5 +1,5 @@
 //@ts-check
-
+// webpack setting that is currently not used.
 'use strict';
 
 const path = require('path');
