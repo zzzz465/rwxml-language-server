@@ -37,7 +37,7 @@ export function extractTypeInfos(dlls: string[], isDevelopment: boolean): Promis
 				extractorProcess = spawn(extractorPath, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
 				break
 			case 'linux':
-				extractorProcess = spawn(`mono ${extractorPath}`, [...args, '--OutputMode', 'stdoutBytes', ...dlls])
+				extractorProcess = spawn(`mono`, [`${extractorPath}`, ...args, '--OutputMode', 'stdoutBytes', ...dlls])
 		}
 
 		if (extractorProcess) {
