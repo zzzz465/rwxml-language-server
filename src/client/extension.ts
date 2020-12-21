@@ -35,6 +35,7 @@ let client: LanguageClient;
 let configWatcher: FileSystemWatcher
 
 export async function activate(context: ExtensionContext): Promise<void> {
+	const isDevelopment = context.extensionMode === vscode.ExtensionMode.Development
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(
 		path.join('out', 'server', 'server.js')
@@ -152,7 +153,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 					const res = await checkPathValid(assemRefs)
 					if (res.valid) {
 						try {
-							const rawTypeInfo = await extractTypeInfos(assemRefs)
+							const rawTypeInfo = await extractTypeInfos(assemRefs, isDevelopment)
 							parms.data[version] = { rawTypeInfo }
 						} catch (err) {
 							vscode.window.showErrorMessage(`failed extracting data, err: ${err}`)
