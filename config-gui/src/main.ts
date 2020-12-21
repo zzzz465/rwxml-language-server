@@ -5,8 +5,6 @@ import ElementUI from 'element-ui'
 import App from './App.vue'
 import router from './router'
 import store from './vuex/config'
-import { vscode } from './vscode'
-
 
 Vue.config.productionTip = false
 
@@ -16,7 +14,6 @@ const mockObject = {
   }
 }
 
-//@ts-ignore
 const vscode: vscode = process.env.NODE_ENV === 'production' ? acquireVsCodeApi() : mockObject
 
 Vue.use({

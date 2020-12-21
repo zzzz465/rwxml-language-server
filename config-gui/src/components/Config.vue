@@ -122,12 +122,8 @@
 </template>
 
 <script lang="ts">
-import { OpenDialogOptions } from "vscode"
 import Vue, { PropType } from "vue"
-import { } from '../vscode'
-// @ts-ignore
 import Folders from './folders.vue'
-// @ts-ignore
 import { Data } from './IConfig'
 
 export default Vue.extend({

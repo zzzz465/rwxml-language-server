@@ -1,30 +1,31 @@
 <template lang="pug">
-  div
-    ConfigPanel
+div
+  ConfigPanel
 </template>
 
 <style>
-  button {
-    color: var(--vscode-button-foreground);
-    background-color: var(--vscode-button-background);
-    border: var(--vscode-button-border);
-  }
-  button:hover {
-    background-color: var(--vscode-button-hoverBackground);
-  }
+button {
+  color: var(--vscode-button-foreground);
+  background-color: var(--vscode-button-background);
+  border: var(--vscode-button-border);
+}
+button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
 </style>
 
 <script lang="ts">
-import Vue from "vue"
-import 'vuex'
-import 'vue-router'
-// @ts-ignore
-import ConfigPanel from './components/ConfigPanel.vue'
+import Vue from "vue";
+import "vuex";
+import "vue-router";
+import ConfigPanel from "./components/ConfigPanel.vue";
 
 export default Vue.extend({
   name: "App",
   components: {
-    ConfigPanel
+    ConfigPanel,
+  },
+  mounted() {
   }
 });
 </script>

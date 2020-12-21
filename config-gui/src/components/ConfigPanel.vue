@@ -36,12 +36,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-// @ts-ignore
 import Config from './Config.vue'
-import { } from '../vscode'
-// @ts-ignore
-import { Data } from './IConfig'
-import Vuex from 'vuex'
 
 export default Vue.extend({
   components: {

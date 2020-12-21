@@ -50,9 +50,7 @@
 </template>
 
 <script lang="ts">
-import { OpenDialogOptions } from 'vscode'
 import Vue, { PropType } from 'vue'
-import { } from '../vscode'
 import _ from 'lodash'
 
 export default Vue.extend({
