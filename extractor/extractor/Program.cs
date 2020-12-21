@@ -51,12 +51,10 @@ namespace extractor
 				}
 				try
 				{
-					var filter = new Regex("mono\\.security"); // it causes error running extractor with mono
-					var files = option.targetFiles.Where(name => !filter.Match(name).Success);
 					Log.Info("Extracting data from");
-					foreach (var file in files)
+					foreach (var file in option.targetFiles)
 						Log.Info(file);
-					var assemblies = AssemblyLoader.Load(files);
+					var assemblies = AssemblyLoader.Load(option.targetFiles);
 					Log.Info("extracting data...");
 					var parseResult = Extractor.parse(assemblies);
 					Log.Info($"Completed extracting data, data count: {parseResult.Count}");
