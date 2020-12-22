@@ -1,19 +1,22 @@
 import { type } from 'os'
 import Vue from 'vue'
+import { message } from '@interop/message'
 
 declare global {
 	interface vscode {
 		postMessage(message: any): unknown
 	}
-	interface OpenDialogOptions {
-		
-	}
 	function acquireVsCodeApi(): vscode
+	interface Event {
+		data: message
+	}
 }
+
 
 declare module 'vue/types/vue' {
 	interface Vue {
 		$vscode: vscode
-		$window: EventTarget
+		$addEventHandler(handler: eventHandler): void
+		$removeEventHandler(handler: eventHandler): void
 	}
 }

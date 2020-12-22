@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "config-gui"
+		},
+		{
+			"path": "interop"
 		}
 	],
 	"settings": {
