@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "ES2020",
+    "module": "ES2020",
     "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
@@ -16,7 +16,7 @@
     ],
     "paths": {
       "@interop/*": [
-        "../interop/*"
+        "../interop/src/*"
       ]
     },
     "lib": [
@@ -35,5 +35,10 @@
   ],
   "exclude": [
     "node_modules"
+  ],
+  "references": [
+    {
+      "path": "../interop"
+    }
   ]
 }
