@@ -25,5 +25,21 @@ export interface openDialogRespond extends _message {
   uris: string[] | string
 }
 
+export interface alert extends _message {
+  type: 'alert'
+  text: string
+}
+
+export interface config extends _message {
+  type: 'config'  
+  data: any
+}
+
+export interface saveConfig extends _message {
+  type: 'saveConfig'
+  data: any
+}
+
 export type message =
-  | route | openDialog | openDialogRespond
+  | route | openDialog | openDialogRespond | alert
+  | config | saveConfig

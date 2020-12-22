@@ -1,6 +1,6 @@
 <template lang="pug">
 div
-  ConfigPanel
+  router-view
 </template>
 
 <style>
@@ -37,6 +37,11 @@ export default Vue.extend({
   },
   beforeDestroy() {
     this.$removeEventHandler(this.handler)
+  },
+  mounted() {
+    this.$vscode.postMessage({
+      type: 'route', path: '', requestId: ''
+    } as route)
   }
 });
 </script>

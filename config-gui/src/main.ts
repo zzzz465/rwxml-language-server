@@ -20,10 +20,12 @@ Vue.use({
   install: function (vue, options) {
     vue.prototype.$vscode = vscode
     vue.prototype.$addEventHandler = function (handler: EventListener) {
-      window.addEventListener('message', handler)
+      if (handler)
+        window.addEventListener('message', handler)
     }
     vue.prototype.$removeEventHandler = function (handler: EventListener) {
-      window.removeEventListener('message', handler)
+      if (handler)
+        window.removeEventListener('message', handler)
     }
   }
 })
