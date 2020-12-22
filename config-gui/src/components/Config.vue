@@ -159,12 +159,9 @@ export default Vue.extend({
         canSelectMany: selectMany
       }
       const req: openDialog = {
-        type: 'openDialog', requestId: this.version, entry, 
+        type: 'openDialog', requestId: this.version, entry, options
       }
-      this.$vscode.postMessage({
-        
-      } as openDialog)
-      this.$vscode.postMessage({ type: 'openDialog', requestId: this.version, entry, options })
+      this.$vscode.postMessage(req)
     },
     openDialogRespond (event: openDialogRespond): void {
       if (event.requestId === this.version) {
