@@ -11,13 +11,25 @@
         "strict": true,
         "resolveJsonModule": true,
         "moduleResolution": "Node",
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@interop/*": [
+                "interop/*"
+            ]
+        }
     },
     "repository": {},
     "engines": {
         "vscode": "^1.47.0"
     },
     "exclude": [
-        "config-gui"
+        "config-gui",
+        "interop"
+    ],
+    "references": [
+        {
+            "path": "interop"
+        }
     ]
 }
