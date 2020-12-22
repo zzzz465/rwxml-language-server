@@ -19,24 +19,16 @@ const vscode: vscode = process.env.NODE_ENV === 'production' ? acquireVsCodeApi(
 Vue.use({
   install: function (vue, options) {
     vue.prototype.$vscode = vscode
-    vue.prototype.$window = window
+    vue.prototype.$addEventHandler = function (handler: EventListener) {
+      window.addEventListener('message', handler)
+    }
+    vue.prototype.$removeEventHandler = function (handler: EventListener) {
+      window.removeEventListener('message', handler)
+    }
   }
 })
 
 Vue.use(ElementUI)
-
-window.addEventListener('message', event => {
-  console.log(event.data)
-  switch (event.data.type) {
-    case 'update': {
-      store.commit('update', event.data.data)
-    } break
-
-    case 'fetch': {
-      vscode.postMessage(store.state.data)
-    } break
-  }
-})
 
 new Vue({
   router, store,

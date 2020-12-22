@@ -125,6 +125,7 @@
 import Vue, { PropType } from "vue"
 import Folders from './folders.vue'
 import { Data } from './IConfig'
+import { route, openDialog, OpenDialogOptions, openDialogRespond } from '@interop/message'
 
 export default Vue.extend({
   components: {
@@ -134,14 +135,20 @@ export default Vue.extend({
     version: { type: String, required: true },
     data: { type: Object as PropType<Data>, required: true }
   },
-  mounted() {
-    this.$window.addEventListener('message', (event: any) => {
-      switch(event.data.type) {
-        case 'openDialogRespond':
-          this.openDialogRespond(event.data)
-          break
+  data() {
+    return { handler: undefined as EventListener | undefined }
+  },
+  mounted(): void {
+    const handler: EventListener = ({ data }) => {
+      if (data.type === 'openDialogRespond') {
+        this.openDialogRespond(data)
       }
-    })
+    }
+    this.$addEventHandler(handler)
+    this.handler = handler
+  },
+  beforeDestroy() {
+    this.$removeEventHandler(this.handler)
   },
   methods: {
     openFileDialog(entry: string, file: boolean, folder: boolean, selectMany: boolean): void {
@@ -151,13 +158,25 @@ export default Vue.extend({
         canSelectFolders: folder,
         canSelectMany: selectMany
       }
+      const req: openDialog = {
+        type: 'openDialog', requestId: this.version, entry, 
+      }
+      this.$vscode.postMessage({
+        
+      } as openDialog)
       this.$vscode.postMessage({ type: 'openDialog', requestId: this.version, entry, options })
     },
-    openDialogRespond (event: any): void {
+    openDialogRespond (event: openDialogRespond): void {
       if (event.requestId === this.version) {
-        const path = event.paths.length > 0 ? event.paths[0] : ''
-        console.log(event)
-        this.emitUpdate(event.entry, path)
+        switch (event.entry) {
+          case 'About':
+          case 'Assemblies':
+          case 'Defs':
+          case 'Textures':
+          case 'Sounds':
+          case 'Patches':
+            this.emitUpdate(event.entry, event.uris.length > 0 ? event.uris[0] : '')
+        }
       }
     },
     emitUpdate (key: string, data: any): void {

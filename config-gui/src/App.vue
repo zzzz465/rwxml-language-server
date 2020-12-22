@@ -19,13 +19,24 @@ import Vue from "vue";
 import "vuex";
 import "vue-router";
 import ConfigPanel from "./components/ConfigPanel.vue";
+import { route } from '@interop/message'
 
 export default Vue.extend({
   name: "App",
   components: {
     ConfigPanel,
   },
-  mounted() {
+  data() {
+    const handler: EventListener = ({ data }) => {
+      if (data.type === 'route') {
+        this.$router.push(data.path)
+      }
+    }
+    this.$addEventHandler(handler)
+    return { handler }
+  },
+  beforeDestroy() {
+    this.$removeEventHandler(this.handler)
   }
 });
 </script>

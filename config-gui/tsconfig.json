@@ -35,10 +35,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "references": [
-    {
-      "path": "../interop"
-    }
   ]
 }
