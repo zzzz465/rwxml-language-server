@@ -14,10 +14,11 @@
     "types": [
       "webpack-env"
     ],
-    "typeRoots": [
-      "./src/types",
-      "node_modules/@types"
-    ],
+    "paths": {
+      "@interop/*": [
+        "../interop/*"
+      ]
+    },
     "lib": [
       "esnext",
       "dom",
@@ -35,7 +36,9 @@
   "exclude": [
     "node_modules"
   ],
-  "engines": {
-    "vscode": "^1.47.0"
-  }
+  "references": [
+    {
+      "path": "../interop"
+    }
+  ]
 }
