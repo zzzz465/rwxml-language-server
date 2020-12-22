@@ -1,12 +1,17 @@
-module.exports = {
-  lintOnSave: false,
-  configureWebpack: {
-    output: {
-      filename: 'main.js',
-      chunkFilename: 'chunk.js'
-    }
+import path from 'path'
+
+export const lintOnSave = false
+export const configureWebpack = {
+  output: {
+    filename: 'main.js',
+    chunkFilename: 'chunk.js'
   },
-  css: {
-    extract: false
+  resolve: {
+    alias: {
+      '@interop': path.join(__dirname, '../interop/src')
+    }
   }
+}
+export const css = {
+  extract: false
 }
