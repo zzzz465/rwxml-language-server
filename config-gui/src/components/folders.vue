@@ -52,6 +52,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 import _ from 'lodash'
+import { openDialog, OpenDialogOptions, openDialogRespond } from '@interop/message'
 
 export default Vue.extend({
   props: {
@@ -63,39 +64,37 @@ export default Vue.extend({
     version: { type: String, required: true }
   },
   data() {
-    return { requestId: '' }
+    return { requestId: '', handler: undefined as EventListener | undefined }
   },
   mounted() {
     this.requestId = `${this.version}/${this.title}`
-    this.$window.addEventListener('message', (event: any) => {
-      switch(event.data.type) {
-        case 'openDialogRespond':
-          this.openDialogRespond(event.data)
-          break
+    const listener: EventListener = ({ data }) => {
+      if (data.type === 'openDialogRespond') {
+        this.openDialogRespond(data)
       }
-    })
+    }
   },
   methods: {
     openFileDialog(): void {
-      const options: OpenDialogOptions = {
-        defaultUri: undefined,
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: true
-      }
-      this.$vscode.postMessage({ type: 'openDialog', requestId: this.requestId, options })
-
-      // this.openDialogRespond({
-        // requestId: this.requestId,
-      // })
+      this.$vscode.postMessage({
+        type: 'openDialog',
+        entry: '',
+        options: {
+          defaultUri: undefined,
+          canSelectFiles: false,
+          canSelectFolders: true,
+          canSelectMany: true
+        },
+        requestId: this.requestId
+      } as openDialog)
     },
-    openDialogRespond (message: any): void { // paths: Array<string>
+    openDialogRespond (message: openDialogRespond): void { // paths: Array<string>
       if (message.requestId === this.requestId) {
-        const newData = _.union(message.paths, this.paths)
+        const newData = _.union(message.uris, this.paths)
         this.$emit('update', newData)
 
         // debug
-        console.log(`add ${message.paths.length} paths to ${this.title}`)
+        console.log(`add ${message.uris.length} paths to ${this.title}`)
       }
     },
     remove(i: number): void {
