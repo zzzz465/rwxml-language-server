@@ -1,17 +1,20 @@
-import path from 'path'
+/* eslint-disable @typescript-eslint/no-var-requires */
+const path = require('path')
 
-export const lintOnSave = false
-export const configureWebpack = {
-  output: {
-    filename: 'main.js',
-    chunkFilename: 'chunk.js'
-  },
-  resolve: {
-    alias: {
-      '@interop': path.join(__dirname, '../interop/src')
+module.exports = {
+  lintOnSave: false,
+  configureWebpack: {
+    output: {
+      filename: 'main.js',
+      chunkFilename: 'chunk.js'
+    },
+    resolve: {
+      alias: {
+        '@interop': '../interop/src'
+      }
     }
+  },
+  css: {
+    extract: false
   }
-}
-export const css = {
-  extract: false
 }
