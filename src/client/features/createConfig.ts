@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import { TextDecoder, TextEncoder } from 'util'
 import * as vscode from 'vscode'
+import { config, message, openDialogRespond, route } from '@interop/message'
 
 export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
 	private static readonly viewType = 'RWXML.config'
@@ -36,10 +37,16 @@ export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
 			enableScripts: true
 		}
 
-		const onReceiveMessage = (message: any) => {
+		const onReceiveMessage = (message: message) => {
 			switch (message.type) {
 				case 'alert': {
 					vscode.window.showInformationMessage(message.text)
+				} break
+
+				case 'route': {
+					webviewPanel.webview.postMessage({
+						path: '/config', requestId: '', type: 'route'
+					} as route)
 				} break
 
 				case 'openDialog': {
@@ -50,24 +57,23 @@ export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
 								type: 'openDialogRespond',
 								requestId: message.requestId,
 								entry: message.entry,
-								paths: fsPaths
-							})
+								uris: fsPaths
+							} as openDialogRespond)
 						})
 				} break
 
-				case 'getConfig': {
+				case 'config': {
 					webviewPanel.webview.postMessage({
-						type: 'getConfigRespond',
-						config: this._configObj
-					})
+						type: 'config', data: this._configObj, requestId: ''
+					} as config)
 				} break
 
-				case 'save': {
-					this._configObj = message.config
+				case 'saveConfig': {
+					this._configObj = message.data
 					const edit = new vscode.WorkspaceEdit()
 					edit.replace(document.uri, // just replace whole content
 						new vscode.Range(0, 0, document.lineCount, 0),
-						JSON.stringify(message.config, null, 4))
+						JSON.stringify(message.data, null, 4))
 
 					vscode.workspace.applyEdit(edit).then(() => document.save())
 				} break
@@ -77,10 +83,6 @@ export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
 		// webviewPanel.onDidDispose(() => this.dispose(), this._disposables)
 		webviewPanel.webview.onDidReceiveMessage(onReceiveMessage, null, this._disposables)
 		webviewPanel.webview.html = this.GetHTML(webviewPanel.webview)
-		webviewPanel.webview.postMessage({
-			type: 'update',
-			data: this._configObj
-		})
 	}
 
 	private GetHTML(webview: vscode.Webview) {

@@ -16,7 +16,7 @@ declare global {
 declare module 'vue/types/vue' {
 	interface Vue {
 		$vscode: vscode
-		$addEventHandler(handler: eventHandler): void
-		$removeEventHandler(handler: eventHandler): void
+		$addEventHandler(handler: EventListener | undefined): void
+		$removeEventHandler(handler: EventListener | undefined): void
 	}
 }

@@ -27,40 +27,65 @@
       .header
         h4 folders
         button(@click="addFolder") add folder
-      div(v-for="(item, key) in folders")
+      div(v-for="(item, key) in config.folders")
         .folder-header
-          Config(@update="(data) => onUpdate(key, data)" :version="key" :data="folders[key]")
+          Config(@update="(data) => updateFolders(key, data)" :version="key" :data="config.folders[key]")
     .update
       button(@click="save") Save
 </template>
 
 <script lang="ts">
+import { alert, config, saveConfig } from '@interop/message'
 import Vue from 'vue'
 import Config from './Config.vue'
+
+function isValidConfig(obj: any): boolean {
+  if (typeof obj === 'object') {
+    if (obj['folders'])
+      return true
+  }
+
+  return false
+}
 
 export default Vue.extend({
   components: {
     Config
   },
-  watch: {
-    '$store.state.data': function (): void {
-      this.folders = this.$store.state.data.folders || {}
-    }
-  },
   data() {
     return {
-      folders: {} as Record<string, any>
+      config: {
+        folders: {} as Record<string, any>
+      },
+      handler: undefined as EventListener | undefined
     }
+  },
+  beforeMount() {
+    const handler: EventListener = ({ data }) => {
+      if (data.type === 'config') {
+        if (isValidConfig(data.data))
+          this.config = data.data
+      }
+    }
+    this.$addEventHandler(handler)
+    this.handler = handler
+
+    this.$vscode.postMessage({
+      type: 'config', data: null, requestId: ''
+    } as config)
+  },
+  beforeDestroy() {
+    this.$removeEventHandler(this.handler)
   },
   methods: {
     addFolder(): void {
-      if (this.folders['new-version']) { // if temp folder is already exist
+      if (this.config.folders['new-version']) { // if temp folder is already exist
         this.$vscode.postMessage({
           type: 'alert',
           text: 'duplication'
-        })
+        } as alert)
       } else {
-        this.onUpdate('new-version', {
+        this.updateFolders('new-version', {
           About: "",
           DefReferences: [],
           AssemblyReferences: [],
@@ -72,17 +97,15 @@ export default Vue.extend({
         })
       }
     },
-    onUpdate(key: string, data: any): void {
-      const newObj = { ...this.folders }
-      newObj[key] = data
-      this.folders = newObj
-      this.$store.commit('updateFolder', newObj)
+    updateFolders(key: string, data: any): void {
+      // because dynamically added objects are not reactive.
+      this.$set(this.config.folders, key, data)
     },
     save() {
       this.$vscode.postMessage({
-        type: 'save',
-        config: this.$store.state.data
-      })
+        type: 'saveConfig',
+        data: this.config
+      } as saveConfig)
     }
   }
 
