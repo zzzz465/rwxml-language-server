@@ -1,11 +1,11 @@
-import { DefTextDocument, isReferencedDef } from '../RW/DefTextDocuments';
-import { XMLDocument } from '../parser/XMLParser';
-import { BFS } from '../utils/nodes';
-import { DecoItem, DecoType } from '../../common/decoration';
-import { isTypeNode, typeNode, TypeInfo } from '../../common/TypeInfo';
-import { isInteger, isFloat, isBool, parseColor } from './textParser';
-import { TextDocument } from 'vscode-languageserver';
-import { Range } from 'vscode-languageserver-textdocument';
+import { DefTextDocument } from '../RW/DefTextDocuments'
+import { XMLDocument } from '../parser/XMLParser'
+import { BFS } from '../utils/nodes'
+import { DecoItem, DecoType } from '../../common/decoration'
+import { isTypeNode, typeNode, TypeInfo } from '../../common/TypeInfo'
+import { isInteger, isFloat, isBool, parseColor } from './textParser'
+import { TextDocument } from 'vscode-languageserver'
+import { Range } from 'vscode-languageserver-textdocument'
 
 interface decoParams {
 	doc: DefTextDocument

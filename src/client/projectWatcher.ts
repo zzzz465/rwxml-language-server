@@ -1,11 +1,11 @@
-import { LanguageClient } from 'vscode-languageclient';
-import { ConfigDatum } from '../common/config';
-import { Event } from '../common/event';
+import { LanguageClient } from 'vscode-languageclient'
+import { ConfigDatum } from '../common/config'
+import { Event } from '../common/event'
 import { Uri } from 'vscode'
 import watch from 'node-watch'
-import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs';
-import { readFile } from 'fs';
-import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
+import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
+import { readFile } from 'fs'
+import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures'
 
 export class ProjectWatcher {
 	private client: LanguageClient

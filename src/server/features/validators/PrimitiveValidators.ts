@@ -1,8 +1,8 @@
-import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from '../NodeValidator';
-import { TypeIdentifier, typeNode, TypeInfo } from '../../../common/TypeInfo';
-import { Diagnostic, DiagnosticSeverity, Position } from 'vscode-languageserver';
-import { Node, textRange } from '../../parser/XMLParser';
-import { Range } from 'vscode-languageserver-textdocument';
+import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from '../NodeValidator'
+import { TypeIdentifier, typeNode, TypeInfo } from '../../../common/TypeInfo'
+import { Diagnostic, DiagnosticSeverity, Position } from 'vscode-languageserver'
+import { Node, textRange } from '../../parser/XMLParser'
+import { Range } from 'vscode-languageserver-textdocument'
 import { isFloat, isInteger, isBool } from '../textParser'
 
 export function checkWhitespaceError(this: NodeValidatorContext, node: Node): ValidationResult {

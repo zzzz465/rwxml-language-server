@@ -1,10 +1,11 @@
-import { Hover, MarkupContent } from 'vscode-languageserver';
-import { DefTextDocument, isWeakRefNode, WeakRefNode } from '../RW/DefTextDocuments';
-import { Position } from 'vscode-languageserver-textdocument';
-import { XMLDocument } from '../parser/XMLParser';
-import { createScanner, TokenType } from '../parser/XMLScanner';
-import { isTypeNode, TypeInfo } from '../../common/TypeInfo';
+import { Hover, MarkupContent } from 'vscode-languageserver'
+import { DefTextDocument } from '../RW/DefTextDocuments'
+import { Position } from 'vscode-languageserver-textdocument'
+import { XMLDocument } from '../parser/XMLParser'
+import { createScanner, TokenType } from '../parser/XMLScanner'
+import { isTypeNode, TypeInfo } from '../../common/TypeInfo'
 import { EOL } from 'os'
+import { isWeakRefNode, WeakRefNode } from '../RW/DefDatabase'
 
 interface HoverParams {
 	document: DefTextDocument

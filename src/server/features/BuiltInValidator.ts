@@ -1,8 +1,6 @@
-import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from './NodeValidator';
-import { TypeIdentifier, typeNode, TypeInfo } from '../../common/TypeInfo';
-import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
-import { Node } from '../parser/XMLParser';
-import { Range } from 'vscode-languageserver-textdocument';
+import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from './NodeValidator'
+import { typeNode, TypeInfo } from '../../common/TypeInfo'
+import { DiagnosticSeverity } from 'vscode-languageserver'
 import {
 	checkDuplicateNode, checkInappropriateNode, checkInvalidNode,
 	checkOpenNode
@@ -10,7 +8,7 @@ import {
 import {
 	checkInteger, checkWhitespaceError
 } from './validators/PrimitiveValidators'
-import { isReferencedDef, isWeakRefNode } from '../RW/DefTextDocuments';
+import { isReferencedDef, isWeakRefNode } from '../RW/DefDatabase'
 // function pipeline 을 만들어야하나?
 const builtInValidatorMap = new Map<string, NodeValidateFunction[]>()
 
@@ -68,40 +66,10 @@ export const builtInValidationParticipant: NodeValidationParticipant = {
 	}
 }
 
-function checkTexPathValid(this: NodeValidatorContext, node: typeNode): ValidationResult {
-	const type = node.typeInfo
-	if (!this.textureFiles) {
-		return {
-			diagnostics: [{
-				message: 'no folder data was provided for validation',
-				range: this.getTextRange(node),
-				severity: DiagnosticSeverity.Hint
-			}]
-		}
-	} else if (node.text) {
-		const text = node.text
-		if ((!this.textureFiles.has(text.content))) {
-			return {
-				diagnostics: [{
-					message: 'invalid texture path',
-					range: this.getTextRange(node),
 
-				}]
-			}
-		}
-	}
-	return { diagnostics: [] }
-}
-
-function checkDefReference(this: NodeValidatorContext, node: typeNode): ValidationResult {
-
-
-	return { diagnostics: [] }
-}
 
 function checkParentDefValid(this: NodeValidatorContext, node: typeNode): ValidationResult {
 	const result: ValidationResult = { diagnostics: [] }
-	const typeInfo = node.typeInfo
 	if (node.attributes && node.attributes.ParentName) {
 		const parentName = node.attributes.ParentName
 		const names = this.defDatabase?.getNames()
@@ -122,7 +90,6 @@ function checkInvalidDefNode(this: NodeValidatorContext, node: typeNode): Valida
 	const result: ValidationResult = { diagnostics: [] }
 	const typeInfo = node.typeInfo
 	if (typeInfo.specialType?.defType) {
-		const defType = typeInfo.specialType.defType.name
 		const defName = node.text?.content
 		if (this.defDatabase && defName) // root Def node is not a target
 			if (node.parent?.tag?.content !== 'Defs' && isWeakRefNode(node) && node.weakReference.out.size == 0)

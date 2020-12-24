@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import { window, ThemeColor } from 'vscode'
 const { createTextEditorDecorationType } = window
-import { DecoItem, DecoType } from '../../common/decoration';
-import { Range } from 'vscode-languageserver';
+import { DecoItem, DecoType } from '../../common/decoration'
+import { Range } from 'vscode-languageserver'
 
 const inlayHint = {
 	background: new ThemeColor('rwxml.decorator.inlayHints.backgroundColor'),
