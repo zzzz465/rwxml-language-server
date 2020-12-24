@@ -367,7 +367,6 @@ connection.onHover(({ position, textDocument }) => {
 })
 
 connection.onCodeLens(({ textDocument }) => {
-	console.log(textDocument.uri)
 	const root = defTextDocuments.getXMLDocument(textDocument.uri)?.root
 	const doc = defTextDocuments.getDocument(textDocument.uri)
 	if (doc && root?.tag?.content == 'Defs') {

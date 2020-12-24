@@ -244,7 +244,6 @@ export function doComplete({
 				currentAttributeName = scanner.getTokenText()
 				break
 			case TokenType.AttributeValue:
-				console.log('asdf')
 				if (scanner.getTokenOffset() < offset && offset < scanner.getTokenEnd()) { // <tag Attr="|">
 					switch (currentAttributeName) {
 						case 'ParentName':
