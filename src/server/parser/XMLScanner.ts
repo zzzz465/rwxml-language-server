@@ -245,7 +245,7 @@ export function createScanner(input: string, initialOffset = 0, initialState: Sc
 		const offset = stream.pos();
 		const oldState = state;
 		const token = internalScan();
-		if (token !== TokenType.EOS && offset === stream.pos() && !(emitPseudoCloseTags && (token ===  TokenType.StartTagClose || token === TokenType.EndTagClose))) {
+		if (token !== TokenType.EOS && offset === stream.pos() && !(emitPseudoCloseTags && (token === TokenType.StartTagClose || token === TokenType.EndTagClose))) {
 			console.log('Scanner.scan has not advanced at offset ' + offset + ', state before: ' + oldState + ' after: ' + state);
 			stream.advance(1);
 			return finishToken(offset, TokenType.Unknown);
@@ -408,16 +408,16 @@ export function createScanner(input: string, initialOffset = 0, initialState: Sc
 				// in xml we don't have any attribute value that is not capsuled with "", or ''
 				// let attributeValue = stream.advanceIfRegExp(/^[^\s"'`=<>]+/);
 				// if (attributeValue.length > 0) {
-					// if (stream.peekChar() === _RAN && stream.peekChar(-1) === _FSL) { // <foo bar=http://foo/>
-						// stream.goBack(1);
-						// attributeValue = attributeValue.substr(0, attributeValue.length - 1);
-					// }
-					// if (lastAttributeName === 'type') {
-						// lastTypeValue = attributeValue;
-					// }
-					// state = ScannerState.WithinTag;
-					// hasSpaceAfterTag = false;
-					// return finishToken(offset, TokenType.AttributeValue);
+				// if (stream.peekChar() === _RAN && stream.peekChar(-1) === _FSL) { // <foo bar=http://foo/>
+				// stream.goBack(1);
+				// attributeValue = attributeValue.substr(0, attributeValue.length - 1);
+				// }
+				// if (lastAttributeName === 'type') {
+				// lastTypeValue = attributeValue;
+				// }
+				// state = ScannerState.WithinTag;
+				// hasSpaceAfterTag = false;
+				// return finishToken(offset, TokenType.AttributeValue);
 				// }
 				const ch = stream.peekChar();
 				if (ch === _SQO || ch === _DQO) {
@@ -426,7 +426,7 @@ export function createScanner(input: string, initialOffset = 0, initialState: Sc
 						stream.advance(1); // consume quote
 					}
 					// if (lastAttributeName === 'type') {
-						// lastTypeValue = stream.getSource().substring(offset + 1, stream.pos() - 1);
+					// lastTypeValue = stream.getSource().substring(offset + 1, stream.pos() - 1);
 					// }
 					state = ScannerState.WithinTag;
 					hasSpaceAfterTag = false;

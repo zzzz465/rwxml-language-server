@@ -6,8 +6,8 @@ export interface EventHandler<T> {
 
 
 export interface iEvent<T> {
-	subscribe (key: Object, handler: EventHandler<T>): void
-	unsubscribe (key: object): void
+	subscribe(key: Object, handler: EventHandler<T>): void
+	unsubscribe(key: object): void
 }
 
 export class Event<T> implements iEvent<T> {
@@ -22,7 +22,7 @@ export class Event<T> implements iEvent<T> {
 	 * @param key a key for the eventhandler which can be distinct by ===(ref) check
 	 * @param handler a handler for the event
 	 */
-	subscribe (key: object, handler: EventHandler<T>): boolean {
+	subscribe(key: object, handler: EventHandler<T>): boolean {
 		if (!this.events.has(key)) {
 			this.events.set(key, handler)
 			return true
@@ -36,7 +36,7 @@ export class Event<T> implements iEvent<T> {
 	 * @param key a key which has been used for subscribe
 	 * @returns whether the key - handler pair exists in the event map
 	 */
-	unsubscribe (key: object): boolean {
+	unsubscribe(key: object): boolean {
 		return this.events.delete(key)
 	}
 

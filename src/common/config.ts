@@ -51,7 +51,7 @@ function isSubFile(parent: URILike, child: URILike): boolean {
 	return child.startsWith(parent)
 }
 
-export function getVersion (config: ConfigDatum, uri: URILike): { kind: fileKind, version: string } | undefined {
+export function getVersion(config: ConfigDatum, uri: URILike): { kind: fileKind, version: string } | undefined {
 	let result: { kind: fileKind, version: string } | undefined = undefined
 
 	for (const [version, object] of Object.entries(config.folders)) {
