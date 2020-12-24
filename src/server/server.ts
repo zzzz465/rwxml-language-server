@@ -283,16 +283,21 @@ function updateDirtyNodes(dirtyNodes: Set<DirtyNode>) {
  * @param document 
  * @param xmldoc null -> no document found | undefined -> not given (try find internally)
  */
-function doValidate(document: DefTextDocument, xmldoc?: XMLDocument | null) {
-	const xmlDoc = xmldoc !== null ? (xmldoc || defTextDocuments.getXMLDocument(document.uri)) : null
-	if (!xmlDoc) return
-	const version = document.rwVersion
-	const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri)
-	const DB = versionDB.get(version)
-	if (DB) {
-		const validator = new NodeValidator(DB, document, xmlDoc, [builtInValidationParticipant], defDatabase)
-		const diagnostics = validator.validateNodes()
-		connection.sendDiagnostics({ uri: document.uri, diagnostics })
+function doValidate(document: DefTextDocument) {
+	const skipReferencedDefCheck = document.isReferencedDocument && !!config.skipReferencedDefCheck
+	if (skipReferencedDefCheck)
+		return
+
+	const xmlDoc = defTextDocuments.getXMLDocument(document.uri)
+	if (xmlDoc) {
+		const version = document.rwVersion
+		const defDatabase = defTextDocuments.getDefDatabaseByUri(document.uri)
+		const DB = versionDB.get(version)
+		if (DB) {
+			const validator = new NodeValidator(DB, document, xmlDoc, [builtInValidationParticipant], defDatabase)
+			const diagnostics = validator.validateNodes()
+			connection.sendDiagnostics({ uri: document.uri, diagnostics })
+		}
 	}
 }
 
