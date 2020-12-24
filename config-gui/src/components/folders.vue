@@ -68,11 +68,17 @@ export default Vue.extend({
   },
   mounted() {
     this.requestId = `${this.version}/${this.title}`
-    const listener: EventListener = ({ data }) => {
+    const handler: EventListener = ({ data }) => {
       if (data.type === 'openDialogRespond') {
         this.openDialogRespond(data)
       }
     }
+
+    this.$addEventHandler(handler)
+    this.handler = handler
+  },
+  beforeDestroy() {
+    this.$removeEventHandler(this.handler)
   },
   methods: {
     openFileDialog(): void {
