@@ -159,7 +159,6 @@ export class DefTextDocuments {
 	listen(connection: IConnection): void {
 		connection.onNotification(DefFileAddedNotificationType, params => {
 			for (const [path, text] of Object.entries(params.files)) {
-				console.log(`defFileAddEvent ${path}`)
 				const document = convertToDefTextdocument(
 					TextDocument.create(URI.parse(path).toString(), 'xml', 1, text),
 					params.version)
@@ -194,7 +193,6 @@ export class DefTextDocuments {
 			}
 		})
 		connection.onNotification(DefFileRemovedNotificationType, path => {
-			console.log('defFileRemovedNotification event')
 			const version = this.getVersion(path)
 			if (version) {
 				const dirtyNodes = this.GetOrCreateDB(version).delete(path)
@@ -208,7 +206,6 @@ export class DefTextDocuments {
 		})
 		// 레퍼런스용 코드
 		connection.onNotification(ReferencedDefFileAddedNotificationType, param => {
-			console.log('ReferencedDefFileAddedNotificationType')
 			const dirtyNodes = new Set<DirtyNode>()
 			for (const [path, text] of Object.entries(param.files)) {
 				const document = convertToDefTextdocument(
@@ -222,11 +219,9 @@ export class DefTextDocuments {
 		})
 
 		connection.onDidOpenTextDocument(({ textDocument }) => {
-			console.log(`editor.onDidOpenTextDocument ${textDocument.uri}`)
 			const version = this.getVersion(textDocument.uri)
 			const document = TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text)
 			if (version) {
-				console.log(`version ${version}`)
 				const document = convertToDefTextdocument(
 					TextDocument.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text),
 					version)
@@ -238,7 +233,6 @@ export class DefTextDocuments {
 		})
 
 		connection.onDidChangeTextDocument(({ contentChanges, textDocument }) => {
-			console.log('editor.onDidChangeTextDocument' + ` ver: ${textDocument.version}`)
 			const document = this.editorDocuments.get(textDocument.uri)!
 			assert(document, 'unexpected: document is null in connection: onDidChangeTextDocument event')
 			TextDocument.update(document, contentChanges, document.version + 1)
@@ -269,7 +263,6 @@ export class DefTextDocuments {
 		})
 
 		connection.onDidCloseTextDocument(({ textDocument: { uri } }) => {
-			console.log('editor.onDidCloseTextDocument')
 			assert(this.editorDocuments.delete(uri), `unexpected: ${uri} was not in editorDocuments`)
 		})
 	}
@@ -311,7 +304,6 @@ export class DefTextDocuments {
 	}
 
 	private update(version: string, path: URILike, content: string): Set<DirtyNode> {
-		console.log('update')
 		const db = this.GetOrCreateDB(version)
 		const typeInfoInjector = this.getVersionDB(version)?.injector
 		const { defs, xmlDocument } = this.parseText(content, typeInfoInjector)
