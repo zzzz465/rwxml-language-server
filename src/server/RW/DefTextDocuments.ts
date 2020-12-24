@@ -26,14 +26,15 @@ export interface sourcedDef extends def {
 export interface DefTextDocument extends TextDocument {
 	/** rimworld version where this TextDocument belongs to */
 	rwVersion: string // cannot use version which is already used in TextDocument interface
+	isReferencedDocument?: boolean
 }
 
 function isDefTextDocument(document: TextDocument): document is DefTextDocument {
 	return 'rwVersion' in document && !!(<any>document).rwVersion
 }
 
-function convertToDefTextdocument(doc: TextDocument, version: string): DefTextDocument {
-	return Object.assign(doc, { rwVersion: version })
+function convertToDefTextdocument(doc: TextDocument, version: string, isReferencedDocument?: boolean): DefTextDocument {
+	return Object.assign(doc, { rwVersion: version, isReferencedDocument })
 }
 
 export function isSourcedDef(obj: any): obj is sourcedDef {
@@ -210,7 +211,7 @@ export class DefTextDocuments {
 			for (const [path, text] of Object.entries(param.files)) {
 				const document = convertToDefTextdocument(
 					TextDocument.create(path, 'xml', 1, text),
-					param.version)
+					param.version, true)
 				this.defDocuments.set(path, document)
 				this.updateReference(param.version, path, document.getText())
 					.forEach(node => dirtyNodes.add(node))
