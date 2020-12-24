@@ -21,6 +21,8 @@ export interface ConfigDatum {
 	folders: {
 		[version: string]: LoadFolders
 	}
+	/** referneced 된 파일들의 타입 체킹을 무시할 것 인가? */
+	skipReferencedDefCheck?: boolean // default value = true
 }
 
 /** any that can be parsed as typeInfo */
