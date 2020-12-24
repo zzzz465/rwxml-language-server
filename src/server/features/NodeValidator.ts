@@ -1,12 +1,12 @@
-import { TypeInfoMap, typeNode, def, isTypeNode, TypeInfo } from '../../common/TypeInfo';
-import { Node, XMLDocument } from '../parser/XMLParser';
-import { Diagnostic } from 'vscode-languageserver';
-import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument';
-import { URILike } from '../../common/common';
-import { assert } from 'console';
-import { createScanner, TokenType } from '../parser/XMLScanner';
-import { iDefDatabase } from '../RW/DefTextDocuments';
-import { versionDB } from '../versionDB';
+import { TypeInfoMap, typeNode, def, isTypeNode, TypeInfo } from '../../common/TypeInfo'
+import { Node, XMLDocument } from '../parser/XMLParser'
+import { Diagnostic } from 'vscode-languageserver'
+import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument'
+import { URILike } from '../../common/common'
+import { assert } from 'console'
+import { createScanner, TokenType } from '../parser/XMLScanner'
+import { versionDB } from '../versionDB'
+import { iDefDatabase } from '../RW/DefDatabase'
 
 const _WHS = ' '.charCodeAt(0)
 

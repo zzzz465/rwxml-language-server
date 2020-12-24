@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 // this code was built based on Microsoft vscode lsp example.
-import * as path from 'path';
-import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode';
+import * as path from 'path'
+import { workspace, ExtensionContext, FileSystemWatcher } from 'vscode'
 import * as vscode from 'vscode'
 import { Uri } from 'vscode'
 import { parseConfig } from './config'
@@ -17,7 +17,7 @@ import {
 	LanguageClientOptions,
 	ServerOptions,
 	TransportKind
-} from 'vscode-languageclient';
+} from 'vscode-languageclient'
 import { DefFileAddedNotificationType } from '../common/Defs'
 import { ProjectWatcher } from './projectWatcher'
 import * as fs from 'fs'
@@ -31,7 +31,7 @@ import { ConfigGUIPanel } from './features/createConfig'
 const glob = util.promisify(glob_callback)
 const exists = util.promisify(fs.exists)
 
-let client: LanguageClient;
+let client: LanguageClient
 let configWatcher: FileSystemWatcher
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -39,10 +39,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(
 		path.join('out', 'server', 'server.js')
-	);
+	)
 	// The debug options for the server
 	// --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
-	const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+	const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] }
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
@@ -53,11 +53,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
 			transport: TransportKind.ipc,
 			options: debugOptions
 		}
-	};
+	}
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'xml' }],
-	};
+	}
 
 	// Create the language client and start the client.
 	client = new LanguageClient(
@@ -65,10 +65,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 		'RWXML Language server',
 		serverOptions,
 		clientOptions
-	);
+	)
 
 	// Start the client. This will also launch the server
-	client.start();
+	client.start()
 	await client.onReady()
 
 	ConfigGUIPanel.register(context) // disposable?
@@ -147,8 +147,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 		for (const [version, obj] of Object.entries(configDatum.folders)) {
 			if (obj.AssemblyReferences) {
-				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath);
-				if (assemRefs.length == 0) continue;
+				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath)
+				if (assemRefs.length == 0) continue
 				const p = (async () => {
 					const res = await checkPathValid(assemRefs)
 					if (res.valid) {
@@ -200,12 +200,12 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 
 		if (activeEditor)
-			triggerUpdateDecorations();
+			triggerUpdateDecorations()
 	}
 
 	async function updateDecorations() {
 		if (!activeEditor)
-			return;
+			return
 
 		console.log('client: updateDecorations')
 
@@ -220,30 +220,30 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 	function triggerUpdateDecorations() {
 		if (timeout) {
-			clearTimeout(timeout);
-			timeout = undefined;
+			clearTimeout(timeout)
+			timeout = undefined
 		}
-		timeout = setTimeout(updateDecorations, 300);
+		timeout = setTimeout(updateDecorations, 300)
 	}
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
-		activeEditor = editor;
+		activeEditor = editor
 		if (editor) {
-			triggerUpdateDecorations();
+			triggerUpdateDecorations()
 		}
-	}, null, context.subscriptions);
+	}, null, context.subscriptions)
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		console.log('client: textDocument changed' + ` ver: ${event.document.version}`)
 		if (activeEditor && event.document === activeEditor.document) {
-			triggerUpdateDecorations();
+			triggerUpdateDecorations()
 		}
-	}, null, context.subscriptions);
+	}, null, context.subscriptions)
 }
 
 export function deactivate(): Thenable<void> | undefined {
 	if (!client) {
-		return undefined;
+		return undefined
 	}
-	return client.stop();
+	return client.stop()
 }

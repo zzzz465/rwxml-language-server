@@ -1,9 +1,8 @@
-import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from '../NodeValidator';
-import { TypeIdentifier, typeNode, TypeInfo } from '../../../common/TypeInfo';
-import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver';
-import { Node } from '../../parser/XMLParser';
-import { Range } from 'vscode-languageserver-textdocument';
-import { isReferencedDef, isWeakRefNode } from '../../RW/DefTextDocuments';
+import { NodeValidationParticipant, NodeValidateFunction, NodeValidatorContext, ValidationResult } from '../NodeValidator'
+import { TypeIdentifier, typeNode, TypeInfo } from '../../../common/TypeInfo'
+import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver'
+import { Node } from '../../parser/XMLParser'
+import { Range } from 'vscode-languageserver-textdocument'
 
 export function checkOpenNode(this: NodeValidatorContext, node: Node): ValidationResult {
 	if (!node.closed) {

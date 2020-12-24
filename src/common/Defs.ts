@@ -1,8 +1,8 @@
-import { RequestType, NotificationType } from 'vscode-languageserver';
+import { RequestType, NotificationType } from 'vscode-languageserver'
 // import { absPath } from './common'
-import { def } from './TypeInfo';
-import { URILike } from './common';
-import { type } from 'os';
+import { def } from './TypeInfo'
+import { URILike } from './common'
+import { type } from 'os'
 
 export interface DefFilesChanged {
 	/** version of the files */

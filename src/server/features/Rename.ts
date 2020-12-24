@@ -1,8 +1,8 @@
-import { Position, TextDocument } from 'vscode-languageserver-textdocument';
-import { XMLDocument } from '../parser/XMLParser';
-import { WorkspaceEdit, Range } from 'vscode-languageserver';
-import { DefTextDocuments } from '../RW/DefTextDocuments';
-import { createScanner, TokenType } from '../parser/XMLScanner';
+import { Position, TextDocument } from 'vscode-languageserver-textdocument'
+import { XMLDocument } from '../parser/XMLParser'
+import { WorkspaceEdit, Range } from 'vscode-languageserver'
+import { DefTextDocuments } from '../RW/DefTextDocuments'
+import { createScanner, TokenType } from '../parser/XMLScanner'
 
 export class XMLRename {
 	constructor() {

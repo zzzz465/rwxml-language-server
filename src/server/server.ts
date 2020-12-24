@@ -10,7 +10,7 @@ import {
 	TextDocumentSyncKind,
 	InitializeResult,
 	Location, CodeLens
-} from 'vscode-languageserver';
+} from 'vscode-languageserver'
 
 import { URI } from 'vscode-uri'
 
@@ -18,30 +18,31 @@ import './parser/XMLParser'
 import './testData/output.json'
 import { doComplete } from './features/RWXMLCompletion'
 import { ConfigDatum, ConfigChangedRequestType, getVersion } from '../common/config'
-import { DefTextDocuments, isReferencedDef, isSourcedDef, DefTextDocument, DirtyNode, isWeakRefNode } from './RW/DefTextDocuments';
-import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode, isDef, typeNode } from '../common/TypeInfo';
-import { /* absPath */ URILike } from '../common/common';
-import { NodeValidator } from './features/NodeValidator';
-import { builtInValidationParticipant } from './features/BuiltInValidator';
-import { versionDB } from './versionDB';
-import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decoration';
-import { BFS } from './utils/nodes';
-import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures';
-import { XMLDocument } from './parser/XMLParser';
-import { decoration } from './features/Decoration';
-import { doHover } from './features/Hover';
-import { AsEnumerable } from 'linq-es2015';
+import { objToTypeInfos, TypeInfoMap, TypeInfoInjector, def, TypeInfo, isTypeNode, isDef, typeNode } from '../common/TypeInfo'
+import { /* absPath */ URILike } from '../common/common'
+import { NodeValidator } from './features/NodeValidator'
+import { builtInValidationParticipant } from './features/BuiltInValidator'
+import { versionDB } from './versionDB'
+import { DecoRequestType, DecoRequestRespond, DecoType } from '../common/decoration'
+import { BFS } from './utils/nodes'
+import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures'
+import { XMLDocument } from './parser/XMLParser'
+import { decoration } from './features/Decoration'
+import { doHover } from './features/Hover'
+import { AsEnumerable } from 'linq-es2015'
+import { DefTextDocument, DefTextDocuments } from './RW/DefTextDocuments'
+import { isReferencedDef, isSourcedDef, DirtyNode, isWeakRefNode } from './RW/DefDatabase'
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
-const connection = createConnection(ProposedFeatures.all);
+const connection = createConnection(ProposedFeatures.all)
 
-let hasConfigurationCapability = false;
-let hasWorkspaceFolderCapability = false;
-let hasDiagnosticRelatedInformationCapability = false;
+let hasConfigurationCapability = false
+let hasWorkspaceFolderCapability = false
+let hasDiagnosticRelatedInformationCapability = false
 
 
 connection.onInitialize((params: InitializeParams) => {
-	const capabilities = params.capabilities;
+	const capabilities = params.capabilities
 	// _config = params.initializationOptions.config ?? defaultConfig // filePath: Uri 도 같이 있음
 	// configfileUri = params.initializationOptions.filePath ?? null
 
@@ -49,15 +50,15 @@ connection.onInitialize((params: InitializeParams) => {
 	// If not, we fall back using global settings.
 	hasConfigurationCapability = !!(
 		capabilities.workspace && !!capabilities.workspace.configuration
-	);
+	)
 	hasWorkspaceFolderCapability = !!(
 		capabilities.workspace && !!capabilities.workspace.workspaceFolders
-	);
+	)
 	hasDiagnosticRelatedInformationCapability = !!(
 		capabilities.textDocument &&
 		capabilities.textDocument.publishDiagnostics &&
 		capabilities.textDocument.publishDiagnostics.relatedInformation
-	);
+	)
 
 	const result: InitializeResult = {
 		capabilities: {
@@ -79,29 +80,29 @@ connection.onInitialize((params: InitializeParams) => {
 			}
 			// typeDefinitionProvider: true,
 		}
-	};
+	}
 	if (hasWorkspaceFolderCapability) {
 		result.capabilities.workspace = {
 			workspaceFolders: {
 				supported: true
 			}
-		};
+		}
 	}
-	return result;
-});
+	return result
+})
 
 connection.onInitialized(() => {
 	if (hasConfigurationCapability) {
 		// Register for all configuration changes.
-		connection.client.register(DidChangeConfigurationNotification.type, undefined);
+		connection.client.register(DidChangeConfigurationNotification.type, undefined)
 	}
 	if (hasWorkspaceFolderCapability) {
 		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			connection.console.log('Workspace folder change event received.');
-		});
+			connection.console.log('Workspace folder change event received.')
+		})
 	}
 
-});
+})
 
 // const mockDataPath = path.join(__dirname, './testData/output.json') // for development only
 // const mockTypeData: any[] = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
@@ -405,4 +406,4 @@ connection.onCodeLens(({ textDocument }) => {
 
 // Listen on the connection
 defTextDocuments.listen(connection)
-connection.listen();
+connection.listen()

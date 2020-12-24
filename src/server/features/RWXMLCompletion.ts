@@ -1,11 +1,11 @@
-import { TextDocument, Position, Range } from 'vscode-languageserver-textdocument';
-import { XMLDocument, Node } from '../parser/XMLParser';
-import { CompletionList, CompletionItem, CompletionItemKind } from 'vscode-languageserver';
-import { createScanner, TokenType, ScannerState } from '../parser/XMLScanner';
+import { TextDocument, Position, Range } from 'vscode-languageserver-textdocument'
+import { XMLDocument, Node } from '../parser/XMLParser'
+import { CompletionList, CompletionItem, CompletionItemKind } from 'vscode-languageserver'
+import { createScanner, TokenType, ScannerState } from '../parser/XMLScanner'
 import { isTypeNode, isDef } from '../../common/TypeInfo'
-import { iDefDatabase } from '../RW/DefTextDocuments';
-import { AsEnumerable } from 'linq-es2015';
-import { versionDB } from '../versionDB';
+import { AsEnumerable } from 'linq-es2015'
+import { versionDB } from '../versionDB'
+import { iDefDatabase } from '../RW/DefDatabase'
 
 // TODO - need code refactor
 
@@ -42,7 +42,7 @@ export function doComplete({
 
 	function getReplaceRange(replaceStart: number, replaceEnd: number = offset): Range {
 		if (replaceStart > offset) {
-			replaceStart = offset;
+			replaceStart = offset
 		}
 		return { start: document.positionAt(replaceStart), end: document.positionAt(replaceEnd) }
 	}

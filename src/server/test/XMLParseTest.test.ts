@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import '../parser/XMLParser';
-import { parse, Node } from '../parser/XMLParser';
-import { BFS, BFS2 } from './utils';
-import { TextDocument } from 'vscode-languageserver';
-import { assert } from 'console';
+import '../parser/XMLParser'
+import { parse, Node } from '../parser/XMLParser'
+import { BFS, BFS2 } from './utils'
+import { TextDocument } from 'vscode-languageserver'
+import { assert } from 'console'
 
 const data = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -66,7 +66,7 @@ describe('xml parse test', function () {
   test('root tag should be Defs', () => {
     expect(parser.root!.tag?.content).toBe('Defs')
   })
-});
+})
 
 const incompleteXML = `
 <?xml version="1.0" encoding="utf-8" ?>

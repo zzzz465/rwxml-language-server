@@ -8,8 +8,8 @@ export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
 
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
 		const provider = new ConfigGUIPanel(context)
-		const providerRegistration = vscode.window.registerCustomEditorProvider(ConfigGUIPanel.viewType, provider);
-		return providerRegistration;
+		const providerRegistration = vscode.window.registerCustomEditorProvider(ConfigGUIPanel.viewType, provider)
+		return providerRegistration
 	}
 
 	private _configPath?: vscode.Uri
