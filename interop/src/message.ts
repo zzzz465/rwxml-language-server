@@ -1,13 +1,13 @@
 import * as vscode from 'vscode'
 
 interface _message {
-	type: string
-	requestId: string
+  type: string
+  requestId: string
 }
 
 export interface route extends _message {
-	type: 'route'
-	path: string
+  type: 'route'
+  path: string
 }
 
 export type OpenDialogOptions = vscode.OpenDialogOptions
@@ -31,7 +31,7 @@ export interface alert extends _message {
 }
 
 export interface config extends _message {
-  type: 'config'  
+  type: 'config'
   data: any
 }
 

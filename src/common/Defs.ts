@@ -17,7 +17,7 @@ export interface DefFilesChanged {
 // will be expanded later.
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface RefDefFilesChangedParams extends DefFilesChanged {
-	
+
 }
 
 export const DefFileAddedNotificationType = new NotificationType<DefFilesChanged>('Defs/added')

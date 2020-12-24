@@ -62,10 +62,10 @@ const data = `
 </Defs>
 `
 describe('xml parse test', function () {
-	const parser = parse(data)
-	test('root tag should be Defs', () => {
-		expect(parser.root!.tag?.content).toBe('Defs')
-	})
+  const parser = parse(data)
+  test('root tag should be Defs', () => {
+    expect(parser.root!.tag?.content).toBe('Defs')
+  })
 });
 
 const incompleteXML = `
@@ -125,7 +125,7 @@ const mockData = ([ // note that on each line, \n character is appended at the e
   '</ThingDef>',
   // 634
   '</Defs>'
-  ]).join('\n')
+]).join('\n')
 
 describe('parser test 2', () => {
   const textDoc = TextDocument.create('', '', 1, mockData)
