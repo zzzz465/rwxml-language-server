@@ -1,11 +1,8 @@
-import * as vscode from 'vscode'
 import { Uri } from 'vscode'
-import { relative, isAbsolute, dirname, resolve } from 'path'
-import { homedir } from 'os'
+import { isAbsolute, dirname, resolve } from 'path'
 // import { absPath } from '../common/common'
-import { NotificationType } from 'vscode-languageserver'
-import { URILike, relativePath } from '../common/common'
 import { ConfigDatum, LoadFolders } from '../common/config'
+import { DocumentUri } from 'vscode-languageserver-textdocument'
 
 function sanitizeString(input: string): string {
 	// windows forbidden char 0~31
@@ -13,7 +10,7 @@ function sanitizeString(input: string): string {
 	return input.replace(String.fromCharCode(8234), '').trim()
 }
 
-function convertToUri(baseUri: Uri, filePath: string | undefined): URILike | undefined {
+function convertToUri(baseUri: Uri, filePath: string | undefined): DocumentUri | undefined {
 	if (filePath) {
 		const path = sanitizeString(filePath)
 		if (isAbsolute(path)) {
@@ -26,7 +23,7 @@ function convertToUri(baseUri: Uri, filePath: string | undefined): URILike | und
 	}
 }
 
-function convertToUris(baseUri: Uri, p: string[] | undefined): URILike[] | undefined {
+function convertToUris(baseUri: Uri, p: string[] | undefined): DocumentUri[] | undefined {
 	if (p) {
 		const result: string[] = []
 		for (const path of p) {

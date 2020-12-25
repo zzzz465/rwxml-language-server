@@ -1,6 +1,11 @@
-coverage
-.github
 .vscode
-src
 config-gui
-!config-gui/dist
+extractor
+interop
+node_modules
+out
+src
+*.js
+*.json
+!package.json
+*.vsix

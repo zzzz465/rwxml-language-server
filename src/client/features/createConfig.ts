@@ -86,8 +86,14 @@ export class ConfigGUIPanel implements vscode.CustomTextEditorProvider {
 	}
 
 	private GetHTML(webview: vscode.Webview) {
-		const js = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'config-gui', 'dist', 'main.js'))
-		const chunk = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'config-gui', 'dist', 'chunk.js'))
+		// if webpack, it is bundled so use dist/config-gui/*
+		// else, we're in development mode so use config-gui/dist/*
+		const js = process.env.isWebpack ?
+			webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'config-gui', 'main.js')) :
+			webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'config-gui', 'dist', 'main.js'))
+		const chunk = process.env.isWebpack ?
+			webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'config-gui', 'chunk.js')) :
+			webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'config-gui', 'dist', 'chunk.js'))
 
 		return `<!DOCTYPE html>
 		<html lang="en">
