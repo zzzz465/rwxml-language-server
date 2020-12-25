@@ -1,4 +1,4 @@
-import { def, isDef, isTypeNode, TypeInfoInjector } from '../../common/TypeInfo'
+import { def, isDef, TypeInfoInjector } from '../../common/TypeInfo'
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument'
 import { parse, XMLDocument } from '../parser/XMLParser'
 

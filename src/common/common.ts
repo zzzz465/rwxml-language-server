@@ -1,4 +1,3 @@
-import { RequestType } from 'vscode-languageserver'
 
 // import { } from './'
 

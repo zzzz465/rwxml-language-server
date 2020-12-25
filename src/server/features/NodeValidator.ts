@@ -1,17 +1,14 @@
-import { TypeInfoMap, typeNode, def, isTypeNode, TypeInfo } from '../../common/TypeInfo'
+import { typeNode, def, isTypeNode, TypeInfo, TypeInfoMap } from '../../common/TypeInfo'
 import { Node, XMLDocument } from '../parser/XMLParser'
 import { Diagnostic } from 'vscode-languageserver'
-import { TextDocument, Range, Position } from 'vscode-languageserver-textdocument'
-import { URILike } from '../../common/common'
+import { TextDocument, Range, Position, DocumentUri } from 'vscode-languageserver-textdocument'
 import { assert } from 'console'
 import { createScanner, TokenType } from '../parser/XMLScanner'
-import { versionDB } from '../versionDB'
 import { iDefDatabase } from '../RW/DefDatabase'
 
-const _WHS = ' '.charCodeAt(0)
 
 export interface NodeValidatorContext {
-	textureFiles?: Set<URILike>
+	textureFiles?: Set<DocumentUri>
 	defDatabase?: iDefDatabase
 	getRangeIncludingTag(node: Node): Range
 	getRange(start: number, end: number): Range
