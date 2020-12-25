@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { NodeValidator } from '../features/NodeValidator'
-import { TextDocument } from 'vscode-languageserver'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 import { parse } from '../parser/XMLParser'
-import { TypeInfoMap } from '../../common/TypeInfo'
 import { BFS2 } from './utils'
 
 const mockData = ([ // note that on each line, \n character is appended at the end

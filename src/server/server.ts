@@ -1,7 +1,3 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 import {
 	createConnection,
 	ProposedFeatures,
@@ -175,37 +171,6 @@ function onProjectChange(project: Project) {
 	}
 }
 
-/*
-connection.onNotification(TextureChangedNotificaionType, ({ files, version }) => {
-	const db = versionDB.get(version)
-	if (!db) return
-
-	for (const file of files) {
-		if (db.textureFileSet.has(version)) {
-			// textureFileChanged event
-		} else {
-			// textureFileAdded event
-			db.textureFileSet.add(file)
-		}
-	}
-})
-*/
-
-/*
-connection.onNotification(TextureRemovedNotificationType, ({ files, version }) => {
-	const db = versionDB.get(version)
-	if (!db) return
-
-	const deletedFiles: string[] = []
-	for (const file of files) {
-		const flag = db.textureFileSet.delete(file)
-		if (flag)
-			deletedFiles.push(file)
-	}
-	// textureRemoved event
-})
-*/
-
 function GetDefDoc(uri: DocumentUri): XMLDocument | undefined {
 	for (const proj of projects.values()) {
 		const xmlDoc = proj.DefDocuments.GetDefDocument(uri)
@@ -315,50 +280,6 @@ connection.onCompletion(({ textDocument: { uri }, position }) => {
 connection.onCompletionResolve(handler => {
 	return handler
 })
-
-
-/*
-let timeout: NodeJS.Timer | undefined = undefined
-
-function validateAll() {
-	if (timeout) {
-		clearTimeout(timeout)
-		timeout = undefined
-	}
-
-	timeout = setTimeout(() => {
-		for (const document of defTextDocuments.getDocuments()) {
-			doValidate(document)
-		}
-	}, 50)
-}
-
-defTextDocuments.onReferenceDocumentsAdded.subscribe({}, () => {
-	console.log('defTextDocuments.onReferenceDocumentsAdded')
-	validateAll()
-})
-*/
-
-/*
-// todo - can we put a cancellation token here and prevent unneccesary events?
-defTextDocuments.onDocumentAdded.subscribe({}, (({ textDocument: document, defs, xmlDocument, dirtyNodes }) => {
-	console.log('defTextDocuments.onDocumentAdded')
-
-	ValidateDirtyNodes(dirtyNodes)
-	/*
-	dirtyNodes.values()
-	validateAll()
-}))
-*/
-
-/*
-defTextDocuments.onDocumentChanged.subscribe({}, ({ textDocument, defs, xmlDocument, dirtyNodes }) => {
-	// validateAll() // temp code
-	// doValidate(textDocument, xmlDocument || null)
-	ValidateDirtyNodes(dirtyNodes)
-})
-*/
-
 
 connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
 	console.log('server: DecoRequest')
