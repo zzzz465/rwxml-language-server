@@ -2,7 +2,7 @@ import { TextDocument, Position, Range } from 'vscode-languageserver-textdocumen
 import { XMLDocument, Node } from '../parser/XMLParser'
 import { CompletionList, CompletionItem, CompletionItemKind } from 'vscode-languageserver'
 import { createScanner, TokenType, ScannerState } from '../parser/XMLScanner'
-import { isTypeNode, isDef } from '../../common/TypeInfo'
+import { isTypeNode, isDef, TypeInfoMap } from '../../common/TypeInfo'
 import { AsEnumerable } from 'linq-es2015'
 import { versionDB } from '../versionDB'
 import { iDefDatabase } from '../RW/DefDatabase'
@@ -10,20 +10,18 @@ import { iDefDatabase } from '../RW/DefDatabase'
 // TODO - need code refactor
 
 export interface completionParams {
-	version: string
 	document: TextDocument
 	position: Position
 	xmlDocument: XMLDocument
-	DB: versionDB
+	typeInfoMap: TypeInfoMap
 	defDatabase?: iDefDatabase
 }
 
 export function doComplete({
-	version,
-	DB,
 	defDatabase,
 	document,
 	position,
+	typeInfoMap,
 	xmlDocument }: completionParams): CompletionList {
 	const result: CompletionList = {
 		isIncomplete: false,
@@ -170,7 +168,7 @@ export function doComplete({
 
 	function collectDefTagSuggestions(): CompletionList {
 		const result: CompletionList = { isIncomplete: false, items: [] }
-		result.items = DB.typeInfoMap.getDefNames().map(name => ({
+		result.items = typeInfoMap.getDefNames().map(name => ({
 			label: name, kind: CompletionItemKind.Constructor
 		} as CompletionItem))
 
@@ -186,11 +184,11 @@ export function doComplete({
 			case 'Class': {
 				if (node.tag?.content === 'li' && parent && isTypeNode(parent) && parent.typeInfo.specialType?.enumerable) {
 					const genericType = parent.typeInfo.specialType.enumerable.genericType
-					const typeInfo = DB.typeInfoMap.getByTypeIdentifier(genericType)
+					const typeInfo = typeInfoMap.getByTypeIdentifier(genericType)
 					if (typeInfo) {
 						const name = typeInfo.specialType?.compClass?.baseClass
 						if (name) {
-							const suggestions = [...DB.typeInfoMap.getComps(name)]
+							const suggestions = [...typeInfoMap.getComps(name)]
 							result.items = AsEnumerable(suggestions).Select(([name, _]) => name)
 								.Select(name => ({
 									label: name, kind: CompletionItemKind.Class

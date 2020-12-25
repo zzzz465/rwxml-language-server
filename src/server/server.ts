@@ -30,6 +30,7 @@ import { DecoRequestRespond, DecoRequestType } from '../common/decoration'
 import { decoration } from './features/Decoration'
 import { DefDocument } from './RW/DefDocuments'
 import { doHover } from './features/Hover'
+import { doComplete } from './features/RWXMLCompletion'
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all)
@@ -212,6 +213,14 @@ function GetDefDoc(uri: DocumentUri): XMLDocument | undefined {
 	}
 }
 
+function GetProject(uri: DocumentUri): Project | undefined {
+	for (const proj of projects.values()) {
+		const xmlDoc = proj.DefDocuments.GetDefDocument(uri)
+		if (xmlDoc)
+			return proj
+	}
+}
+
 function GetDefDocs(uri: DocumentUri): DefDocument[] {
 	return [...projects.values()].map(p => p.DefDocuments.GetDefDocument(uri))
 		.filter(d => !!d) as DefDocument[]
@@ -289,25 +298,24 @@ connection.onRenameRequest(request => {
 */
 
 
-// TODO - can this event called before "onDocumentChanged" event?
-/*
 connection.onCompletion(({ textDocument: { uri }, position }) => {
-	console.log('completion request')
-	const document = defTextDocuments.getDocument(uri)
-	const xmlDocument = defTextDocuments.getXMLDocument(uri)
-	const defDatabase = defTextDocuments.getDefDatabaseByUri(uri)
-	if (xmlDocument && document && config) {
-		const version = document.rwVersion
-		const DB = versionDB.get(version)
-		if (DB)
-			return doComplete({ DB, defDatabase, document, position, version, xmlDocument })
-	}
+	const textDoc = customTextDocuments.GetDocument(uri)
+	const defDoc = GetDefDoc(uri)
+	const project = GetProject(uri)
+	if (textDoc && defDoc && project)
+		return doComplete({
+			typeInfoMap: project.typeInfoMap,
+			document: textDoc,
+			position,
+			xmlDocument: defDoc,
+			defDatabase: project.DefDB
+		})
 })
 
 connection.onCompletionResolve(handler => {
 	return handler
 })
-*/
+
 
 /*
 let timeout: NodeJS.Timer | undefined = undefined
