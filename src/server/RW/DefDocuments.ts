@@ -2,7 +2,7 @@ import { def, isDef, isTypeNode, TypeInfoInjector } from '../../common/TypeInfo'
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument'
 import { parse, XMLDocument } from '../parser/XMLParser'
 
-interface DefDocument extends XMLDocument {
+export interface DefDocument extends XMLDocument {
 	defs: def[]
 }
 
@@ -12,7 +12,7 @@ export class DefDocuments {
 
 	}
 
-	GetXMLDocument(uri: DocumentUri): XMLDocument | undefined {
+	GetDefDocument(uri: DocumentUri): DefDocument | undefined {
 		return this.documents.get(uri)
 	}
 

@@ -74,14 +74,18 @@ export class Node {
 }
 
 export interface XMLDocument extends Node {
-	Uri?: string
+	Uri: string
 	rawXmlDefinition: string;
 	root?: Node;
 	findNodeBefore(offset: number): Node;
 	findNodeAt(offset: number): Node;
 }
 
-export function parse(text: string, Uri?: string): XMLDocument {
+/** 
+ * @param text XML content
+ * @param Uri Source of the text
+ */
+export function parse(text: string, Uri = ''): XMLDocument {
 	const scanner = createScanner(text, undefined, undefined, true)
 
 	const XMLDocument = new Node(<any>{}, 0, text.length, [], void 0) as XMLDocument

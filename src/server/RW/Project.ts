@@ -34,7 +34,7 @@ export class Project implements Disposable {
 	public readonly DefDB = new DefDatabase(this.version)
 	private readonly typeInfoInjector = new TypeInfoInjector(this.typeInfoMap)
 	private readonly referenced = new Set<string>()
-	public readonly XMLDB = new DefDocuments(this.typeInfoInjector)
+	public readonly DefDocuments = new DefDocuments(this.typeInfoInjector)
 	private _Change = new Event<ProjectChangeEvent>()
 	public get Change(): iEvent<ProjectChangeEvent> { return this._Change }
 
@@ -64,20 +64,20 @@ export class Project implements Disposable {
 		if (event.isReferenced)
 			this.referenced.add(event.textDocument.uri)
 
-		const DefDocument = this.XMLDB.DocumentAdd(event.textDocument)
+		const DefDocument = this.DefDocuments.DocumentAdd(event.textDocument)
 		const dirtyNodes = this.DefDB.update(event.textDocument.uri, DefDocument.defs)
 		return dirtyNodes
 	}
 
 	private onDefFileChanged(event: DocumentEvent): Set<DirtyNode> {
-		const DefDocument = this.XMLDB.DocumentChange(event.textDocument)
+		const DefDocument = this.DefDocuments.DocumentChange(event.textDocument)
 		const dirtyNodes = this.DefDB.update(event.textDocument.uri, DefDocument.defs)
 		return dirtyNodes
 	}
 
 	private onDefFileDeleted(event: DocumentEvent) {
 		this.DefDB.delete(event.textDocument.uri)
-		this.XMLDB.DocumentDelete(event.textDocument.uri)
+		this.DefDocuments.DocumentDelete(event.textDocument.uri)
 	}
 
 	private onFileAdded(uri: DocumentUri) {
