@@ -29,6 +29,7 @@ import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument'
 import { DecoRequestRespond, DecoRequestType } from '../common/decoration'
 import { decoration } from './features/Decoration'
 import { DefDocument } from './RW/DefDocuments'
+import { doHover } from './features/Hover'
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all)
@@ -204,7 +205,7 @@ connection.onNotification(TextureRemovedNotificationType, ({ files, version }) =
 })
 */
 
-function GetXMLDoc(uri: DocumentUri): XMLDocument | undefined {
+function GetDefDoc(uri: DocumentUri): XMLDocument | undefined {
 	for (const proj of projects.values()) {
 		const xmlDoc = proj.DefDocuments.GetDefDocument(uri)
 		if (xmlDoc) return xmlDoc
@@ -218,7 +219,7 @@ function GetDefDocs(uri: DocumentUri): DefDocument[] {
 
 connection.onDeclaration(({ position, textDocument: { uri } }) => {
 	const textDoc = customTextDocuments.GetDocument(uri)
-	const xmlDoc = GetXMLDoc(uri)
+	const xmlDoc = GetDefDoc(uri)
 	if (textDoc && xmlDoc) {
 		const offset = textDoc.offsetAt(position)
 		const node = xmlDoc.findNodeAt(offset)
@@ -367,19 +368,17 @@ connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
 })
 
 
-/*
-connection.onHover(({ position, textDocument }) => {
-	const doc = defTextDocuments.getDocument(textDocument.uri)
-	const xmlDoc = defTextDocuments.getXMLDocument(textDocument.uri)
 
-	if (doc && xmlDoc) {
+connection.onHover(({ position, textDocument: { uri } }) => {
+	const doc = customTextDocuments.GetDocument(uri)
+	const defDoc = GetDefDoc(uri)
+
+	if (doc && defDoc) {
 		const offset = doc.offsetAt(position)
-		return doHover({ document: doc, xmlDocument: xmlDoc, offset })
+		return doHover({ document: doc, offset, xmlDocument: defDoc })
 	}
-
-	return undefined
 })
-*/
+
 
 
 connection.onCodeLens(({ textDocument }) => {

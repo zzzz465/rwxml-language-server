@@ -5,7 +5,7 @@ import { createScanner, TokenType } from '../parser/XMLScanner'
 import { isTypeNode, TypeInfo } from '../../common/TypeInfo'
 import { EOL } from 'os'
 import { isWeakRefNode, WeakRefNode } from '../RW/DefDatabase'
-import { TextDocument } from 'vscode'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 interface HoverParams {
 	document: TextDocument
