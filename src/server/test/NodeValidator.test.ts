@@ -1,44 +1,43 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { NodeValidator } from '../features/NodeValidator'
-import { TextDocument } from 'vscode-languageserver'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 import { parse } from '../parser/XMLParser'
-import { TypeInfoMap } from '../../common/TypeInfo'
 import { BFS2 } from './utils'
 
 const mockData = ([ // note that on each line, \n character is appended at the end
-// 0
-'<?xml version="1.0" encoding="utf-8" ?>',
-// 40
-'<Defs>',
-// 47
-'<ThingDef ParentName="DrugBase">',
-// 79
-'<defName>Beer</defName>',
-// 99
-'<label>beer</label>',
-// 119
-'<description>The first beverage besides water ever consumed by mankind. Beer can taste good, but its main effect is intoxication. Excessive consumption can lead to alcohol blackouts and, over time, addiction.</description>',
-// 347
-'<descriptionHyperlinks>',
-// 371
-'<HediffDef>AlcoholHigh</HediffDef>',
-// 406
-'<HediffDef>AlcoholTolerance</HediffDef>',
-// 446
-'<HediffDef>Hangover</HediffDef>',
-// 478
-'<HediffDef>AlcoholAddiction</HediffDef>',
-// 518
-'<HediffDef>Cirrhosis</HediffDef>',
-// 551
-'<HediffDef>ChemicalDamageModerate</HediffDef>',
-// 597
-'</descriptionHyperlinks>',
-// 622
-'</ThingDef>',
-// 634
-'</Defs>'
+	// 0
+	'<?xml version="1.0" encoding="utf-8" ?>',
+	// 40
+	'<Defs>',
+	// 47
+	'<ThingDef ParentName="DrugBase">',
+	// 79
+	'<defName>Beer</defName>',
+	// 99
+	'<label>beer</label>',
+	// 119
+	'<description>The first beverage besides water ever consumed by mankind. Beer can taste good, but its main effect is intoxication. Excessive consumption can lead to alcohol blackouts and, over time, addiction.</description>',
+	// 347
+	'<descriptionHyperlinks>',
+	// 371
+	'<HediffDef>AlcoholHigh</HediffDef>',
+	// 406
+	'<HediffDef>AlcoholTolerance</HediffDef>',
+	// 446
+	'<HediffDef>Hangover</HediffDef>',
+	// 478
+	'<HediffDef>AlcoholAddiction</HediffDef>',
+	// 518
+	'<HediffDef>Cirrhosis</HediffDef>',
+	// 551
+	'<HediffDef>ChemicalDamageModerate</HediffDef>',
+	// 597
+	'</descriptionHyperlinks>',
+	// 622
+	'</ThingDef>',
+	// 634
+	'</Defs>'
 ]).join('\n')
 
 const textDoc = TextDocument.create('', '', 1, mockData)

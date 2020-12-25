@@ -21,6 +21,8 @@ export interface ConfigDatum {
 	folders: {
 		[version: string]: LoadFolders
 	}
+	/** referneced 된 파일들의 타입 체킹을 무시할 것 인가? */
+	skipReferencedDefCheck?: boolean // default value = true
 }
 
 /** any that can be parsed as typeInfo */
@@ -51,7 +53,7 @@ function isSubFile(parent: URILike, child: URILike): boolean {
 	return child.startsWith(parent)
 }
 
-export function getVersion (config: ConfigDatum, uri: URILike): { kind: fileKind, version: string } | undefined {
+export function getVersion(config: ConfigDatum, uri: URILike): { kind: fileKind, version: string } | undefined {
 	let result: { kind: fileKind, version: string } | undefined = undefined
 
 	for (const [version, object] of Object.entries(config.folders)) {

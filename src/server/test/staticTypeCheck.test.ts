@@ -53,31 +53,31 @@ const DefData = `
 `
 
 describe('basic static type checking test', function () {
-	const xmlDoc = parse(DefData)
-	const typeInfos = objToTypeInfos(mockTypeData)
-	const typeInfoMap = new TypeInfoMap(typeInfos)
-	const injector = new TypeInfoInjector(typeInfoMap)
-	const ThingDef = BFS2(xmlDoc.root!, 'ThingDef')!
+  const xmlDoc = parse(DefData)
+  const typeInfos = objToTypeInfos(mockTypeData)
+  const typeInfoMap = new TypeInfoMap(typeInfos)
+  const injector = new TypeInfoInjector(typeInfoMap)
+  const ThingDef = BFS2(xmlDoc.root!, 'ThingDef')!
   injector.Inject(ThingDef)
   test('injector should inject ThingDef type into the def object', () => {
     expect(isTypeNode(ThingDef)).toBe(true)
   })
 
-	test('ThingDef/statBases/Mass should be checked as float', function () {
-		const textDoc = TextDocument.create('', 'xml', 1, DefData)
-		
-		const ingestible = ThingDef.children.find(n => n.tag?.content === 'ingestible')!
-		expect(ingestible).toBeTruthy() // null check
-		const maxNumToIngestAtOnce = ingestible.children.find(n => n.tag?.content === 'maxNumToIngestAtOnce')!
-		expect(maxNumToIngestAtOnce).toBeTruthy() // null check
-    
+  test('ThingDef/statBases/Mass should be checked as float', function () {
+    const textDoc = TextDocument.create('', 'xml', 1, DefData)
+
+    const ingestible = ThingDef.children.find(n => n.tag?.content === 'ingestible')!
+    expect(ingestible).toBeTruthy() // null check
+    const maxNumToIngestAtOnce = ingestible.children.find(n => n.tag?.content === 'maxNumToIngestAtOnce')!
+    expect(maxNumToIngestAtOnce).toBeTruthy() // null check
+
     // FIXME - first parameter is not a valid one... it still pass tests though.
-		const validator = new NodeValidator(<any>undefined, textDoc, xmlDoc, [builtInValidationParticipant])
-		const result = validator.validateNodes()
-    
+    const validator = new NodeValidator(<any>undefined, textDoc, xmlDoc, [builtInValidationParticipant])
+    const result = validator.validateNodes()
+
     const { start: textStart, end: textEnd } = maxNumToIngestAtOnce.text!
 
-		const error = result.find(d => textDoc.offsetAt(d.range.start) >= textStart && textDoc.offsetAt(d.range.end) <= textEnd)
-		expect(error).not.toBeUndefined()
-	})
+    const error = result.find(d => textDoc.offsetAt(d.range.start) >= textStart && textDoc.offsetAt(d.range.end) <= textEnd)
+    expect(error).not.toBeUndefined()
+  })
 })

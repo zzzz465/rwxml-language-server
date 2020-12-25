@@ -1,0 +1,11 @@
+{
+  "name": "interop",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/vscode": "^1.52.0"
+  }
+}

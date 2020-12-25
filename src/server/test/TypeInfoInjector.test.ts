@@ -100,7 +100,7 @@ const data = `
   </tools>
 	</ThingDef>
 </Defs>
-`;
+`
 
 describe('TypeInfo json to object converter test', function () {
 	const converted = objToTypeInfos(mockTypeData)

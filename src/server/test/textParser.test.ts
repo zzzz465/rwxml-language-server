@@ -1,6 +1,6 @@
 import * as parser from '../features/textParser'
 
-describe('isFloat test', function () {	
+describe('isFloat test', function () {
 	test('".1234" === float', function () {
 		const flag = parser.isFloat('.1234')
 		expect(flag).toBeTruthy()

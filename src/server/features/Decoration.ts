@@ -1,32 +1,31 @@
-import { DefTextDocument, isReferencedDef } from '../RW/DefTextDocuments';
-import { XMLDocument } from '../parser/XMLParser';
-import { BFS } from '../utils/nodes';
-import { DecoItem, DecoType } from '../../common/decoration';
-import { isTypeNode, typeNode, TypeInfo } from '../../common/TypeInfo';
-import { isInteger, isFloat, isBool, parseColor } from './textParser';
-import { TextDocument } from 'vscode-languageserver';
-import { Range } from 'vscode-languageserver-textdocument';
+import { XMLDocument } from '../parser/XMLParser'
+import { BFS } from '../utils/nodes'
+import { DecoItem, DecoType } from '../../common/decoration'
+import { isTypeNode, typeNode, TypeInfo } from '../../common/TypeInfo'
+import { isInteger, isFloat, isBool, parseColor } from './textParser'
+import { TextDocument } from 'vscode-languageserver-textdocument'
+import { Range } from 'vscode-languageserver-textdocument'
 
 interface decoParams {
-	doc: DefTextDocument
-	xmlDoc: XMLDocument
+	textDocument: TextDocument
+	XMLDocument: XMLDocument
 }
 
 function textIsEnum(typeInfo: TypeInfo, text: string): boolean {
 	return typeInfo.leafNodeCompletions?.has(text) || false
 }
 
-export function decoration({ doc, xmlDoc }: decoParams): DecoItem[] {
+export function decoration({ textDocument, XMLDocument }: decoParams): DecoItem[] {
 	function textToRange(text: { start: number, end: number }): Range {
 		return {
-			start: doc.positionAt(text.start),
-			end: doc.positionAt(text.end)
+			start: textDocument.positionAt(text.start),
+			end: textDocument.positionAt(text.end)
 		}
 	}
 	const result: DecoItem[] = []
-	if (!xmlDoc.root) return result
+	if (!XMLDocument.root) return result
 
-	const nodes = BFS(xmlDoc.root, true)
+	const nodes = BFS(XMLDocument.root, true)
 	for (const node of nodes) {
 		if (isTypeNode(node)) {
 			if (node.closed && node.tag) {

@@ -118,7 +118,7 @@ export function parseColor(input: string): color | parseColorErrorCode {
 	if (stream.peekChar(-1) !== _CPT)
 		return parseColorErrorCode.notEndWithCPT
 
-	switch(colors.length) {
+	switch (colors.length) {
 		case 4: {
 			return {
 				R: colors[0],

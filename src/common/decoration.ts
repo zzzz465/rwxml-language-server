@@ -1,5 +1,5 @@
-import { RequestType, Range } from 'vscode-languageserver';
-import { URILike } from './common';
+import { RequestType, Range } from 'vscode-languageserver'
+import { URILike } from './common'
 
 export interface DecoRequestParams {
 	document: {

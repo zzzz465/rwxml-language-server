@@ -7,12 +7,14 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Remoting.Lifetime;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace extractor
 {
     public static class AssemblyLoader
     {
         static Dictionary<AssemblyName, Assembly> cache = new Dictionary<AssemblyName, Assembly>();
+        static readonly Regex blacklist = new Regex("Mono\\.Security");
 
         static string SanitizePath(string path)
         {
@@ -71,6 +73,8 @@ namespace extractor
                     var files = Directory.GetFiles(path, "*.dll");
                     foreach (var file in files)
                     {
+                        if (blacklist.IsMatch(file))
+                            continue;
                         try
                         {
                             list.Add(_Load(file));
@@ -83,6 +87,8 @@ namespace extractor
                 }
                 else if (File.Exists(path))
                 {
+                    if (blacklist.IsMatch(path))
+                        continue;
                     try
                     {
                         list.Add(_Load(path));

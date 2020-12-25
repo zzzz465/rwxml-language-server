@@ -1,5 +1,5 @@
-import { RequestType, NotificationType } from 'vscode-languageserver';
-import { URILike } from './common';
+import { RequestType, NotificationType } from 'vscode-languageserver'
+import { URILike } from './common'
 
 export interface TextureChangedNotificationParams {
 	version: string
