@@ -1,7 +1,7 @@
 {
 	"displayName": "RWXML language server",
 	"name": "rwxml-lang-serv",
-	"version": "0.4.27",
+	"version": "0.4.28",
 	"description": "Language server for rimworld XML modding, editing. support custom mods.",
 	"main": "dist/client/index.js",
 	"icon": "Images/icon_128.png",
