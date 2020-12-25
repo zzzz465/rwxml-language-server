@@ -37,9 +37,12 @@ let configWatcher: FileSystemWatcher
 export async function activate(context: ExtensionContext): Promise<void> {
 	const isDevelopment = context.extensionMode === vscode.ExtensionMode.Development
 	// The server is implemented in node
-	const serverModule = context.asAbsolutePath(
-		path.join('out', 'server', 'server.js')
-	)
+	let serverModule = ''
+	if (process.env.isWebpack) {
+		serverModule = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
+	} else {
+		serverModule = context.asAbsolutePath(path.join('out', 'server', 'server.js'))
+	}
 	// The debug options for the server
 	// --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
 	const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] }
@@ -70,6 +73,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	// Start the client. This will also launch the server
 	client.start()
 	await client.onReady()
+
+	vscode.window.showInformationMessage(`webpack: ${process.env.isWebpack}`)
 
 	ConfigGUIPanel.register(context) // disposable?
 
@@ -153,7 +158,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 					const res = await checkPathValid(assemRefs)
 					if (res.valid) {
 						try {
-							const rawTypeInfo = await extractTypeInfos(assemRefs, isDevelopment)
+							const rawTypeInfo = await extractTypeInfos(context, assemRefs, isDevelopment)
 							parms.data[version] = { rawTypeInfo }
 						} catch (err) {
 							vscode.window.showErrorMessage(`failed extracting data, err: ${err}`)

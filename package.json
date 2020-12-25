@@ -3,7 +3,7 @@
 	"name": "rwxml-lang-serv",
 	"version": "0.4.27",
 	"description": "Language server for rimworld XML modding, editing. support custom mods.",
-	"main": "out/client/extension.js",
+	"main": "dist/client/index.js",
 	"icon": "Images/icon_128.png",
 	"scripts": {
 		"compile": "tsc -b",
@@ -13,7 +13,7 @@
 		"extractor:build:mono": "xbuild ./extractor/extractor.sln /p:OutputPath=../../out/client/extractor/linux",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
 		"extractor:build": "npm run extractor:build:window && npm run extractor:build:mono",
-		"upload-only": "tsc && npm run extractor:build",
+		"upload-only": "npm run extractor:build",
 		"webpack": "webpack --mode development",
 		"vscode:prepublish": "npm run upload-only && webpack --mode production"
 	},
@@ -172,13 +172,14 @@
 		"@typescript-eslint/eslint-plugin": "^3.9.0",
 		"@typescript-eslint/parser": "^2.34.0",
 		"babel-jest": "^26.3.0",
+		"copy-webpack-plugin": "^7.0.0",
 		"eslint": "^6.4.0",
 		"eslint-config-typescript": "^3.0.0",
 		"eslint-plugin-only-warn": "^1.0.2",
 		"jest": "^26.3.0",
 		"ts-loader": "^8.0.3",
 		"typescript": "^3.9.4",
-		"webpack": "^4.44.1",
+		"webpack": "^5.11.0",
 		"webpack-cli": "^3.3.12"
 	},
 	"dependencies": {
