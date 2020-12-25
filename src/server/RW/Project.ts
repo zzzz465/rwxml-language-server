@@ -57,7 +57,9 @@ export class Project implements Disposable {
 	}
 
 	dispose(): void {
-		// TODO - add destructor
+		this.TextDocuments.DocumentAdded.unsubscribe(this)
+		this.TextDocuments.DocumentChanged.unsubscribe(this)
+		this.TextDocuments.DocumentDeleted.unsubscribe(this)
 	}
 
 	private onDefFileAdded(event: DocumentAddedEvent): Set<DirtyNode> {
