@@ -9,7 +9,8 @@ import {
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
 	InitializeResult,
-	PublishDiagnosticsParams
+	PublishDiagnosticsParams,
+	Location
 } from 'vscode-languageserver'
 
 
@@ -22,9 +23,9 @@ import { builtInValidationParticipant } from './features/BuiltInValidator'
 import { XMLDocument } from './parser/XMLParser'
 import { AsEnumerable } from 'linq-es2015'
 import { CustomTextDocuments } from './RW/CustomDocuments'
-import { DirtyNode, DefDatabase } from './RW/DefDatabase'
+import { DirtyNode, DefDatabase, isReferencedDef } from './RW/DefDatabase'
 import { Project, ProjectChangeEvent } from './RW/Project'
-import { TextDocument } from 'vscode-languageserver-textdocument'
+import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument'
 import { DecoRequestRespond, DecoRequestType } from '../common/decoration'
 import { decoration } from './features/Decoration'
 // Create a connection for the server, using Node's IPC as a transport.
@@ -202,39 +203,36 @@ connection.onNotification(TextureRemovedNotificationType, ({ files, version }) =
 })
 */
 
-/*
-connection.onDeclaration(request => {
-	const uri = request.textDocument.uri
-	const defs = defTextDocuments.getDefs(uri)
-	const textDocument = defTextDocuments.getDocument(uri)
-	if (textDocument) {
-		let targetDef: def | undefined = undefined
-		for (const def of defs) {
-			const offset = textDocument.offsetAt(request.position)
-			if (def.start < offset && offset < def.end) {
-				targetDef = def
-				break
-			}
-		}
-		if (targetDef && isReferencedDef(targetDef)) {
-			const base = targetDef.base
-			if (base && isSourcedDef(base)) {
-				const uri = URI.file(base.source)
-				const baseDoc = defTextDocuments.getDocument(base.source)
+function GetXMLDoc(uri: DocumentUri): XMLDocument | undefined {
+	for (const proj of projects.values()) {
+		const xmlDoc = proj.XMLDB.GetXMLDocument(uri)
+		if (xmlDoc) return xmlDoc
+	}
+}
+
+connection.onDeclaration(({ position, textDocument: { uri } }) => {
+	const textDoc = customTextDocuments.GetDocument(uri)
+	const xmlDoc = GetXMLDoc(uri)
+	if (textDoc && xmlDoc) {
+		const offset = textDoc.offsetAt(position)
+		const node = xmlDoc.findNodeAt(offset)
+		if (isReferencedDef(node)) {
+			const base = node.base
+			const uri = base?.document.Uri
+			if (uri && base) {
+				const baseDoc = customTextDocuments.GetDocument(uri)
 				if (baseDoc) {
 					return {
-						uri: uri.toString(),
-						range: {
-							start: baseDoc.positionAt(base.start),
-							end: baseDoc.positionAt(base.end)
+						uri, range: {
+							start: baseDoc.positionAt(base.start), end: baseDoc.positionAt(base.end)
 						}
-					}
+					} as Location
 				}
 			}
 		}
 	}
 })
-*/
+
 
 /*
 connection.onReferences(request => {

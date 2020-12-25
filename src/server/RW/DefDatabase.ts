@@ -4,14 +4,6 @@ import { DocumentUri } from 'vscode-languageserver-textdocument'
 import { Node } from '../parser/XMLParser'
 import { BFS } from '../utils/nodes'
 
-export interface sourcedDef extends def {
-	source: DocumentUri
-}
-
-export function isSourcedDef(obj: any): obj is sourcedDef {
-	return 'source' in obj && typeof obj.source === 'string'
-}
-
 /** typenode which need to be re-evaluated */
 export type DirtyNode = iDirtyNode & typeNode
 
