@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { relative } from 'path';
-import { URI } from 'vscode-uri';
+import { relative } from 'path'
+import { URI } from 'vscode-uri'
 
 export const enum CharCode {
 	Slash = 47,
@@ -15,13 +15,13 @@ export const enum CharCode {
  * @returns the directory name of a path.
  */
 export function dirname(path: string): string {
-	const idx = ~path.lastIndexOf('/') || ~path.lastIndexOf('\\');
+	const idx = ~path.lastIndexOf('/') || ~path.lastIndexOf('\\')
 	if (idx === 0) {
-		return '.';
+		return '.'
 	} else if (~idx === 0) {
-		return path[0];
+		return path[0]
 	} else {
-		return path.substring(0, ~idx);
+		return path.substring(0, ~idx)
 	}
 }
 
@@ -29,13 +29,13 @@ export function dirname(path: string): string {
  * @returns the base name of a path.
  */
 export function basename(path: string): string {
-	const idx = ~path.lastIndexOf('/') || ~path.lastIndexOf('\\');
+	const idx = ~path.lastIndexOf('/') || ~path.lastIndexOf('\\')
 	if (idx === 0) {
-		return path;
+		return path
 	} else if (~idx === path.length - 1) {
-		return basename(path.substring(0, path.length - 1));
+		return basename(path.substring(0, path.length - 1))
 	} else {
-		return path.substr(~idx + 1);
+		return path.substr(~idx + 1)
 	}
 }
 
@@ -43,9 +43,9 @@ export function basename(path: string): string {
  * @returns {{.far}} from boo.far or the empty string.
  */
 export function extname(path: string): string {
-	path = basename(path);
-	const idx = ~path.lastIndexOf('.');
-	return idx ? path.substring(~idx) : '';
+	path = basename(path)
+	const idx = ~path.lastIndexOf('.')
+	return idx ? path.substring(~idx) : ''
 }
 
 export const join: (...parts: string[]) => string = function () {
@@ -53,26 +53,26 @@ export const join: (...parts: string[]) => string = function () {
 	// them to JS - it would result in 2*n runtime cost instead
 	// of 1*n, where n is parts.length.
 
-	let value = '';
+	let value = ''
 	for (let i = 0; i < arguments.length; i++) {
-		const part = arguments[i];
+		const part = arguments[i]
 		if (i > 0) {
 			// add the separater between two parts unless
 			// there already is one
-			const last = value.charCodeAt(value.length - 1);
+			const last = value.charCodeAt(value.length - 1)
 			if (last !== CharCode.Slash && last !== CharCode.Backslash) {
-				const next = part.charCodeAt(0);
+				const next = part.charCodeAt(0)
 				if (next !== CharCode.Slash && next !== CharCode.Backslash) {
 
-					value += '/';
+					value += '/'
 				}
 			}
 		}
-		value += part;
+		value += part
 	}
 
-	return value;
-};
+	return value
+}
 
 export function isSubPath(parent: URI, child: URI): boolean {
 	return relative(child.toString(), parent.toString()).startsWith('../')

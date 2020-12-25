@@ -1,13 +1,13 @@
-import { Hover, MarkupContent } from 'vscode-languageserver';
-import { DefTextDocument, isWeakRefNode, WeakRefNode } from '../RW/DefTextDocuments';
-import { Position } from 'vscode-languageserver-textdocument';
-import { XMLDocument } from '../parser/XMLParser';
-import { createScanner, TokenType } from '../parser/XMLScanner';
-import { isTypeNode, TypeInfo } from '../../common/TypeInfo';
+import { Hover, MarkupContent } from 'vscode-languageserver'
+import { XMLDocument } from '../parser/XMLParser'
+import { createScanner, TokenType } from '../parser/XMLScanner'
+import { isTypeNode } from '../../common/TypeInfo'
 import { EOL } from 'os'
+import { isWeakRefNode, WeakRefNode } from '../RW/DefDatabase'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 interface HoverParams {
-	document: DefTextDocument
+	document: TextDocument
 	xmlDocument: XMLDocument
 	offset: number
 }

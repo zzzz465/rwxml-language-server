@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import '../parser/XMLParser';
-import { parse, Node } from '../parser/XMLParser';
-import { BFS, BFS2 } from './utils';
-import { TextDocument } from 'vscode-languageserver';
-import { assert } from 'console';
+import '../parser/XMLParser'
+import { parse, Node } from '../parser/XMLParser'
+import { BFS, BFS2 } from './utils'
+import { TextDocument } from 'vscode-languageserver'
+import { assert } from 'console'
 
 const data = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -62,11 +62,11 @@ const data = `
 </Defs>
 `
 describe('xml parse test', function () {
-	const parser = parse(data)
-	test('root tag should be Defs', () => {
-		expect(parser.root!.tag?.content).toBe('Defs')
-	})
-});
+  const parser = parse(data)
+  test('root tag should be Defs', () => {
+    expect(parser.root!.tag?.content).toBe('Defs')
+  })
+})
 
 const incompleteXML = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -125,7 +125,7 @@ const mockData = ([ // note that on each line, \n character is appended at the e
   '</ThingDef>',
   // 634
   '</Defs>'
-  ]).join('\n')
+]).join('\n')
 
 describe('parser test 2', () => {
   const textDoc = TextDocument.create('', '', 1, mockData)

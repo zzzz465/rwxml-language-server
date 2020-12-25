@@ -1,22 +1,21 @@
 {
 	"displayName": "RWXML language server",
 	"name": "rwxml-lang-serv",
-	"version": "0.4.26",
-	"description": "LSP compliant language server for rimworld XML modding, editing. support custom mods.",
-	"main": "out/client/extension.js",
+	"version": "0.4.28",
+	"description": "Language server for rimworld XML modding, editing. support custom mods.",
+	"main": "dist/client/index.js",
 	"icon": "Images/icon_128.png",
 	"scripts": {
-		"pkgvars": "node ./node_modules/vscode/bin/install",
-		"postinstall": "node ./node_modules/vscode/bin/install",
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"test": "jest",
-		"extractor:build": "dotnet build ./extractor/extractor.sln",
+		"extractor:build:window": "dotnet build ./extractor/extractor.sln /p:OutputPath=../../out/client/extractor/windows",
+		"extractor:build:mono": "xbuild ./extractor/extractor.sln /p:OutputPath=../../out/client/extractor/linux",
 		"lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
-		"prepublish": "tsc && npm run extractor:build",
+		"extractor:build": "npm run extractor:build:window && npm run extractor:build:mono",
+		"upload-only": "npm run extractor:build",
 		"webpack": "webpack --mode development",
-		"vscode:prepublish": "npm run prepublish && webpack --mode production",
-		"webpack-dev": "webpack --mode development --watch"
+		"vscode:prepublish": "npm run upload-only && webpack --mode production"
 	},
 	"homepage": "https://github.com/zzzz465/rwxml-language-server",
 	"bugs": {
@@ -29,7 +28,7 @@
 	"license": "ISC",
 	"categories": [],
 	"engines": {
-		"vscode": "^1.43.0"
+		"vscode": "^1.47.0"
 	},
 	"repository": {
 		"url": "https://github.com/zzzz465/rwxml-language-server"
@@ -49,6 +48,17 @@
 				}
 			}
 		},
+		"customEditors": [
+			{
+				"viewType": "RWXML.config",
+				"displayName": "rwxml configuration",
+				"selector": [
+					{
+						"filenamePattern": "rwconfigrc.json"
+					}
+				]
+			}
+		],
 		"colors": [
 			{
 				"id": "rwxml.decorator.inlayHints.backgroundColor",
@@ -122,6 +132,13 @@
 					"highContrast": "#757575"
 				}
 			}
+		],
+		"commands": [
+			{
+				"command": "RWXML.makeConfig",
+				"title": "create new rwxml configuration",
+				"category": "RWXML"
+			}
 		]
 	},
 	"publisher": "madeline",
@@ -135,10 +152,15 @@
 			"ts"
 		],
 		"preset": "ts-jest",
-		"testMatch": null
+		"testMatch": null,
+		"modulePathIgnorePatterns": [
+			"<rootDir>/config-gui"
+		]
 	},
 	"activationEvents": [
-		"onLanguage:xml"
+		"onLanguage:xml",
+		"onCommand:RWXML.makeConfig",
+		"onCustomEditor:RWXML.config"
 	],
 	"devDependencies": {
 		"@babel/core": "^7.11.1",
@@ -150,18 +172,19 @@
 		"@typescript-eslint/eslint-plugin": "^3.9.0",
 		"@typescript-eslint/parser": "^2.34.0",
 		"babel-jest": "^26.3.0",
+		"copy-webpack-plugin": "^7.0.0",
 		"eslint": "^6.4.0",
 		"eslint-config-typescript": "^3.0.0",
 		"eslint-plugin-only-warn": "^1.0.2",
 		"jest": "^26.3.0",
 		"ts-loader": "^8.0.3",
 		"typescript": "^3.9.4",
-		"vscode": "^1.1.37",
-		"webpack": "^4.44.1",
+		"webpack": "^5.11.0",
 		"webpack-cli": "^3.3.12"
 	},
 	"dependencies": {
 		"@types/glob": "^7.1.3",
+		"@types/vscode": "^1.51.0",
 		"glob": "^7.1.6",
 		"linq-es2015": "^2.5.1",
 		"lodash": "^4.17.19",

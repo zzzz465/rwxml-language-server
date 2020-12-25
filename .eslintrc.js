@@ -15,5 +15,8 @@ module.exports = {
 	],
 	rules: {
 		// 'curly': ['warn', ]
+		'no-inner-declarations': 'off',
+		'@typescript-eslint/no-namespace': 'off',
+		'semi': ['warn', 'never']
 	}
 };

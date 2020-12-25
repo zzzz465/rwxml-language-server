@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import { window, ThemeColor } from 'vscode'
 const { createTextEditorDecorationType } = window
-import { DecoItem, DecoType } from '../../common/decoration';
-import { Range } from 'vscode-languageserver';
+import { DecoItem, DecoType } from '../../common/decoration'
+import { Range } from 'vscode-languageserver'
 
 const inlayHint = {
 	background: new ThemeColor('rwxml.decorator.inlayHints.backgroundColor'),
@@ -68,7 +68,7 @@ const invalid_node_tag_decos = createTextEditorDecorationType({
 	color: new ThemeColor("rwxml.decorator.invalid.node.tag.foregroundColor")
 })
 
-export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]): void {
+export function applyDecos(activeEditor: vscode.TextEditor, items: DecoItem[]): void {
 	const map = new Map<any, vscode.Range[]>()
 	map.set(DecoType.content_Enum, [])
 	map.set(DecoType.content_boolean, [])
@@ -84,7 +84,7 @@ export function applyDecos (activeEditor: vscode.TextEditor, items: DecoItem[]):
 	for (const item of items) {
 		const start = new vscode.Position(item.range.start.line, item.range.start.character)
 		const end = new vscode.Position(item.range.end.line, item.range.end.character)
-		const range = new vscode.Range(start ,end)
+		const range = new vscode.Range(start, end)
 		map.get(item.type)!.push(range)
 	}
 
