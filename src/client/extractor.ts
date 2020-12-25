@@ -18,15 +18,18 @@ switch (platform()) {
 	default:
 		console.error(`platform ${platformSpecificPath} is not supported`)
 }
-// __dirname = "out/client/"
-const extractorPath = resolve(__dirname, './extractor', platformSpecificPath, 'extractor.exe')
 
 /**
  * extract typeInfo from given paths.  
  * note: it cannot be asynchronized! you must wait to call a new one after the previous one is completed.
  * @param dlls absolute paths of target dll
  */
-export function extractTypeInfos(dlls: string[], isDevelopment: boolean): Promise<any> {
+export function extractTypeInfos(context: vscode.ExtensionContext, dlls: string[], isDevelopment: boolean): Promise<any> {
+	const clientPath = process.env.isWebpack ?
+		context.asAbsolutePath('./dist/client') : context.asAbsolutePath('./out/client')
+
+	const extractorPath = resolve(clientPath, './extractor', platformSpecificPath, 'extractor.exe')
+
 	// TODO - make a error routine when the client cannot run dotnet files.
 	const args = vscode.workspace.getConfiguration().get<string[]>('rwxml.extractor.args') || []
 
