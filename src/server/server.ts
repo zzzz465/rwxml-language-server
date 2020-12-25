@@ -20,14 +20,15 @@ import { ConfigDatum, ConfigChangedRequestType } from '../common/config'
 import { objToTypeInfos, TypeInfoMap } from '../common/TypeInfo'
 import { NodeValidator } from './features/NodeValidator'
 import { builtInValidationParticipant } from './features/BuiltInValidator'
-import { XMLDocument } from './parser/XMLParser'
+import { Node, XMLDocument } from './parser/XMLParser'
 import { AsEnumerable } from 'linq-es2015'
 import { CustomTextDocuments } from './RW/CustomDocuments'
-import { DirtyNode, DefDatabase, isReferencedDef } from './RW/DefDatabase'
+import { DirtyNode, DefDatabase, isReferencedDef, isWeakRefNode } from './RW/DefDatabase'
 import { Project, ProjectChangeEvent } from './RW/Project'
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument'
 import { DecoRequestRespond, DecoRequestType } from '../common/decoration'
 import { decoration } from './features/Decoration'
+import { DefDocument } from './RW/DefDocuments'
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all)
@@ -120,7 +121,7 @@ function ValidateDirtyNodes(dirtyNodes: DirtyNode[], project: Project): PublishD
 
 	for (const document of documents) {
 		const documentUri = document.key || ''
-		const XMLDoc = project.XMLDB.GetXMLDocument(documentUri)
+		const XMLDoc = project.DefDocuments.GetDefDocument(documentUri)
 		const TextDoc = customTextDocuments.GetDocument(documentUri)
 		// ignore referenced def (TODO - add config to disable this config... really?)
 		const isNotReferencedDef = !project.isReferenced(documentUri)
@@ -205,9 +206,14 @@ connection.onNotification(TextureRemovedNotificationType, ({ files, version }) =
 
 function GetXMLDoc(uri: DocumentUri): XMLDocument | undefined {
 	for (const proj of projects.values()) {
-		const xmlDoc = proj.XMLDB.GetXMLDocument(uri)
+		const xmlDoc = proj.DefDocuments.GetDefDocument(uri)
 		if (xmlDoc) return xmlDoc
 	}
+}
+
+function GetDefDocs(uri: DocumentUri): DefDocument[] {
+	return [...projects.values()].map(p => p.DefDocuments.GetDefDocument(uri))
+		.filter(d => !!d) as DefDocument[]
 }
 
 connection.onDeclaration(({ position, textDocument: { uri } }) => {
@@ -234,44 +240,34 @@ connection.onDeclaration(({ position, textDocument: { uri } }) => {
 })
 
 
-/*
-connection.onReferences(request => {
-	const uri = request.textDocument.uri
-	const defs = defTextDocuments.getDefs(uri)
-	const textDocument = defTextDocuments.getDocument(uri)
-	if (textDocument) {
-		let selectedDef: def | undefined
-		for (const def of defs) {
-			const offset = textDocument.offsetAt(request.position)
-			if (def.start < offset && offset < def.end) {
-				selectedDef = def
-				break
-			}
-		}
+connection.onReferences(({ position, textDocument: { uri } }) => {
+	const defDocs = GetDefDocs(uri)
+	const textDoc = customTextDocuments.GetDocument(uri)
+	const result: Location[] = []
+	if (textDoc) {
+		for (const defDoc of defDocs) {
+			const node = defDoc.findNodeAt(textDoc.offsetAt(position))
 
-		if (selectedDef && isReferencedDef(selectedDef)) {
-			const result: Location[] = []
-			for (const child of selectedDef.derived) {
-				if (!isSourcedDef(child))
-					continue
-
-				const document = defTextDocuments.getDocument(child.source)
-				if (document) {
-					const location = {
-						uri: URI.file(child.source).toString(),
-						range: {
-							start: document.positionAt(child.start),
-							end: document.positionAt(child.end)
-						}
-					} as Location
-					result.push(location)
+			function AddLocations(nodes: Node[]): void {
+				for (const node of nodes) {
+					const textDoc = customTextDocuments.GetDocument(node.document.Uri)
+					if (textDoc)
+						result.push({
+							range: { start: textDoc.positionAt(node.start), end: textDoc.positionAt(node.end) },
+							uri: node.document.Uri
+						})
 				}
 			}
-			return result
+
+			if (isWeakRefNode(node))
+				AddLocations([...node.weakReference.in.values()])
+			if (isReferencedDef(node))
+				AddLocations([...node.derived.values()])
 		}
 	}
+
+	return result
 })
-*/
 
 /*
 // 레퍼런스로 연결된 textDocument 들은 수정하면 안됨!
@@ -361,7 +357,7 @@ connection.onRequest(DecoRequestType, ({ document: { uri } }) => {
 
 	for (const proj of projects.values()) {
 		const textDocument = customTextDocuments.GetDocument(uri)
-		const XMLDocument = proj.XMLDB.GetXMLDocument(uri)
+		const XMLDocument = proj.DefDocuments.GetDefDocument(uri)
 		if (textDocument && XMLDocument) {
 			result.items = decoration({ textDocument, XMLDocument })
 		}
