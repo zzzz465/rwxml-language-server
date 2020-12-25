@@ -1,11 +1,11 @@
 import assert = require('assert')
-import { URILike } from 'src/common/common'
-import { def, getDefName, getName, isTypeNode, typeNode } from 'src/common/TypeInfo'
+import { def, typeNode, isTypeNode, getDefName, getName } from '../../common/TypeInfo'
+import { DocumentUri } from 'vscode-languageserver-textdocument'
 import { Node } from '../parser/XMLParser'
 import { BFS } from '../utils/nodes'
 
 export interface sourcedDef extends def {
-	source: URILike
+	source: DocumentUri
 }
 
 export function isSourcedDef(obj: any): obj is sourcedDef {
@@ -75,7 +75,7 @@ function castOrConvertToDirtyNode(node: typeNode): DirtyNode {
 }
 
 export interface iDefDatabase {
-	getByURI(URIlike: URILike): def[]
+	getByURI(URIlike: DocumentUri): def[]
 	getByName(defType: defType, name: string): def | null
 	/**
 	 * 
@@ -89,7 +89,7 @@ export interface iDefDatabase {
 }
 
 export class DefDatabase implements iDefDatabase {
-	private _defs: Map<URILike, (InheritDef | def)[]>
+	private _defs: Map<DocumentUri, (InheritDef | def)[]>
 	private _defDatabase: Map<defType, Map<defName, Set<(InheritDef | def)>>>
 	private _NameDatabase: Map<string, Set<(InheritDef | def)>> // note that Name is global thing-y
 	private _inheritWanters: Set<InheritDef>
@@ -102,7 +102,7 @@ export class DefDatabase implements iDefDatabase {
 		this._weakDefRefWanters = new Set()
 	}
 
-	getByURI(URILike: URILike): def[] { // only returns valid def
+	getByURI(URILike: DocumentUri): def[] { // only returns valid def
 		return this._defs.get(URILike) || []
 	}
 
@@ -135,12 +135,12 @@ export class DefDatabase implements iDefDatabase {
 
 	/**
 	 * update defDatabase, returning dirty nodes which need to be re-evaluated
-	 * @param URILike 
+	 * @param documentUri 
 	 * @param newDefs 
 	 * @returns dirty nodes which need to be re-evaluated
 	 */
-	update(URILike: URILike, newDefs: def[]): Set<DirtyNode> {
-		this.deleteDefs(URILike)
+	update(documentUri: DocumentUri, newDefs: def[]): Set<DirtyNode> {
+		this.deleteDefs(documentUri)
 		for (const def of newDefs) {
 			if (!def.tag || !def.closed)
 				continue
@@ -182,7 +182,7 @@ export class DefDatabase implements iDefDatabase {
 			weakRefWanters.map(node => this.registerWeakRefWanter(node))
 		}
 
-		this._defs.set(URILike, newDefs)
+		this._defs.set(documentUri, newDefs)
 		const dirty1 = this.resolveInheritWanters()
 		const dirty2 = this.resolveWeakRefWanters()
 		// merging two sets
@@ -195,7 +195,7 @@ export class DefDatabase implements iDefDatabase {
 	/** delete file from defDatabase
 	 *  
 	 * */
-	delete(URILike: URILike): Set<DirtyNode> {
+	delete(URILike: DocumentUri): Set<DirtyNode> {
 		const result = this.update(URILike, [])
 		this._defs.delete(URILike)
 		return result
@@ -289,7 +289,7 @@ export class DefDatabase implements iDefDatabase {
 	 * @param URILike 
 	 * @returns dirty nodes which need to be re-evaluated
 	 */
-	private deleteDefs(URILike: URILike): Set<DirtyNode> {
+	private deleteDefs(URILike: DocumentUri): Set<DirtyNode> {
 		const dirtyNodes = new Set<DirtyNode>()
 		const defs = this._defs.get(URILike)
 		if (defs) {

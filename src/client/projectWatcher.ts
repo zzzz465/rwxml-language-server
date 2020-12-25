@@ -55,7 +55,9 @@ export class ProjectWatcher {
 				break
 			}
 			case 'remove': {
-				this.client.sendNotification(DefFileRemovedNotificationType, uriPath)
+				this.client.sendNotification(DefFileRemovedNotificationType, {
+					version, files: [uriPath]
+				})
 				break
 			}
 		}

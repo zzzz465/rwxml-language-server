@@ -8,7 +8,8 @@ import { RequestType } from 'vscode-languageserver'
 */
 export type absPath = string
 
-/** uri string that can be parsed with vscode-URI */
+/** uri string that can be parsed with vscode-URI 
+ * @deprecated use DocumentUri instead */
 export type URILike = string
 
 /** relative path string */

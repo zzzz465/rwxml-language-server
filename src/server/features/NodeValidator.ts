@@ -35,7 +35,7 @@ export interface NodeValidationParticipant {
 
 export class NodeValidator implements NodeValidatorContext {
 	private diagnostics: Diagnostic[]
-	constructor(private versionDB: versionDB,
+	constructor(private typeInfoMap: TypeInfoMap,
 		private textDocument: TextDocument,
 		private XMLDocument: XMLDocument,
 		private nodeValidationParticipants: NodeValidationParticipant[],
