@@ -10,37 +10,11 @@ const _EOS = 0
 const _CMA = ','.charCodeAt(0) // comma
 
 export function isInteger(input: string): boolean {
-	if (hasWhitespace(input)) return false
-	const stream = new MultiLineStream(input, 0)
-	while (!stream.eos()) {
-		const char = stream.peekChar()
-		if (48 <= char && char <= 57)
-			stream.advance(1)
-		else
-			return false
-	}
-
-	return true
+	return !!input.match(/^-?[0-9]+$/)
 }
 
 export function isFloat(input: string): boolean {
-	if (hasWhitespace(input)) return false
-	const stream = new MultiLineStream(input, 0)
-	let foundDot = false // did we found any dot?
-	while (!stream.eos()) {
-		const char = stream.peekChar()
-		if (char === _DOT) {
-			if (foundDot) // no two dots.
-				return false
-			else
-				foundDot = true
-		} else if (!(48 <= char && char <= 57)) { // not 0~9
-			return false
-		}
-		stream.advance(1) // valid 0~9, advance
-	}
-
-	return true // it is a valid one.
+	return !!input.match(/^[+-]?([0-9]*[.])?[0-9]+$/)
 }
 
 interface color {
