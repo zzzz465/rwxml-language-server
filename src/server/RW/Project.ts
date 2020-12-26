@@ -55,6 +55,9 @@ export class Project implements Disposable {
 		private readonly _TextureDeleteEvent: Event<File[]>
 	) {
 		this.registerEventHandlers()
+
+		if (loadFolders.Textures)
+			this.Textures.AddRoot(URI.parse(loadFolders.Textures).fsPath)
 	}
 	private registerEventHandlers() {
 		this.TextDocuments.DocumentAdded.subscribe(this, this.onDefFileAdded.bind(this))

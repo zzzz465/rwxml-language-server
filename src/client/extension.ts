@@ -27,6 +27,7 @@ import { Event } from '../common/event'
 import { DecoRequestType } from '../common/decoration'
 import { applyDecos } from './features/decoration'
 import { ConfigGUIPanel } from './features/createConfig'
+import { TextureChangedNotificaionType, TextureChangedNotificationParams } from '../common/textures'
 
 const glob = util.promisify(glob_callback)
 const exists = util.promisify(fs.exists)
@@ -196,6 +197,18 @@ export async function activate(context: ExtensionContext): Promise<void> {
 						const paths = await glob('**/*.xml', { absolute: true, cwd: vscode.Uri.parse(refPath).fsPath })
 						params.files = await populateDefFiles(paths)
 						client.sendNotification(ReferencedDefFileAddedNotificationType, params)
+					})()
+				}
+			}
+
+			if (obj.Textures) {
+				const texturePaths = [obj.Textures] // 모든 path를 배열로 바꿀껀데, 지금은 임시로 이렇게
+				for (const texPath of texturePaths) {
+					(async () => {
+						const params: TextureChangedNotificationParams = { version, uris: [] }
+						params.uris = (await glob('**/*.{png, jpg, jpeg, gif}', { absolute: true, cwd: vscode.Uri.parse(texPath).fsPath }))
+							.map(fsPath => Uri.file(fsPath).toString())
+						client.sendNotification(TextureChangedNotificaionType, params)
 					})()
 				}
 			}

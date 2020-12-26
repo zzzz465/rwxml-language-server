@@ -68,7 +68,7 @@ export class ProjectWatcher {
 		switch (event) {
 			case 'update': {
 				this.client.sendNotification(TextureChangedNotificaionType, {
-					files: [uriPath],
+					uris: [uriPath],
 					version
 				})
 				break
@@ -76,7 +76,7 @@ export class ProjectWatcher {
 
 			case 'remove': {
 				this.client.sendNotification(TextureRemovedNotificationType, {
-					files: [uriPath],
+					uris: [uriPath],
 					version
 				})
 				break
