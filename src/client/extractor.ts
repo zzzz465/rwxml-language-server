@@ -24,7 +24,7 @@ switch (platform()) {
  * note: it cannot be asynchronized! you must wait to call a new one after the previous one is completed.
  * @param dlls absolute paths of target dll
  */
-export function extractTypeInfos(context: vscode.ExtensionContext, dlls: string[], isDevelopment: boolean): Promise<any> {
+export function extractTypeInfos(context: vscode.ExtensionContext, dlls: string[]): Promise<any> {
 	const logOutputPath = context.asAbsolutePath('./extractorLog.log')
 
 	const clientPath = process.env.isWebpack ?
