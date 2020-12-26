@@ -36,7 +36,6 @@ let client: LanguageClient
 let configWatcher: FileSystemWatcher
 
 export async function activate(context: ExtensionContext): Promise<void> {
-	const isDevelopment = context.extensionMode === vscode.ExtensionMode.Development
 	// The server is implemented in node
 	let serverModule = ''
 	if (process.env.isWebpack) {
@@ -75,7 +74,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	client.start()
 	await client.onReady()
 
-	vscode.window.showInformationMessage(`webpack: ${process.env.isWebpack}`)
+
+	let rawTypeInfo: any = {}
+
+	vscode.commands.registerCommand('RWXML.DEBUG.print-rawTypeInfo', () => {
+		vscode.workspace.openTextDocument({ content: JSON.stringify(rawTypeInfo, null, 4), language: 'json' })
+			.then(doc => vscode.window.showTextDocument(doc))
+	})
 
 	ConfigGUIPanel.register(context) // disposable?
 
@@ -83,9 +88,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	let activeEditor = vscode.window.activeTextEditor
 
 	const projectWatcher = new ProjectWatcher(client)
-
-	/** @deprecated (moved into projectWatcher) called when onConfigfileChanged is called */
-	let disposeEvent: Event<void> = new Event<void>()
 
 	const initialFile = await vscode.workspace.findFiles('**/rwconfigrc.json')
 	if (initialFile) {
@@ -135,8 +137,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 	async function onConfigfileChanged(configUri: Uri) {
 		console.log('client: reload config')
-		disposeEvent.Invoke()
-		disposeEvent = new Event<void>()
 		const text = (await fs.promises.readFile(configUri.fsPath)).toString()
 		let object: any | undefined = undefined
 		try {
@@ -145,13 +145,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
 			return
 		}
 
-		const configDatum = parseConfig(object, configUri)
+		const config = parseConfig(object, configUri)
 
-		const parms: ConfigChangedParams = { configDatum, data: {} }
+		const parms: ConfigChangedParams = { configDatum: config, data: {} }
 
 		const promises: Promise<void>[] = []
 
-		for (const [version, obj] of Object.entries(configDatum.folders)) {
+		for (const [version, obj] of Object.entries(config.folders)) {
 			if (obj.AssemblyReferences) {
 				const assemRefs = obj.AssemblyReferences.map(uri => Uri.parse(uri).fsPath)
 				if (assemRefs.length == 0) continue
@@ -176,9 +176,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 		await Promise.all(promises)
 
 		// await server to be ready.
+		rawTypeInfo = parms.data
 		await client.sendRequest(ConfigChangedRequestType, parms)
 
-		for (const [version, obj] of Object.entries(configDatum.folders)) {
+		for (const [version, obj] of Object.entries(config.folders)) {
 			if (obj.Defs) {
 				const defPath = vscode.Uri.parse(obj.Defs).fsPath;
 				(async () => {
@@ -214,7 +215,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 			}
 		}
 
-		projectWatcher.watch(configDatum)
+		projectWatcher.watch(config)
 
 
 		if (activeEditor)
