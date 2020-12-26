@@ -24,15 +24,15 @@ describe('isFloat test', function () {
 })
 
 describe('isInteger test', function () {
-	test('"1234" === integer', function () {
+	test('"1234" is integer', function () {
 		expect(parser.isInteger('1234')).toBeTruthy()
 	})
 
-	test('"0" === integer', function () {
+	test('"0" is integer', function () {
 		expect(parser.isInteger('0')).toBeTruthy()
 	})
 
-	test('"0 123" !== integer', function () {
+	test('"0 123" is not integer', function () {
 		expect(parser.isInteger('0 123')).not.toBeTruthy()
 	})
 })
