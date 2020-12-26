@@ -7,6 +7,8 @@ import { XMLDocument } from '../parser/XMLParser'
 import { DefDocuments } from './DefDocuments'
 import { TypeInfoInjector, TypeInfoMap } from '../../common/TypeInfo'
 import { Event, iEvent } from '../../common/event'
+import { Directory, File, RootDirectory } from './Folder'
+import { URI } from 'vscode-uri'
 
 /** decorator to call function when the version is matched */
 /*
@@ -26,6 +28,11 @@ export interface ProjectChangeEvent {
 	dirtyNodes: Set<DirtyNode>
 }
 
+const enum FileKind {
+	Texture,
+	Sound
+}
+
 /**
  * Project is a unit that represents single version
  * including Def, Assemblies, References... etc
@@ -37,6 +44,7 @@ export class Project implements Disposable {
 	public readonly DefDocuments = new DefDocuments(this.typeInfoInjector)
 	private _Change = new Event<ProjectChangeEvent>()
 	public get Change(): iEvent<ProjectChangeEvent> { return this._Change }
+	public readonly Textures = new RootDirectory()
 
 	constructor(
 		public readonly version: string,
@@ -82,11 +90,23 @@ export class Project implements Disposable {
 		this.DefDocuments.DocumentDelete(event.textDocument.uri)
 	}
 
-	private onFileAdded(uri: DocumentUri) {
+	private onFileAdded(file: File, kind: FileKind) {
+		switch (kind) {
+			case FileKind.Texture:
+				this.Textures.Add(file)
+				break
 
+			case FileKind.Sound:
+				throw new Error('not implemented')
+
+		}
 	}
 
-	private onFileDeleted(uri: DocumentUri) {
-
+	private onFileDeleted(file: File, kind: FileKind) {
+		switch (kind) {
+			case FileKind.Texture:
+				this.Textures.Delete(file)
+				break
+		}
 	}
 }
