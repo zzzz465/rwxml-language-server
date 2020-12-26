@@ -50,7 +50,9 @@ export class Project implements Disposable {
 		public readonly version: string,
 		public readonly loadFolders: LoadFolders,
 		public readonly typeInfoMap: TypeInfoMap,
-		private readonly TextDocuments: CustomTextDocuments
+		private readonly TextDocuments: CustomTextDocuments,
+		private readonly _TextureAddEvent: Event<File[]>,
+		private readonly _TextureDeleteEvent: Event<File[]>
 	) {
 		this.registerEventHandlers()
 	}
@@ -58,6 +60,8 @@ export class Project implements Disposable {
 		this.TextDocuments.DocumentAdded.subscribe(this, this.onDefFileAdded.bind(this))
 		this.TextDocuments.DocumentChanged.subscribe(this, this.onDefFileChanged.bind(this))
 		this.TextDocuments.DocumentDeleted.subscribe(this, this.onDefFileDeleted.bind(this))
+		this._TextureAddEvent.subscribe(this, (files) => files.map(file => this.onFileAdded(file, FileKind.Texture)))
+		this._TextureDeleteEvent.subscribe(this, (files) => files.map(file => this.onFileDeleted(file, FileKind.Texture)))
 	}
 
 	isReferenced(uri: DocumentUri): boolean {
@@ -68,6 +72,8 @@ export class Project implements Disposable {
 		this.TextDocuments.DocumentAdded.unsubscribe(this)
 		this.TextDocuments.DocumentChanged.unsubscribe(this)
 		this.TextDocuments.DocumentDeleted.unsubscribe(this)
+		this._TextureAddEvent.unsubscribe(this)
+		this._TextureDeleteEvent.unsubscribe(this)
 	}
 
 	private onDefFileAdded(event: DocumentAddedEvent): Set<DirtyNode> {

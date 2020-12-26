@@ -27,6 +27,10 @@ import { decoration } from './features/Decoration'
 import { DefDocument } from './RW/DefDocuments'
 import { doHover } from './features/Hover'
 import { doComplete } from './features/RWXMLCompletion'
+import { TextureChangedNotificaionType, TextureRemovedNotificationType } from 'src/common/textures'
+import { Event } from '../common/event'
+import { File } from './RW/Folder'
+import { URI } from 'vscode-uri'
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all)
@@ -94,13 +98,15 @@ connection.onInitialized(() => {
 })
 //#endregion
 
-//#region global variables
+//#region global variables and Events
 const customTextDocuments = new CustomTextDocuments()
 customTextDocuments.listen(connection)
 
 const projects = new Map<string, Project>() // version - Project
 const typeInfoMaps = new Map<string, TypeInfoMap>() // version - injector
 let config: ConfigDatum = { folders: {} }
+const TextureAddEvent = new Event<File[]>()
+const TextureDeleteEvent = new Event<File[]>()
 //#endregion
 
 //#region validate function implementation
@@ -140,6 +146,8 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 	projects.forEach(proj => proj.dispose())
 	projects.clear()
 	typeInfoMaps.clear()
+	TextureAddEvent.clear()
+	TextureDeleteEvent.clear()
 
 	// set config data
 	config = configDatum
@@ -155,7 +163,8 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 		// if the typeInfoMap is generated, else just ignore that version.
 		if (targetTypeInfoMap) {
 			const project = new Project(
-				version, config, targetTypeInfoMap, customTextDocuments)
+				version, config, targetTypeInfoMap, customTextDocuments,
+				TextureAddEvent, TextureDeleteEvent)
 
 			project.Change.subscribe(onProjectChange, onProjectChange(project))
 
@@ -347,6 +356,16 @@ connection.onCodeLens(({ textDocument }) => {
 	}
 	*/
 	return undefined
+})
+
+connection.onNotification(TextureChangedNotificaionType, ({ uris }) => {
+	const files = uris.map(uri => new File(URI.parse(uri)))
+	TextureAddEvent.Invoke(files)
+})
+
+connection.onNotification(TextureRemovedNotificationType, ({ uris }) => {
+	const files = uris.map(uri => new File(URI.parse(uri)))
+	TextureDeleteEvent.Invoke(files)
 })
 
 
