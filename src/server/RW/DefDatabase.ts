@@ -187,9 +187,9 @@ export class DefDatabase implements iDefDatabase {
 	/** delete file from defDatabase
 	 *  
 	 * */
-	delete(URILike: DocumentUri): Set<DirtyNode> {
-		const result = this.update(URILike, [])
-		this._defs.delete(URILike)
+	delete(DocumentUri: DocumentUri): Set<DirtyNode> {
+		const result = this.update(DocumentUri, [])
+		this._defs.delete(DocumentUri)
 		return result
 	}
 

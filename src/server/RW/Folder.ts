@@ -7,9 +7,9 @@ const seperator = '/' // URI class use '/' as a seperator (platform independent)
 
 export class File {
 	readonly type = 'File'
-	readonly baseName: string
+	readonly path: Path.ParsedPath
 	constructor(public readonly Uri: URI) {
-		this.baseName = Path.basename(Uri.fsPath)
+		this.path = Path.parse(Uri.fsPath)
 	}
 }
 
@@ -19,12 +19,13 @@ function isSubPath(parent: string, child: string): boolean {
 
 export class Directory {
 	readonly type = 'Directory'
-	protected _files = new Map<string, File>()
+	// usually few file exists in here so no problem with array (I hope)
+	protected _files: File[] = []
 	protected _directories = new Map<string, Directory>()
 
-	readonly baseName: string
+	readonly path: Path.ParsedPath
 	constructor(public readonly Uri: URI) {
-		this.baseName = Path.basename(Uri.fsPath)
+		this.path = Path.parse(Uri.fsPath)
 	}
 
 	/**
@@ -34,28 +35,28 @@ export class Directory {
 	Add(obj: File | Directory): void {
 		switch (obj.type) {
 			case 'File':
-				this._files.set(obj.baseName, obj)
+				this._files.push(obj)
 				break
 
 			case 'Directory':
-				this._directories.set(obj.baseName, obj)
+				this._directories.set(obj.path.name, obj)
 				break
 		}
 	}
 
 	Delete(obj: File | Directory): void {
-		this._files.delete(obj.baseName)
-		this._directories.delete(obj.baseName)
+		this._files = this._files.filter(f => !f.path.name)
+		this._directories.delete(obj.path.name)
 	}
 
 	Get(name: string): File | Directory | undefined {
-		return this._directories.get(name) || this._files.get(name)
+		return this._directories.get(name) || this._files.find(d => d.path.name === name)
 	}
 }
 
 export class RootDirectory {
 	private _roots = new Set<string>() // fsPath[]
-	private root = new Directory(URI.file('/'))
+	private rootDir = new Directory(URI.file('/'))
 
 	constructor() {
 	}
@@ -75,13 +76,13 @@ export class RootDirectory {
 			// get directory that contains file
 			const paths = Path.dirname(Path.relative(root.fsPath, file.Uri.fsPath))
 				.split(Path.sep) // paths without last basename
-			let dir = this.root
+			let dir = this.rootDir
 			for (const path of paths) {
 				const obj = dir.Get(path)
 				if (obj?.type === 'Directory') {
 					dir = obj
 				} else { // directory is not exist
-					const newUri = dir == this.root ?
+					const newUri = dir == this.rootDir ?
 						URI.file(Path.join(root.fsPath, path)) :
 						URI.file(Path.join(dir.Uri.fsPath, path))
 
@@ -102,7 +103,7 @@ export class RootDirectory {
 			// get directory that contains file
 			const paths = Path.dirname(Path.relative(root.fsPath, file.Uri.fsPath))
 				.split(Path.sep) // paths without last basename
-			let dir = this.root
+			let dir = this.rootDir
 			for (const path of paths) {
 				const obj = dir.Get(path)
 				if (obj?.type === 'Directory')
@@ -113,6 +114,25 @@ export class RootDirectory {
 
 			dir.Delete(file)
 		}
+	}
+
+	/**
+	 * 
+	 * @param path relative path starting from Textures root
+	 */
+	Find(path: string): File | Directory | undefined {
+		const dirs = Path.dirname(path).split('/')
+		const basename = Path.basename(path)
+		let dir = this.rootDir
+		for (const path of dirs) {
+			const res = dir.Get(path)
+			if (res?.type === 'Directory')
+				dir = res
+			else
+				return undefined
+		}
+
+		return dir.Get(basename)
 	}
 
 	private isRelatedFile(file: File): boolean {

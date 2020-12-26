@@ -4,7 +4,7 @@ import { CustomTextDocuments, DocumentAddedEvent, DocumentEvent } from './Custom
 import { Disposable, DocumentUri } from 'vscode-languageserver'
 import { DefDatabase, DirtyNode } from './DefDatabase'
 import { XMLDocument } from '../parser/XMLParser'
-import { DefDocuments } from './DefDocuments'
+import { DefDocument, DefDocuments } from './DefDocuments'
 import { TypeInfoInjector, TypeInfoMap } from '../../common/TypeInfo'
 import { Event, iEvent } from '../../common/event'
 import { Directory, File, RootDirectory } from './Folder'
@@ -21,10 +21,18 @@ function validateVersion(target: Project, propertyName: string, descriptor: Type
 }
 */
 
+export type ProjectEvent = ProjectChangeEvent | ProjectDeleteEvent
 export interface ProjectChangeEvent {
-	defDocuments: DefDocuments
-	defDB: DefDatabase
-	typeInfoMap: TypeInfoMap
+	type: 'change'
+	project: Project
+	dirtyNodes: Set<DirtyNode>,
+	textDocument: TextDocument,
+	defDocument: DefDocument
+}
+
+export interface ProjectDeleteEvent {
+	type: 'delete'
+	project: Project
 	dirtyNodes: Set<DirtyNode>
 }
 
@@ -42,8 +50,8 @@ export class Project implements Disposable {
 	private readonly typeInfoInjector = new TypeInfoInjector(this.typeInfoMap)
 	private readonly referenced = new Set<string>()
 	public readonly DefDocuments = new DefDocuments(this.typeInfoInjector)
-	private _Change = new Event<ProjectChangeEvent>()
-	public get Change(): iEvent<ProjectChangeEvent> { return this._Change }
+	private _Change = new Event<ProjectEvent>()
+	public get Change(): iEvent<ProjectEvent> { return this._Change }
 	public readonly Textures = new RootDirectory()
 
 	constructor(
@@ -79,27 +87,29 @@ export class Project implements Disposable {
 		this._TextureDeleteEvent.unsubscribe(this)
 	}
 
-	private onDefFileAdded(event: DocumentAddedEvent): Set<DirtyNode> {
+	private onDefFileAdded(event: DocumentAddedEvent): void {
 		if (event.isReferenced)
 			this.referenced.add(event.textDocument.uri)
 
-		const DefDocument = this.DefDocuments.DocumentAdd(event.textDocument)
-		const dirtyNodes = this.DefDB.update(event.textDocument.uri, DefDocument.defs)
-		return dirtyNodes
+		const defDocument = this.DefDocuments.DocumentAdd(event.textDocument)
+		const dirtyNodes = this.DefDB.update(event.textDocument.uri, defDocument.defs)
+		this._Change.Invoke({ type: 'change', project: this, dirtyNodes, textDocument: event.textDocument, defDocument })
 	}
 
-	private onDefFileChanged(event: DocumentEvent): Set<DirtyNode> {
-		const DefDocument = this.DefDocuments.DocumentChange(event.textDocument)
-		const dirtyNodes = this.DefDB.update(event.textDocument.uri, DefDocument.defs)
-		return dirtyNodes
+	private onDefFileChanged(event: DocumentEvent): void {
+		const defDocument = this.DefDocuments.DocumentChange(event.textDocument)
+		const dirtyNodes = this.DefDB.update(event.textDocument.uri, defDocument.defs)
+		this._Change.Invoke({ type: 'change', project: this, dirtyNodes, textDocument: event.textDocument, defDocument })
 	}
 
-	private onDefFileDeleted(event: DocumentEvent) {
+	private onDefFileDeleted(event: DocumentEvent): void {
 		this.DefDB.delete(event.textDocument.uri)
 		this.DefDocuments.DocumentDelete(event.textDocument.uri)
+		const dirtyNodes = this.DefDB.delete(event.textDocument.uri)
+		this._Change.Invoke({ type: 'delete', project: this, dirtyNodes })
 	}
 
-	private onFileAdded(file: File, kind: FileKind) {
+	private onFileAdded(file: File, kind: FileKind): void {
 		switch (kind) {
 			case FileKind.Texture:
 				this.Textures.Add(file)
@@ -111,7 +121,7 @@ export class Project implements Disposable {
 		}
 	}
 
-	private onFileDeleted(file: File, kind: FileKind) {
+	private onFileDeleted(file: File, kind: FileKind): void {
 		switch (kind) {
 			case FileKind.Texture:
 				this.Textures.Delete(file)
