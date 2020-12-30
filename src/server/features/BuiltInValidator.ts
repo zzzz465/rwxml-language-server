@@ -10,6 +10,7 @@ import {
 } from './validators/PrimitiveValidators'
 import { isReferencedDef, isWeakRefNode } from '../RW/DefDatabase'
 import { Node } from '../parser/XMLParser'
+import * as Path from 'path'
 // function pipeline 을 만들어야하나?
 const builtInValidatorMap = new Map<string, NodeValidateFunction[]>()
 
@@ -118,7 +119,9 @@ function checkTexturePath(this: NodeValidatorContext, node: typeNode): Validatio
 	const result: ValidationResult = { diagnostics: [] }
 
 	if (isTextureNode(node) && node.text) {
-		const res = this.project.Textures.Find(node.text.content)
+		const path = Path.parse(node.text.content)
+		const nameRegex = new RegExp(`${path.name}(_[\w]+)?`)
+		const res = this.project.Textures.Find(path.dir, nameRegex)
 		switch (res?.type) {
 			case 'File':
 				break

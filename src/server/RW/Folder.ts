@@ -49,8 +49,11 @@ export class Directory {
 		this._directories.delete(obj.path.name)
 	}
 
-	Get(name: string): File | Directory | undefined {
-		return this._directories.get(name) || this._files.find(d => d.path.name === name)
+	Get(pattern: string | RegExp): File | Directory | undefined {
+		if (pattern instanceof RegExp)
+			return [...this._directories.values()].find(d => !!pattern.exec(d.path.name)) || this._files.find(d => pattern.exec(d.path.name))
+		else
+			return this._directories.get(pattern) || this._files.find(d => d.path.name === pattern)
 	}
 }
 
@@ -120,9 +123,8 @@ export class RootDirectory {
 	 * 
 	 * @param path relative path starting from Textures root
 	 */
-	Find(path: string): File | Directory | undefined {
-		const dirs = Path.dirname(path).split('/')
-		const basename = Path.basename(path)
+	Find(dirPath: string, name: string | RegExp): File | Directory | undefined {
+		const dirs = dirPath.split('/')
 		let dir = this.rootDir
 		for (const path of dirs) {
 			const res = dir.Get(path)
@@ -132,7 +134,7 @@ export class RootDirectory {
 				return undefined
 		}
 
-		return dir.Get(basename)
+		return dir.Get(name)
 	}
 
 	private isRelatedFile(file: File): boolean {
