@@ -327,9 +327,9 @@ export class DefDatabase implements iDefDatabase {
 				for (const refNode of weakRefNodes) {
 					// disconnect incoming pointers
 					for (const other of refNode.weakReference.in.values()) {
-						assert(other.weakReference.out.has(refNode), `tried to remove remote reference, ${other} to ${refNode}`)
+						// assert(other.weakReference.out.has(refNode), `tried to remove remote out reference, ${other} to ${refNode}`)
 						other.weakReference.out.delete(refNode)
-						assert(refNode.weakReference.in.has(other), `tried to remove origin reference, ${other} to ${refNode}`)
+						// assert(refNode.weakReference.in.has(other), `tried to remove origin in reference, ${other} to ${refNode}`)
 						refNode.weakReference.in.delete(other)
 						GCIfZero(other)
 						dirtyNodes.add(castOrConvertToDirtyNode(other))
@@ -337,9 +337,9 @@ export class DefDatabase implements iDefDatabase {
 
 					// disconnect outgoing pointers
 					for (const other of refNode.weakReference.out.values()) {
-						assert(other.weakReference.in.has(refNode), `tried to remove remote reference, ${refNode} to ${other}`)
+						// assert(other.weakReference.in.has(refNode), `tried to remove remote in reference, ${refNode} to ${other}`)
 						other.weakReference.in.has(refNode)
-						assert(refNode.weakReference.out.has(other), `tried to remove origin reference, ${refNode} to ${other}`)
+						// assert(refNode.weakReference.out.has(other), `tried to remove origin out reference, ${refNode} to ${other}`)
 						refNode.weakReference.out.delete(other)
 						GCIfZero(other)
 						dirtyNodes.add(castOrConvertToDirtyNode(other))
@@ -363,7 +363,7 @@ export class DefDatabase implements iDefDatabase {
 				`tried to remove parent reference ${def.tag} which is not valid`)
 
 		for (const derived of def.derived.values()) { // remove cross-reference with child
-			assert(derived.base === def)
+			// assert(derived.base === def)
 			derived.base = undefined
 			this.registerInheritWanter(derived)
 			result.push(castOrConvertToDirtyNode(derived))
