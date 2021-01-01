@@ -9,3 +9,4 @@ src
 *.json
 !package.json
 *.vsix
+Textures

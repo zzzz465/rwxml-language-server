@@ -74,6 +74,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	client.start()
 	await client.onReady()
 
+	const vanilaTexturePathsRaw = (await fs.promises.readFile(context.asAbsolutePath('B18Textures.txt'), 'utf-8'))
+		.split('\n')
 
 	let rawTypeInfo: any = {}
 
@@ -205,10 +207,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
 			if (obj.Textures) {
 				const texturePaths = [obj.Textures] // 모든 path를 배열로 바꿀껀데, 지금은 임시로 이렇게
 				for (const texPath of texturePaths) {
-					(async () => {
+					(async () => { // query texture paths based on config file, and add vanila textures
 						const params: TextureChangedNotificationParams = { version, uris: [] }
 						params.uris = (await glob('**/*.{png, jpg, jpeg, gif}', { absolute: true, cwd: vscode.Uri.parse(texPath).fsPath }))
 							.map(fsPath => Uri.file(fsPath).toString())
+						params.uris.push(...vanilaTexturePathsRaw)
 						client.sendNotification(TextureChangedNotificaionType, params)
 					})()
 				}
