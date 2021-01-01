@@ -65,7 +65,11 @@ export class Project implements Disposable {
 		this.registerEventHandlers()
 
 		if (loadFolders.Textures)
-			this.Textures.AddRoot(URI.parse(loadFolders.Textures).fsPath)
+			this.Textures.AddRoot(URI.parse(loadFolders.Textures))
+
+		// add vanila textures
+		const CoreURI = URI.file('<Core>')
+		this.Textures.AddRoot(CoreURI) // Add Core path
 	}
 	private registerEventHandlers() {
 		this.TextDocuments.DocumentAdded.subscribe(this, this.onDefFileAdded.bind(this))

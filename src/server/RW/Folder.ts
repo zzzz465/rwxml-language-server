@@ -58,14 +58,14 @@ export class Directory {
 }
 
 export class RootDirectory {
-	private _roots = new Set<string>() // fsPath[]
+	private _roots: URI[] = [] // fsPath[]
 	private rootDir = new Directory(URI.file('/'))
 
 	constructor() {
 	}
 
-	AddRoot(fsPath: string): void {
-		this._roots.add(fsPath)
+	AddRoot(uri: URI): void {
+		this._roots.push(uri)
 	}
 
 	/**
@@ -74,10 +74,10 @@ export class RootDirectory {
 	 * @param file 
 	 */
 	Add(file: File): void { // file should have ext?
-		const root = this.GetRelatedRoot(file.Uri.fsPath)
+		const root = this.GetRelatedRoot(file.Uri)
 		if (root) {
 			// get directory that contains file
-			const paths = Path.dirname(Path.relative(root.fsPath, file.Uri.fsPath))
+			const paths = Path.dirname(Path.relative(root.path, file.Uri.path))
 				.split(Path.sep) // paths without last basename
 			let dir = this.rootDir
 			for (const path of paths) {
@@ -101,7 +101,7 @@ export class RootDirectory {
 	}
 
 	Delete(file: File): void {
-		const root = this.GetRelatedRoot(file.Uri.fsPath)
+		const root = this.GetRelatedRoot(file.Uri)
 		if (root) {
 			// get directory that contains file
 			const paths = Path.dirname(Path.relative(root.fsPath, file.Uri.fsPath))
@@ -138,14 +138,13 @@ export class RootDirectory {
 	}
 
 	private isRelatedFile(file: File): boolean {
-		const relatedRoot = this.GetRelatedRoot(file.Uri.fsPath)
+		const relatedRoot = this.GetRelatedRoot(file.Uri)
 		return !!relatedRoot
 	}
 
-	private GetRelatedRoot(path: string): URI | null {
-		for (const fsPath of this._roots.values()) {
-			const parent = URI.file(fsPath)
-			if (isSubPath(parent.fsPath, path))
+	private GetRelatedRoot(uri: URI): URI | null {
+		for (const parent of this._roots.values()) {
+			if (isSubPath(parent.path, uri.path))
 				return parent
 		}
 
