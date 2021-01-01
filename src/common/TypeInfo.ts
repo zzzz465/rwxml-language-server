@@ -19,7 +19,9 @@ export type TypeIdentifier = string;
  * it can have multiple flags
  */
 export interface specialType {
-	/** does it have an association with textures? */
+	/** does it have an association with textures?
+	 * @deprecated cannot use, need to be removed
+	 */
 	texPath?: string
 	/** does original class inherits Verse.Def class? */
 	defType?: {

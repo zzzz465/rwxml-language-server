@@ -1,14 +1,14 @@
 import { RequestType, NotificationType } from 'vscode-languageserver'
-import { URILike } from './common'
+import { DocumentUri } from 'vscode-languageserver-textdocument'
 
 export interface TextureChangedNotificationParams {
 	version: string
-	files: URILike[]
+	uris: DocumentUri[]
 }
 
 export interface TextureRemovedNotificationParams {
 	version: string
-	files: URILike[]
+	uris: DocumentUri[]
 }
 
 export const TextureChangedNotificaionType = new NotificationType<TextureChangedNotificationParams>('rwxml/Texture/added')

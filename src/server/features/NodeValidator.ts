@@ -5,10 +5,11 @@ import { TextDocument, Range, Position, DocumentUri } from 'vscode-languageserve
 import { assert } from 'console'
 import { createScanner, TokenType } from '../parser/XMLScanner'
 import { iDefDatabase } from '../RW/DefDatabase'
+import { Project } from '../RW/Project'
 
 
 export interface NodeValidatorContext {
-	textureFiles?: Set<DocumentUri>
+	project: Project
 	defDatabase?: iDefDatabase
 	getRangeIncludingTag(node: Node): Range
 	getRange(start: number, end: number): Range
@@ -32,7 +33,8 @@ export interface NodeValidationParticipant {
 
 export class NodeValidator implements NodeValidatorContext {
 	private diagnostics: Diagnostic[]
-	constructor(private typeInfoMap: TypeInfoMap,
+	constructor(
+		public readonly project: Project,
 		private textDocument: TextDocument,
 		private XMLDocument: XMLDocument,
 		private nodeValidationParticipants: NodeValidationParticipant[],

@@ -1,20 +1,21 @@
 // no vscode module allowed in here!!!!!!!
 import { RequestType, NotificationType } from 'vscode-languageserver'
-import { URILike, relativePath, absPath } from './common'
+import { DocumentUri } from 'vscode-languageserver-textdocument'
+import { relativePath, absPath } from './common'
 import { DefFilesChanged } from './Defs'
 // import { absPath } from './common'
 
 export interface LoadFolders {
 	readonly version: string
-	readonly About: URILike
-	readonly Assemblies?: URILike
-	readonly Languages?: URILike
-	readonly Defs?: URILike
-	readonly Textures?: URILike
-	readonly Sounds?: URILike
-	readonly Patches?: URILike
-	readonly DefReferences?: URILike[]
-	readonly AssemblyReferences?: URILike[]
+	readonly About: DocumentUri
+	readonly Assemblies?: DocumentUri
+	readonly Languages?: DocumentUri
+	readonly Defs?: DocumentUri
+	readonly Textures?: DocumentUri
+	readonly Sounds?: DocumentUri
+	readonly Patches?: DocumentUri
+	readonly DefReferences?: DocumentUri[]
+	readonly AssemblyReferences?: DocumentUri[]
 }
 
 export interface ConfigDatum {
@@ -49,11 +50,11 @@ export const enum fileKind {
 	referencedDef
 }
 
-function isSubFile(parent: URILike, child: URILike): boolean {
+function isSubFile(parent: DocumentUri, child: DocumentUri): boolean {
 	return child.startsWith(parent)
 }
 
-export function getVersion(config: ConfigDatum, uri: URILike): { kind: fileKind, version: string } | undefined {
+export function getVersion(config: ConfigDatum, uri: DocumentUri): { kind: fileKind, version: string } | undefined {
 	let result: { kind: fileKind, version: string } | undefined = undefined
 
 	for (const [version, object] of Object.entries(config.folders)) {

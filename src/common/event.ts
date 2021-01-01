@@ -49,4 +49,11 @@ export class Event<T> implements iEvent<T> {
 			handler(params)
 		}
 	}
+
+	/**
+	 * clear event
+	 */
+	clear(): void {
+		this.events.clear()
+	}
 }

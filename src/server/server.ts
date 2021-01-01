@@ -20,13 +20,17 @@ import { Node, XMLDocument } from './parser/XMLParser'
 import { AsEnumerable } from 'linq-es2015'
 import { CustomTextDocuments } from './RW/CustomDocuments'
 import { DirtyNode, DefDatabase, isReferencedDef, isWeakRefNode } from './RW/DefDatabase'
-import { Project, ProjectChangeEvent } from './RW/Project'
+import { Project, ProjectChangeEvent, ProjectEvent } from './RW/Project'
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument'
 import { DecoRequestRespond, DecoRequestType } from '../common/decoration'
 import { decoration } from './features/Decoration'
 import { DefDocument } from './RW/DefDocuments'
 import { doHover } from './features/Hover'
 import { doComplete } from './features/RWXMLCompletion'
+import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures'
+import { Event } from '../common/event'
+import { File } from './RW/Folder'
+import { URI } from 'vscode-uri'
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all)
@@ -94,20 +98,22 @@ connection.onInitialized(() => {
 })
 //#endregion
 
-//#region global variables
+//#region global variables and Events
 const customTextDocuments = new CustomTextDocuments()
 customTextDocuments.listen(connection)
 
 const projects = new Map<string, Project>() // version - Project
 const typeInfoMaps = new Map<string, TypeInfoMap>() // version - injector
 let config: ConfigDatum = { folders: {} }
+const TextureAddEvent = new Event<File[]>()
+const TextureDeleteEvent = new Event<File[]>()
 //#endregion
 
 //#region validate function implementation
 
-function doValidate(typeInfoMap: TypeInfoMap, textDocument: TextDocument, XMLDocument: XMLDocument, defDB: DefDatabase) {
+function doValidate(project: Project, textDocument: TextDocument, XMLDocument: XMLDocument, defDB: DefDatabase) {
 	const validator = new NodeValidator(
-		typeInfoMap, textDocument, XMLDocument, [builtInValidationParticipant], defDB)
+		project, textDocument, XMLDocument, [builtInValidationParticipant], defDB)
 	return validator.validateNodes()
 }
 
@@ -124,7 +130,7 @@ function ValidateDirtyNodes(dirtyNodes: DirtyNode[], project: Project): PublishD
 		// ignore referenced def (TODO - add config to disable this config... really?)
 		const isNotReferencedDef = !project.isReferenced(documentUri)
 		if (XMLDoc && TextDoc && isNotReferencedDef) {
-			const diagnostics = doValidate(project.typeInfoMap, TextDoc, XMLDoc, project.DefDB)
+			const diagnostics = doValidate(project, TextDoc, XMLDoc, project.DefDB)
 			result.push({ diagnostics, uri: documentUri })
 		}
 	}
@@ -140,6 +146,8 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 	projects.forEach(proj => proj.dispose())
 	projects.clear()
 	typeInfoMaps.clear()
+	TextureAddEvent.clear()
+	TextureDeleteEvent.clear()
 
 	// set config data
 	config = configDatum
@@ -155,20 +163,22 @@ connection.onRequest(ConfigChangedRequestType, ({ configDatum, data }) => {
 		// if the typeInfoMap is generated, else just ignore that version.
 		if (targetTypeInfoMap) {
 			const project = new Project(
-				version, config, targetTypeInfoMap, customTextDocuments)
+				version, config, targetTypeInfoMap, customTextDocuments,
+				TextureAddEvent, TextureDeleteEvent)
 
-			project.Change.subscribe(onProjectChange, onProjectChange(project))
+			project.Change.subscribe(onProjectChange, onProjectChange)
 
 			projects.set(version, project)
 		}
 	}
 })
 
-function onProjectChange(project: Project) {
-	return function (event: ProjectChangeEvent) {
-		const result = ValidateDirtyNodes([...event.dirtyNodes.values()], project)
-		result.map(d => connection.sendDiagnostics(d))
+function onProjectChange(event: ProjectEvent) {
+	const result = ValidateDirtyNodes([...event.dirtyNodes.values()], event.project)
+	if (event.type === 'change') {
+		doValidate(event.project, event.textDocument, event.defDocument, event.project.DefDB)
 	}
+	result.map(d => connection.sendDiagnostics(d))
 }
 
 function GetDefDoc(uri: DocumentUri): XMLDocument | undefined {
@@ -347,6 +357,16 @@ connection.onCodeLens(({ textDocument }) => {
 	}
 	*/
 	return undefined
+})
+
+connection.onNotification(TextureChangedNotificaionType, ({ uris }) => {
+	const files = uris.map(uri => new File(URI.parse(uri)))
+	TextureAddEvent.Invoke(files)
+})
+
+connection.onNotification(TextureRemovedNotificationType, ({ uris }) => {
+	const files = uris.map(uri => new File(URI.parse(uri)))
+	TextureDeleteEvent.Invoke(files)
 })
 
 

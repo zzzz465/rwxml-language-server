@@ -17,7 +17,8 @@
             "@interop/*": [
                 "interop/src/*"
             ]
-        }
+        },
+        "esModuleInterop": true
     },
     "repository": {},
     "engines": {

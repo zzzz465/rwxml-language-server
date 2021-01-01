@@ -3,7 +3,7 @@ import { ConfigDatum } from '../common/config'
 import { Event } from '../common/event'
 import { Uri } from 'vscode'
 import watch from 'node-watch'
-import { DefFileChangedNotificationType, DefFileRemovedNotificationType } from '../common/Defs'
+import { DefFileChangedNotificationType, DefFileRemovedNotificationType, DefFilesChanged } from '../common/Defs'
 import { readFile } from 'fs'
 import { TextureChangedNotificaionType, TextureRemovedNotificationType } from '../common/textures'
 
@@ -45,12 +45,9 @@ export class ProjectWatcher {
 				readFile(filename, (err, data) => {
 					if (err) return
 					const text = data.toString()
-					this.client.sendNotification(DefFileChangedNotificationType, {
-						version,
-						files: {
-							uriPath: text
-						}
-					})
+					const param: DefFilesChanged = { version, files: {} }
+					param.files[uriPath] = text
+					this.client.sendNotification(DefFileChangedNotificationType, param)
 				})
 				break
 			}
@@ -68,7 +65,7 @@ export class ProjectWatcher {
 		switch (event) {
 			case 'update': {
 				this.client.sendNotification(TextureChangedNotificaionType, {
-					files: [uriPath],
+					uris: [uriPath],
 					version
 				})
 				break
@@ -76,7 +73,7 @@ export class ProjectWatcher {
 
 			case 'remove': {
 				this.client.sendNotification(TextureRemovedNotificationType, {
-					files: [uriPath],
+					uris: [uriPath],
 					version
 				})
 				break

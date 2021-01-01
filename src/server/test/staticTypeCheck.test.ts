@@ -8,6 +8,10 @@ import 'linq-es2015'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { NodeValidator } from '../features/NodeValidator'
 import { builtInValidationParticipant } from '../features/BuiltInValidator'
+import { Project } from '../RW/Project'
+import { Event } from '../../common/event'
+import { CustomTextDocuments } from '../RW/CustomDocuments'
+import { ConfigDatum, LoadFolders } from 'src/common/config'
 // import * as mockTypeData from '../testData/output.json'
 const mockDataPath = path.join(__dirname, '../testData/output.json')
 const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
@@ -52,6 +56,19 @@ const DefData = `
 </Defs>
 `
 
+const mockFolder: LoadFolders = {
+  About: '',
+  version: '',
+  Assemblies: '',
+  AssemblyReferences: [],
+  DefReferences: [],
+  Defs: '',
+  Languages: '',
+  Patches: '',
+  Sounds: '',
+  Textures: ''
+}
+
 describe('basic static type checking test', function () {
   const xmlDoc = parse(DefData)
   const typeInfos = objToTypeInfos(mockTypeData)
@@ -72,7 +89,9 @@ describe('basic static type checking test', function () {
     expect(maxNumToIngestAtOnce).toBeTruthy() // null check
 
     // FIXME - first parameter is not a valid one... it still pass tests though.
-    const validator = new NodeValidator(<any>undefined, textDoc, xmlDoc, [builtInValidationParticipant])
+    const customTextDocuments = new CustomTextDocuments()
+    const project = new Project('', mockFolder, typeInfoMap, customTextDocuments, new Event(), new Event())
+    const validator = new NodeValidator(project, textDoc, xmlDoc, [builtInValidationParticipant])
     const result = validator.validateNodes()
 
     const { start: textStart, end: textEnd } = maxNumToIngestAtOnce.text!

@@ -4,6 +4,25 @@
 	"configurations": [
 		{
 			"type": "node",
+			"request": "launch",
+			"name": "Launch Program",
+			"runtimeArgs": [
+				"--nolazy",
+				"-r",
+				"ts-node/register/transpile-only"
+			],
+			"args": [
+				"${file}"
+			],
+			"cwd": "${workspaceFolder}",
+			"internalConsoleOptions": "openOnSessionStart",
+			"skipFiles": [
+				"<node_internals>/**",
+				"node_modules/**"
+			]
+		},
+		{
+			"type": "node",
 			"name": "vscode-jest-tests",
 			"request": "launch",
 			"program": "${workspaceFolder}/node_modules/jest/bin/jest",
@@ -20,8 +39,12 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
-			"outFiles": ["${workspaceRoot}/out/client/**/*.js"],
+			"args": [
+				"--extensionDevelopmentPath=${workspaceRoot}"
+			],
+			"outFiles": [
+				"${workspaceRoot}/out/client/**/*.js"
+			],
 			"preLaunchTask": {
 				"type": "npm",
 				"script": "watch"
@@ -33,7 +56,9 @@
 			"name": "Attach to Server",
 			"port": 6009,
 			"restart": true,
-			"outFiles": ["${workspaceRoot}/out/**/*.js"]
+			"outFiles": [
+				"${workspaceRoot}/out/**/*.js"
+			]
 		},
 		{
 			"name": "Language Server E2E Test",
@@ -45,14 +70,18 @@
 				"--extensionTestsPath=${workspaceRoot}/client/out/test/index",
 				"${workspaceRoot}/client/testFixture"
 			],
-			"outFiles": ["${workspaceRoot}/client/out/test/**/*.js"]
+			"outFiles": [
+				"${workspaceRoot}/client/out/test/**/*.js"
+			]
 		}
 	],
-
 	"compounds": [
 		{
 			"name": "Client + Server",
-			"configurations": ["Launch Client", "Attach to Server"]
+			"configurations": [
+				"Launch Client",
+				"Attach to Server"
+			]
 		}
 	]
 }

@@ -14,7 +14,7 @@ export interface DefFilesChanged {
 
 export interface DefFilesRemoved {
 	version: string
-	files: string[] // list of uri
+	files: DocumentUri[] // list of uri
 }
 
 /** DefReferences 내의 paths 를 쿼리한 결과를 보냄, delete일수도 있고, add일수도 있음 -> 서버단에서 관리 */
