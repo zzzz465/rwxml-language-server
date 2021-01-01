@@ -120,7 +120,7 @@ function checkTexturePath(this: NodeValidatorContext, node: typeNode): Validatio
 
 	if (isTextureNode(node) && node.text) {
 		const path = Path.parse(node.text.content)
-		const nameRegex = new RegExp(`${path.name}(_[\w]+)?`)
+		const nameRegex = new RegExp(`${path.name}(_[\w]+)?`, 'i') // rimworld's loading is case-insensitive
 		const res = this.project.Textures.Find(path.dir, nameRegex)
 		switch (res?.type) {
 			case 'File':
