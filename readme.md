@@ -30,6 +30,8 @@ you have to put `rwconfigrc.json` in the root directory of your mod.
 note that `only one config file` is allowed in the entire project file.
 
 ### Config file schema
+(Use internal GUI)
+
 ```json5
 {
 	"folders": {
@@ -81,16 +83,6 @@ you can use absolute or relative path.
 
 # Documentation
 
-TODO
-
-## but why? - motivations, etc...
-
-As the limitation of xml modding, most modders have similar problems.  
-Searching defs, open decompiler and read what field the class have,  
-use time figuring out what this node does, continuously re-open the game just to find typo...  
-these things make modding difficult, **which can be avoided.**
-
-
 # Development
 ### Prerequisites
 1. node.js 10 or higher
@@ -104,7 +96,3 @@ git clone https://github.com/zzzz465/rwxml-language-server
 npm install
 *fix reference in sln project*
 ```
-
-# Donations
-if you like my work, please consider buy me a coffee!  
-https://ko-fi.com/madeline_modding  
