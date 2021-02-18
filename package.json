@@ -3,7 +3,7 @@
 	"name": "rwxml-lang-serv",
 	"version": "0.4.29",
 	"description": "Language server for rimworld XML modding, editing. support custom mods.",
-	"main": "dist/client/index.js",
+	"main": "out/client/extension.js",
 	"icon": "Images/icon_128.png",
 	"scripts": {
 		"compile": "tsc -b",
@@ -129,8 +129,8 @@
 		],
 		"commands": [
 			{
-				"command": "RWXML.makeConfig",
-				"title": "create new rwxml configuration",
+				"command": "RWXML.DEBUG.print-rawTypeInfo",
+				"title": "print typeinfo json file",
 				"category": "RWXML"
 			}
 		]
@@ -186,6 +186,7 @@
 		"node-watch": "^0.6.4",
 		"ts-jest": "^26.1.4",
 		"tsconfig-paths": "^3.9.0",
+		"tsyringe": "^4.4.0",
 		"vscode-languageclient": "^6.1.3",
 		"vscode-languageserver": "^6.1.1",
 		"vscode-languageserver-textdocument": "^1.0.1",
