@@ -5,18 +5,24 @@ module.exports = {
 	parser: '@typescript-eslint/parser',
 	plugins: [
 		'@typescript-eslint',
-		'only-warn'
+		'only-warn',
+		'prettier'
 	],
 	extends: [
 		'eslint:recommended',
 		'plugin:@typescript-eslint/recommended',
 		'plugin:@typescript-eslint/eslint-recommended',
+		'plugin:prettier/recommended',
 		'typescript'
 	],
 	rules: {
 		// 'curly': ['warn', ]
 		'no-inner-declarations': 'off',
 		'@typescript-eslint/no-namespace': 'off',
-		'semi': ['warn', 'never']
+		'semi': ['warn', 'never'],
+		'prettier/prettier': ['warn', {
+			'endOfLine': 'auto',
+			'semi': false
+		}]
 	}
 };

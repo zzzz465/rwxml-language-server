@@ -1,13 +1,12 @@
-
 // import { } from './'
 
-/** path represents absoulte path start from disk letter  
- * @example C:/path/to/directory 
+/** path represents absoulte path start from disk letter
+ * @example C:/path/to/directory
  * @example C:/path/to/file.ext
-*/
+ */
 export type absPath = string
 
-/** uri string that can be parsed with vscode-URI 
+/** uri string that can be parsed with vscode-URI
  * @deprecated use DocumentUri instead */
 export type URILike = string
 

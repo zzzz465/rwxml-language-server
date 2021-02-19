@@ -1,20 +1,27 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { parse } from '../parser/XMLParser'
-import { objToTypeInfos, TypeInfoInjector, TypeInfoMap, isTypeNode } from '../../common/TypeInfo'
-import * as fs from 'fs'
-import * as path from 'path'
-import { BFS2 } from './utils'
-import 'linq-es2015'
-import { TextDocument } from 'vscode-languageserver-textdocument'
-import { NodeValidator } from '../features/NodeValidator'
-import { builtInValidationParticipant } from '../features/BuiltInValidator'
-import { Project } from '../RW/Project'
-import { Event } from '../../common/event'
-import { CustomTextDocuments } from '../RW/CustomDocuments'
-import { ConfigDatum, LoadFolders } from 'src/common/config'
+import { parse } from "../parser/XMLParser"
+import {
+  objToTypeInfos,
+  TypeInfoInjector,
+  TypeInfoMap,
+  isTypeNode,
+} from "../../common/TypeInfo"
+import * as fs from "fs"
+import * as path from "path"
+import { BFS2 } from "./utils"
+import "linq-es2015"
+import { TextDocument } from "vscode-languageserver-textdocument"
+import { NodeValidator } from "../features/NodeValidator"
+import { builtInValidationParticipant } from "../features/BuiltInValidator"
+import { Project } from "../RW/Project"
+import { Event } from "../../common/event"
+import { CustomTextDocuments } from "../RW/CustomDocuments"
+import { ConfigDatum, LoadFolders } from "src/common/config"
 // import * as mockTypeData from '../testData/output.json'
-const mockDataPath = path.join(__dirname, '../testData/output.json')
-const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
+const mockDataPath = path.join(__dirname, "../testData/output.json")
+const mockTypeData = JSON.parse(
+  fs.readFileSync(mockDataPath, { encoding: "utf-8" })
+)
 
 const DefData = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -57,46 +64,63 @@ const DefData = `
 `
 
 const mockFolder: LoadFolders = {
-  About: '',
-  version: '',
-  Assemblies: '',
+  About: "",
+  version: "",
+  Assemblies: "",
   AssemblyReferences: [],
   DefReferences: [],
-  Defs: '',
-  Languages: '',
-  Patches: '',
-  Sounds: '',
-  Textures: ''
+  Defs: "",
+  Languages: "",
+  Patches: "",
+  Sounds: "",
+  Textures: "",
 }
 
-describe('basic static type checking test', function () {
+describe("basic static type checking test", function () {
   const xmlDoc = parse(DefData)
   const typeInfos = objToTypeInfos(mockTypeData)
   const typeInfoMap = new TypeInfoMap(typeInfos)
   const injector = new TypeInfoInjector(typeInfoMap)
-  const ThingDef = BFS2(xmlDoc.root!, 'ThingDef')!
+  const ThingDef = BFS2(xmlDoc.root!, "ThingDef")!
   injector.Inject(ThingDef)
-  test('injector should inject ThingDef type into the def object', () => {
+  test("injector should inject ThingDef type into the def object", () => {
     expect(isTypeNode(ThingDef)).toBe(true)
   })
 
-  test('ThingDef/statBases/Mass should be checked as float', function () {
-    const textDoc = TextDocument.create('', 'xml', 1, DefData)
+  test("ThingDef/statBases/Mass should be checked as float", function () {
+    const textDoc = TextDocument.create("", "xml", 1, DefData)
 
-    const ingestible = ThingDef.children.find(n => n.tag?.content === 'ingestible')!
+    const ingestible = ThingDef.children.find(
+      (n) => n.tag?.content === "ingestible"
+    )!
     expect(ingestible).toBeTruthy() // null check
-    const maxNumToIngestAtOnce = ingestible.children.find(n => n.tag?.content === 'maxNumToIngestAtOnce')!
+    const maxNumToIngestAtOnce = ingestible.children.find(
+      (n) => n.tag?.content === "maxNumToIngestAtOnce"
+    )!
     expect(maxNumToIngestAtOnce).toBeTruthy() // null check
 
     // FIXME - first parameter is not a valid one... it still pass tests though.
     const customTextDocuments = new CustomTextDocuments()
-    const project = new Project('', mockFolder, typeInfoMap, customTextDocuments, new Event(), new Event())
-    const validator = new NodeValidator(project, textDoc, xmlDoc, [builtInValidationParticipant])
+    const project = new Project(
+      "",
+      mockFolder,
+      typeInfoMap,
+      customTextDocuments,
+      new Event(),
+      new Event()
+    )
+    const validator = new NodeValidator(project, textDoc, xmlDoc, [
+      builtInValidationParticipant,
+    ])
     const result = validator.validateNodes()
 
     const { start: textStart, end: textEnd } = maxNumToIngestAtOnce.text!
 
-    const error = result.find(d => textDoc.offsetAt(d.range.start) >= textStart && textDoc.offsetAt(d.range.end) <= textEnd)
+    const error = result.find(
+      (d) =>
+        textDoc.offsetAt(d.range.start) >= textStart &&
+        textDoc.offsetAt(d.range.end) <= textEnd
+    )
     expect(error).not.toBeUndefined()
   })
 })

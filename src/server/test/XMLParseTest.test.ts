@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import '../parser/XMLParser'
-import { parse, Node } from '../parser/XMLParser'
-import { BFS, BFS2 } from './utils'
-import { TextDocument } from 'vscode-languageserver'
-import { assert } from 'console'
+import "../parser/XMLParser"
+import { parse, Node } from "../parser/XMLParser"
+import { BFS, BFS2 } from "./utils"
+import { TextDocument } from "vscode-languageserver"
+import { assert } from "console"
 
 const data = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -61,10 +61,10 @@ const data = `
   </BodyDef>
 </Defs>
 `
-describe('xml parse test', function () {
+describe("xml parse test", function () {
   const parser = parse(data)
-  test('root tag should be Defs', () => {
-    expect(parser.root!.tag?.content).toBe('Defs')
+  test("root tag should be Defs", () => {
+    expect(parser.root!.tag?.content).toBe("Defs")
   })
 })
 
@@ -77,76 +77,76 @@ const incompleteXML = `
 </Defs>
 `
 
-describe('incomplete xml parse test', function () {
+describe("incomplete xml parse test", function () {
   const parseResult = parse(incompleteXML)
   const root = parseResult.root!
-  test('root tag should be \'Defs\'', function () {
-    expect(root.tag?.content).toBe('Defs')
+  test("root tag should be 'Defs'", function () {
+    expect(root.tag?.content).toBe("Defs")
   })
-  test('incomplete node should have ThingDef as parent', function () {
+  test("incomplete node should have ThingDef as parent", function () {
     const incompleteNode = BFS(root, (node) => !node.closed)
-    const parent = BFS(root, (node) => node.tag?.content === 'ThingDef')
+    const parent = BFS(root, (node) => node.tag?.content === "ThingDef")
     expect(incompleteNode).not.toBeNull()
     expect(incompleteNode?.parent === parent).toBeTruthy()
   })
 })
 
-
-const mockData = ([ // note that on each line, \n character is appended at the end
+const mockData = [
+  // note that on each line, \n character is appended at the end
   // 0
   '<?xml version="1.0" encoding="utf-8" ?>',
   // 40
-  '<Defs>',
+  "<Defs>",
   // 47
   '<ThingDef ParentName="DrugBase">',
   // 79
-  '<defName>Beer</defName>',
+  "<defName>Beer</defName>",
   // 99
-  '<label>beer</label>',
+  "<label>beer</label>",
   // 119
-  '<description>The first beverage besides water ever consumed by mankind. Beer can taste good, but its main effect is intoxication. Excessive consumption can lead to alcohol blackouts and, over time, addiction.</description>',
+  "<description>The first beverage besides water ever consumed by mankind. Beer can taste good, but its main effect is intoxication. Excessive consumption can lead to alcohol blackouts and, over time, addiction.</description>",
   // 347
-  '<descriptionHyperlinks>',
+  "<descriptionHyperlinks>",
   // 371
-  '<HediffDef>AlcoholHigh</HediffDef>',
+  "<HediffDef>AlcoholHigh</HediffDef>",
   // 406
-  '<HediffDef>AlcoholTolerance</HediffDef>',
+  "<HediffDef>AlcoholTolerance</HediffDef>",
   // 446
-  '<HediffDef>Hangover</HediffDef>',
+  "<HediffDef>Hangover</HediffDef>",
   // 478
-  '<HediffDef>AlcoholAddiction</HediffDef>',
+  "<HediffDef>AlcoholAddiction</HediffDef>",
   // 518
-  '<HediffDef>Cirrhosis</HediffDef>',
+  "<HediffDef>Cirrhosis</HediffDef>",
   // 551
-  '<HediffDef>ChemicalDamageModerate</HediffDef>',
+  "<HediffDef>ChemicalDamageModerate</HediffDef>",
   // 597
-  '</descriptionHyperlinks>',
+  "</descriptionHyperlinks>",
   // 622
-  '</ThingDef>',
+  "</ThingDef>",
   // 634
-  '</Defs>'
-]).join('\n')
+  "</Defs>",
+].join("\n")
 
-describe('parser test 2', () => {
-  const textDoc = TextDocument.create('', '', 1, mockData)
+describe("parser test 2", () => {
+  const textDoc = TextDocument.create("", "", 1, mockData)
   const xmlDoc = parse(mockData)
-  test('start tag test', () => {
-    const node = BFS2(xmlDoc.root!, 'ThingDef')!
+  test("start tag test", () => {
+    const node = BFS2(xmlDoc.root!, "ThingDef")!
     expect(node).toBeTruthy()
     expect(node.tag).toBeTruthy()
     const { content, start, end } = node.tag!
     expect(start).toBe(48)
     expect(end).toBe(56)
-    expect(content).toBe('ThingDef')
+    expect(content).toBe("ThingDef")
   })
 
-  test('end tag test', () => {
-    const node = BFS2(xmlDoc.root!, 'ThingDef')!
+  test("end tag test", () => {
+    const node = BFS2(xmlDoc.root!, "ThingDef")!
     expect(node).toBeTruthy()
     expect(node.endTag).toBeTruthy()
     const { start, content, end } = node.endTag!
     expect(start).toBe(624)
-    expect(content).toBe('ThingDef')
+    expect(content).toBe("ThingDef")
     expect(end).toBe(632)
   })
 })

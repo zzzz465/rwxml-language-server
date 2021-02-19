@@ -3,22 +3,24 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { MarkupContent } from 'vscode-languageserver-types'
+import { MarkupContent } from "vscode-languageserver-types"
 
-export function normalizeMarkupContent(input: string | MarkupContent | undefined): MarkupContent | undefined {
-	if (!input) {
-		return undefined
-	}
+export function normalizeMarkupContent(
+  input: string | MarkupContent | undefined
+): MarkupContent | undefined {
+  if (!input) {
+    return undefined
+  }
 
-	if (typeof input === 'string') {
-		return {
-			kind: 'markdown',
-			value: input
-		}
-	}
+  if (typeof input === "string") {
+    return {
+      kind: "markdown",
+      value: input,
+    }
+  }
 
-	return {
-		kind: 'markdown',
-		value: input.value
-	}
+  return {
+    kind: "markdown",
+    value: input.value,
+  }
 }

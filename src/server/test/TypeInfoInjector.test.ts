@@ -1,11 +1,19 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TypeInfoInjector, objToTypeInfos, typeNode, isTypeNode as isTypeNode, TypeInfoMap } from '../../common/TypeInfo'
-import { parse } from '../parser/XMLParser'
-import * as fs from 'fs'
-import * as path from 'path'
+import {
+  TypeInfoInjector,
+  objToTypeInfos,
+  typeNode,
+  isTypeNode as isTypeNode,
+  TypeInfoMap,
+} from "../../common/TypeInfo"
+import { parse } from "../parser/XMLParser"
+import * as fs from "fs"
+import * as path from "path"
 // import * as mockTypeData from '../testData/output.json'
-const mockDataPath = path.join(__dirname, '../testData/output.json')
-const mockTypeData = JSON.parse(fs.readFileSync(mockDataPath, { encoding: 'utf-8' }))
+const mockDataPath = path.join(__dirname, "../testData/output.json")
+const mockTypeData = JSON.parse(
+  fs.readFileSync(mockDataPath, { encoding: "utf-8" })
+)
 
 const data = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -102,35 +110,39 @@ const data = `
 </Defs>
 `
 
-describe('TypeInfo json to object converter test', function () {
-	const converted = objToTypeInfos(mockTypeData)
-	const ThingDefTypeInfo = converted.find(d => d.typeIdentifier === 'Verse.ThingDef')
-	test('objToTypeInfo() converter test', () => {
-		expect(ThingDefTypeInfo).toBeTruthy()
-		expect(ThingDefTypeInfo?.childNodes).toBeTruthy()
-		if (ThingDefTypeInfo?.childNodes) {
-			const childNodes = ThingDefTypeInfo.childNodes
-			expect(childNodes.get('thingClass')).toBe('System.Type')
-			expect(childNodes.get('size')).toBe('Verse.IntVec2')
-			expect(childNodes.get('useHitPoints')).toBe('System.Boolean')
-		}
-	})
+describe("TypeInfo json to object converter test", function () {
+  const converted = objToTypeInfos(mockTypeData)
+  const ThingDefTypeInfo = converted.find(
+    (d) => d.typeIdentifier === "Verse.ThingDef"
+  )
+  test("objToTypeInfo() converter test", () => {
+    expect(ThingDefTypeInfo).toBeTruthy()
+    expect(ThingDefTypeInfo?.childNodes).toBeTruthy()
+    if (ThingDefTypeInfo?.childNodes) {
+      const childNodes = ThingDefTypeInfo.childNodes
+      expect(childNodes.get("thingClass")).toBe("System.Type")
+      expect(childNodes.get("size")).toBe("Verse.IntVec2")
+      expect(childNodes.get("useHitPoints")).toBe("System.Boolean")
+    }
+  })
 })
 
-test('TypeInfoInjector base injection test', function () {
-	const parser = parse(data)
-	expect(parser.root!.tag?.content).toBe('Defs')
-	const bodyDef = parser.root!.children[0]!
-	expect(bodyDef.tag?.content).toBe('ThingDef')
-	const typeInfos = objToTypeInfos(mockTypeData)
-	const injector = new TypeInfoInjector(new TypeInfoMap(typeInfos))
-	injector.Inject(bodyDef)
-	const injectedBodyDef = bodyDef as typeNode
-	expect(isTypeNode(injectedBodyDef)).toBeTruthy()
-	const ingestible = bodyDef.children.find(d => d.tag?.content === 'ingestible')
-	expect(ingestible).toBeTruthy()
-	expect(isTypeNode(ingestible)).toBeTruthy()
-	const ingestible_defNode = ingestible as typeNode
-	expect(ingestible_defNode.typeInfo.childNodes).toBeTruthy()
-	// const injector = new TypeInfoInjector();
+test("TypeInfoInjector base injection test", function () {
+  const parser = parse(data)
+  expect(parser.root!.tag?.content).toBe("Defs")
+  const bodyDef = parser.root!.children[0]!
+  expect(bodyDef.tag?.content).toBe("ThingDef")
+  const typeInfos = objToTypeInfos(mockTypeData)
+  const injector = new TypeInfoInjector(new TypeInfoMap(typeInfos))
+  injector.Inject(bodyDef)
+  const injectedBodyDef = bodyDef as typeNode
+  expect(isTypeNode(injectedBodyDef)).toBeTruthy()
+  const ingestible = bodyDef.children.find(
+    (d) => d.tag?.content === "ingestible"
+  )
+  expect(ingestible).toBeTruthy()
+  expect(isTypeNode(ingestible)).toBeTruthy()
+  const ingestible_defNode = ingestible as typeNode
+  expect(ingestible_defNode.typeInfo.childNodes).toBeTruthy()
+  // const injector = new TypeInfoInjector();
 })
