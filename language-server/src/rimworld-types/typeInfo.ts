@@ -1,5 +1,4 @@
 import { Metadata } from './metadata'
-import { TypeIdentifier } from './declaredType'
 
 export type SpecialType =
   | 'integer'
@@ -25,9 +24,7 @@ export class TypeInfo {
     throw new Error()
   }
 
-  constructor(fullName: TypeIdentifier) {
-    this.fullName = fullName
-    this.childNodes = new Map()
-    this.metadata = {}
+  private constructor() {
+    throw new Error('constructor should not be called')
   }
 }
