@@ -1,7 +1,7 @@
 import { ScannerState } from './ScannerState'
 import { TokenType } from './TokenType'
 import { MultiLineStream } from './MultiLineStream'
-import { _NWL, _TAB, _BNG, _MIN, _RAN, _CAR, _DQO, _EQS, _FSL, _LAN, _LFD, _QUE, _SQO, _WSP } from './char'
+import { _BNG, _DQO, _EQS, _FSL, _LAN, _MIN, _QUE, _RAN, _SQO } from './char'
 
 export { TextDocument } from 'vscode-languageserver-textdocument'
 export * from 'vscode-languageserver-types'

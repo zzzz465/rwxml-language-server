@@ -104,6 +104,7 @@ export class MultiLineStream {
   public advanceUntilChars(ch: number[]): boolean {
     while (this.position + ch.length <= this.source.length) {
       let i = 0
+      // TODO: inspect this code
       for (; i < ch.length && this.source.charCodeAt(this.position + i) === ch[i]; i++) {}
       if (i === ch.length) {
         return true

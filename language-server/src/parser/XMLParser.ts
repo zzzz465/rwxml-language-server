@@ -3,8 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createScanner, TokenType } from './XMLScanner'
+import { createScanner } from './XMLScanner'
 import { findFirst } from '../utils/arrays'
+import { TokenType } from './TokenType'
 
 export interface textRange {
   start: number
@@ -20,10 +21,6 @@ export class Node {
   public attributes: { [name: string]: string | null }
   public contentRange?: textRange
 
-  public get attributeNames(): string[] {
-    return this.attributes ? Object.keys(this.attributes) : []
-  }
-
   constructor(
     public document: XMLDocument,
     public start: number,
@@ -31,6 +28,10 @@ export class Node {
     public children: Node[],
     public parent?: Node
   ) {}
+
+  public get attributeNames(): string[] {
+    return this.attributes ? Object.keys(this.attributes) : []
+  }
 
   public get firstChild(): Node | undefined {
     return this.children[0]
