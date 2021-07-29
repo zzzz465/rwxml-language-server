@@ -1,4 +1,4 @@
-import { Node } from '../parser/XMLParser'
+import { Node } from '../parser/XMLParser_old'
 
 export function BFS(root: Node, excludeRoot?: boolean): Node[] {
   const marker: Set<Node> = new Set()

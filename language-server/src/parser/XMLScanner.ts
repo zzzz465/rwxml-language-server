@@ -273,7 +273,7 @@ export function createScanner(
         hasSpaceAfterTag = false
         return internalScan() // no advance yet - jump to WithinTag
       }
-      case ScannerState.WithinScriptContent:
+      case ScannerState.WithinScriptContent: {
         // see http://stackoverflow.com/questions/14574471/how-do-browsers-parse-a-script-tag-exactly
         let scriptState = 1
         while (!stream.eos()) {
@@ -307,13 +307,15 @@ export function createScanner(
           return finishToken(offset, TokenType.Script)
         }
         return internalScan() // no advance yet - jump to content
-      case ScannerState.WithinStyleContent:
+      }
+      case ScannerState.WithinStyleContent: {
         stream.advanceUntilRegExp(/<\/style/i)
         state = ScannerState.WithinContent
         if (offset < stream.pos()) {
           return finishToken(offset, TokenType.Styles)
         }
         return internalScan() // no advance yet - jump to content
+      }
     }
 
     stream.advance(1)
