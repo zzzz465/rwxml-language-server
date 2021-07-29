@@ -1,4 +1,6 @@
 import { Metadata } from './metadata'
+import { cache } from '../utils/cache'
+import typeMap from './specialTypeMap'
 
 export type SpecialType =
   | 'integer'
@@ -16,12 +18,14 @@ export class TypeInfo {
   readonly metadata: Metadata
   readonly childNodes: Map<string, TypeInfo>
 
+  @cache()
   get isDef(): boolean {
-    throw new Error()
+    return !!this.metadata.defType
   }
 
-  get specialType(): SpecialType | null {
-    throw new Error()
+  @cache()
+  get specialType(): SpecialType | undefined {
+    return typeMap.get(this.fullName)
   }
 
   private constructor() {
