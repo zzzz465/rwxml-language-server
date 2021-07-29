@@ -1,8 +1,3 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
 import { createScanner } from './XMLScanner'
 import { findFirst } from '../utils/arrays'
 import { TokenType } from './TokenType'
@@ -18,16 +13,16 @@ export class Node {
   public closed = false // is validate closed? ex) <tag></tag>
   public startTagEnd: number | undefined
   public endTagStart: number | undefined
-  public attributes: { [name: string]: string | null }
+  public attributes: { [name: string]: string | null } = {}
   public contentRange?: textRange
+  public document!: XMLDocument
+  public start!: number
+  public end!: number
+  public children!: Node[]
+  public parent?: Node
 
-  constructor(
-    public document: XMLDocument,
-    public start: number,
-    public end: number,
-    public children: Node[],
-    public parent?: Node
-  ) {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  private constructor() {}
 
   public get attributeNames(): string[] {
     return this.attributes ? Object.keys(this.attributes) : []
@@ -54,7 +49,6 @@ export class Node {
   }
 
   public isSameTag(tagString: string): boolean {
-    // return this.tag && tagInLowerCase && this.tag.length === tagInLowerCase.length && this.tag.toLowerCase() === tagInLowerCase;
     return !!this.tag && this.tag.content === tagString
   }
 
@@ -98,17 +92,22 @@ export interface XMLDocument extends Node {
   findNodeAt(offset: number): Node
 }
 
-/**
- * @param text XML content
- * @param Uri Source of the text
- */
-export function parse(text: string, Uri = ''): XMLDocument {
-  const scanner = createScanner(text, undefined, undefined, true)
+function createNode(fields: Partial<Node>) {
+  return Object.assign(Node.constructor.call(new Object(null)), fields)
+}
 
-  const XMLDocument = new Node(<any>{}, 0, text.length, [], void 0) as XMLDocument
-  XMLDocument.document = XMLDocument
-  XMLDocument.Uri = Uri
-  let curr = XMLDocument as Node
+export function parse(rawXML: string): XMLDocument {
+  const scanner = createScanner(rawXML, undefined, undefined, true)
+
+  const xmlDocument = createNode({
+    document: void 0,
+    start: 0,
+    end: rawXML.length,
+    children: [],
+    parent: void 0,
+  }) as XMLDocument
+  xmlDocument.document = xmlDocument
+  let curr = xmlDocument as Node
   let endTagStart = -1
   let endTagName: string | null = null
   let pendingAttribute: string | null = null
@@ -116,44 +115,40 @@ export function parse(text: string, Uri = ''): XMLDocument {
   while (token !== TokenType.EOS) {
     switch (token) {
       case TokenType.XMLDeclaration: {
-        const raw = scanner.getTokenText()
-        XMLDocument.rawXmlDefinition = raw
+        xmlDocument.rawXmlDefinition = scanner.getTokenText()
         break
       }
       case TokenType.StartTagOpen: {
-        const child = new Node(XMLDocument, scanner.getTokenOffset(), text.length, [], curr)
-        child.document = XMLDocument
+        const child = createNode({
+          document: xmlDocument,
+          start: scanner.getTokenOffset(),
+          end: rawXML.length,
+          children: [],
+          parent: curr,
+        })
+        child.document = xmlDocument
         curr.children.push(child)
         curr = child
         break
       }
-      case TokenType.StartTag:
+      case TokenType.StartTag: {
         curr.tag = {
           content: scanner.getTokenText(),
           start: scanner.getTokenOffset(),
           end: scanner.getTokenEnd(),
         }
         break
-      case TokenType.StartTagClose:
+      }
+      case TokenType.StartTagClose: {
         if (curr.parent) {
           curr.end = scanner.getTokenEnd() // might be later set to end tag position
           if (scanner.getTokenLength()) {
-            // why?
             curr.startTagEnd = scanner.getTokenEnd()
-            // if (curr.tag && isVoidElement(curr.tag)) {
-            /*
-            if (curr.tag) { // 다른데로 옮겨야함
-              curr.closed = true;
-              curr = curr.parent;
-            }
-            */
-          } else {
-            // pseudo close token from an incomplete start tag
-            // curr = curr.parent;
           }
         }
         break
-      case TokenType.StartTagSelfClose:
+      }
+      case TokenType.StartTagSelfClose: {
         if (curr.parent) {
           curr.closed = true
           curr.end = scanner.getTokenEnd()
@@ -161,15 +156,17 @@ export function parse(text: string, Uri = ''): XMLDocument {
           curr = curr.parent
         }
         break
-      case TokenType.EndTagOpen:
+      }
+      case TokenType.EndTagOpen: {
         endTagStart = scanner.getTokenOffset()
         endTagName = null
         break
-      case TokenType.EndTag:
-        // endTagName = scanner.getTokenText().toLowerCase();
+      }
+      case TokenType.EndTag: {
         endTagName = scanner.getTokenText()
         break
-      case TokenType.EndTagClose:
+      }
+      case TokenType.EndTagClose: {
         if (endTagName) {
           let node = curr
           // see if we can find a matching
@@ -194,6 +191,7 @@ export function parse(text: string, Uri = ''): XMLDocument {
           }
         }
         break
+      }
       case TokenType.AttributeName: {
         pendingAttribute = scanner.getTokenText()
         let attributes = curr.attributes
@@ -225,7 +223,7 @@ export function parse(text: string, Uri = ''): XMLDocument {
     token = scanner.scan()
   }
 
-  const queue: Node[] = [XMLDocument]
+  const queue: Node[] = [xmlDocument]
   while (queue.length > 0) {
     // node that have children can't have text value
     const item = queue.pop()! // so it removes them
@@ -235,15 +233,7 @@ export function parse(text: string, Uri = ''): XMLDocument {
     }
   }
 
-  if (XMLDocument.children.length > 0) XMLDocument.root = XMLDocument.children[0]
+  if (xmlDocument.children.length > 0) xmlDocument.root = xmlDocument.children[0]
 
-  // root에 대해서, XML 선언 + root 재조정
-  return XMLDocument
-  /*
-  return {
-    root: XMLDocument,
-    findNodeBefore: XMLDocument.findNodeBefore.bind(XMLDocument),
-    findNodeAt: XMLDocument.findNodeAt.bind(XMLDocument)
-  };
-  */
+  return xmlDocument
 }
