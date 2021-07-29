@@ -39,6 +39,13 @@ export function load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
     } as TypeInfo)
   }
 
+  // freeze objects
+  ;[...typeInfoMap.values()].map((t) => {
+    Object.freeze(t)
+    Object.freeze(t.metadata)
+    Object.freeze(t.childNodes)
+  })
+
   const ret = new TypeInfoMap()
   ret.addTypeInfos(...typeInfoMap.values())
   return ret
