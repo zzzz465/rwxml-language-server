@@ -1,8 +1,8 @@
 import { createScanner, Scanner } from './XMLScanner'
 import { createXMLDocument, XMLDocument } from './XMLDocument'
-import { createXMLNode, XMLNode } from "./XMLNode";
+import { createXMLNode, XMLNode } from './XMLNode'
 import { TokenType } from './TokenType'
-import { Range } from "../types";
+import { Range } from '../types'
 
 export class XMLParser {
   private scanner: Scanner
@@ -10,11 +10,11 @@ export class XMLParser {
   private curr!: XMLNode
   private endTagStart = -1
   private endTagName?: string
-  private pendingAttribute?: string
+  private pendingAttribute: string | null = null
   private token: TokenType
 
   constructor(private rawXML: string) {
-    this.scanner = createScanner(rawXML, undefined, undefined, true)
+    this.scanner = createScanner(this.rawXML, undefined, undefined, true)
     this.token = TokenType.Unknown
   }
 
@@ -23,6 +23,7 @@ export class XMLParser {
 
     while (this.token != TokenType.EOS) {
       this.scan()
+      this.token = this.scanner.scan()
     }
   }
 
@@ -39,7 +40,10 @@ export class XMLParser {
           children: [],
           parent: this.curr,
         })
-        Object.assign<Range, Range>(child.elementRange, { start: this.scanner.getTokenOffset(), end: this.xmlDocument.rawXML.length })
+        Object.assign<Range, Range>(child.elementRange, {
+          start: this.scanner.getTokenOffset(),
+          end: this.xmlDocument.rawXML.length,
+        })
         child.document = this.xmlDocument
         this.curr.children.push(child)
         this.curr = child
@@ -83,11 +87,13 @@ export class XMLParser {
       case TokenType.EndTagClose: {
         if (this.endTagName) {
           let node = this.curr
+
           // see if we can find a matching
-          while (!node.isSameTag(this.endTagName) && node.parent) {
+          while (!node.equalTag(this.endTagName) && node.parent) {
             node = node.parent
           }
-          if (node.parent != undefined) {
+
+          if (node.parent !== undefined) {
             while (this.curr !== node) {
               this.curr.elementRange.end = this.endTagStart
               this.curr.validNode = false
@@ -105,35 +111,32 @@ export class XMLParser {
         break
       }
       case TokenType.AttributeName: {
-        pendingAttribute = scanner.getTokenText()
-        let attributes = curr.attributes
-        if (!attributes) {
-          curr.attributes = attributes = {}
-        }
-        attributes[pendingAttribute] = null // Support valueless attributes such as 'checked'
+        this.pendingAttribute = this.scanner.getTokenText()
+        // Support valueless attributes such as 'checked'
+        this.curr.attributes[this.pendingAttribute] = null
         break
       }
       case TokenType.AttributeValue: {
-        let value = scanner.getTokenText()
-        if (value.length >= 2) value = value.substring(1, value.length - 1) // remove encapsuling text '' or ""
-        const attributes = curr.attributes
-        if (attributes && pendingAttribute) {
-          attributes[pendingAttribute] = value
-          pendingAttribute = null
+        let value = this.scanner.getTokenText()
+        if (value.length >= 2) {
+          // remove encapsuling text '' or ""
+          value = value.substring(1, value.length - 1)
+        }
+
+        const attributes = this.curr.attributes
+        if (this.pendingAttribute !== null) {
+          attributes[this.pendingAttribute] = value
+          this.pendingAttribute = null
         }
         break
       }
       case TokenType.Content: {
-        curr.contentRange = {
-          start: scanner.getTokenOffset(),
-          content: scanner.getTokenText(),
-          end: scanner.getTokenEnd(),
-        }
+        this.curr.contentRange.start = this.scanner.getTokenOffset()
+        this.curr.contentRange.end = this.scanner.getTokenEnd()
+        this.curr.content = this.scanner.getTokenText()
         break
       }
     }
-    token = scanner.scan()
-  }
   }
 
   private createXMLDocument(): XMLDocument {
