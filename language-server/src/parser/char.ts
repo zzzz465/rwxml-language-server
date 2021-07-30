@@ -1,3 +1,5 @@
+// eslint-disable-next-line quotes
+export const _SQO = "'".charCodeAt(0)
 export const _BNG = '!'.charCodeAt(0)
 export const _MIN = '-'.charCodeAt(0)
 export const _LAN = '<'.charCodeAt(0)
@@ -6,7 +8,6 @@ export const _FSL = '/'.charCodeAt(0)
 export const _QUE = '?'.charCodeAt(0)
 export const _EQS = '='.charCodeAt(0)
 export const _DQO = '"'.charCodeAt(0)
-export const _SQO = "'".charCodeAt(0)
 export const _NWL = '\n'.charCodeAt(0)
 export const _CAR = '\r'.charCodeAt(0)
 export const _LFD = '\f'.charCodeAt(0)
