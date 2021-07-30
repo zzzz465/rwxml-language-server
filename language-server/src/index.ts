@@ -1,5 +1,5 @@
-/*
-무엇을 제공해야 하는가?
+import { Command } from 'commander'
 
+const program = new Command()
 
-*/
+program.version('0.0.1', '-v, --version')
