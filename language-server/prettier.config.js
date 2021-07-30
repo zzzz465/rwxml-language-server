@@ -3,5 +3,4 @@ module.exports = {
   semi: false,
   singleQuote: true,
   printWidth: 120,
-  'max-line-length': [true, { limit: 120 }],
 }

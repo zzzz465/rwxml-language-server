@@ -1,5 +1,7 @@
 import { XMLDocument } from './XMLDocument'
 import { Range } from '../types'
+import * as _ from 'lodash'
+import { sortedFindFirst } from '../utils/arrays'
 
 function range(): Range {
   return { start: -1, end: -1 }
@@ -23,15 +25,50 @@ export class XMLNode {
   readonly contentRange: Range = range() // value 의 시작 부터 끝까지 (공백포함)
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() { }
+  private constructor() {}
 
   equalTag(other: string) {
     return this.name === other
   }
 
-  findNodeBefore(offset: number): XMLNode { }
+  firstChild(): XMLNode | undefined {
+    return _.first(this.children)
+  }
 
-  findNodeAt(offset: number): XMLNode { }
+  lastChild(): XMLNode | undefined {
+    return _.last(this.children)
+  }
+
+  findNodeBefore(offset: number): XMLNode {
+    const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
+    if (index >= 0) {
+      const child = this.children[index]
+      if (offset > child.elementRange.start) {
+        return child.findNodeBefore(offset)
+      } else {
+        const lastChild = this.firstChild()
+        if (lastChild && lastChild.elementRange.end === child.elementRange.end) {
+          return child.findNodeBefore(offset)
+        } else {
+          return child
+        }
+      }
+    }
+
+    return this
+  }
+
+  findNodeAt(offset: number): XMLNode {
+    const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
+    if (index >= 0) {
+      const child = this.children[index]
+      if (offset > child.elementRange.start && offset <= child.elementRange.end) {
+        return child.findNodeAt(offset)
+      }
+    }
+
+    return this
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types

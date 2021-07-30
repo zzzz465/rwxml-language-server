@@ -3,7 +3,7 @@
  * are located before all elements where p(x) is true.
  * @returns the least x for which p(x) is true or array.length if no element fullfills the given function.
  */
-export function findFirst<T>(array: T[], p: (x: T) => boolean): number {
+export function sortedFindFirst<T>(array: T[], p: (x: T) => boolean): number {
   let low = 0,
     high = array.length
   if (high === 0) {
