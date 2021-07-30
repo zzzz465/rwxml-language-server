@@ -9,16 +9,16 @@ export enum TokenType {
   EndTagOpen,
   EndTagClose,
   EndTag,
-  DelimiterAssign, //
-  AttributeName, //
-  AttributeValue, //
-  StartXMLDeclarationTag, //
-  XMLDeclaration, //
-  EndXMLDeclarationTag, //
-  Content, //
-  Whitespace, //
-  Unknown, //
-  Script, //
-  Styles, //
-  EOS, //
+  DelimiterAssign,
+  AttributeName,
+  AttributeValue,
+  StartXMLDeclarationTag,
+  XMLDeclaration,
+  EndXMLDeclarationTag,
+  Content,
+  Whitespace,
+  Unknown,
+  Script,
+  Styles,
+  EOS,
 }
