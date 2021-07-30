@@ -542,6 +542,13 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/commander@^2.12.2":
+  version "2.12.2"
+  resolved "https://registry.yarnpkg.com/@types/commander/-/commander-2.12.2.tgz#183041a23842d4281478fa5d23c5ca78e6fd08ae"
+  integrity sha512-0QEFiR8ljcHp9bAbWxecjVRuAMr16ivPiGOw6KFQBVrVd0RQIcM3xKdRisH2EDWgVWujiYtHwhSkSUoAAGzH7Q==
+  dependencies:
+    commander "*"
+
 "@types/eslint-scope@^3.7.0":
   version "3.7.1"
   resolved "https://registry.yarnpkg.com/@types/eslint-scope/-/eslint-scope-3.7.1.tgz#8dc390a7b4f9dd9f1284629efce982e41612116e"
@@ -1356,6 +1363,11 @@ combined-stream@^1.0.8:
   integrity sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==
   dependencies:
     delayed-stream "~1.0.0"
+
+commander@*, commander@^8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-8.1.0.tgz#db36e3e66edf24ff591d639862c6ab2c52664362"
+  integrity sha512-mf45ldcuHSYShkplHHGKWb4TrmwQadxOn7v4WuhDJy0ZVoY5JFajaRDKD0PNe5qXzBX0rhovjTnP6Kz9LETcuA==
 
 commander@^2.20.0:
   version "2.20.3"
