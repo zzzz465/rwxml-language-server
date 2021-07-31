@@ -4,10 +4,7 @@ import { isDirectory } from '../../utils/fs'
 export default function (command: Command): void {
   const cmd = command.command('tr')
 
-  cmd
-    .command('extract <directory>')
-    .requiredOption('-l, --language-code', 'langauge code, example: ')
-    .action(extract)
+  cmd.command('extract <directory>').requiredOption('-l, --language-code', 'langauge code, example: ').action(extract)
 }
 
 async function extract(dirPath: string, options: any): Promise<void> {

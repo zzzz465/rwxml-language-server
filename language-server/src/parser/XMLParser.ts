@@ -18,6 +18,11 @@ export class XMLParser {
     this.token = TokenType.Unknown
   }
 
+  private static createXMLDocument(): XMLDocument {
+    const document = Object.create(null) as XMLDocument
+    return createXMLDocument(document, { document })
+  }
+
   private parse() {
     this.xmlDocument = XMLParser.createXMLDocument()
 
@@ -139,10 +144,5 @@ export class XMLParser {
         break
       }
     }
-  }
-
-  private static createXMLDocument(): XMLDocument {
-    const document = Object.create(null) as XMLDocument
-    return createXMLDocument(document, { document })
   }
 }

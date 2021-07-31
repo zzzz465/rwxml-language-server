@@ -18,6 +18,10 @@ export class TypeInfo {
   readonly metadata: Metadata
   readonly childNodes: Map<string, TypeInfo>
 
+  private constructor() {
+    throw new Error('constructor should not be called')
+  }
+
   @cache()
   get isDef(): boolean {
     return !!this.metadata.defType
@@ -26,9 +30,5 @@ export class TypeInfo {
   @cache()
   get specialType(): SpecialType | undefined {
     return typeMap.get(this.fullName)
-  }
-
-  private constructor() {
-    throw new Error('constructor should not be called')
   }
 }
