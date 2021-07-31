@@ -18,6 +18,7 @@ namespace extractor
             public static Type Def;
             public static Type UnsavedAttribute;
             public static Type IntRange, FloatRange, IntVec3;
+            public static Type MustTranslateAttribute;
         }
 
         static class UnityEngineTypes
@@ -37,6 +38,7 @@ namespace extractor
                 RWTypes.IntRange = RWAssem.GetType("Verse.IntRange");
                 RWTypes.FloatRange = RWAssem.GetType("Verse.FloatRange");
                 RWTypes.IntVec3 = RWAssem.GetType("Verse.IntVec3");
+                RWTypes.MustTranslateAttribute = RWAssem.GetType("Verse.MustTranslateAttribute");
                 UnityEngineTypes.Color = UnityAssem.GetType("UnityEngine.Color");
 
                 foreach (var assembly in assemblies)
@@ -149,21 +151,22 @@ namespace extractor
                     // set child type's typeId
                     if (fieldType.IsGenericType)
                     {
-                        var identifier = string.Empty;
+                        var fullName = string.Empty;
                         if (fieldType.GetGenericTypeDefinition() == listType)
                         {
-                            identifier = Util.GetListTypeIdentifier(fieldType);
+                            fullName = Util.GetListTypeIdentifier(fieldType);
                         }
                         else
                         {
-                            identifier = Util.GetGenericTypeIdentifier(fieldType);
+                            fullName = Util.GetGenericTypeIdentifier(fieldType);
                         }
-                        typeInfo.childNodes[fieldName] = identifier;
+                        typeInfo.fields[fieldName] = new RawFieldInfo() { fullName = fullName };
                     }
                     else
                     {
                         // typeInfo.childNodes[fieldName] = $"{fieldType.Namespace}.{fieldType.Name}";
-                        typeInfo.childNodes[fieldName] = Util.GetTypeIdentifier(fieldType);
+                        var fullName = Util.GetTypeIdentifier(fieldType);
+                        typeInfo.fields[fieldName] = new RawFieldInfo() { fullName = fullName };
                     }
                 }
                 typeInfo.childCollected = true;
@@ -214,6 +217,8 @@ namespace extractor
             {
                 var type = pair.Key;
                 var rawTypeInfo = pair.Value;
+
+                // populate rawTypeInfo
                 if (type.IsEnum)
                 {
 					// set leafNodeCompletions and specialType (obsolete), now moved to language-server part
@@ -298,6 +303,33 @@ namespace extractor
                     }
 
 					rawTypeInfo.metadata.compClass.baseClass = Util.GetTypeIdentifier(baseType);
+                }
+
+                // populate fieldInfo in fields
+
+                foreach(var pair2 in rawTypeInfo.fields)
+                {
+                    var fieldName = pair2.Key;
+                    var rawFieldInfo = pair2.Value;
+
+                    var fieldInfo = type.GetField(fieldName, BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
+
+                    rawFieldInfo.fullName = Util.GetTypeIdentifier(fieldInfo.FieldType);
+                    
+                    if (fieldInfo.IsPublic)
+                    {
+                        rawFieldInfo.accessModifier = "public";
+                    }
+                    else if (fieldInfo.IsPrivate)
+                    {
+                        rawFieldInfo.accessModifier = "private";
+                    }
+
+                    // check MustTranslateAttribute
+                    if (Attribute.IsDefined(fieldInfo, RWTypes.MustTranslateAttribute, false))
+                    {
+                        rawFieldInfo.fieldMetadata.mustTranslate = true;
+                    }
                 }
 
                 rawTypeInfo.populated = true;

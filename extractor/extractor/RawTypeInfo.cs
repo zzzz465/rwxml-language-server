@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace extractor
 {
+    // should match with typescript RawFieldInfo interface
     public class RawTypeInfo
     {
         public string fullName = "";
         public Metadata metadata;
-        public Dictionary<string, string> childNodes = new Dictionary<string, string>(); // Record<FieldName, TypeIdentifier>
+        public Dictionary<string, RawFieldInfo> fields = new Dictionary<string, RawFieldInfo>(); // Record<FieldName, TypeIdentifier>
 
         // helper fields
         [JsonIgnore]

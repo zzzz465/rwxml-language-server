@@ -19,8 +19,8 @@ export default class TypeInfoLoader {
       const typeInfo = typeInfoMap.get(fullName) as TypeInfo
       const fields = typeInfo.fields
 
-      // register all childNodes
-      for (const [fieldName, rawFieldInfo] of Object.entries(rawTypeInfo.childNodes)) {
+      // register all fields
+      for (const [fieldName, rawFieldInfo] of Object.entries(rawTypeInfo.fields)) {
         const typeIdentifier = rawFieldInfo.fullName
         const fieldTypeInfo = typeInfoMap.get(typeIdentifier) as TypeInfo
 
