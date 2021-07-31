@@ -2,51 +2,49 @@ import { TypeInfo } from './typeInfo'
 import { TypeInfoMap } from './typeInfoMap'
 import { AsEnumerable } from 'linq-es2015'
 import { RawTypeInfo } from './rawTypeInfo'
+import { FieldInfo } from './fieldInfo'
 
-export function load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
-  const rawTypeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
-    (k) => k.fullName,
-    (k) => k
-  )
-  const typeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
-    (k) => k.fullName,
-    () => TypeInfo.constructor.apply(Object.create(null)) as TypeInfo
-  )
+export default class TypeInfoLoader {
+  static load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
+    const rawTypeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
+      (k) => k.fullName,
+      (k) => k
+    )
+    const typeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
+      (k) => k.fullName,
+      (v) => new TypeInfo(v.fullName)
+    )
 
-  for (const [fullName, rawTypeInfo] of rawTypeInfoMap) {
-    const typeInfo = typeInfoMap.get(fullName) as TypeInfo
+    for (const [fullName, rawTypeInfo] of rawTypeInfoMap) {
+      const typeInfo = typeInfoMap.get(fullName) as TypeInfo
+      const fields = typeInfo.fields
 
-    const fields = new Map<string, TypeInfo>()
+      // register all childNodes
+      for (const [fieldName, rawFieldInfo] of Object.entries(rawTypeInfo.childNodes)) {
+        const typeIdentifier = rawFieldInfo.fullName
+        const fieldTypeInfo = typeInfoMap.get(typeIdentifier) as TypeInfo
 
-    // register all childNodes
-    for (const [fieldName, typeIdentifier] of Object.entries(rawTypeInfo.childNodes)) {
-      const fieldTypeInfo = typeInfoMap.get(typeIdentifier) as TypeInfo
+        if (fields.has(fieldName)) {
+          throw new Error(
+            `exception while connecting field to typeInfo: field ${fieldName} already exists in type ${fullName}`
+          )
+        }
 
-      if (fields.has(fieldName)) {
-        throw new Error(
-          `exception while connecting field to typeInfo: field ${fieldName} already exists in type ${fullName}`
-        )
+        const fieldInfo = new FieldInfo(rawFieldInfo.fieldMetadata, fieldTypeInfo)
+
+        fields.set(fieldName, fieldInfo)
       }
-
-      fields.set(fieldName, fieldTypeInfo)
     }
 
-    // assign values to typeInfo object
-    Object.assign(typeInfo, {
-      fullName,
-      childNodes: fields,
-      metadata: rawTypeInfo.metadata,
-    } as TypeInfo)
+    // freeze objects
+    ;[...typeInfoMap.values()].map((t) => {
+      Object.freeze(t)
+      Object.freeze(t.metadata)
+      Object.freeze(t.fields)
+    })
+
+    const ret = new TypeInfoMap()
+    ret.addTypeInfos(...typeInfoMap.values())
+    return ret
   }
-
-  // freeze objects
-  ;[...typeInfoMap.values()].map((t) => {
-    Object.freeze(t)
-    Object.freeze(t.metadata)
-    Object.freeze(t.childNodes)
-  })
-
-  const ret = new TypeInfoMap()
-  ret.addTypeInfos(...typeInfoMap.values())
-  return ret
 }

@@ -2,38 +2,57 @@ import { ValidXMLNode, XMLNode } from '../parser/XMLNode'
 import { TypeInfoMap } from './typeInfoMap'
 import { TypeInfo } from './typeInfo'
 import { Injectable } from './injectable'
+import { XMLDocument } from '../parser/XMLDocument'
+import { Def } from './def'
 
-// inject defType to xmlNode
-export function injectDefType(xmlNode: XMLNode, typeInfoMap: TypeInfoMap): boolean {
-  if (!xmlNode.validNode) {
-    return false
+export default class TypeInfoInjector {
+  // inject defType to xmlNode
+  static injectDefType(xmlNode: XMLNode, typeInfoMap: TypeInfoMap): boolean {
+    if (!xmlNode.validNode) {
+      return false
+    }
+
+    const elementName = xmlNode.name
+    const defTypeInfo = typeInfoMap.getTypeInfoByName(elementName)
+
+    if (defTypeInfo) {
+      TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap)
+      return true
+    } else {
+      return false
+    }
   }
 
-  const elementName = xmlNode.name
-  const defTypeInfo = typeInfoMap.getTypeInfoByName(elementName)
+  // recursively inject all typeInfo to xmlNode
+  static injectType(xmlNode: ValidXMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): void {
+    Object.assign<XMLNode, Partial<Injectable>>(xmlNode, { typeInfo })
 
-  if (defTypeInfo) {
-    inject(xmlNode, defTypeInfo, typeInfoMap)
-    return true
-  } else {
-    return false
-  }
-}
+    const injectable = xmlNode as Injectable
 
-// recursively inject all typeInfo to xmlNode
-export function inject(xmlNode: ValidXMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): void {
-  Object.assign<XMLNode, Partial<Injectable>>(xmlNode, { typeInfo })
+    for (const childNode of xmlNode.children) {
+      if (childNode.validNode) {
+        const elementName = injectable.name
+        const correspondingTypeInfo = injectable.typeInfo.fields.get(elementName)
 
-  const injectable = xmlNode as Injectable
-
-  for (const childNode of xmlNode.children) {
-    if (childNode.validNode) {
-      const elementName = injectable.name
-      const correspondingTypeInfo = injectable.typeInfo.childNodes.get(elementName)
-
-      if (correspondingTypeInfo) {
-        inject(childNode, correspondingTypeInfo, typeInfoMap)
+        if (correspondingTypeInfo) {
+          TypeInfoInjector.injectType(childNode, correspondingTypeInfo.typeInfo, typeInfoMap)
+        }
       }
     }
+  }
+
+  static inject(xmlDocument: XMLDocument, typeInfoMap: TypeInfoMap) {
+    const res = {
+      xmlDocument,
+      defs: [] as Def[],
+    }
+
+    if (xmlDocument.name === 'Defs') {
+      for (const xmlNode of xmlDocument.children) {
+        this.injectDefType(xmlNode, typeInfoMap)
+      }
+    }
+
+    return res
   }
 }

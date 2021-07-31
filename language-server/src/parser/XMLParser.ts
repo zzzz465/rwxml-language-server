@@ -13,6 +13,8 @@ export class XMLParser {
   private pendingAttribute: string | null = null
   private token: TokenType
 
+  private parsed = false
+
   constructor(private rawXML: string) {
     this.scanner = createScanner(this.rawXML, undefined, undefined, true)
     this.token = TokenType.Unknown
@@ -23,13 +25,17 @@ export class XMLParser {
     return createXMLDocument(document, { document })
   }
 
-  private parse() {
-    this.xmlDocument = XMLParser.createXMLDocument()
+  parse() {
+    if (!this.parsed) {
+      this.xmlDocument = XMLParser.createXMLDocument()
 
-    while (this.token != TokenType.EOS) {
-      this.scan()
-      this.token = this.scanner.scan()
+      while (this.token != TokenType.EOS) {
+        this.scan()
+        this.token = this.scanner.scan()
+      }
     }
+
+    return this.xmlDocument
   }
 
   private scan() {

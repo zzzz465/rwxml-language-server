@@ -1,7 +1,6 @@
 import { TypeIdentifier } from './declaredType'
 
 export interface Metadata {
-  texPath?: string
   enumerable?: {
     genericType: TypeIdentifier
   }
@@ -11,4 +10,5 @@ export interface Metadata {
   defType?: {
     name: string
   }
+  texPath?: string
 }

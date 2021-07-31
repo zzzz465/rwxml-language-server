@@ -1,6 +1,7 @@
 import { Metadata } from './metadata'
 import { cache } from '../utils/cache'
 import typeMap from './specialTypeMap'
+import { FieldInfo } from './fieldInfo'
 
 export type SpecialType =
   | 'integer'
@@ -14,13 +15,10 @@ export type SpecialType =
   | 'floatRange'
 
 export class TypeInfo {
-  readonly fullName: string
-  readonly metadata: Metadata
-  readonly childNodes: Map<string, TypeInfo>
+  readonly metadata: Metadata = {}
+  readonly fields: Map<string, FieldInfo> = new Map()
 
-  private constructor() {
-    throw new Error('constructor should not be called')
-  }
+  constructor(public readonly fullName: string) {}
 
   @cache()
   get isDef(): boolean {

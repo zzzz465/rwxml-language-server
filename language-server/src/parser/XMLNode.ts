@@ -9,18 +9,18 @@ function range(): Range {
 
 export type XMLNode = ValidXMLNode | InvalidXMLNode
 
-export interface InvalidXMLNode extends Readonly<IXMLNode> {
+export interface InvalidXMLNode extends IXMLNode {
   validNode: false
 }
 
-export interface ValidXMLNode extends Readonly<IXMLNode> {
+export interface ValidXMLNode extends IXMLNode {
   validNode: true
   name: string
   content: string
 }
 
-export interface IXMLNode extends XMLNodeBase {
-  children: XMLNode[]
+export interface IXMLNode extends Readonly<XMLNodeBase> {
+  readonly children: XMLNode[]
 }
 
 export class XMLNodeBase {
@@ -84,6 +84,16 @@ export class XMLNodeBase {
     }
 
     return this
+  }
+
+  findNode(dest: XMLNode[], predicate: (xmlNode: XMLNode) => boolean): void {
+    if (predicate(this as XMLNode)) {
+      dest.push(this as XMLNode)
+    }
+
+    for (const child of this.children) {
+      child.findNode(dest, predicate)
+    }
   }
 }
 

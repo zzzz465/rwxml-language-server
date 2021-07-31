@@ -1,6 +1,6 @@
-import { XMLNodeBase } from './XMLNode'
+import { IXMLNode, XMLNodeBase } from './XMLNode'
 
-export interface XMLDocument extends XMLNodeBase {
+export interface XMLDocument extends IXMLNode {
   readonly rawXML: string
   rawXMLDefinition: string
   uri: string

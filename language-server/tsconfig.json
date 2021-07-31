@@ -10,6 +10,7 @@
         "resolveJsonModule": true,
         "moduleResolution": "Node",
         "skipLibCheck": true,
-        "baseUrl": "."
+        "esModuleInterop": true,
+        "baseUrl": ".",
     }
 }
