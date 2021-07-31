@@ -1,0 +1,9 @@
+version:
+  1.3:
+    rawTypeInfos:
+      core:
+        url:
+      loyalty:
+        url:
+      ideology:
+        url:

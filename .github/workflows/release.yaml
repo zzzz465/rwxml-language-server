@@ -1,0 +1,18 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  branch_release:
+    name: push release branch
+    runs-on:
+      - 'ubuntu-latest'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: push to release branch
+        run: |
+          git switch -c release
+          git push origin release -f
