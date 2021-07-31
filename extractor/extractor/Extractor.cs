@@ -17,7 +17,6 @@ namespace extractor
             public static Assembly assembly;
             public static Type Def;
             public static Type UnsavedAttribute;
-            public static Type MustTranslateAttribute;
             public static Type IntRange, FloatRange, IntVec3;
         }
 
@@ -35,7 +34,6 @@ namespace extractor
                 RWTypes.assembly = RWAssem;
                 RWTypes.Def = RWAssem.GetType("Verse.Def");
                 RWTypes.UnsavedAttribute = RWAssem.GetType("Verse.UnsavedAttribute");
-                RWTypes.MustTranslateAttribute = RWAssem.GetType("Verse.MustTranslateAttribute");
                 RWTypes.IntRange = RWAssem.GetType("Verse.IntRange");
                 RWTypes.FloatRange = RWAssem.GetType("Verse.FloatRange");
                 RWTypes.IntVec3 = RWAssem.GetType("Verse.IntVec3");

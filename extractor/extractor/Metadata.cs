@@ -25,5 +25,6 @@ namespace extractor
         public FieldEnumerable enumerable;
         public FieldCompClass compClass;
         public FieldDefType defType;
+        public bool mustTranslate;
     }
 }
