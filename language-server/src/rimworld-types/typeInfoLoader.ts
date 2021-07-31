@@ -10,7 +10,7 @@ export function load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
   )
   const typeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
     (k) => k.fullName,
-    () => TypeInfo.constructor.apply(Object.create(null))
+    () => TypeInfo.constructor.apply(Object.create(null)) as TypeInfo
   )
 
   for (const [fullName, rawTypeInfo] of rawTypeInfoMap) {

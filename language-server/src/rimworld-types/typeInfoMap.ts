@@ -1,5 +1,6 @@
 import { TypeInfo } from './typeInfo'
-import { TypeIdentifier } from './declaredType'
+import { DefType, TypeIdentifier } from './declaredType'
+import { isFullName } from './util'
 
 export class TypeInfoMap {
   private typeMap: Map<TypeIdentifier, TypeInfo> = new Map()
@@ -19,7 +20,19 @@ export class TypeInfoMap {
     return [...this.typeMap.values()]
   }
 
-  getNodeByName(id: TypeIdentifier): TypeInfo | undefined {
+  getTypeInfoByName(id: DefType | TypeIdentifier): TypeInfo | undefined {
+    let typeInfo = this.typeMap.get(id)
+
+    if (!typeInfo) {
+      if (!isFullName(id)) {
+        typeInfo = this.typeMap.get(`RimWorld.${id}`)
+      }
+    }
+
+    return typeInfo
+  }
+
+  getTypeInfoFullName(id: TypeIdentifier): TypeInfo | undefined {
     return this.typeMap.get(id)
   }
 

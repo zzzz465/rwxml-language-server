@@ -1,13 +1,13 @@
 import { createScanner, Scanner } from './XMLScanner'
 import { createXMLDocument, XMLDocument } from './XMLDocument'
-import { createXMLNode, XMLNode } from './XMLNode'
+import { createXMLNode, XMLNodeBase } from './XMLNode'
 import { TokenType } from './TokenType'
 import { Range } from '../types'
 
 export class XMLParser {
   private scanner: Scanner
   private xmlDocument!: XMLDocument
-  private curr!: XMLNode
+  private curr!: XMLNodeBase
   private endTagStart = -1
   private endTagName?: string
   private pendingAttribute: string | null = null
@@ -19,7 +19,7 @@ export class XMLParser {
   }
 
   private parse() {
-    this.xmlDocument = this.createXMLDocument()
+    this.xmlDocument = XMLParser.createXMLDocument()
 
     while (this.token != TokenType.EOS) {
       this.scan()
@@ -97,12 +97,14 @@ export class XMLParser {
             while (this.curr !== node) {
               this.curr.elementRange.end = this.endTagStart
               this.curr.validNode = false
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               this.curr = this.curr.parent!
             }
 
             this.curr.validNode = true
             this.curr.endTagRange.start = this.endTagStart
             this.curr.elementRange.end = this.scanner.getTokenEnd()
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.curr = this.curr.parent!
           } else {
             // ignore closing tag </tag>
@@ -119,7 +121,7 @@ export class XMLParser {
       case TokenType.AttributeValue: {
         let value = this.scanner.getTokenText()
         if (value.length >= 2) {
-          // remove encapsuling text '' or ""
+          // remove encapsulating text '' or ""
           value = value.substring(1, value.length - 1)
         }
 
@@ -139,11 +141,8 @@ export class XMLParser {
     }
   }
 
-  private createXMLDocument(): XMLDocument {
-    // TODO: fix this method after filling XMLNode class
-    const document = Object.create(null)
-    return createXMLDocument(document, {
-      document,
-    })
+  private static createXMLDocument(): XMLDocument {
+    const document = Object.create(null) as XMLDocument
+    return createXMLDocument(document, { document })
   }
 }

@@ -1,6 +1,6 @@
-import { XMLNode } from './XMLNode'
+import { XMLNodeBase } from './XMLNode'
 
-export interface XMLDocument extends XMLNode {
+export interface XMLDocument extends XMLNodeBase {
   readonly rawXML: string
   rawXMLDefinition: string
   uri: string
@@ -8,5 +8,5 @@ export interface XMLDocument extends XMLNode {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function createXMLDocument(object: object | undefined, fields: Partial<XMLDocument>): XMLDocument {
-  return Object.assign(XMLNode.constructor.call(object ?? Object.create(null)), fields)
+  return Object.assign(XMLNodeBase.constructor.call(object ?? Object.create(null)), fields)
 }

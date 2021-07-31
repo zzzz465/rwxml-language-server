@@ -7,15 +7,31 @@ function range(): Range {
   return { start: -1, end: -1 }
 }
 
-export class XMLNode {
+export type XMLNode = ValidXMLNode | InvalidXMLNode
+
+export interface InvalidXMLNode extends Readonly<IXMLNode> {
+  validNode: false
+}
+
+export interface ValidXMLNode extends Readonly<IXMLNode> {
+  validNode: true
+  name: string
+  content: string
+}
+
+export interface IXMLNode extends XMLNodeBase {
+  children: XMLNode[]
+}
+
+export class XMLNodeBase {
   document: XMLDocument = <any>void 0
-  parent?: XMLNode
-  children: XMLNode[] = []
-  validNode = false
+  parent?: XMLNodeBase
+  children: XMLNodeBase[] = []
   selfClosed = false
-  name = ''
-  content = ''
+  name: string | null = null
+  content: string | null = null
   attributes: Record<string, string | null> = {}
+  validNode = false
 
   // ranges
   readonly elementRange: Range = range() // node 의 여는 태그 < 부터 닫는 태그 > 까지
@@ -31,15 +47,15 @@ export class XMLNode {
     return this.name === other
   }
 
-  firstChild(): XMLNode | undefined {
+  firstChild(): XMLNodeBase | undefined {
     return _.first(this.children)
   }
 
-  lastChild(): XMLNode | undefined {
+  lastChild(): XMLNodeBase | undefined {
     return _.last(this.children)
   }
 
-  findNodeBefore(offset: number): XMLNode {
+  findNodeBefore(offset: number): XMLNodeBase {
     const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
     if (index >= 0) {
       const child = this.children[index]
@@ -58,7 +74,7 @@ export class XMLNode {
     return this
   }
 
-  findNodeAt(offset: number): XMLNode {
+  findNodeAt(offset: number): XMLNodeBase {
     const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
     if (index >= 0) {
       const child = this.children[index]
@@ -72,6 +88,6 @@ export class XMLNode {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export function createXMLNode(object: object | undefined, fields: Partial<XMLNode>): XMLNode {
-  return Object.assign(XMLNode.constructor.call(object ?? Object.create(null)), fields)
+export function createXMLNode(object: object | undefined, fields: Partial<XMLNodeBase>): XMLNodeBase {
+  return Object.assign(XMLNodeBase.constructor.call(object ?? Object.create(null)), fields)
 }
