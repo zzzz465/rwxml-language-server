@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,9 @@ namespace extractor
         public Dictionary<string, string> childNodes = new Dictionary<string, string>(); // Record<FieldName, TypeIdentifier>
 
         // helper fields
+        [JsonIgnore]
         public bool childCollected = false;
+        [JsonIgnore]
         public bool populated = false;
 
         public RawTypeInfo(String fullName)
