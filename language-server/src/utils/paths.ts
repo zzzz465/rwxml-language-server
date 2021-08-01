@@ -50,6 +50,7 @@ export const join: (...parts: string[]) => string = function () {
 
   let value = ''
   for (let i = 0; i < arguments.length; i++) {
+    // eslint-disable-next-line prefer-rest-params
     const part = arguments[i]
     if (i > 0) {
       // add the separater between two parts unless
