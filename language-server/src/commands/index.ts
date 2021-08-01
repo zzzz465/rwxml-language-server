@@ -1,6 +1,6 @@
 import { Command } from 'commander'
-import xml from './xml'
+import tr from './tr'
 
 export default function (command: Command): void {
-  xml(command)
+  command.addCommand(tr())
 }

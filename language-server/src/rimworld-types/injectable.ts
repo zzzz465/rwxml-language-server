@@ -66,7 +66,7 @@ export function toInjectable(xmlNode: XMLNode, typeInfo: TypeInfo): Injectable {
 }
 
 export function unInjectable(xmlNode: Injectable): XMLNode {
-  const ret = xmlNode as Writable<Injectable>
+  const ret = xmlNode as Partial<Writable<Injectable>>
 
   delete ret.typeInfo
   delete ret.fields
@@ -74,5 +74,5 @@ export function unInjectable(xmlNode: Injectable): XMLNode {
   delete ret.getDefPath
   delete ret.getFieldInfo
 
-  return ret
+  return ret as XMLNode
 }

@@ -14,10 +14,15 @@ import { RawTypeInfo } from '../../rimworld-types/rawTypeInfo'
 import TypeInfoInjector from '../../rimworld-types/typeInfoInjector'
 import { Injectable } from '../../rimworld-types/injectable'
 
-export default function (command: Command): void {
-  const cmd = command.command('tr')
+export default function () {
+  const command = new Command('tr')
 
-  cmd.command('extract <directory>').requiredOption('-l, --language-code', 'langauge code, example: ').action(extract)
+  command
+    .command('extract <directory>')
+    .requiredOption('-l, --language-code', 'langauge code, example: ')
+    .action(extract)
+
+  return command
 }
 
 async function extract(dirPath: string, options: any): Promise<void> {
