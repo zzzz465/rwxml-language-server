@@ -13,7 +13,9 @@ export interface Def extends Injectable {
   }
 
   readonly defName: string
-  buildDefPath(): string
+
+  getDefPath(): string
+
   getFieldInfo(): undefined
 }
 
@@ -38,11 +40,18 @@ export function toDef(obj: Injectable): Def {
     throw new Error(`exception while getting defName from node: ${obj.content}`)
   }
 
-  return Object.assign(obj, {
+  const ret = Object.assign(obj, {
     inherit: { base: null, child: new Set() },
     reference: { incoming: new Set(), outgoing: new Set() },
     defName,
   }) as Def
+
+  ret.getDefPath = buildDefPath.bind(ret)
+  ret.getFieldInfo = function () {
+    return undefined
+  }
+
+  return ret
 }
 
 export function unDef(obj: Def): Injectable {
