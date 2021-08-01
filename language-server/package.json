@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",
+    "@types/double-ended-queue": "^2.1.1",
     "@types/jest": "^26.0.9",
     "@types/js-yaml": "^4.0.2",
     "@types/lodash": "^4.14.159",
@@ -57,6 +58,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "commander": "^8.1.0",
+    "double-ended-queue": "^2.1.0-0",
     "fast-glob": "^3.2.7",
     "js-yaml": "^4.1.0",
     "linq-es2015": "^2.5.1",

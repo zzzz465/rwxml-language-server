@@ -12,8 +12,8 @@ import { XMLParser } from '../../parser/XMLParser'
 import TypeInfoLoader from '../../rimworld-types/typeInfoLoader'
 import { RawTypeInfo } from '../../rimworld-types/rawTypeInfo'
 import TypeInfoInjector from '../../rimworld-types/typeInfoInjector'
-import { Injectable } from '../../rimworld-types/injectable'
-import { XMLNode } from '../../parser/XMLNode'
+import { Injectable, isInjectable } from '../../rimworld-types/injectable'
+import { AsEnumerable } from 'linq-es2015'
 
 export default function (command: Command): void {
   const cmd = command.command('tr')
@@ -68,12 +68,63 @@ async function extract(dirPath: string, options: any): Promise<void> {
   const injectedResults = xmlDocuments.map((xmlDocument) => TypeInfoInjector.inject(xmlDocument, typeInfoMap))
 
   // search all nodes and get which has [MustTranslate] tag exists
-  const translateNodes: XMLNode[] = []
-  const predicate = (node: Injectable) => {
-    // TODO: filter by mustTranslate
-    return false
+  const injectables: Injectable[] = []
+  for (const r of injectedResults) {
+    for (const def of r.defs) {
+      def.findNode(injectables, () => true)
+    }
   }
+
+  // FIXME: ugly code must be refactored
+  const translatorNodes: Injectable[] = []
+  for (const r of injectables) {
+    const xmlNodeMap = AsEnumerable(r.children).ToMap(
+      (r) => r.name,
+      (r) => r
+    )
+
+    for (const [fieldName, fieldInfo] of r.typeInfo.fields.entries()) {
+      if (fieldInfo.fieldMetadata.mustTranslate) {
+        const xmlNode = xmlNodeMap.get(fieldName)
+        if (xmlNode && isInjectable(xmlNode)) {
+          translatorNodes.push(xmlNode)
+        } else {
+          throw new Error()
+        }
+      }
+    }
+  }
+
   // build path based on it
+  // 1. get Def node
+  // 2. get parent chain
+  // 3. ... 이게 맞나?
+
+  // 그냥...
+  // 1. get Def node
+  // 2. traverse all child nodes while building path
+  // 3. if fieldMetadata has attribute mustTranslate, add it
+
+  // 결국, 현재 Node 만 가지고 바로 path 를 추출하는 알고리즘을 제작하면 된다.
 
   // print output with following output format (-o json, -o yaml, -o plainText?)
+}
+
+function extractTranslationNodes(parentPath: string, injectable: Injectable) {
+  const fields = injectable.typeInfo.fields
+  for (const child of injectable.children) {
+    if (isInjectable(child)) {
+      const fieldInfo = fields.get(child.name)
+      if (fieldInfo) {
+        if (fieldInfo.fieldMetadata.mustTranslate && child.isLeafNode()) {
+          // extract label string
+        }
+
+        if (!child.isLeafNode()) {
+        }
+      } else {
+        // TODO: throw warning
+      }
+    }
+  }
 }
