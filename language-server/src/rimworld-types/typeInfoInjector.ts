@@ -1,9 +1,9 @@
 import { ValidXMLNode, XMLNode } from '../parser/XMLNode'
 import { TypeInfoMap } from './typeInfoMap'
 import { TypeInfo } from './typeInfo'
-import { Injectable } from './injectable'
+import { Injectable, toInjectable } from './injectable'
 import { XMLDocument } from '../parser/XMLDocument'
-import { Def } from './def'
+import { Def, toDef } from './def'
 
 export default class TypeInfoInjector {
   // inject defType to xmlNode
@@ -17,6 +17,8 @@ export default class TypeInfoInjector {
 
     if (defTypeInfo) {
       TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap)
+      const def = toInjectable(xmlNode, defTypeInfo)
+      toDef(def)
       return true
     } else {
       return false
@@ -36,6 +38,7 @@ export default class TypeInfoInjector {
 
         if (correspondingTypeInfo) {
           TypeInfoInjector.injectType(childNode, correspondingTypeInfo.typeInfo, typeInfoMap)
+          toInjectable(childNode, correspondingTypeInfo.typeInfo)
         }
       }
     }
@@ -47,9 +50,15 @@ export default class TypeInfoInjector {
       defs: [] as Def[],
     }
 
-    if (xmlDocument.name === 'Defs') {
-      for (const xmlNode of xmlDocument.children) {
-        this.injectDefType(xmlNode, typeInfoMap)
+    const root = xmlDocument.firstChild()
+
+    if (root && root.name === 'Defs') {
+      for (const xmlNode of root.children) {
+        const success = this.injectDefType(xmlNode, typeInfoMap)
+
+        if (success) {
+          res.defs.push(xmlNode as Def)
+        }
       }
     }
 

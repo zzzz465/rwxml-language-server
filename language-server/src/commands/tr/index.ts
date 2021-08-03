@@ -19,7 +19,7 @@ export default function () {
 
   command
     .command('extract <directory>')
-    .requiredOption('-l, --language-code', 'langauge code, example: ')
+    .option('-l, --language-code', 'langauge code, example: ', 'en,ko')
     .action(extract)
 
   return command
@@ -32,14 +32,14 @@ async function extract(dirPath: string, options: any): Promise<void> {
   }
 
   // get manifest from web
-  let { data, status } = await axios.get(METADATA_URL)
-  if (status !== 200) {
+  let res = await axios.get(METADATA_URL)
+  if (res.status !== 200) {
     throw new Error(`cannot get manifest from web, url: ${METADATA_URL}`)
   }
 
-  const metadata = yaml.load(data) as Metadata | undefined
+  const metadata = yaml.load(res.data) as Metadata | undefined
   if (!metadata) {
-    throw new Error(`cannot parse metadata from given data: ${data}`)
+    throw new Error(`cannot parse metadata from given data: ${res.data}`)
   }
 
   // get rawXMLData from web
@@ -49,18 +49,21 @@ async function extract(dirPath: string, options: any): Promise<void> {
     throw new Error(`rawTypeInfos in metadata is undefined, metadata url: ${METADATA_URL}`)
   }
 
-  ;[data, status] = await axios.get(rawTypeInfosURL.core.url)
-  if (status !== 200) {
+  res = await axios.get(rawTypeInfosURL.core.url)
+  if (res.status !== 200) {
     throw new Error(`cannot get rawTypeInfo core.json from web, url: ${rawTypeInfosURL.core.url}`)
   }
 
   // parse rawTypeInfo and get typeInfoMap, injector
-  const coreRawTypeInfos = JSON.parse(data) as RawTypeInfo[]
+
+  // const coreRawTypeInfos = JSON.parse(res.data) as RawTypeInfo[]
+  const coreRawTypeInfos = res.data as RawTypeInfo[] // already parsed in axios module
   const typeInfoMap = TypeInfoLoader.load(coreRawTypeInfos)
 
   // grab all paths of xmls
-  const searchPath = normalize(path.join(dirPath, '**/*.xml'))
-  const pathToXMLs = await glob(searchPath, { absolute: true, onlyFiles: true, unique: true })
+  // FIXME: xml path not searched
+  const searchPath = normalize(dirPath)
+  const pathToXMLs = await glob('**/*.xml', { absolute: true, cwd: searchPath })
 
   // load all xmls as string
   const xmls = await Promise.all(pathToXMLs.map((p) => fs.promises.readFile(p, { encoding: 'utf-8' })))

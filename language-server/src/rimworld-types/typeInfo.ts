@@ -21,12 +21,12 @@ export class TypeInfo {
   constructor(public readonly fullName: string) {}
 
   @cache()
-  get isDef(): boolean {
+  isDef(): boolean {
     return !!this.metadata.defType
   }
 
   @cache()
-  get specialType(): SpecialType | undefined {
+  specialType(): SpecialType | undefined {
     return typeMap.get(this.fullName)
   }
 }

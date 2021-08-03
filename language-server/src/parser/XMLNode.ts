@@ -41,21 +41,21 @@ export class XMLNodeBase {
   readonly contentRange: Range = range() // value 의 시작 부터 끝까지 (공백포함)
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
+  public constructor() {}
 
   equalTag(other: string) {
     return this.name === other
   }
 
-  firstChild(): XMLNodeBase | undefined {
-    return _.first(this.children)
+  firstChild(): IXMLNode | undefined {
+    return _.first(this.children) as IXMLNode
   }
 
-  lastChild(): XMLNodeBase | undefined {
-    return _.last(this.children)
+  lastChild(): IXMLNode | undefined {
+    return _.last(this.children) as IXMLNode
   }
 
-  findNodeBefore(offset: number): XMLNodeBase {
+  findNodeBefore(offset: number): IXMLNode {
     const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
     if (index >= 0) {
       const child = this.children[index]
@@ -66,15 +66,15 @@ export class XMLNodeBase {
         if (lastChild && lastChild.elementRange.end === child.elementRange.end) {
           return child.findNodeBefore(offset)
         } else {
-          return child
+          return child as IXMLNode
         }
       }
     }
 
-    return this
+    return this as IXMLNode
   }
 
-  findNodeAt(offset: number): XMLNodeBase {
+  findNodeAt(offset: number): IXMLNode {
     const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
     if (index >= 0) {
       const child = this.children[index]
@@ -83,7 +83,7 @@ export class XMLNodeBase {
       }
     }
 
-    return this
+    return this as IXMLNode
   }
 
   findNode(dest: XMLNode[], predicate: (xmlNode: XMLNode) => boolean): void {
@@ -95,9 +95,4 @@ export class XMLNodeBase {
       child.findNode(dest, predicate)
     }
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function createXMLNode(object: object | undefined, fields: Partial<XMLNodeBase>): XMLNodeBase {
-  return Object.assign(XMLNodeBase.constructor.call(object ?? Object.create(null)), fields)
 }

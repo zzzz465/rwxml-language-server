@@ -1,6 +1,6 @@
 import { createScanner, Scanner } from './XMLScanner'
-import { createXMLDocument, XMLDocument } from './XMLDocument'
-import { createXMLNode, XMLNodeBase } from './XMLNode'
+import { XMLDocument } from './XMLDocument'
+import { XMLNodeBase } from './XMLNode'
 import { TokenType } from './TokenType'
 import { Range } from '../types'
 
@@ -20,14 +20,10 @@ export class XMLParser {
     this.token = TokenType.Unknown
   }
 
-  private static createXMLDocument(): XMLDocument {
-    const document = Object.create(null) as XMLDocument
-    return createXMLDocument(document, { document })
-  }
-
   parse() {
     if (!this.parsed) {
-      this.xmlDocument = XMLParser.createXMLDocument()
+      this.xmlDocument = this.createXMLDocument()
+      this.curr = this.xmlDocument
 
       while (this.token != TokenType.EOS) {
         this.scan()
@@ -46,11 +42,10 @@ export class XMLParser {
       }
       case TokenType.StartTagOpen: {
         // create child and assign some values
-        const child = createXMLNode(void 0, {
-          document: this.xmlDocument,
-          children: [],
-          parent: this.curr,
-        })
+        const child = new XMLNodeBase()
+        child.document = this.xmlDocument
+        child.parent = this.curr
+
         Object.assign<Range, Range>(child.elementRange, {
           start: this.scanner.getTokenOffset(),
           end: this.xmlDocument.rawXML.length,
@@ -150,5 +145,12 @@ export class XMLParser {
         break
       }
     }
+  }
+
+  private createXMLDocument() {
+    const document = new XMLNodeBase() as XMLDocument
+    Object.assign<XMLDocument, Partial<XMLDocument>>(document, { rawXML: this.rawXML, document })
+
+    return document
   }
 }
