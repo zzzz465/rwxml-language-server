@@ -12,7 +12,8 @@ import { XMLParser } from '../../parser/XMLParser'
 import TypeInfoLoader from '../../rimworld-types/typeInfoLoader'
 import { RawTypeInfo } from '../../rimworld-types/rawTypeInfo'
 import TypeInfoInjector from '../../rimworld-types/typeInfoInjector'
-import { Injectable } from '../../rimworld-types/injectable'
+import { Injectable, isInjectable } from '../../rimworld-types/injectable'
+import { AsEnumerable } from 'linq-es2015'
 
 export default function () {
   const command = new Command('tr')
@@ -61,23 +62,50 @@ async function extract(dirPath: string, options: any): Promise<void> {
   const typeInfoMap = TypeInfoLoader.load(coreRawTypeInfos)
 
   // grab all paths of xmls
-  // FIXME: xml path not searched
   const searchPath = normalize(dirPath)
   const pathToXMLs = await glob('**/*.xml', { absolute: true, cwd: searchPath })
 
   // load all xmls as string
-  const xmls = await Promise.all(pathToXMLs.map((p) => fs.promises.readFile(p, { encoding: 'utf-8' })))
+  const xmls = await Promise.all(
+    pathToXMLs.map(async (uri) => {
+      const text = await fs.promises.readFile(uri, { encoding: 'utf-8' })
+      return {
+        text,
+        uri,
+      }
+    })
+  )
 
   // parse xmls
-  const xmlDocuments = xmls.map((xml) => new XMLParser(xml).parse())
+  const xmlDocuments = xmls.map(({ uri, text }) => {
+    const xmlDocument = new XMLParser(text).parse()
+    xmlDocument.uri = uri
+
+    return xmlDocument
+  })
 
   // inject type into xml
   const injectedResults = xmlDocuments.map((xmlDocument) => TypeInfoInjector.inject(xmlDocument, typeInfoMap))
 
   // search all nodes and get which has [MustTranslate] tag exists
-  const injectables: Injectable[] = injectedResults.map((d) => d.defs).flat(1)
+  const defs = AsEnumerable(injectedResults)
+    .SelectMany((d) => d.defs)
+    .Where((d) => d.getDefName() !== undefined)
+    .ToArray()
 
-  const translatorNodes: Injectable[] = injectables.filter((d) => d.getFieldInfo()?.fieldMetadata.mustTranslate)
+  // get all injectables
+  const injectables: Injectable[] = []
+  for (const def of defs) {
+    const uri = def.document.uri
+    const allInjectables: Injectable[] = []
+    def.findNode(allInjectables, isInjectable)
+
+    console.log(allInjectables.length)
+  }
+
+  const translatorNodes: Injectable[] = AsEnumerable(injectables)
+    .Where((injectable) => injectable.getDefPath() !== undefined)
+    .ToArray()
 
   // print all nodes
   for (const node of translatorNodes) {

@@ -16,8 +16,7 @@ export default class TypeInfoInjector {
     const defTypeInfo = typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
-      TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap)
-      const def = toInjectable(xmlNode, defTypeInfo)
+      const def = TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap) as Def
       toDef(def)
       return true
     } else {
@@ -26,22 +25,21 @@ export default class TypeInfoInjector {
   }
 
   // recursively inject all typeInfo to xmlNode
-  static injectType(xmlNode: ValidXMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): void {
-    Object.assign<XMLNode, Partial<Injectable>>(xmlNode, { typeInfo })
-
-    const injectable = xmlNode as Injectable
+  static injectType(xmlNode: ValidXMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): Injectable {
+    const injectable = toInjectable(xmlNode, typeInfo)
 
     for (const childNode of xmlNode.children) {
       if (childNode.validNode) {
-        const elementName = injectable.name
+        const elementName = childNode.name
         const correspondingTypeInfo = injectable.typeInfo.fields.get(elementName)
 
         if (correspondingTypeInfo) {
           TypeInfoInjector.injectType(childNode, correspondingTypeInfo.typeInfo, typeInfoMap)
-          toInjectable(childNode, correspondingTypeInfo.typeInfo)
         }
       }
     }
+
+    return injectable
   }
 
   static inject(xmlDocument: XMLDocument, typeInfoMap: TypeInfoMap) {

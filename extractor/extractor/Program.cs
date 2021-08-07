@@ -74,8 +74,8 @@ namespace extractor
 
 					var serializerSetting = new JsonSerializerSettings();
 					serializerSetting.Formatting = option.formatted ? Formatting.Indented : Formatting.None;
-					serializerSetting.NullValueHandling = NullValueHandling.Ignore;
-					serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
+					serializerSetting.NullValueHandling = NullValueHandling.Include;
+					serializerSetting.DefaultValueHandling = DefaultValueHandling.Include;
 
 					var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
 					Log.Info($"serialized Object string length: {serializedObject.Length}");
