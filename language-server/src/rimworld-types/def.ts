@@ -1,10 +1,25 @@
-import { Injectable, isInjectable, toInjectable } from './injectable'
-import { XMLNode } from '../parser/XMLNode'
+import { Injectable } from './injectable'
 import { Writable } from '../utils/types'
 
-export interface Def extends Injectable {
+export class Def extends Injectable {
+  static toDef(injectable: Injectable): Def {
+    const def = injectable as Writable<Def>
+
+    def.inherit = {
+      child: new Set(),
+    }
+    def.reference = {
+      incoming: new Set(),
+      outgoing: new Set(),
+    }
+
+    Reflect.setPrototypeOf(def, Def.prototype)
+
+    return def
+  }
+
   readonly inherit: {
-    base: Def | null
+    base?: Def
     child: Set<Def>
   }
 
@@ -13,59 +28,29 @@ export interface Def extends Injectable {
     outgoing: Set<Def>
   }
 
-  getDefName(): string | undefined
-  getObjectRefName(): string | undefined
-  getDefPath(): string
-  getFieldInfo(): undefined
-}
+  private constructor() {
+    super()
+    throw new Error()
+  }
 
-function buildDefPath(this: Def) {
-  return this.name + '.' + this.name
-}
+  getDefName(): string | undefined {
+    const defNameNode = this.children.find((d) => d.name == 'defName')
+    if (defNameNode && defNameNode.validNode && defNameNode.content) {
+      return defNameNode.content
+    } else {
+      return undefined
+    }
+  }
 
-function getDefName(this: Def): string | undefined {
-  const defNameNode = this.children.find((d) => d.name == 'defName')
-  if (defNameNode && defNameNode.validNode) {
-    return defNameNode.content
-  } else {
+  override getDefPath(): string | undefined {
+    const defName = this.getDefName()
+
+    if (defName) {
+      return this.name + '.' + defName
+    }
+  }
+
+  getFieldInfo() {
     return undefined
   }
-}
-
-function getObjectRefName(this: Def): string | undefined {
-  return this.attributes['Name'] ?? undefined
-}
-
-export function isDef(obj: XMLNode | Injectable): obj is Def {
-  return isInjectable(obj) && 'inherit' in obj && 'reference' in obj
-}
-
-export function toDef(obj: Injectable): Def {
-  const ret = Object.assign(obj, {
-    inherit: { base: null, child: new Set() },
-    reference: { incoming: new Set(), outgoing: new Set() },
-  }) as Def
-
-  ret.getDefPath = buildDefPath.bind(ret)
-  ret.getDefName = getDefName.bind(ret)
-  ret.getObjectRefName = getObjectRefName.bind(ret)
-  ret.getFieldInfo = function () {
-    return undefined
-  }.bind(ret)
-
-  return ret
-}
-
-export function unDef(def: Def): Injectable {
-  const obj = def as Partial<Writable<Def>>
-  delete obj.inherit
-  delete obj.reference
-  delete obj.getDefName
-  delete obj.getDefName
-  delete obj.getObjectRefName
-
-  const ret = <Injectable>obj
-
-  toInjectable(ret, ret.typeInfo)
-  return ret
 }

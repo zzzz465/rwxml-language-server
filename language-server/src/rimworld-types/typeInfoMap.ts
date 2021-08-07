@@ -20,7 +20,11 @@ export class TypeInfoMap {
     return [...this.typeMap.values()]
   }
 
-  getTypeInfoByName(id: DefType | TypeIdentifier): TypeInfo | undefined {
+  getTypeInfoByName(id: DefType | TypeIdentifier | null | undefined): TypeInfo | undefined {
+    if (!id) {
+      return undefined
+    }
+
     let typeInfo = this.typeMap.get(id)
 
     if (!typeInfo) {

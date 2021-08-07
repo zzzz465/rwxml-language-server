@@ -1,9 +1,9 @@
-import { ValidXMLNode, XMLNode } from '../parser/XMLNode'
+import { XMLNode } from '../parser/XMLNode'
 import { TypeInfoMap } from './typeInfoMap'
 import { TypeInfo } from './typeInfo'
-import { Injectable, toInjectable } from './injectable'
+import { Injectable } from './injectable'
 import { XMLDocument } from '../parser/XMLDocument'
-import { Def, toDef } from './def'
+import { Def } from './def'
 
 export default class TypeInfoInjector {
   // inject defType to xmlNode
@@ -17,7 +17,7 @@ export default class TypeInfoInjector {
 
     if (defTypeInfo) {
       const def = TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap) as Def
-      toDef(def)
+      Def
       return true
     } else {
       return false
@@ -25,13 +25,12 @@ export default class TypeInfoInjector {
   }
 
   // recursively inject all typeInfo to xmlNode
-  static injectType(xmlNode: ValidXMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): Injectable {
-    const injectable = toInjectable(xmlNode, typeInfo)
+  static injectType(xmlNode: XMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): Injectable {
+    const injectable = Injectable.toInjectable(xmlNode, typeInfo)
 
     for (const childNode of xmlNode.children) {
       if (childNode.validNode) {
-        const elementName = childNode.name
-        const correspondingTypeInfo = injectable.typeInfo.fields.get(elementName)
+        const correspondingTypeInfo = injectable.typeInfo.fields.get(childNode.name ?? '')
 
         if (correspondingTypeInfo) {
           TypeInfoInjector.injectType(childNode, correspondingTypeInfo.typeInfo, typeInfoMap)

@@ -7,31 +7,15 @@ function range(): Range {
   return { start: -1, end: -1 }
 }
 
-export type XMLNode = ValidXMLNode | InvalidXMLNode
-
-export interface InvalidXMLNode extends IXMLNode {
-  validNode: false
-}
-
-export interface ValidXMLNode extends IXMLNode {
-  validNode: true
-  name: string
-  content: string
-}
-
-export interface IXMLNode extends Readonly<XMLNodeBase> {
-  readonly children: XMLNode[]
-}
-
-export class XMLNodeBase {
-  document: XMLDocument = <any>void 0
-  parent?: XMLNodeBase
-  children: XMLNodeBase[] = []
-  selfClosed = false
-  name: string | null = null
-  content: string | null = null
-  attributes: Record<string, string | null> = {}
-  validNode = false
+export class XMLNode {
+  readonly document: XMLDocument = <any>void 0
+  readonly parent?: XMLNode
+  readonly children: XMLNode[] = []
+  readonly selfClosed: boolean = false
+  readonly name: string | null = null
+  readonly content: string | null = null
+  readonly attributes: Record<string, string | null> = {}
+  readonly validNode: boolean = false
 
   // ranges
   readonly elementRange: Range = range() // node 의 여는 태그 < 부터 닫는 태그 > 까지
@@ -47,15 +31,15 @@ export class XMLNodeBase {
     return this.name === other
   }
 
-  firstChild(): IXMLNode | undefined {
-    return _.first(this.children) as IXMLNode
+  firstChild(): XMLNode | undefined {
+    return _.first(this.children) as XMLNode
   }
 
-  lastChild(): IXMLNode | undefined {
-    return _.last(this.children) as IXMLNode
+  lastChild(): XMLNode | undefined {
+    return _.last(this.children) as XMLNode
   }
 
-  findNodeBefore(offset: number): IXMLNode {
+  findNodeBefore(offset: number): XMLNode {
     const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
     if (index >= 0) {
       const child = this.children[index]
@@ -66,15 +50,15 @@ export class XMLNodeBase {
         if (lastChild && lastChild.elementRange.end === child.elementRange.end) {
           return child.findNodeBefore(offset)
         } else {
-          return child as IXMLNode
+          return child as XMLNode
         }
       }
     }
 
-    return this as IXMLNode
+    return this as XMLNode
   }
 
-  findNodeAt(offset: number): IXMLNode {
+  findNodeAt(offset: number): XMLNode {
     const index = sortedFindFirst(this.children, (c) => offset <= c.elementRange.start) - 1
     if (index >= 0) {
       const child = this.children[index]
@@ -83,7 +67,7 @@ export class XMLNodeBase {
       }
     }
 
-    return this as IXMLNode
+    return this as XMLNode
   }
 
   findNode(dest: XMLNode[], predicate: (xmlNode: XMLNode) => boolean): void {

@@ -12,7 +12,7 @@ import { XMLParser } from '../../parser/XMLParser'
 import TypeInfoLoader from '../../rimworld-types/typeInfoLoader'
 import { RawTypeInfo } from '../../rimworld-types/rawTypeInfo'
 import TypeInfoInjector from '../../rimworld-types/typeInfoInjector'
-import { Injectable, isInjectable } from '../../rimworld-types/injectable'
+import { Injectable } from '../../rimworld-types/injectable'
 import { AsEnumerable } from 'linq-es2015'
 
 export default function () {
@@ -98,7 +98,7 @@ async function extract(dirPath: string, options: any): Promise<void> {
   for (const def of defs) {
     const uri = def.document.uri
     const allInjectables: Injectable[] = []
-    def.findNode(allInjectables, isInjectable)
+    def.findNode(allInjectables, (inj) => inj instanceof Injectable)
 
     console.log(allInjectables.length)
   }

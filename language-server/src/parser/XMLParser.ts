@@ -1,13 +1,14 @@
 import { createScanner, Scanner } from './XMLScanner'
 import { XMLDocument } from './XMLDocument'
-import { XMLNodeBase } from './XMLNode'
+import { XMLNode } from './XMLNode'
 import { TokenType } from './TokenType'
 import { Range } from '../types'
+import { Writable } from '../utils/types'
 
 export class XMLParser {
   private scanner: Scanner
-  private xmlDocument!: XMLDocument
-  private curr!: XMLNodeBase
+  private xmlDocument!: Writable<XMLDocument>
+  private curr!: Writable<XMLNode>
   private endTagStart = -1
   private endTagName?: string
   private pendingAttribute: string | null = null
@@ -42,7 +43,7 @@ export class XMLParser {
       }
       case TokenType.StartTagOpen: {
         // create child and assign some values
-        const child = new XMLNodeBase()
+        const child = new XMLNode() as Writable<XMLNode>
         child.document = this.xmlDocument
         child.parent = this.curr
 
@@ -148,7 +149,7 @@ export class XMLParser {
   }
 
   private createXMLDocument() {
-    const document = new XMLNodeBase() as XMLDocument
+    const document = new XMLNode() as XMLDocument
     Object.assign<XMLDocument, Partial<XMLDocument>>(document, { rawXML: this.rawXML, document })
 
     return document
