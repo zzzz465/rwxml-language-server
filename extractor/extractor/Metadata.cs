@@ -8,10 +8,6 @@ namespace extractor
 {
     public struct Metadata
     {
-        public struct FieldEnumerable
-        {
-            public string genericType;
-        }
         public struct FieldCompClass
         {
             public string baseClass;
@@ -20,11 +16,15 @@ namespace extractor
         {
             public string name;
         }
+        public struct FieldGeneric
+        {
+            public string[] args;
+        }
 
         public string texPath;
-        public FieldEnumerable enumerable;
         public FieldCompClass compClass;
         public FieldDefType defType;
+        public FieldGeneric generic;
         public bool mustTranslate;
     }
 }

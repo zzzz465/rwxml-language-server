@@ -11,6 +11,7 @@ namespace extractor
     public static class Extractor
     {
         static Dictionary<Type, RawTypeInfo> typeDict = new Dictionary<Type, RawTypeInfo>();
+        static Type listType = typeof(List<>).GetGenericTypeDefinition();
 
         static class RWTypes
         {
@@ -74,7 +75,6 @@ namespace extractor
 
         static void CollectData_BFS(IEnumerable<Type> _types)
         {
-            var listType = typeof(List<>).GetGenericTypeDefinition();
             Queue<Type> types = new Queue<Type>(_types);
             while (types.Count > 0)
             {
@@ -120,8 +120,7 @@ namespace extractor
                         {
                             if (fieldType.GetGenericTypeDefinition() == listType)
                             {
-                                var fullName = Util.GetListTypeIdentifier(fieldType); // don't need to fill child nodes.
-                                typeDict.Add(fieldType, new RawTypeInfo(fullName));
+                                typeDict.Add(fieldType, new RawTypeInfo(fieldType));
                             }
                             else
                             {
@@ -154,18 +153,18 @@ namespace extractor
                         var fullName = string.Empty;
                         if (fieldType.GetGenericTypeDefinition() == listType)
                         {
-                            fullName = Util.GetListTypeIdentifier(fieldType);
+                            fullName = NameUtility.GetTypeIdentifier(fieldType);
                         }
                         else
                         {
-                            fullName = Util.GetGenericTypeIdentifier(fieldType);
+                            fullName = NameUtility.GetTypeIdentifier(fieldType);
                         }
                         typeInfo.fields[fieldName] = new RawFieldInfo() { fullName = fullName };
                     }
                     else
                     {
                         // typeInfo.childNodes[fieldName] = $"{fieldType.Namespace}.{fieldType.Name}";
-                        var fullName = Util.GetTypeIdentifier(fieldType);
+                        var fullName = NameUtility.GetTypeIdentifier(fieldType);
                         typeInfo.fields[fieldName] = new RawFieldInfo() { fullName = fullName };
                     }
                 }
@@ -230,65 +229,19 @@ namespace extractor
                 }
                 if (type.IsGenericType)
                 {
-                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>).GetGenericTypeDefinition())
-                    {
-                        var T = type.GetGenericArguments()[0];
-						rawTypeInfo.metadata.enumerable.genericType = Util.GetTypeIdentifier(T);
-						// rawTypeInfo doesn't accept enumerableType anymore, leave this code for future use.
-                        // enumerable.enumerableType = "list";
-                    }
-                }
-                else if (type.IsArray)
-                {
-                    var T = type.GetElementType();
-                    rawTypeInfo.metadata.enumerable.genericType = Util.GetTypeIdentifier(T);
-					// rawTypeInfo doesn't accept enumerableType anymore, leave this code for future use.
-                    // enumerable.enumerableType = "array";
-                }
-                if (type == stringType)
-                {
-                    // rawTypeInfo.specialType.@string = true;
-                }
-                if (type.IsPrimitive)
-                {
-                    if (integers.Contains(type))
-                    {
-                        // rawTypeInfo.specialType.integer = true;
-                    }
-                    else if (floats.Contains(type))
-                    {
-                        // rawTypeInfo.specialType.@float = true;
-                    }
-                }
-                if (type == typeof(bool))
-                {
-                    // rawTypeInfo.specialType.@bool = true;
-                }
-                if (type.IsSubclassOf(UnityEngineTypes.Color))
-                {
-                    // rawTypeInfo.specialType.color = true;
-                }
-                if (type == RWTypes.IntRange)
-                {
-                    // rawTypeInfo.specialType.intRange = true;
-                }
-                if (type == RWTypes.FloatRange)
-                {
-                    // rawTypeInfo.specialType.floatRange = true;
-                }
-                if (type == RWTypes.IntVec3)
-                {
-                    // rawTypeInfo.specialType.intVec3 = true;
+                    var args = from T in type.GenericTypeArguments
+                               select NameUtility.GetTypeIdentifier(T);
+                    rawTypeInfo.metadata.generic.args = args.ToArray();
                 }
                 if (type.IsSubclassOf(def))
                 {
 					if (type.IsArray)
 					{
-						rawTypeInfo.metadata.defType.name = Util.GetArrayTypeIdentifier(type);
+						rawTypeInfo.metadata.defType.name = NameUtility.GetTypeIdentifier(type);
 					}
 					else
 					{
-						rawTypeInfo.metadata.defType.name = Util.GetTypeIdentifier(type);
+						rawTypeInfo.metadata.defType.name = NameUtility.GetTypeIdentifier(type);
 					}
                 }
                 if (type.Name.Contains("CompProperties"))
@@ -302,11 +255,10 @@ namespace extractor
                         baseType = baseType.BaseType;
                     }
 
-					rawTypeInfo.metadata.compClass.baseClass = Util.GetTypeIdentifier(baseType);
+					rawTypeInfo.metadata.compClass.baseClass = NameUtility.GetTypeIdentifier(baseType);
                 }
 
                 // populate fieldInfo in fields
-
                 foreach(var pair2 in rawTypeInfo.fields)
                 {
                     var fieldName = pair2.Key;
@@ -314,7 +266,14 @@ namespace extractor
 
                     var fieldInfo = type.GetField(fieldName, BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
 
-                    rawFieldInfo.fullName = Util.GetTypeIdentifier(fieldInfo.FieldType);
+                    if (fieldInfo.FieldType.IsGenericType && fieldInfo.FieldType.GetGenericTypeDefinition() == listType)
+                    {
+                        rawFieldInfo.fullName = NameUtility.GetTypeIdentifier(fieldInfo.FieldType);
+                    }
+                    else
+                    {
+                        rawFieldInfo.fullName = NameUtility.GetTypeIdentifier(fieldInfo.FieldType);
+                    }
                     
                     if (fieldInfo.IsPublic)
                     {

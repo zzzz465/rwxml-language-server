@@ -17,7 +17,6 @@ export default class TypeInfoInjector {
 
     if (defTypeInfo) {
       const def = TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap) as Def
-      Def
       return true
     } else {
       return false
@@ -26,6 +25,8 @@ export default class TypeInfoInjector {
 
   // recursively inject all typeInfo to xmlNode
   static injectType(xmlNode: XMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): Injectable {
+    console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
+
     const injectable = Injectable.toInjectable(xmlNode, typeInfo)
 
     for (const childNode of xmlNode.children) {

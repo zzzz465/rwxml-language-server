@@ -20,40 +20,9 @@ namespace extractor
         [JsonIgnore]
         public bool populated = false;
 
-        public RawTypeInfo(String fullName)
+        public RawTypeInfo(Type T)
         {
-            this.fullName = fullName;
-        }
-
-        public RawTypeInfo(Type type)
-        {
-            this.fullName = GetFullName(type);
-        }
-
-        private static string GetFullName(Type type)
-        {
-            string typeId = "";
-            if (type.IsGenericType)
-            {
-                if (type.GetGenericTypeDefinition() == typeof(List<>))
-                {
-                    typeId = Util.GetListTypeIdentifier(type);
-                }
-                else
-                {
-                    typeId = Util.GetGenericTypeIdentifier(type);
-                }
-            }
-            else if (type.IsArray)
-            {
-                typeId = Util.GetArrayTypeIdentifier(type);
-            }
-            else
-            {
-                typeId = Util.GetTypeIdentifier(type);
-            }
-
-            return typeId;
+            this.fullName = NameUtility.GetTypeIdentifier(T);
         }
     }
 }

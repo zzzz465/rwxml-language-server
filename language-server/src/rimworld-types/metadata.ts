@@ -1,14 +1,16 @@
 import { TypeIdentifier } from './declaredType'
 
 export interface Metadata {
-  enumerable?: {
-    genericType: TypeIdentifier
-  }
   compClass?: {
     baseClass: TypeIdentifier
   }
   defType?: {
     name: string
+  }
+  generic?: {
+    args: {
+      fullName: TypeIdentifier
+    }[]
   }
   texPath?: string
 }
