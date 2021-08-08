@@ -46,20 +46,12 @@ namespace extractor
                 {
                     Log.Info($"Extracting data from {assembly.GetName().FullName}");
 
-                    try
-                    {
-                        // collect Def or CompProperties (naming convention)
-                        var types = from type in assembly.GetTypes()
-                                    where type != null && (type.IsSubclassOf(RWTypes.Def) || type.Name.Contains("CompProperties"))
-                                    select type;
-                        var name = assembly.GetName().Name;
-                        CollectData_BFS(types);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"Error was thrown while extracting data from {assembly.GetName().FullName}");
-                        Log.Error(ex.Message);
-                    }
+                    // collect Def or CompProperties (naming convention)
+                    var types = from type in assembly.GetTypes()
+                                where type != null && (type.IsSubclassOf(RWTypes.Def) || type.Name.Contains("CompProperties"))
+                                select type;
+                    var name = assembly.GetName().Name;
+                    CollectData_BFS(types);
                 }
                 var relatedTypes = SearchDerivedClasses(assemblies);
                 CollectData_BFS(relatedTypes);
@@ -98,74 +90,28 @@ namespace extractor
                     continue;
                 }
 
-                var name = type.Name;
-
                 var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-                foreach (var field in fields)
+                foreach (var fieldInfo in fields)
                 {
-                    var fieldType = field.FieldType;
-                    var fieldName = field.Name;
+                    var fieldType = fieldInfo.FieldType;
+                    var fieldName = fieldInfo.Name;
 
-                    var unsavedAttr = field.CustomAttributes.FirstOrDefault(attr => attr.AttributeType == RWTypes.UnsavedAttribute);
-                    if (unsavedAttr != null)
+                    if (!typeDict.ContainsKey(fieldType))
                     {
-                        var allowLoading = (bool)unsavedAttr.ConstructorArguments[0].Value;
-                        if (allowLoading == false)
-                            continue;
-                    }
+                        typeDict.Add(fieldType, new RawTypeInfo(fieldType));
+                        types.Enqueue(fieldType);
 
-                    if (!typeDict.ContainsKey(fieldType)) // if it is not registered
-                    {
                         if (fieldType.IsGenericType)
                         {
-                            if (fieldType.GetGenericTypeDefinition() == listType)
+                            foreach(var T in fieldType.GenericTypeArguments)
                             {
-                                typeDict.Add(fieldType, new RawTypeInfo(fieldType));
-                            }
-                            else
-                            {
-                                types.Enqueue(fieldType); // need to fill child nodes
-                                var genericTArgs = fieldType.GetGenericArguments();
-                                foreach (var T in genericTArgs)
+                                if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
                                 {
-                                    if (T.IsGenericParameter)
-                                    { // example) K of List<K>, we don't need that
-                                        continue;
-                                    }
-
-                                    if (!typeDict.ContainsKey(T))
-                                    {
-                                        types.Enqueue(T);
-                                    }
+                                    typeDict.Add(T, new RawTypeInfo(T));
+                                    types.Enqueue(T);
                                 }
                             }
                         }
-                        else
-                        {
-                            typeDict.Add(fieldType, new RawTypeInfo(fieldType));
-                            types.Enqueue(fieldType);
-                        }
-                    }
-
-                    // set child type's typeId
-                    if (fieldType.IsGenericType)
-                    {
-                        var fullName = string.Empty;
-                        if (fieldType.GetGenericTypeDefinition() == listType)
-                        {
-                            fullName = NameUtility.GetTypeIdentifier(fieldType);
-                        }
-                        else
-                        {
-                            fullName = NameUtility.GetTypeIdentifier(fieldType);
-                        }
-                        typeInfo.fields[fieldName] = new RawFieldInfo() { fullName = fullName };
-                    }
-                    else
-                    {
-                        // typeInfo.childNodes[fieldName] = $"{fieldType.Namespace}.{fieldType.Name}";
-                        var fullName = NameUtility.GetTypeIdentifier(fieldType);
-                        typeInfo.fields[fieldName] = new RawFieldInfo() { fullName = fullName };
                     }
                 }
                 typeInfo.childCollected = true;
@@ -180,9 +126,11 @@ namespace extractor
                 var baseType = type;
                 while (baseType != null && baseType != objType)
                 {
-                    if (typeDict.ContainsKey(baseType))
-                        return true;
                     baseType = baseType.BaseType;
+                    if (baseType != null && typeDict.ContainsKey(baseType))
+                    {
+                        return true;
+                    }
                 }
                 return false;
             };
@@ -198,52 +146,11 @@ namespace extractor
 
         static void PopulateData()
         {
-            var integers = new HashSet<Type>(new Type[] {
-                        typeof(byte), typeof(sbyte), typeof(Int16), typeof(UInt16), typeof(Int32), typeof(UInt32),
-                        typeof(Int64), typeof(UInt64)
-                    });
-
-            var floats = new HashSet<Type>(new Type[]
-            {
-                        typeof(Single), typeof(double)
-            });
-            var stringType = typeof(string);
-
-            var targets = typeDict;
-
-            var def = RWTypes.Def;
-            foreach (var pair in targets)
+            foreach (var pair in typeDict)
             {
                 var type = pair.Key;
                 var rawTypeInfo = pair.Value;
 
-                // populate rawTypeInfo
-                if (type.IsEnum)
-                {
-					// set leafNodeCompletions and specialType (obsolete), now moved to language-server part
-                    // var values = type.GetEnumValues().Cast<Object>().Select(obj => obj.ToString())
-                        // .Select(name => new CompletionItem() { label = name, kind = CompletionItemKind.Enum })
-                        // .ToArray();
-                    // rawTypeInfo.leafNodeCompletions = values;
-                    // rawTypeInfo.specialType.@enum = true;
-                }
-                if (type.IsGenericType)
-                {
-                    var args = from T in type.GenericTypeArguments
-                               select NameUtility.GetTypeIdentifier(T);
-                    rawTypeInfo.metadata.generic.args = args.ToArray();
-                }
-                if (type.IsSubclassOf(def))
-                {
-					if (type.IsArray)
-					{
-						rawTypeInfo.metadata.defType.name = NameUtility.GetTypeIdentifier(type);
-					}
-					else
-					{
-						rawTypeInfo.metadata.defType.name = NameUtility.GetTypeIdentifier(type);
-					}
-                }
                 if (type.Name.Contains("CompProperties"))
                 {
                     var baseType = type;
@@ -256,39 +163,6 @@ namespace extractor
                     }
 
 					rawTypeInfo.metadata.compClass.baseClass = NameUtility.GetTypeIdentifier(baseType);
-                }
-
-                // populate fieldInfo in fields
-                foreach(var pair2 in rawTypeInfo.fields)
-                {
-                    var fieldName = pair2.Key;
-                    var rawFieldInfo = pair2.Value;
-
-                    var fieldInfo = type.GetField(fieldName, BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
-
-                    if (fieldInfo.FieldType.IsGenericType && fieldInfo.FieldType.GetGenericTypeDefinition() == listType)
-                    {
-                        rawFieldInfo.fullName = NameUtility.GetTypeIdentifier(fieldInfo.FieldType);
-                    }
-                    else
-                    {
-                        rawFieldInfo.fullName = NameUtility.GetTypeIdentifier(fieldInfo.FieldType);
-                    }
-                    
-                    if (fieldInfo.IsPublic)
-                    {
-                        rawFieldInfo.accessModifier = "public";
-                    }
-                    else if (fieldInfo.IsPrivate)
-                    {
-                        rawFieldInfo.accessModifier = "private";
-                    }
-
-                    // check MustTranslateAttribute
-                    if (Attribute.IsDefined(fieldInfo, RWTypes.MustTranslateAttribute, false))
-                    {
-                        rawFieldInfo.fieldMetadata.mustTranslate = true;
-                    }
                 }
 
                 rawTypeInfo.populated = true;

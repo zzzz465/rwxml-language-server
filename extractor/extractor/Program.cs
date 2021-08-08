@@ -52,8 +52,6 @@ namespace extractor
 				// 	Log.SetOutput(option.logOutputPath);
 				// }
 
-				try
-				{
 					Log.Info("Extracting data from");
 					foreach (var file in option.targetFiles) { 
 						Log.Info(file);
@@ -103,12 +101,6 @@ namespace extractor
 					Console.WriteLine(serializedObject);
 					Log.Info("Extraction completed!");
 					exitCode = 0;
-				}
-				catch (Exception ex)
-				{
-					Log.Error(ex.ToString());
-					exitCode = 1;
-				}
 			});
 
 			return exitCode;

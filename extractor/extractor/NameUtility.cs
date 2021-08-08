@@ -12,7 +12,14 @@ namespace extractor
 
         public static string GetTypeIdentifier(Type T)
         {
-            return $"{T.Namespace}.${T.Name}";
+            if (String.IsNullOrEmpty(T.Namespace))
+            {
+                return T.Name;
+            }
+            else
+            {
+                return String.Join(".", T.Namespace, T.Name);
+            }
         }
     }
 }
