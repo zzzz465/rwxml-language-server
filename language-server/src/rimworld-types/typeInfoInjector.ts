@@ -30,11 +30,11 @@ export default class TypeInfoInjector {
     const injectable = Injectable.toInjectable(xmlNode, typeInfo)
 
     for (const childNode of xmlNode.children) {
-      if (childNode.validNode) {
-        const correspondingTypeInfo = injectable.typeInfo.fields.get(childNode.name ?? '')
+      if (childNode.validNode && childNode.name) {
+        const fieldInfo = injectable.typeInfo.fields[childNode.name]
 
-        if (correspondingTypeInfo) {
-          TypeInfoInjector.injectType(childNode, correspondingTypeInfo.typeInfo, typeInfoMap)
+        if (fieldInfo) {
+          TypeInfoInjector.injectType(childNode, fieldInfo.fieldType, typeInfoMap)
         }
       }
     }

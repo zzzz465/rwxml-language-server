@@ -1,6 +1,15 @@
 import { TypeInfo } from './typeInfo'
-import { FieldMetadata } from './fieldMetadata'
+import { TypeIdentifier } from './declaredType'
+
+export interface FieldInfoMetadata {}
 
 export class FieldInfo {
-  constructor(readonly fieldMetadata: FieldMetadata, readonly typeInfo: TypeInfo) {}
+  constructor(
+    public readonly metadata: FieldInfoMetadata,
+    public readonly declaringType: TypeInfo,
+    public readonly fieldType: TypeInfo,
+    public readonly attributes: Record<string, TypeIdentifier>,
+    public readonly isPublic: boolean,
+    public readonly isPrivate: boolean
+  ) {}
 }

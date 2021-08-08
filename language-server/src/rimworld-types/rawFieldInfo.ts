@@ -1,8 +1,3 @@
-import { TypeIdentifier } from './declaredType'
-import { FieldMetadata } from './fieldMetadata'
+import { FieldInfo } from './fieldInfo'
 
-export interface RawFieldInfo {
-  fieldMetadata: FieldMetadata
-  fullName: TypeIdentifier
-  accessModifier: 'public' | 'protected' | 'private'
-}
+export type RawFieldInfo = FieldInfo
