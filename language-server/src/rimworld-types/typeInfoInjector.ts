@@ -17,6 +17,7 @@ export default class TypeInfoInjector {
 
     if (defTypeInfo) {
       const def = TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap) as Def
+      Def.toDef(def)
       return true
     } else {
       return false

@@ -33,6 +33,7 @@ async function extract(dirPath: string, options: any): Promise<void> {
   }
 
   // get manifest from web
+  /*
   let res = await axios.get(METADATA_URL)
   if (res.status !== 200) {
     throw new Error(`cannot get manifest from web, url: ${METADATA_URL}`)
@@ -59,6 +60,15 @@ async function extract(dirPath: string, options: any): Promise<void> {
 
   // const coreRawTypeInfos = JSON.parse(res.data) as RawTypeInfo[]
   const coreRawTypeInfos = res.data as RawTypeInfo[] // already parsed in axios module
+  const typeInfoMap = TypeInfoLoader.load(coreRawTypeInfos)
+  */
+
+  // use local rawTypeInfo
+  const corePath = path.join(__dirname, '../../../../metadata/rawTypeInfos/1.3/core.json')
+  const coreRawTypeInfoText = await fs.promises.readFile(corePath, {
+    encoding: 'utf-8',
+  })
+  const coreRawTypeInfos = JSON.parse(coreRawTypeInfoText)
   const typeInfoMap = TypeInfoLoader.load(coreRawTypeInfos)
 
   // grab all paths of xmls
@@ -97,10 +107,7 @@ async function extract(dirPath: string, options: any): Promise<void> {
   const injectables: Injectable[] = []
   for (const def of defs) {
     const uri = def.document.uri
-    const allInjectables: Injectable[] = []
-    def.findNode(allInjectables, (inj) => inj instanceof Injectable)
-
-    console.log(allInjectables.length)
+    def.findNode(injectables, (inj) => inj instanceof Injectable)
   }
 
   const translatorNodes: Injectable[] = AsEnumerable(injectables)

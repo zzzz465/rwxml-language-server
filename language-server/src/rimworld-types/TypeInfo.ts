@@ -21,10 +21,10 @@ export class TypeInfo {
   constructor(
     public readonly metadata: TypeInfoMetadata,
     public readonly fullName: string,
-    public readonly attributes: Record<string, TypeIdentifier>,
-    public readonly fields: Record<string, FieldInfo>,
-    public readonly GenericArguments: TypeIdentifier[],
-    public readonly baseClass: TypeInfo | undefined,
+    public readonly attributes: Record<string, TypeInfo>, // need to populate typeInfo
+    public readonly fields: Record<string, FieldInfo>, // need to populate typeInfo
+    public readonly genericArguments: TypeInfo[], // need to populate typeInfo
+    public readonly baseClass: TypeInfo | undefined, // need to populate typeInfo
     public readonly isGeneric: boolean,
     public readonly isArray: boolean
   ) {}
@@ -38,5 +38,10 @@ export class TypeInfo {
     } else {
       return false
     }
+  }
+
+  @cache()
+  isEnumerable(): boolean {
+    return this.isArray || this.fullName.includes('System.Collections.Generic.List')
   }
 }

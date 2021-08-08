@@ -32,7 +32,7 @@ export class Injectable extends XMLNode {
   getDefPath(): string | undefined {
     const parentDefPath = this.parent.getDefPath()
     if (parentDefPath) {
-      if (this.parent.typeInfo.metadata.enumerable) {
+      if (this.parent.typeInfo.isEnumerable()) {
         // TODO: add rule which doesn't use <li> node
         const index = this.parent.children.indexOf(this)
         return parentDefPath + '.' + String(index)
@@ -44,7 +44,7 @@ export class Injectable extends XMLNode {
 
   getFieldInfo(): FieldInfo | undefined {
     if (this.name && this.parent) {
-      const fieldInfo = this.parent.typeInfo.fields.get(this.name)
+      const fieldInfo = this.parent.typeInfo.fields[this.name]
       if (!fieldInfo) {
         throw new Error(`xmlNode ${this.content} is injectable but not registered on parent's typeInfo as field`)
       }
