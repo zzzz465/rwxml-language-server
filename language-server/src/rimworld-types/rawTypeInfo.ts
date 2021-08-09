@@ -1,3 +1,3 @@
 import { TypeInfo } from './TypeInfo'
 
-export type RawTypeInfo = TypeInfo
+export type RawTypeInfo = Partial<TypeInfo>
