@@ -31,9 +31,17 @@ namespace extractor
 
             foreach (var attrib in fieldInfo.CustomAttributes)
             {
-                var attribType = attrib.AttributeType;
-                attributes.Add(attribType.Name, NameUtility.GetTypeIdentifier(attribType));
+                if (!attrib.AttributeType.IsSpecialName)
+                {
+                    var attribType = attrib.AttributeType;
+                    attributes.Add(attribType.Name, NameUtility.GetTypeIdentifier(attribType));
+                }
             }
+        }
+
+        public bool ShouldSerializeattributes()
+        {
+            return this.attributes.Count > 0;
         }
     }
 }

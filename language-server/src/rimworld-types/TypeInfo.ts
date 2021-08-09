@@ -25,6 +25,7 @@ export class TypeInfo {
     public readonly fields: Record<string, FieldInfo>, // need to populate typeInfo
     public readonly genericArguments: TypeInfo[], // need to populate typeInfo
     public readonly baseClass: TypeInfo | undefined, // need to populate typeInfo
+    public readonly methods: string[],
     public readonly isGeneric: boolean,
     public readonly isArray: boolean
   ) {}

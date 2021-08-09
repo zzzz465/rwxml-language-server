@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace extractor
@@ -37,6 +38,7 @@ namespace extractor
         public Dictionary<string, string> attributes = new Dictionary<string, string>();
         public Dictionary<string, RawFieldInfo> fields = new Dictionary<string, RawFieldInfo>();
         public List<string> genericArguments = new List<string>();
+        public List<string> methods = new List<string>();
         public string baseClass;
         public bool isGeneric, isArray;
 
@@ -65,8 +67,11 @@ namespace extractor
             // fields
             foreach (var field in T.GetFields())
             {
-                var rawFieldInfo = new RawFieldInfo(field);
-                fields.Add(rawFieldInfo.Name, rawFieldInfo);
+                if (!TypeFilter.IsBannedField(field))
+                {
+                    var rawFieldInfo = new RawFieldInfo(field);
+                    fields.Add(rawFieldInfo.Name, rawFieldInfo);
+                }
             }
 
             // attributes
@@ -78,6 +83,39 @@ namespace extractor
                     this.attributes.Add(type.Name, NameUtility.GetTypeIdentifier(type));
                 }
             }
+
+            // useful methods
+            var methods = T.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            foreach (var method in methods)
+            {
+                switch (method.Name)
+                {
+                    case "LoadDataFromXmlCustom":
+                        this.methods.Add(method.Name);
+                        break;
+                }
+            }
+        }
+
+        // json properties
+        public bool ShouldSerializegenericArguments()
+        {
+            return this.genericArguments.Count > 0;
+        }
+
+        public bool ShouldSerializeattributes()
+        {
+            return this.attributes.Count > 0;
+        }
+
+        public bool ShouldSerializefields()
+        {
+            return this.fields.Count > 0;
+        }
+
+        public bool ShouldSerializemethods()
+        {
+            return this.methods.Count > 0;
         }
     }
 }

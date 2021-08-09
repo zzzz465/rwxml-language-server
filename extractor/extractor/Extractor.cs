@@ -73,6 +73,11 @@ namespace extractor
                 var type = types.Dequeue();
                 var typeName = type.Name;
 
+                if (TypeFilter.IsBannedType(type))
+                {
+                    continue;
+                }
+
                 RawTypeInfo typeInfo;
                 if (!typeDict.TryGetValue(type, out typeInfo))
                 {
