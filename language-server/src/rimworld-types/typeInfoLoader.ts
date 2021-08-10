@@ -24,6 +24,7 @@ export default class TypeInfoLoader {
             rawTypeInfo.fields ?? {},
             rawTypeInfo.genericArguments ?? [],
             rawTypeInfo.baseClass,
+            rawTypeInfo.methods ?? [],
             rawTypeInfo.isGeneric ?? false,
             rawTypeInfo.isArray ?? false
           )
@@ -41,8 +42,6 @@ export default class TypeInfoLoader {
           const t = typeInfoMap.get(<string>(<unknown>fullName))
           if (t) {
             typeInfo.attributes.name = t
-          } else {
-            throw new Error()
           }
         }
 
