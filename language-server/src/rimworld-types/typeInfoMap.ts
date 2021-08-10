@@ -2,6 +2,22 @@ import { TypeInfo } from './typeInfo'
 import { DefType, TypeIdentifier } from './declaredType'
 import { isFullName } from './util'
 
+const rimworldNamespaces = [
+  'Verse',
+  'RimWorld',
+  'Verse.AI',
+  'Verse.AI.Group',
+  'Verse.Noise',
+  'Verse.Sound',
+  'RimWorld.Planet',
+  'Verse.Profile',
+  'Verse.Grammar',
+  'RimWorld.BaseGen',
+  'RimWorld.IO',
+  'RimWorld.QuestGen',
+  'RimWorld.SketchGen',
+]
+
 export class TypeInfoMap {
   private typeMap: Map<TypeIdentifier, TypeInfo> = new Map()
 
@@ -29,7 +45,14 @@ export class TypeInfoMap {
 
     if (!typeInfo) {
       if (!isFullName(id)) {
-        typeInfo = this.typeMap.get(`RimWorld.${id}`)
+        for (const ns of rimworldNamespaces) {
+          const fullName = `${ns}.${id}`
+          typeInfo = this.typeMap.get(fullName)
+          if (typeInfo) {
+            this.typeMap.set(id, typeInfo)
+            break
+          }
+        }
       }
     }
 
