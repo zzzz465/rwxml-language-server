@@ -43,6 +43,6 @@ export class TypeInfo {
 
   @cache()
   isEnumerable(): boolean {
-    return this.isArray || this.fullName.includes('System.Collections.Generic.List')
+    return this.isArray || (this.isGeneric && this.fullName.match(/System\.Collections\.Generic\.List.*/) != null)
   }
 }

@@ -106,7 +106,6 @@ async function extract(dirPath: string, options: any): Promise<void> {
   // get all injectables
   const injectables: Injectable[] = []
   for (const def of defs) {
-    const uri = def.document.uri
     def.findNode(injectables, (inj) => inj instanceof Injectable)
   }
 

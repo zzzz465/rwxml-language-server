@@ -29,17 +29,26 @@ export default class TypeInfoInjector {
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo)
+    if (typeInfo.isEnumerable()) {
+      const listGenericType = typeInfo.genericArguments[0]
+      console.assert(!!listGenericType, `listGenericType for type: ${typeInfo.fullName} is invalid.`)
 
-    for (const childNode of xmlNode.children) {
-      if (childNode.validNode && childNode.name) {
-        const fieldInfo = injectable.typeInfo.fields[childNode.name]
+      for (const childNode of injectable.children) {
+        if (childNode.validNode && childNode.name) {
+          TypeInfoInjector.injectType(childNode, listGenericType, typeInfoMap)
+        }
+      }
+    } else {
+      for (const childNode of injectable.children) {
+        if (childNode.validNode && childNode.name) {
+          const fieldInfo = injectable.typeInfo.fields[childNode.name]
 
-        if (fieldInfo) {
-          TypeInfoInjector.injectType(childNode, fieldInfo.fieldType, typeInfoMap)
+          if (fieldInfo) {
+            TypeInfoInjector.injectType(childNode, fieldInfo.fieldType, typeInfoMap)
+          }
         }
       }
     }
-
     return injectable
   }
 
