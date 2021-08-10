@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
+    "cache-decorator": "^0.1.6",
     "commander": "^8.1.0",
     "double-ended-queue": "^2.1.0-0",
     "fast-glob": "^3.2.7",

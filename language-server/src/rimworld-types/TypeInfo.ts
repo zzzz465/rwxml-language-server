@@ -1,6 +1,5 @@
-import { cache } from '../utils/cache'
 import { FieldInfo } from './fieldInfo'
-import { TypeIdentifier } from './declaredType'
+import { cache, CacheType, CacheScope } from 'cache-decorator'
 
 export type SpecialType =
   | 'integer'
@@ -30,7 +29,7 @@ export class TypeInfo {
     public readonly isArray: boolean
   ) {}
 
-  @cache()
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isDef(): boolean {
     if (this.fullName === 'Verse.Def') {
       return true
@@ -41,7 +40,7 @@ export class TypeInfo {
     }
   }
 
-  @cache()
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isEnumerable(): boolean {
     return this.isArray || (this.isGeneric && this.fullName.match(/System\.Collections\.Generic\.List.*/) != null)
   }
