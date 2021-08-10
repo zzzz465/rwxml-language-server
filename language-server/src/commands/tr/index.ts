@@ -135,7 +135,7 @@ async function extract(dirPath: string, options: Options): Promise<void> {
   const translatorNodes: Injectable[] = AsEnumerable(injectables)
     .Where((injectable) => injectable.getDefPath() !== undefined)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    .Where((d) => regexFilters.some((f) => f.test(d.getDefPath()!)))
+    .Where((d) => regexFilters.length == 0 || regexFilters.some((f) => f.test(d.getDefPath()!)))
     .ToArray()
 
   // print all nodes
