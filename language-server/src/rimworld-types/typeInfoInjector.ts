@@ -26,10 +26,21 @@ export default class TypeInfoInjector {
 
   // recursively inject all typeInfo to xmlNode
   static injectType(xmlNode: XMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): Injectable {
+    const classAttribute = xmlNode.attributes.Class
+
+    // support <li Class="XXXCompProperties_YYY">
+    if (classAttribute) {
+      const ClassTypeInfo = typeInfoMap.getTypeInfoByName(classAttribute)
+      if (ClassTypeInfo) {
+        typeInfo = ClassTypeInfo
+      }
+    }
+
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo)
     if (typeInfo.isEnumerable()) {
+      // <li> types
       const listGenericType = typeInfo.genericArguments[0]
       console.assert(!!listGenericType, `listGenericType for type: ${typeInfo.fullName} is invalid.`)
 
