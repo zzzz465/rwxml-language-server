@@ -20,16 +20,39 @@ export default function () {
 
   command
     .command('extract <directory>')
-    .option('-l, --language-code', 'langauge code, example: ', 'en,ko')
+    .option('-l, --language-code <languageCode>', 'langauge code, example: en,ko', 'en,ko')
+    .option('-a, --add-regex [filters...]', 'add filter regex, example: *.description')
+    .option('--filterFile [filterFiles...]', 'add file that contians list of filter regex, splitted by LF')
     .action(extract)
 
   return command
 }
 
-async function extract(dirPath: string, options: any): Promise<void> {
+interface Options {
+  languageCode?: string
+  addRegex?: string[]
+  filterFile?: string[]
+}
+
+async function extract(dirPath: string, options: Options): Promise<void> {
   // validate directory is valid
   if (!(await isDirectory(dirPath))) {
     throw new Error(`directory ${dirPath} is not a valid path.`)
+  }
+
+  const regexFilters: RegExp[] = []
+
+  for (const file of options.filterFile ?? []) {
+    if (fs.existsSync(file)) {
+      const text = fs.readFileSync(file, { encoding: 'utf-8' })
+      regexFilters.push(...text.split('\n').map((r) => new RegExp(r, 'g')))
+    } else {
+      throw new Error(`file ${file} that you provided do not exist.`)
+    }
+  }
+
+  for (const filter of options.addRegex ?? []) {
+    regexFilters.push(new RegExp(filter, 'g'))
   }
 
   // get manifest from web
@@ -111,24 +134,12 @@ async function extract(dirPath: string, options: any): Promise<void> {
 
   const translatorNodes: Injectable[] = AsEnumerable(injectables)
     .Where((injectable) => injectable.getDefPath() !== undefined)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .Where((d) => regexFilters.some((f) => f.test(d.getDefPath()!)))
     .ToArray()
 
   // print all nodes
   for (const node of translatorNodes) {
     console.log(`path: ${node.getDefPath()}, content: ${node.content}`)
   }
-
-  // build path based on it
-  // 1. get Def node
-  // 2. get parent chain
-  // 3. ... 이게 맞나?
-
-  // 그냥...
-  // 1. get Def node
-  // 2. traverse all child nodes while building path
-  // 3. if fieldMetadata has attribute mustTranslate, add it
-
-  // 결국, 현재 Node 만 가지고 바로 path 를 추출하는 알고리즘을 제작하면 된다.
-
-  // print output with following output format (-o json, -o yaml, -o plainText?)
 }
