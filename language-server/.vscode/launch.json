@@ -15,7 +15,7 @@
                 "src/index.ts",
                 "tr",
                 "extract",
-                "../../Core"
+                "../../Core/hediffs",
             ],
             "cwd": "${workspaceRoot}",
             "internalConsoleOptions": "openOnSessionStart",
