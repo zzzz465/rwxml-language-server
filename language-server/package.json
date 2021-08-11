@@ -10,6 +10,7 @@
     "test": "jest",
     "lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
     "webpack": "webpack --mode development",
+    "build": "tsc --outDir dist",
     "vscode:prepublish": "npm run upload-only && webpack --mode production"
   },
   "author": "madeline",
