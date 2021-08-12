@@ -57,6 +57,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
+    "chokidar": "^3.5.2",
     "double-ended-queue": "^2.1.0-0",
     "js-yaml": "^4.1.0",
     "linq-es2015": "^2.5.1",
