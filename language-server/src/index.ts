@@ -1,3 +1,4 @@
+import { workspace } from 'vscode'
 import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver'
 
 const connection = createConnection(ProposedFeatures.all)
