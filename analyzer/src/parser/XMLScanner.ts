@@ -3,9 +3,6 @@ import { TokenType } from './TokenType'
 import { MultiLineStream } from './MultiLineStream'
 import { _BNG, _DQO, _EQS, _FSL, _LAN, _MIN, _QUE, _RAN, _SQO } from './char'
 
-export { TextDocument } from 'vscode-languageserver-textdocument'
-export * from 'vscode-languageserver-types'
-
 export interface Scanner {
   scan(): TokenType
 

@@ -7,6 +7,8 @@
         "rootDir": "src",
         "sourceMap": true,
         "strict": true,
+        "emitDecoratorMetadata": true,
+        "declaration": true,
         "resolveJsonModule": true,
         "moduleResolution": "Node",
         "skipLibCheck": true,
@@ -16,5 +18,8 @@
         "paths": {
             "cache-decorator": ["node_modules/cache-decorator/lib/index.d.ts"] // https://github.com/brn/cache-decorator
         }
-    }
+    },
+    "exclude": [
+        "./dist"
+    ]
 }
