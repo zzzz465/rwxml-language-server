@@ -5,18 +5,19 @@ import { Injectable } from './injectable'
 import { XMLDocument } from '../parser/XMLDocument'
 import { Def } from './def'
 
-export default class TypeInfoInjector {
-  // inject defType to xmlNode
-  static injectDefType(xmlNode: XMLNode, typeInfoMap: TypeInfoMap): boolean {
+export class TypeInfoInjector {
+  constructor(private typeInfoMap: TypeInfoMap) {}
+
+  injectDefType(xmlNode: XMLNode): boolean {
     if (!xmlNode.validNode) {
       return false
     }
 
     const elementName = xmlNode.name
-    const defTypeInfo = typeInfoMap.getTypeInfoByName(elementName)
+    const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
-      const def = TypeInfoInjector.injectType(xmlNode, defTypeInfo, typeInfoMap) as Def
+      const def = this.injectType(xmlNode, defTypeInfo) as Def
       Def.toDef(def)
       return true
     } else {
@@ -25,12 +26,12 @@ export default class TypeInfoInjector {
   }
 
   // recursively inject all typeInfo to xmlNode
-  static injectType(xmlNode: XMLNode, typeInfo: TypeInfo, typeInfoMap: TypeInfoMap): Injectable {
+  injectType(xmlNode: XMLNode, typeInfo: TypeInfo): Injectable {
     const classAttribute = xmlNode.attributes.Class
 
     // support <li Class="XXXCompProperties_YYY">
     if (classAttribute) {
-      const ClassTypeInfo = typeInfoMap.getTypeInfoByName(classAttribute)
+      const ClassTypeInfo = this.typeInfoMap.getTypeInfoByName(classAttribute)
       if (ClassTypeInfo) {
         typeInfo = ClassTypeInfo
       }
@@ -46,7 +47,7 @@ export default class TypeInfoInjector {
 
       for (const childNode of injectable.children) {
         if (childNode.validNode && childNode.name) {
-          TypeInfoInjector.injectType(childNode, listGenericType, typeInfoMap)
+          this.injectType(childNode, listGenericType)
         }
       }
     } else {
@@ -55,7 +56,7 @@ export default class TypeInfoInjector {
           const fieldInfo = injectable.typeInfo.fields[childNode.name]
 
           if (fieldInfo) {
-            TypeInfoInjector.injectType(childNode, fieldInfo.fieldType, typeInfoMap)
+            this.injectType(childNode, fieldInfo.fieldType)
           }
         }
       }
@@ -63,7 +64,7 @@ export default class TypeInfoInjector {
     return injectable
   }
 
-  static inject(xmlDocument: XMLDocument, typeInfoMap: TypeInfoMap) {
+  inject(xmlDocument: XMLDocument) {
     const res = {
       xmlDocument,
       defs: [] as Def[],
@@ -73,7 +74,7 @@ export default class TypeInfoInjector {
 
     if (root && root.name === 'Defs') {
       for (const xmlNode of root.children) {
-        const success = this.injectDefType(xmlNode, typeInfoMap)
+        const success = this.injectDefType(xmlNode)
 
         if (success) {
           res.defs.push(xmlNode as Def)

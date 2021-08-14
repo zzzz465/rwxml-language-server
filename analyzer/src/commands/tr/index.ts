@@ -11,7 +11,7 @@ import * as fs from 'fs'
 import { XMLParser } from '../../parser/XMLParser'
 import TypeInfoLoader from '../../rimworld-types/typeInfoLoader'
 import { RawTypeInfo } from '../../rimworld-types/rawTypeInfo'
-import TypeInfoInjector from '../../rimworld-types/typeInfoInjector'
+import { TypeInfoInjector } from '../../rimworld-types/typeInfoInjector'
 import { Injectable } from '../../rimworld-types/injectable'
 import { AsEnumerable } from 'linq-es2015'
 
@@ -117,8 +117,10 @@ async function extract(dirPath: string, options: Options): Promise<void> {
     return xmlDocument
   })
 
+  const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
+
   // inject type into xml
-  const injectedResults = xmlDocuments.map((xmlDocument) => TypeInfoInjector.inject(xmlDocument, typeInfoMap))
+  const injectedResults = xmlDocuments.map((xmlDocument) => typeInfoInjector.inject(xmlDocument))
 
   // search all nodes and get which has [MustTranslate] tag exists
   const defs = AsEnumerable(injectedResults)
