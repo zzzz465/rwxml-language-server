@@ -10,7 +10,7 @@ repos:
           - commit
       - id: analyzer::git-add-build
         name: git add dist directory
-        entry: bash -c "git add 'analyzer/dist/**/*.*'"
+        entry: bash -c "sleep 0.2; git add 'analyzer/dist/**/*.*'"
         files: analyzer/.*
         language: system
         stages:
