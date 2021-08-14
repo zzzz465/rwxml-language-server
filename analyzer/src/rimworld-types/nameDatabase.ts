@@ -6,7 +6,7 @@ export class NameDatabase {
   private uriToInheritNames: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
 
   addDef(def: Def): boolean {
-    const inheritName = def.getInheritName()
+    const inheritName = def.getNameAttributeValue()
 
     if (inheritName) {
       this.inheritNames.setValue(inheritName, def)
@@ -27,7 +27,7 @@ export class NameDatabase {
   }
 
   removeDef(def: Def): Def {
-    const inheritName = def.getInheritName()
+    const inheritName = def.getNameAttributeValue()
 
     if (inheritName) {
       this.inheritNames.remove(inheritName, def)
