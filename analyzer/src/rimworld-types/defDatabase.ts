@@ -26,20 +26,25 @@ export class DefDatabase {
     return this.uriToDef.getValue(uri)
   }
 
-  removeDef(def: Def): void {
+  removeDef(def: Def): Def {
     const defName = def.getDefName()
 
     if (defName) {
       this.defs.remove(defName, def)
       this.uriToDef.remove(def.document.uri, def)
+
+      return def
     } else {
       throw new Error()
     }
   }
 
-  removeAllDefsByUri(uri: string): void {
-    for (const def of this.getDefByUri(uri)) {
+  removeAllDefsByUri(uri: string): Def[] {
+    const defs = this.getDefByUri(uri)
+    for (const def of defs) {
       this.removeDef(def)
     }
+
+    return defs
   }
 }
