@@ -22,4 +22,15 @@ export class DefDatabase {
     this.defs.remove(defName, def)
     this.uriToDef.remove(def.document.uri, def)
   }
+
+  removeAllDefsByUri(uri: string): void {
+    this.getDefByUri(uri).map((def) => {
+      const defName = def.getDefName()
+      if (defName) {
+        this.removeDef(defName, def)
+      } else {
+        throw new Error()
+      }
+    })
+  }
 }
