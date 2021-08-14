@@ -3,7 +3,7 @@ import { Disposable } from 'vscode-languageserver'
 import { FileManager } from './fs/fileManager'
 
 export class Project implements Disposable {
-  // private readonly defDatabase = new
+  private readonly defDatabase = new 
   private readonly fileManager = new FileManager()
 
   constructor(public readonly version: string) {}
