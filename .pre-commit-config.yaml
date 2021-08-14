@@ -1,0 +1,11 @@
+repos:
+  - repo: local
+    hooks:
+      - id: analyzer::build
+        name: build analyzer
+        entry: bash -c "cd analyzer; yarn build"
+        args:
+          - build
+        files: analyzer/.*
+        language: system
+
