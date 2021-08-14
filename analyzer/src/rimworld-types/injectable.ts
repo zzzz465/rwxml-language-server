@@ -2,10 +2,19 @@ import { XMLNode } from '../parser/XMLNode'
 import { TypeInfo } from './typeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
+import { Def } from './def'
 
 export class Injectable extends XMLNode {
   static toInjectable(node: XMLNode, typeInfo: TypeInfo): Injectable {
     const ret = node as Writable<Injectable>
+
+    ret.inherit = {
+      base: new Set(),
+      child: new Set(),
+    }
+    ret.reference = {
+      outgoing: new Set(),
+    }
 
     ret.typeInfo = typeInfo
     ret.fields = new Map()
@@ -19,6 +28,15 @@ export class Injectable extends XMLNode {
   readonly typeInfo!: TypeInfo
   readonly fields!: Map<string, Injectable>
   readonly parent!: Injectable
+
+  readonly inherit: {
+    base: Set<Def>
+    child: Set<Def>
+  }
+
+  readonly reference: {
+    outgoing: Set<Def>
+  }
 
   protected constructor() {
     super()

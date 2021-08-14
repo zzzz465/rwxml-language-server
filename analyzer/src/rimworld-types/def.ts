@@ -7,27 +7,16 @@ export class Def extends Injectable {
   static toDef(injectable: Injectable): Def {
     const def = injectable as Writable<Def>
 
-    def.inherit = {
-      child: new Set<DefNameType>(),
-    }
-    def.reference = {
-      incoming: new Set<DefNameType>(),
-      outgoing: new Set<DefNameType>(),
-    }
+    def.reference.incoming = new Set()
 
     Reflect.setPrototypeOf(def, Def.prototype)
 
     return def
   }
 
-  readonly inherit: {
-    base?: DefNameType
-    child: Set<DefNameType>
-  }
-
   readonly reference: {
-    incoming: Set<DefNameType>
-    outgoing: Set<DefNameType>
+    incoming: Set<Injectable>
+    outgoing: Set<Def>
   }
 
   private constructor() {
