@@ -44,6 +44,11 @@ export class Def extends Injectable {
     }
   }
 
+  getInheritName(): string | undefined {
+    const inheritName = this.attributes['Name']
+    return inheritName ?? undefined
+  }
+
   override getDefPath(): string | undefined {
     const defName = this.getDefName()
 

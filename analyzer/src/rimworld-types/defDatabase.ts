@@ -5,9 +5,17 @@ export class DefDatabase {
   private defs: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
   private uriToDef: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
 
-  addDef(defName: string, def: Def): void {
-    this.defs.setValue(defName, def)
-    this.uriToDef.setValue(def.document.uri, def)
+  addDef(def: Def): boolean {
+    const defName = def.getDefName()
+
+    if (defName) {
+      this.defs.setValue(defName, def)
+      this.uriToDef.setValue(def.document.uri, def)
+
+      return true
+    } else {
+      return false
+    }
   }
 
   getDef(defName: string): Def[] {
@@ -18,19 +26,20 @@ export class DefDatabase {
     return this.uriToDef.getValue(uri)
   }
 
-  removeDef(defName: string, def: Def): void {
-    this.defs.remove(defName, def)
-    this.uriToDef.remove(def.document.uri, def)
+  removeDef(def: Def): void {
+    const defName = def.getDefName()
+
+    if (defName) {
+      this.defs.remove(defName, def)
+      this.uriToDef.remove(def.document.uri, def)
+    } else {
+      throw new Error()
+    }
   }
 
   removeAllDefsByUri(uri: string): void {
-    this.getDefByUri(uri).map((def) => {
-      const defName = def.getDefName()
-      if (defName) {
-        this.removeDef(defName, def)
-      } else {
-        throw new Error()
-      }
-    })
+    for (const def of this.getDefByUri(uri)) {
+      this.removeDef(def)
+    }
   }
 }
