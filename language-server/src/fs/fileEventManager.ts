@@ -1,6 +1,6 @@
 // manages all file in project
 
-import { createNanoEvents, DefaultEvents, Emitter } from 'nanoevents'
+import { createNanoEvents, Emitter } from 'nanoevents'
 import { Disposable } from 'vscode-languageserver'
 import { File } from './file'
 
@@ -11,7 +11,7 @@ export interface FileManagerEvents {
   dispose(): void
 }
 
-export class FileManager implements Disposable {
+export class FileEventManager implements Disposable {
   readonly fileEvent: Emitter<FileManagerEvents> = createNanoEvents()
 
   FileCreated(file: File) {

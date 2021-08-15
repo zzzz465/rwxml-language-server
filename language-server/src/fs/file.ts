@@ -1,15 +1,15 @@
 import { URI } from 'vscode-uri'
 
-export type FileType = 'Unknown' | 'Image' | 'XML' | 'Sound'
+export type File = XMLFile
 
-export interface File {
-  readonly type: FileType
+export interface IFile {
   readonly uri: URI
 }
 
-export class XMLFile implements File {
-  readonly type = 'XML'
-  private text = ''
-
+export class OtherFile implements IFile {
   constructor(public readonly uri: URI) {}
+}
+
+export class XMLFile implements IFile {
+  constructor(public readonly uri: URI, public readonly text: string) {}
 }
