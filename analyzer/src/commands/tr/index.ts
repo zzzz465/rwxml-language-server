@@ -111,7 +111,7 @@ async function extract(dirPath: string, options: Options): Promise<void> {
 
   // parse xmls
   const xmlDocuments = xmls.map(({ uri, text }) => {
-    const xmlDocument = new XMLParser(text).parse()
+    const xmlDocument = new XMLParser(text, uri).parse()
     xmlDocument.uri = uri
 
     return xmlDocument

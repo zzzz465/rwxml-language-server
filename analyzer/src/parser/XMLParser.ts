@@ -16,7 +16,7 @@ export class XMLParser {
 
   private parsed = false
 
-  constructor(private rawXML: string) {
+  constructor(private rawXML: string, private uri: string) {
     this.scanner = createScanner(this.rawXML, undefined, undefined, true)
     this.token = TokenType.Unknown
   }
@@ -150,7 +150,7 @@ export class XMLParser {
 
   private createXMLDocument() {
     const document = new XMLNode() as XMLDocument
-    Object.assign<XMLDocument, Partial<XMLDocument>>(document, { rawXML: this.rawXML, document })
+    Object.assign<XMLDocument, Partial<XMLDocument>>(document, { rawXML: this.rawXML, document, uri: this.uri })
 
     return document
   }
