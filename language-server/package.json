@@ -52,7 +52,6 @@
     "js-yaml": "^4.1.0",
     "linq-es2015": "^2.5.1",
     "lodash": "^4.17.21",
-    "nanoevents": "^6.0.0",
     "normalize-path": "^3.0.0",
     "rwxml-analyzer": "../analyzer",
     "tsconfig-paths": "^3.9.0",

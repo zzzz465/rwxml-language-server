@@ -1,4 +1,3 @@
-import { createNanoEvents, Emitter } from 'nanoevents'
 import { Injectable, XMLParser } from 'rwxml-analyzer'
 import { DefManager } from './defManager'
 import { XMLFile, File } from './fs/file'
@@ -9,7 +8,7 @@ export interface ProjectEvents {
 }
 
 export class Project {
-  public projectEvent: Emitter<ProjectEvents> = createNanoEvents()
+  public projectEvent: NodeJS.EventEmitter<ProjectEvents> = new NodeJS.EventEmitter()
 
   constructor(
     public readonly version: string,

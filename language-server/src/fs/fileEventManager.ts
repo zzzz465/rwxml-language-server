@@ -1,6 +1,4 @@
 // manages all file in project
-
-import { createNanoEvents, Emitter } from 'nanoevents'
 import { Disposable } from 'vscode-languageserver'
 import { File } from './file'
 
@@ -12,7 +10,7 @@ export interface FileManagerEvents {
 }
 
 export class FileEventManager implements Disposable {
-  readonly fileEvent: Emitter<FileManagerEvents> = createNanoEvents()
+  readonly fileEvent: NodeJS.EventEmitter<FileManagerEvents> = new NodeJS.EventEmitter()
 
   FileCreated(file: File) {
     this.fileEvent.emit('created', file)
