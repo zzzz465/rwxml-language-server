@@ -1,7 +1,6 @@
-import { Injectable, XMLParser } from 'rwxml-analyzer'
+import { DefDatabase, Injectable, NameDatabase, XMLParser } from 'rwxml-analyzer'
 import { DefManager } from './defManager'
-import { XMLFile, File } from './fs/file'
-import { FileEventManager } from './fs/fileEventManager'
+import { XMLFile, File } from './fs'
 
 export interface ProjectEvents {
   defChanged(injectables: Injectable[]): void
@@ -12,33 +11,30 @@ export class Project {
 
   constructor(
     public readonly version: string,
-    private readonly defManager: DefManager,
-    private readonly fileEventManager: FileEventManager
-  ) {
-    this.fileEventManager.fileEvent.on('created', this.onFileAdded.bind(this))
-    this.fileEventManager.fileEvent.on('changed', this.onFileChanged.bind(this))
-    this.fileEventManager.fileEvent.on('deleted', this.onFileDeleted.bind(this))
-  }
+    public readonly defManager: DefManager,
+    public readonly defDatabase: DefDatabase,
+    public readonly nameDatabase: NameDatabase
+  ) {}
 
-  private onFileAdded(file: File) {
+  FileAdded(file: File) {
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
-  private onFileChanged(file: File) {
+  FileChanged(file: File) {
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
-  private onFileDeleted(file: File) {
+  FileDeleted(file: File) {
     if (file instanceof XMLFile) {
       this.onXMLFileDeleted(file)
     }
   }
 
-  private onXMLFileChanged(file: File) {
+  private onXMLFileChanged(file: XMLFile) {
     const parser = new XMLParser(file.text, file.uri.toString())
     const xmlDocument = parser.parse()
 
@@ -46,7 +42,7 @@ export class Project {
     this.projectEvent.emit('defChanged', dirty)
   }
 
-  private onXMLFileDeleted(file: File) {
+  private onXMLFileDeleted(file: XMLFile) {
     const parser = new XMLParser(file.text, file.uri.toString())
     const xmlDocument = parser.parse()
 
