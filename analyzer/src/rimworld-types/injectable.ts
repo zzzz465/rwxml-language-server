@@ -2,19 +2,11 @@ import { XMLNode } from '../parser/XMLNode'
 import { TypeInfo } from './typeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
-import { Def } from './def'
+import { cache, CacheScope, CacheType } from 'cache-decorator/lib'
 
 export class Injectable extends XMLNode {
   static toInjectable(node: XMLNode, typeInfo: TypeInfo): Injectable {
     const ret = node as Writable<Injectable>
-
-    ret.inherit = {
-      base: new Set(),
-      child: new Set(),
-    }
-    ret.reference = {
-      outgoing: new Set(),
-    }
 
     ret.typeInfo = typeInfo
     ret.fields = new Map()
@@ -29,15 +21,6 @@ export class Injectable extends XMLNode {
   readonly fields!: Map<string, Injectable>
   readonly parent!: Injectable
 
-  readonly inherit: {
-    base: Set<Def>
-    child: Set<Def>
-  }
-
-  readonly reference: {
-    outgoing: Set<Def>
-  }
-
   protected constructor() {
     super()
     throw new Error()
@@ -47,6 +30,7 @@ export class Injectable extends XMLNode {
     return this.children.length == 0
   }
 
+  @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getDefPath(): string | undefined {
     const parentDefPath = this.parent.getDefPath()
     if (parentDefPath) {
@@ -60,6 +44,7 @@ export class Injectable extends XMLNode {
     }
   }
 
+  @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getFieldInfo(): FieldInfo | undefined {
     if (this.name && this.parent) {
       const fieldInfo = this.parent.typeInfo.fields[this.name]
