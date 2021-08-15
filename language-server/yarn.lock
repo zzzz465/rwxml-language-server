@@ -3923,7 +3923,7 @@ run-parallel@^1.1.9:
     queue-microtask "^1.2.2"
 
 rwxml-analyzer@../analyzer:
-  version "0.1.0"
+  version "0.4.0"
   dependencies:
     axios "^0.21.1"
     cache-decorator "^0.1.6"
