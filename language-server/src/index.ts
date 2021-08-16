@@ -1,39 +1,28 @@
 import axios from 'axios'
 import { DefDatabase, Metadata, NameDatabase, TypeInfoInjector, TypeInfoMap } from 'rwxml-analyzer'
-import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver/node'
+import {
+  createConnection,
+  InitializeParams,
+  InitializeResult,
+  ProposedFeatures,
+  TextDocuments,
+} from 'vscode-languageserver/node'
 import { DefManager } from './defManager'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './fs'
 import { Project } from './project'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { getVersion } from './utils'
 import { File } from './fs'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 const connection = createConnection(ProposedFeatures.all)
-
-connection.onInitialize((params: InitializeParams) => {
-  const initializeResult: InitializeResult = {
-    capabilities: {
-      codeLensProvider: { resolveProvider: false },
-      colorProvider: false,
-      completionProvider: {},
-      declarationProvider: false,
-      definitionProvider: false,
-      documentHighlightProvider: false,
-      documentLinkProvider: undefined,
-      hoverProvider: false,
-      referencesProvider: false,
-      typeDefinitionProvider: false,
-    },
-  }
-
-  return initializeResult
-})
 
 const projects: Map<string, Project> = new Map()
 const metadataURL = 'https://raw.githubusercontent.com/zzzz465/rwxml-language-server/release/metadata/metadata.yaml'
 
 let metadata: Metadata
 let typeInfoMapManager: TypeInfoMapManager
+const textDocuments = new TextDocuments(TextDocument)
 
 const typeInfoMaps: Map<RimWorldVersion, TypeInfoMap> = new Map()
 
@@ -60,7 +49,7 @@ async function getProject(version: RimWorldVersion) {
   return projects.get(version) as Project
 }
 
-connection.onInitialized(async (params) => {
+connection.onInitialize(async (params: InitializeParams) => {
   const res = await axios.get(metadataURL)
 
   if (res.status === 200) {
@@ -72,6 +61,10 @@ connection.onInitialized(async (params) => {
   typeInfoMapManager = new TypeInfoMapManager(metadata)
 
   connection.onNotification(ProjectFileAdded, async (params) => {
+    if (textDocuments.get(params.uri)) {
+      return
+    }
+
     const version = getVersion(params.uri)
     const project = await getProject(version)
     const file = File.create({ uri: params.uri, text: params.text })
@@ -79,6 +72,10 @@ connection.onInitialized(async (params) => {
   })
 
   connection.onNotification(ProjectFileChanged, async (params) => {
+    if (textDocuments.get(params.uri)) {
+      return
+    }
+
     const version = getVersion(params.uri)
     const project = await getProject(version)
     const file = File.create({ uri: params.uri, text: params.text })
@@ -86,9 +83,43 @@ connection.onInitialized(async (params) => {
   })
 
   connection.onNotification(ProjectFileDeleted, async (params) => {
+    if (textDocuments.get(params.uri)) {
+      return
+    }
+
     const version = getVersion(params.uri)
     const project = await getProject(version)
     const file = File.create({ uri: params.uri })
     project.FileDeleted(file)
   })
+
+  textDocuments.onDidChangeContent(async (e) => {
+    const version = getVersion(e.document.uri)
+    const project = await getProject(version)
+    const file = File.create({ uri: e.document.uri, text: e.document.getText() })
+    project.FileChanged(file)
+  })
+
+  textDocuments.listen(connection)
+
+  const initializeResult: InitializeResult = {
+    capabilities: {
+      codeLensProvider: { resolveProvider: false },
+      colorProvider: false,
+      completionProvider: {},
+      declarationProvider: false,
+      definitionProvider: false,
+      documentHighlightProvider: false,
+      documentLinkProvider: undefined,
+      hoverProvider: false,
+      referencesProvider: false,
+      typeDefinitionProvider: false,
+    },
+  }
+
+  return initializeResult
+})
+
+connection.onInitialized(async (params) => {
+  console.log('language-server initialized.')
 })

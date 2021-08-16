@@ -1,14 +1,13 @@
 {
   "displayName": "RWXML language server",
   "name": "rwxml-language-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "IDE Support for rimworld mod.",
-  "main": "out/index.js",
+  "main": "dist/index.js",
   "activationEvents": [
     "onLanguage:xml"
   ],
   "scripts": {
-    "compile": "tsc -b",
     "build": "tsc"
   },
   "author": "madeline",
@@ -62,6 +61,7 @@
     "linq-es2015": "^2.5.1",
     "lodash": "^4.17.21",
     "normalize-path": "^3.0.0",
+    "rwxml-language-server-language-server": "../language-server/",
     "tsconfig-paths": "^3.9.0",
     "vscode-languageclient": "^6.1.3"
   }
