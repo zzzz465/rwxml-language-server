@@ -8,7 +8,7 @@
     "onLanguage:xml"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -p tsconfig.json"
   },
   "author": "madeline",
   "contributors": [
@@ -61,7 +61,6 @@
     "linq-es2015": "^2.5.1",
     "lodash": "^4.17.21",
     "normalize-path": "^3.0.0",
-    "rwxml-language-server-language-server": "../language-server/",
     "tsconfig-paths": "^3.9.0",
     "vscode-languageclient": "^6.1.3"
   }
