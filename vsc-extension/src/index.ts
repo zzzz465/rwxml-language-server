@@ -1,6 +1,8 @@
-import { ExtensionContext, workspace } from 'vscode'
+import { ExtensionContext } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
+import { printXMLDocumentObjectHandler } from './commands'
 import path from 'path'
+import vscode from 'vscode'
 
 let client: LanguageClient
 
@@ -9,12 +11,20 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('initializing @rwxml-language-server/vsc-extension ...')
   client = await initServer()
 
+  // register commands
+  console.log('register commands...')
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'rwxml:debug:printXMLDocumentObject',
+      printXMLDocumentObjectHandler(context, client)
+    )
+  )
+
   // wait server to be ready
   client.start()
   await client.onReady()
-  console.log('initialization completed.')
 
-  // send event when project file changes
+  console.log('initialization completed.')
 }
 
 export function deactivate() {

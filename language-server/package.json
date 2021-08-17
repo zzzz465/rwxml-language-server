@@ -4,7 +4,8 @@
   "description": "language server of rwxml language server extension.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
   },
   "author": "madeline",
   "contributors": [

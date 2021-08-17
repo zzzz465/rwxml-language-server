@@ -8,13 +8,20 @@ import {
   TextDocuments,
 } from 'vscode-languageserver/node'
 import { DefManager } from './defManager'
-import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './fs'
+import {
+  ProjectFileAdded,
+  ProjectFileChanged,
+  ProjectFileDeleted,
+  SerializedXMLDocumentRequest,
+  SerializedXMLDocumentResponse,
+} from './fs'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { getVersion } from './utils'
 import { File } from './fs'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Project } from './project'
 import YAML from 'js-yaml'
+import { URI } from 'vscode-uri'
 
 const connection = createConnection(ProposedFeatures.all)
 
@@ -73,7 +80,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
   connection.console.log('register notification handlers...')
   connection.onNotification(ProjectFileAdded, async (params) => {
-    console.log(`ProjectFileAdded, uri: ${params.uri}`)
+    console.log(`ProjectFileAdded, uri: ${decodeURIComponent(params.uri)}`)
 
     if (textDocuments.get(params.uri)) {
       return
@@ -81,19 +88,19 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     const version = getVersion(params.uri)
     const project = await getProject(version)
-    const file = File.create({ uri: params.uri, text: params.text })
+    const file = File.create({ uri: URI.parse(params.uri), text: params.text })
     project.FileAdded(file)
   })
 
   connection.onNotification(ProjectFileChanged, async (params) => {
-    console.log(`ProjectFileChanged, uri: ${params.uri}`)
+    console.log(`ProjectFileChanged, uri: ${decodeURIComponent(params.uri)}`)
     if (textDocuments.get(params.uri)) {
       return
     }
 
     const version = getVersion(params.uri)
     const project = await getProject(version)
-    const file = File.create({ uri: params.uri, text: params.text })
+    const file = File.create({ uri: URI.parse(params.uri), text: params.text })
     project.FileChanged(file)
   })
 
@@ -105,17 +112,29 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     const version = getVersion(params.uri)
     const project = await getProject(version)
-    const file = File.create({ uri: params.uri })
+    const file = File.create({ uri: URI.parse(params.uri) })
     project.FileDeleted(file)
   })
 
   textDocuments.onDidChangeContent(async (e) => {
-    const uri = decodeURIComponent(e.document.uri)
-    console.log(`onDidChangeContext, uri: ${uri}`)
+    const uri = e.document.uri
+    console.log(`onDidChangeContext, uri: ${decodeURIComponent(uri)}`)
     const version = getVersion(uri)
     const project = await getProject(version)
-    const file = File.create({ uri, text: e.document.getText() })
+    const file = File.create({ uri: URI.parse(uri), text: e.document.getText() })
     project.FileChanged(file)
+  })
+
+  connection.onRequest(SerializedXMLDocumentRequest, async ({ uri }) => {
+    console.log(`SerializedXMLDocumentRequest: ${uri}`)
+    const version = getVersion(uri)
+    const project = await getProject(version)
+
+    const xmlDocument = project.getXMLDocumentByUri(uri)
+
+    return {
+      document: xmlDocument,
+    } as SerializedXMLDocumentResponse
   })
 
   textDocuments.listen(connection)
@@ -125,8 +144,8 @@ connection.onInitialize(async (params: InitializeParams) => {
       codeLensProvider: { resolveProvider: false },
       colorProvider: false,
       completionProvider: {},
-      declarationProvider: true,
-      definitionProvider: true,
+      declarationProvider: false,
+      definitionProvider: false,
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
       hoverProvider: false,
@@ -134,7 +153,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       typeDefinitionProvider: false,
       workspace: {
         workspaceFolders: {
-          supported: true,
+          supported: false,
         },
       },
     },
@@ -143,10 +162,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   connection.console.log('initialization completed!')
 
   return initializeResult
-})
-
-connection.onInitialized((params) => {
-  connection.console.log('onInitialized')
 })
 
 connection.listen()

@@ -189,3 +189,5 @@ fabric.properties
 .idea
 
 dist
+
+!.vscode/launch.json

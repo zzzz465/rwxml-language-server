@@ -1,22 +1,21 @@
-import { NotificationType, RequestType } from 'vscode-languageserver'
-import { UrlEncodedString } from '../types'
+import { NotificationType, RequestType } from 'vscode-languageclient'
 
 export interface ProjectFileAddedNotificationParams {
-  uri: UrlEncodedString
+  uri: string
   text?: string
 }
 
 export interface ProjectFileChangedNotificationParams {
-  uri: UrlEncodedString
+  uri: string
   text?: string
 }
 
 export interface ProjectFileDeletedNotificationParams {
-  uri: UrlEncodedString
+  uri: string
 }
 
 export interface SerializedXMLDocumentRequest {
-  uri: UrlEncodedString
+  uri: string
 }
 
 export interface SerializedXMLDocumentResponse {

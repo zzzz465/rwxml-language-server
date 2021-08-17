@@ -5,14 +5,11 @@ export type File = XMLFile | OtherFile
 
 export namespace File {
   interface FileCreateParameters {
-    uri: string | URI
+    uri: URI
     text?: string
   }
   export function create(params: FileCreateParameters) {
-    let uri = params.uri
-    if (typeof uri === 'string') {
-      uri = URI.parse(uri)
-    }
+    const uri = params.uri
 
     if (path.extname(uri.fsPath) === 'xml') {
       return new XMLFile(uri, params.text ?? '')
