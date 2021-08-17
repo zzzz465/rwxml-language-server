@@ -14,6 +14,7 @@ import {
   ProjectFileDeleted,
   SerializedXMLDocumentRequest,
   SerializedXMLDocumentResponse,
+  WorkspaceInitialization,
   XMLDocumentDecoItemRequest,
 } from './fs'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
@@ -26,6 +27,8 @@ import { URI } from 'vscode-uri'
 import Flatted from 'flatted'
 import { RangeConverter } from './utils/rangeConverter'
 import { onDecorate } from './features/decorate'
+import { onDefinition } from './features/definition'
+import { TextDocumentManager } from './textDocumentManager'
 
 const connection = createConnection(ProposedFeatures.all)
 
@@ -35,6 +38,7 @@ const metadataURL = 'https://raw.githubusercontent.com/zzzz465/rwxml-language-se
 let metadata: Metadata
 let typeInfoMapManager: TypeInfoMapManager
 const textDocuments = new TextDocuments(TextDocument)
+const textDocumentManager = new TextDocumentManager()
 
 const typeInfoMaps: Map<RimWorldVersion, TypeInfoMap> = new Map()
 
@@ -57,7 +61,14 @@ async function getProject(version: RimWorldVersion) {
 
     projects.set(
       version,
-      new Project(version, defManager, defDatabase, nameDatabase, new RangeConverter(textDocuments))
+      new Project(
+        version,
+        defManager,
+        defDatabase,
+        nameDatabase,
+        new RangeConverter(textDocumentManager),
+        textDocumentManager
+      )
     )
   }
 
@@ -88,7 +99,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   connection.console.log('register notification handlers...')
   connection.onNotification(ProjectFileAdded, async (params) => {
     console.log(`ProjectFileAdded, uri: ${decodeURIComponent(params.uri)}`)
-
     if (textDocuments.get(params.uri)) {
       return
     }
@@ -132,6 +142,15 @@ connection.onInitialize(async (params: InitializeParams) => {
     project.FileChanged(file)
   })
 
+  connection.onNotification(WorkspaceInitialization, async ({ files }) => {
+    for (const { uri, text } of files) {
+      const version = getVersion(uri)
+      const project = await getProject(version)
+      const file = File.create({ uri: URI.parse(uri), text })
+      project.FileAdded(file)
+    }
+  })
+
   connection.onRequest(SerializedXMLDocumentRequest, async ({ uri }) => {
     console.log(`SerializedXMLDocumentRequest: ${uri}`)
     const version = getVersion(uri)
@@ -169,6 +188,23 @@ connection.onInitialize(async (params: InitializeParams) => {
     }
   })
 
+  connection.onDefinition(async ({ position, textDocument }) => {
+    const version = getVersion(textDocument.uri)
+    const project = await getProject(version)
+
+    if (project) {
+      const { definitionLinks, errors } = onDefinition(project, URI.parse(textDocument.uri), position)
+
+      if (errors.length > 0) {
+        console.log(errors)
+      }
+
+      return definitionLinks
+    }
+
+    return []
+  })
+
   textDocuments.listen(connection)
 
   const initializeResult: InitializeResult = {
@@ -176,8 +212,8 @@ connection.onInitialize(async (params: InitializeParams) => {
       codeLensProvider: { resolveProvider: false },
       colorProvider: false,
       completionProvider: {},
-      declarationProvider: false,
-      definitionProvider: false,
+      declarationProvider: false, // 선언으로 바로가기
+      definitionProvider: true, // 정의로 바로가기
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
       hoverProvider: false,

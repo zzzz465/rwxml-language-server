@@ -1,12 +1,14 @@
 import rwxml from 'rwxml-analyzer'
 import { TextDocuments } from 'vscode-languageserver'
-import { Range, TextDocument } from 'vscode-languageserver-textdocument'
+import { Position, Range, TextDocument } from 'vscode-languageserver-textdocument'
+import { Project } from '../project'
+import { TextDocumentManager } from '../textDocumentManager'
 
 export class RangeConverter {
-  constructor(private readonly textDocuments: TextDocuments<TextDocument>) {}
+  constructor(private readonly textDocumentManager: TextDocumentManager) {}
 
   toLanguageServerRange(range: rwxml.Range, uri: string): Range | undefined {
-    const textDocument = this.textDocuments.get(uri)
+    const textDocument = this.textDocumentManager.get(uri)
 
     if (!textDocument) {
       return
@@ -16,5 +18,28 @@ export class RangeConverter {
     const end = textDocument.positionAt(range.end)
 
     return { start, end }
+  }
+
+  toRange(range: Range, uri: string): rwxml.Range | undefined {
+    const textDocument = this.textDocumentManager.get(uri)
+
+    if (!textDocument) {
+      return
+    }
+
+    const start = textDocument.offsetAt(range.start)
+    const end = textDocument.offsetAt(range.end)
+
+    return { start, end }
+  }
+
+  toOffset(position: Position, uri: string): number | undefined {
+    const textDocument = this.textDocumentManager.get(uri)
+
+    if (!textDocument) {
+      return
+    }
+
+    return textDocument.offsetAt(position)
   }
 }

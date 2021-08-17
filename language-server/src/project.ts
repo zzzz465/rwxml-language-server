@@ -1,9 +1,11 @@
 import { EventEmitter } from 'events'
 import { DefDatabase, Injectable, NameDatabase, XMLDocument, XMLParser } from 'rwxml-analyzer'
+import { TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File } from './fs'
+import { TextDocumentManager } from './textDocumentManager'
 import { RangeConverter } from './utils/rangeConverter'
 
 export interface ProjectEvents {
@@ -17,9 +19,10 @@ export class Project {
   constructor(
     public readonly version: string,
     public readonly defManager: DefManager,
-    public readonly defDatabase: DefDatabase,
+    private readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
-    public readonly rangeConverter: RangeConverter
+    public readonly rangeConverter: RangeConverter,
+    private readonly textDocumentManager: TextDocumentManager
   ) {}
 
   FileAdded(file: File) {
@@ -51,22 +54,32 @@ export class Project {
     return this.xmlDocumentMap.get(uri)
   }
 
+  getTextDocumentByUri(uri: string | URI) {
+    if (uri instanceof URI) {
+      uri = uri.toString()
+    }
+
+    return this.textDocumentManager.get(uri)
+  }
+
   private onXMLFileChanged(file: XMLFile) {
-    const parser = new XMLParser(file.text, file.uri.toString())
-    const xmlDocument = parser.parse() as XMLDocument
     const uri = file.uri.toString()
+    const parser = new XMLParser(file.text, uri)
+    const xmlDocument = parser.parse() as XMLDocument
 
     this.xmlDocumentMap.set(uri, xmlDocument)
+    this.textDocumentManager.set(uri, file.text)
 
     const dirty = this.defManager.update(xmlDocument)
     this.projectEvent.emit('defChanged', dirty)
   }
 
   private onXMLFileDeleted(file: XMLFile) {
-    const parser = new XMLParser(file.text, file.uri.toString())
+    const uri = file.uri.toString()
+    const parser = new XMLParser(file.text, uri)
     const xmlDocument = parser.parse() as XMLDocument
 
-    this.xmlDocumentMap.delete(file.uri.toString())
+    this.textDocumentManager.delete(uri)
 
     const dirty = this.defManager.update(xmlDocument)
     this.projectEvent.emit('defChanged', dirty)

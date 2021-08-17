@@ -32,6 +32,10 @@ export interface XMLDocumentDecoItemResponse {
   items: DecoItem[]
 }
 
+export interface WorkspaceInitializationNotificationParams {
+  files: ProjectFileAddedNotificationParams[]
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -42,6 +46,10 @@ export const ProjectFileChanged = new NotificationType<ProjectFileChangedNotific
 
 export const ProjectFileDeleted = new NotificationType<ProjectFileDeletedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileChanged'
+)
+
+export const WorkspaceInitialization = new NotificationType<WorkspaceInitializationNotificationParams>(
+  'rwxml-language-server:notification:WorkspaceInitialization'
 )
 
 export const SerializedXMLDocumentRequest = new RequestType<

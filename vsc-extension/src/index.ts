@@ -4,7 +4,7 @@ import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
 import vscode from 'vscode'
 import { updateDecoration } from './features'
-import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
+import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted, WorkspaceInitialization } from './events'
 
 let client: LanguageClient
 let disposed = false
@@ -81,14 +81,15 @@ export async function activate(context: ExtensionContext): Promise<void> {
     xmlFiles.map(async (uri) => {
       const text = Uint8Array.from(await vscode.workspace.fs.readFile(uri)).toString()
 
-      return { uri, text }
+      return { uri: uri.toString(), text }
     })
   )
   console.log(`loaded ${loadedXMLFiles.length} files...`)
+  console.log('sending WorkspaceInitialization notification...')
+  await client.sendNotification(WorkspaceInitialization, {
+    files: loadedXMLFiles,
+  })
 
-  for (const { uri, text } of loadedXMLFiles) {
-    client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
-  }
   console.log('loading current workspace xml files completed.')
 
   console.log('initialization completed.')
