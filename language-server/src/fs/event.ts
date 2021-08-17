@@ -1,5 +1,5 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
-import { UrlEncodedString } from '../types'
+import { DecoItem, UrlEncodedString } from '../types'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
@@ -23,6 +23,15 @@ export interface SerializedXMLDocumentResponse {
   document?: Record<string, unknown>
 }
 
+export interface XMLDocumentDecoItemRequest {
+  uri: string
+}
+
+export interface XMLDocumentDecoItemResponse {
+  uri: string
+  items: DecoItem[]
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -40,3 +49,9 @@ export const SerializedXMLDocumentRequest = new RequestType<
   SerializedXMLDocumentResponse,
   undefined
 >('rwxml-language-server:request:SerializedXMLDocument')
+
+export const XMLDocumentDecoItemRequest = new RequestType<
+  XMLDocumentDecoItemRequest,
+  XMLDocumentDecoItemResponse,
+  undefined
+>('rwxml-language-server:request:XMLDocumentDecoItem')

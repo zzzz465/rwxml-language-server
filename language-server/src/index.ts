@@ -14,6 +14,7 @@ import {
   ProjectFileDeleted,
   SerializedXMLDocumentRequest,
   SerializedXMLDocumentResponse,
+  XMLDocumentDecoItemRequest,
 } from './fs'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { getVersion } from './utils'
@@ -23,6 +24,8 @@ import { Project } from './project'
 import YAML from 'js-yaml'
 import { URI } from 'vscode-uri'
 import Flatted from 'flatted'
+import { RangeConverter } from './utils/rangeConverter'
+import { onDecorate } from './features/decorate'
 
 const connection = createConnection(ProposedFeatures.all)
 
@@ -52,7 +55,10 @@ async function getProject(version: RimWorldVersion) {
     const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
     const defManager = new DefManager(defDatabase, nameDatabase, typeInfoMap, typeInfoInjector)
 
-    projects.set(version, new Project(version, defManager, defDatabase, nameDatabase))
+    projects.set(
+      version,
+      new Project(version, defManager, defDatabase, nameDatabase, new RangeConverter(textDocuments))
+    )
   }
 
   const targetProject = projects.get(version) as Project
@@ -140,6 +146,27 @@ connection.onInitialize(async (params: InitializeParams) => {
     return {
       document: xmlDocument,
     } as SerializedXMLDocumentResponse
+  })
+
+  connection.onCodeLens((params) => {
+    return []
+  })
+
+  connection.onRequest(XMLDocumentDecoItemRequest, async ({ uri }) => {
+    const version = getVersion(uri)
+    const project = await getProject(version)
+
+    if (project) {
+      const { decoItems, errors } = onDecorate(project, URI.parse(uri))
+
+      if (errors.length > 0) {
+        console.log(errors)
+      }
+
+      return { uri, items: decoItems }
+    } else {
+      return []
+    }
   })
 
   textDocuments.listen(connection)

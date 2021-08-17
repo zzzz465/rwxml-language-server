@@ -1,8 +1,10 @@
 import { EventEmitter } from 'events'
 import { DefDatabase, Injectable, NameDatabase, XMLDocument, XMLParser } from 'rwxml-analyzer'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File } from './fs'
+import { RangeConverter } from './utils/rangeConverter'
 
 export interface ProjectEvents {
   defChanged(injectables: Injectable[]): void
@@ -16,7 +18,8 @@ export class Project {
     public readonly version: string,
     public readonly defManager: DefManager,
     public readonly defDatabase: DefDatabase,
-    public readonly nameDatabase: NameDatabase
+    public readonly nameDatabase: NameDatabase,
+    public readonly rangeConverter: RangeConverter
   ) {}
 
   FileAdded(file: File) {
@@ -51,8 +54,9 @@ export class Project {
   private onXMLFileChanged(file: XMLFile) {
     const parser = new XMLParser(file.text, file.uri.toString())
     const xmlDocument = parser.parse() as XMLDocument
+    const uri = file.uri.toString()
 
-    this.xmlDocumentMap.set(file.uri.toString(), xmlDocument)
+    this.xmlDocumentMap.set(uri, xmlDocument)
 
     const dirty = this.defManager.update(xmlDocument)
     this.projectEvent.emit('defChanged', dirty)

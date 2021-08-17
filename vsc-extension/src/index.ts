@@ -1,10 +1,13 @@
-import { ExtensionContext } from 'vscode'
+import { Disposable, ExtensionContext } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
 import vscode from 'vscode'
+import { updateDecoration } from './features'
 
 let client: LanguageClient
+let disposed = false
+const disposables: Disposable[] = []
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // initalize language server
@@ -20,7 +23,35 @@ export async function activate(context: ExtensionContext): Promise<void> {
     )
   )
 
+  console.log('registering commands done.')
+
+  console.log('register client features...')
+  console.log('register updateDecoration on onDidChangeActiveTextEditor')
+  vscode.window.onDidChangeActiveTextEditor(
+    (e) => {
+      if (e?.document.uri) {
+        updateDecoration(client, e.document.uri.toString())
+      }
+    },
+    undefined,
+    disposables
+  )
+
+  console.log('register updateDecoration on onDidChangeTextDocument')
+  vscode.workspace.onDidChangeTextDocument(
+    (e) => {
+      if (e.document.uri) {
+        updateDecoration(client, e.document.uri.toString())
+      }
+    },
+    undefined,
+    disposables
+  )
+
+  console.log('registering client features done.')
+
   // wait server to be ready
+  console.log('waiting language-server to be ready...')
   client.start()
   await client.onReady()
 
@@ -30,6 +61,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
 export function deactivate() {
   if (client) {
     return client.stop()
+  }
+
+  if (!disposed) {
+    disposables.map((d) => d.dispose())
+    disposed = true
   }
 }
 
