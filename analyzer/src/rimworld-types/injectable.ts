@@ -2,7 +2,7 @@ import { XMLNode } from '../parser/XMLNode'
 import { TypeInfo } from './typeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
-import { cache, CacheScope, CacheType } from 'cache-decorator/lib'
+import { cache, CacheScope, CacheType } from 'cache-decorator'
 
 export class Injectable extends XMLNode {
   static toInjectable(node: XMLNode, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
