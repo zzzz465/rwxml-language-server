@@ -44,4 +44,31 @@ export class TypeInfo {
   isEnumerable(): boolean {
     return this.isArray || (this.isGeneric && this.fullName.match(/System\.Collections\.Generic\.List.*/) != null)
   }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isString() {
+    return this.fullName === 'System.String'
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isInteger() {
+    switch (this.fullName) {
+      case 'System.Int32':
+      case 'System.Int16':
+      case 'System.Int64':
+        return true
+    }
+
+    return false
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isBoolean() {
+    return this.fullName === 'System.Boolean'
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isColor32() {
+    return this.fullName === 'UnityEngine.Color32'
+  }
 }
