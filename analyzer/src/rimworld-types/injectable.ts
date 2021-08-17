@@ -5,7 +5,7 @@ import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator/lib'
 
 export class Injectable extends XMLNode {
-  static toInjectable(node: XMLNode, typeInfo: TypeInfo): Injectable {
+  static toInjectable(node: XMLNode, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
     const ret = node as Writable<Injectable>
 
     ret.typeInfo = typeInfo
@@ -13,11 +13,12 @@ export class Injectable extends XMLNode {
 
     Reflect.setPrototypeOf(ret, Injectable.prototype)
 
-    return ret
+    return ret as Injectable
   }
 
   readonly name!: string
   readonly typeInfo!: TypeInfo
+  readonly fieldInfo?: FieldInfo
   readonly fields!: Map<string, Injectable>
   readonly parent!: Injectable
 
@@ -44,15 +45,16 @@ export class Injectable extends XMLNode {
     }
   }
 
-  @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getFieldInfo(): FieldInfo | undefined {
-    if (this.name && this.parent) {
-      const fieldInfo = this.parent.typeInfo.fields[this.name]
-      if (!fieldInfo) {
-        throw new Error(`xmlNode ${this.content} is injectable but not registered on parent's typeInfo as field`)
-      }
+    return this.fieldInfo
+  }
 
-      return fieldInfo
+  @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
+  private indexOfParent(): number {
+    if (this.parent.typeInfo.isEnumerable()) {
+      return this.parent.children.indexOf(this)
+    } else {
+      throw new Error('indexOfParent called but parent node is not enumerable.')
     }
   }
 }

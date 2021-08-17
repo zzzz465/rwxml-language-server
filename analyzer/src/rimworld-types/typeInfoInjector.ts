@@ -4,6 +4,7 @@ import { TypeInfo } from './typeInfo'
 import { Injectable } from './injectable'
 import { XMLDocument } from '../parser/XMLDocument'
 import { Def } from './def'
+import { FieldInfo } from './fieldInfo'
 
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) {}
@@ -26,7 +27,7 @@ export class TypeInfoInjector {
   }
 
   // recursively inject all typeInfo to xmlNode
-  injectType(xmlNode: XMLNode, typeInfo: TypeInfo): Injectable {
+  injectType(xmlNode: XMLNode, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
     const classAttribute = xmlNode.attributes.Class
 
     // support <li Class="XXXCompProperties_YYY">
@@ -39,7 +40,7 @@ export class TypeInfoInjector {
 
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
-    const injectable = Injectable.toInjectable(xmlNode, typeInfo)
+    const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
     if (typeInfo.isEnumerable()) {
       // <li> types
       const listGenericType = typeInfo.genericArguments[0]
@@ -56,7 +57,7 @@ export class TypeInfoInjector {
           const fieldInfo = injectable.typeInfo.fields[childNode.name]
 
           if (fieldInfo) {
-            this.injectType(childNode, fieldInfo.fieldType)
+            this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
           }
         }
       }
