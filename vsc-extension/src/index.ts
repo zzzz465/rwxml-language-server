@@ -1,12 +1,14 @@
-import { Disposable, ExtensionContext } from 'vscode'
+import { Disposable, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
 import vscode from 'vscode'
 import { updateDecoration } from './features'
+import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 
 let client: LanguageClient
 let disposed = false
+let fileSystemWatcher: FileSystemWatcher
 const disposables: Disposable[] = []
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -54,6 +56,40 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('waiting language-server to be ready...')
   client.start()
   await client.onReady()
+  console.log('language-server is ready.')
+
+  console.log('initializing project Watcher...')
+  fileSystemWatcher = workspace.createFileSystemWatcher('**/*.xml')
+  fileSystemWatcher.onDidCreate(async (uri) => {
+    const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString()
+    client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
+  })
+  fileSystemWatcher.onDidChange(async (uri) => {
+    const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString()
+    client.sendNotification(ProjectFileChanged, { uri: uri.toString(), text })
+  })
+  fileSystemWatcher.onDidDelete(async (uri) => {
+    client.sendNotification(ProjectFileDeleted, { uri: uri.toString() })
+  })
+  disposables.push(fileSystemWatcher)
+  console.log('project Watcher initialized.')
+
+  console.log('loading all files from current workspace...')
+  const xmlFiles = await vscode.workspace.findFiles('**/*.xml')
+  console.log(`${xmlFiles.length} xml files found in current workspace. reading...`)
+  const loadedXMLFiles = await Promise.all(
+    xmlFiles.map(async (uri) => {
+      const text = Uint8Array.from(await vscode.workspace.fs.readFile(uri)).toString()
+
+      return { uri, text }
+    })
+  )
+  console.log(`loaded ${loadedXMLFiles.length} files...`)
+
+  for (const { uri, text } of loadedXMLFiles) {
+    client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
+  }
+  console.log('loading current workspace xml files completed.')
 
   console.log('initialization completed.')
 }
