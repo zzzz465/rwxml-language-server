@@ -10,6 +10,7 @@ export class Injectable extends XMLNode {
 
     ret.typeInfo = typeInfo
     ret.fields = new Map()
+    ret.fieldInfo = fieldInfo
 
     Reflect.setPrototypeOf(ret, Injectable.prototype)
 
