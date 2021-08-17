@@ -1,4 +1,6 @@
-declare namespace NodeJS {
+import 'events'
+
+declare module 'events' {
   interface EventMap {
     [event: string]: any
   }

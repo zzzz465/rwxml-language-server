@@ -1,23 +1,20 @@
 import { ExtensionContext, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
+import path from 'path'
 
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // initalize language server
+  console.log('initializing @rwxml-language-server/vsc-extension ...')
   client = await initServer()
 
   // wait server to be ready
   client.start()
   await client.onReady()
+  console.log('initialization completed.')
 
   // send event when project file changes
-
-  console.log('extension initialized')
-
-  workspace.onDidChangeTextDocument((e) => {
-    console.log(`document changed, uri: ${e.document.uri}`)
-  })
 }
 
 export function deactivate() {
@@ -27,10 +24,12 @@ export function deactivate() {
 }
 
 async function initServer() {
+  const modulePath = path.join(__dirname, '..', '..', 'language-server', 'dist', 'index.js')
+
   const serverOptions: ServerOptions = {
-    run: { module: '../language-server/index.js', transport: TransportKind.ipc },
+    run: { module: modulePath, transport: TransportKind.ipc },
     debug: {
-      module: '../language-server/index.js',
+      module: modulePath,
       transport: TransportKind.ipc,
       options: {
         execArgv: ['--nolazy', '--inspect=6009'],

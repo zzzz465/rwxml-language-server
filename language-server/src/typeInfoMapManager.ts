@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { AsEnumerable } from 'linq-es2015'
-import { Metadata, RawTypeInfo, TypeInfoMap } from 'rwxml-analyzer'
+import { Metadata, RawTypeInfo } from 'rwxml-analyzer'
 import TypeInfoLoader from 'rwxml-analyzer/dist/rimworld-types/typeInfoLoader'
 
 export type RimWorldVersion = typeof RimWorldVersionArray[number]

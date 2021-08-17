@@ -9,11 +9,12 @@ import {
 } from 'vscode-languageserver/node'
 import { DefManager } from './defManager'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './fs'
-import { Project } from './project'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { getVersion } from './utils'
 import { File } from './fs'
 import { TextDocument } from 'vscode-languageserver-textdocument'
+import { Project } from './project'
+import YAML from 'js-yaml'
 
 const connection = createConnection(ProposedFeatures.all)
 
@@ -36,7 +37,7 @@ async function getTypeInfoMap(version: RimWorldVersion) {
 }
 
 async function getProject(version: RimWorldVersion) {
-  if (projects.has(version)) {
+  if (!projects.has(version)) {
     const defDatabase = new DefDatabase()
     const nameDatabase = new NameDatabase()
     const typeInfoMap = await getTypeInfoMap(version)
@@ -46,21 +47,34 @@ async function getProject(version: RimWorldVersion) {
     projects.set(version, new Project(version, defManager, defDatabase, nameDatabase))
   }
 
-  return projects.get(version) as Project
+  const targetProject = projects.get(version) as Project
+
+  return targetProject
 }
 
 connection.onInitialize(async (params: InitializeParams) => {
+  connection.console.log('hello world! initializing @rwxml-language-server/language-server ...')
+  connection.console.log('receiving metadata from web...')
   const res = await axios.get(metadataURL)
 
   if (res.status === 200) {
-    metadata = res.data as Metadata
+    console.log('received metadata.')
+    console.log(res.data)
+    metadata = YAML.load(res.data) as Metadata
+    console.log('metadata parsed as json.')
+    console.log(JSON.stringify(metadata, undefined, 4))
+
+    connection.console.log('ok!')
   } else {
     throw new Error(`cannot get metadata from url ${metadataURL}`)
   }
 
   typeInfoMapManager = new TypeInfoMapManager(metadata)
 
+  connection.console.log('register notification handlers...')
   connection.onNotification(ProjectFileAdded, async (params) => {
+    console.log(`ProjectFileAdded, uri: ${params.uri}`)
+
     if (textDocuments.get(params.uri)) {
       return
     }
@@ -72,6 +86,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   })
 
   connection.onNotification(ProjectFileChanged, async (params) => {
+    console.log(`ProjectFileChanged, uri: ${params.uri}`)
     if (textDocuments.get(params.uri)) {
       return
     }
@@ -83,6 +98,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   })
 
   connection.onNotification(ProjectFileDeleted, async (params) => {
+    console.log(`ProjectFileDeleted, uri: ${params.uri}`)
     if (textDocuments.get(params.uri)) {
       return
     }
@@ -94,9 +110,11 @@ connection.onInitialize(async (params: InitializeParams) => {
   })
 
   textDocuments.onDidChangeContent(async (e) => {
-    const version = getVersion(e.document.uri)
+    const uri = decodeURIComponent(e.document.uri)
+    console.log(`onDidChangeContext, uri: ${uri}`)
+    const version = getVersion(uri)
     const project = await getProject(version)
-    const file = File.create({ uri: e.document.uri, text: e.document.getText() })
+    const file = File.create({ uri, text: e.document.getText() })
     project.FileChanged(file)
   })
 
@@ -107,19 +125,28 @@ connection.onInitialize(async (params: InitializeParams) => {
       codeLensProvider: { resolveProvider: false },
       colorProvider: false,
       completionProvider: {},
-      declarationProvider: false,
-      definitionProvider: false,
+      declarationProvider: true,
+      definitionProvider: true,
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
       hoverProvider: false,
       referencesProvider: false,
       typeDefinitionProvider: false,
+      workspace: {
+        workspaceFolders: {
+          supported: true,
+        },
+      },
     },
   }
+
+  connection.console.log('initialization completed!')
 
   return initializeResult
 })
 
-connection.onInitialized(async (params) => {
-  console.log('language-server initialized.')
+connection.onInitialized((params) => {
+  connection.console.log('onInitialized')
 })
+
+connection.listen()

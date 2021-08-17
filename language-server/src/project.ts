@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events'
 import { DefDatabase, Injectable, NameDatabase, XMLParser } from 'rwxml-analyzer'
 import { DefManager } from './defManager'
 import { XMLFile, File } from './fs'
@@ -7,7 +8,7 @@ export interface ProjectEvents {
 }
 
 export class Project {
-  public projectEvent: NodeJS.EventEmitter<ProjectEvents> = new NodeJS.EventEmitter()
+  public projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
 
   constructor(
     public readonly version: string,
