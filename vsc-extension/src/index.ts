@@ -1,7 +1,7 @@
 import { ExtensionContext } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { printXMLDocumentObjectHandler } from './commands'
-import path from 'path'
+import * as path from 'path'
 import vscode from 'vscode'
 
 let client: LanguageClient

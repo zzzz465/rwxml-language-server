@@ -22,6 +22,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Project } from './project'
 import YAML from 'js-yaml'
 import { URI } from 'vscode-uri'
+import Flatted from 'flatted'
 
 const connection = createConnection(ProposedFeatures.all)
 
@@ -131,6 +132,10 @@ connection.onInitialize(async (params: InitializeParams) => {
     const project = await getProject(version)
 
     const xmlDocument = project.getXMLDocumentByUri(uri)
+
+    const flatted = Flatted.stringify(xmlDocument)
+    console.log(xmlDocument)
+    const restored = Flatted.parse(flatted)
 
     return {
       document: xmlDocument,

@@ -1,6 +1,6 @@
 import normalizePath from 'normalize-path'
 import { URI } from 'vscode-uri'
-import path from 'path'
+import * as path from 'path'
 import _ from 'lodash'
 import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapManager'
 

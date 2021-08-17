@@ -6,11 +6,11 @@ export type DefNameType = string
 
 export class Def extends Injectable {
   static toDef(injectable: Injectable): Def {
-    const def = injectable as Writable<Def>
+    const def = injectable as unknown as Writable<Def>
 
     Reflect.setPrototypeOf(def, Def.prototype)
 
-    return def
+    return def as Def
   }
 
   private constructor() {

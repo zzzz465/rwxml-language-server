@@ -1,4 +1,4 @@
-import path from 'path'
+import * as path from 'path'
 import { URI } from 'vscode-uri'
 
 export type File = XMLFile | OtherFile
@@ -11,7 +11,7 @@ export namespace File {
   export function create(params: FileCreateParameters) {
     const uri = params.uri
 
-    if (path.extname(uri.fsPath) === 'xml') {
+    if (path.extname(uri.fsPath) === '.xml') {
       return new XMLFile(uri, params.text ?? '')
     }
 
