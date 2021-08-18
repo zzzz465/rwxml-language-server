@@ -1,0 +1,65 @@
+{
+  "name": "rwxml-language-server-insider",
+  "displayName": "[Insider] RWXML Language Server",
+  "version": "0.1.0",
+  "description": "[Insider] IDE Support for rimworld mod.",
+  "module": "node",
+  "main": "dist/client/index.js",
+  "scripts": {
+    "vsc-extension:build": "webpack -c client.webpack.config.js --mode production",
+    "language-server:build": "webpack -c server.webpack.config.js --mode production",
+    "clear-build": "rimraf dist",
+    "build": "yarn clear-build && yarn vsc-extension:build && yarn language-server:build"
+  },
+  "repository": "https://www.github.com/zzzz465/rwxml-language-server",
+  "bugs": {
+    "url": "https://www.github.com/zzzz465/rwxml-language-server/issues"
+  },
+  "categories": [
+    "Language Packs",
+    "Debuggers",
+    "Linters",
+    "Programming Languages",
+    "Themes",
+    "Snippets"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "publisher": "madeline",
+  "author": "madeline",
+  "contributors": [
+    {
+      "email": "zzzz465@naver.com",
+      "name": "madeline",
+      "url": "https://www.github.com/zzzz465"
+    }
+  ],
+  "maintainers": [
+    {
+      "email": "zzzz465@naver.com",
+      "name": "madeline",
+      "url": "https://www.github.com/zzzz465"
+    }
+  ],
+  "license": "ISC",
+  "engines": {
+    "vscode": "^1.47.0"
+  },
+  "activationEvents": [
+    "onLanguage:xml"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "rwxml:debug:printXMLDocumentObject",
+        "title": "RWXML: (debug) print current document's XMLDocument"
+      }
+    ]
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "webpack": "^5.11.0",
+    "webpack-cli": "^3.3.12"
+  }
+}

@@ -4,7 +4,6 @@
 
 const path = require('path')
 const webpack = require('webpack')
-const CopyPlugin = require('copy-webpack-plugin')
 
 /**@type {import('webpack').Configuration}*/
 const config = {
@@ -16,7 +15,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'client/index.js',
-    libraryTarget: 'commonjs',
+    libraryTarget: 'commonjs2',
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
   devtool: 'source-map',
@@ -31,6 +30,8 @@ const config = {
   ],
   resolve: {
     extensions: ['.ts', '.js'],
+    // jsnext:main is added because typescript-collections use amd by main, so it breaks webpack build.
+    mainFields: ['module', 'jsnext:main', 'main'],
   },
   module: {
     rules: [

@@ -4,14 +4,13 @@
 
 const path = require('path')
 const webpack = require('webpack')
-const CopyPlugin = require('copy-webpack-plugin')
 
 /**@type {import('webpack').Configuration}*/
 const config = {
   target: 'node',
   entry: '../../language-server/src/index.ts',
   resolveLoader: {
-    modules: ['../../language-server/node_modules']
+    modules: [path.resolve(__dirname, '..', '..', 'language-server', 'node_modules')]
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -20,9 +19,6 @@ const config = {
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
   devtool: 'source-map',
-  externals: {
-    vscode: 'commonjs',
-  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env.isWebpack': JSON.stringify(true),
@@ -30,6 +26,8 @@ const config = {
   ],
   resolve: {
     extensions: ['.ts', '.js'],
+    // jsnext:main is added because typescript-collections use amd by main, so it breaks webpack build.
+    mainFields: ['module', 'jsnext:main', 'main'],
   },
   module: {
     rules: [
