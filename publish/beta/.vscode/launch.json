@@ -1,0 +1,33 @@
+{
+  "configurations": [
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Launch Client",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceRoot}"
+      ],
+      "outFiles": [
+        "${workspaceRoot}/dist/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server",
+      "port": 6009,
+      "restart": true,
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/dist/**/*.*"
+      ]
+    },
+  ],
+  "compounds": [
+    {
+      "name": "E2E test",
+      "configurations": ["Launch Client", "Attach to Server"]
+    }
+  ]
+}
