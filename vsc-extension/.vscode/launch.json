@@ -8,6 +8,9 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}"
       ],
+      "env": {
+        "languageServerEntryPath": "../language-server/dist/index.js"
+      },
       "outFiles": [
         "${workspaceRoot}/dist/**/*.js"
       ]

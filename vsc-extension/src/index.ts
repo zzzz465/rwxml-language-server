@@ -1,4 +1,4 @@
-import { Disposable, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
+import { Disposable, env, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
@@ -14,7 +14,13 @@ const disposables: Disposable[] = []
 export async function activate(context: ExtensionContext): Promise<void> {
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
-  client = await initServer()
+  const languageServerEntryPath = process.env.languageServerEntryPath ?? '../language-server/dist/index.js'
+  if (!languageServerEntryPath) {
+    throw new Error('env:languageServerEntryPath is invalid.')
+  }
+  const languageServerModulePath = path.join(context.extensionPath, languageServerEntryPath)
+  console.log(`languageServerModulePath: ${languageServerModulePath}`)
+  client = await initServer(languageServerModulePath)
 
   // register commands
   console.log('register commands...')
@@ -106,9 +112,7 @@ export function deactivate() {
   }
 }
 
-async function initServer() {
-  const modulePath = path.join(__dirname, '..', '..', 'language-server', 'dist', 'index.js')
-
+async function initServer(modulePath: string) {
   const serverOptions: ServerOptions = {
     run: { module: modulePath, transport: TransportKind.ipc },
     debug: {
