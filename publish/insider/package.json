@@ -6,8 +6,8 @@
   "module": "node",
   "main": "dist/client/index.js",
   "scripts": {
-    "vsc-extension:build": "webpack -c client.webpack.config.js --mode production",
-    "language-server:build": "webpack -c server.webpack.config.js --mode production",
+    "vsc-extension:build": "webpack --config client.webpack.config.js --mode production",
+    "language-server:build": "webpack --config server.webpack.config.js --mode production",
     "clear-build": "rimraf dist",
     "build": "yarn clear-build && yarn vsc-extension:build && yarn language-server:build"
   },

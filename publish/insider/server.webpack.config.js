@@ -8,7 +8,7 @@ const webpack = require('webpack')
 /**@type {import('webpack').Configuration}*/
 const config = {
   target: 'node',
-  entry: '../../language-server/src/index.ts',
+  entry: path.resolve(__dirname, '..', '..', 'language-server', 'src', 'index.ts'),
   resolveLoader: {
     modules: [path.resolve(__dirname, '..', '..', 'language-server', 'node_modules')]
   },

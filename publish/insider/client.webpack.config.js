@@ -8,9 +8,9 @@ const webpack = require('webpack')
 /**@type {import('webpack').Configuration}*/
 const config = {
   target: 'node',
-  entry: '../../vsc-extension/src/index.ts',
+  entry: path.resolve(__dirname, '..', '..', 'vsc-extension', 'src', 'index.ts'),
   resolveLoader: {
-    modules: ['../../vsc-extension/node_modules'],
+    modules: [path.resolve(__dirname, '..', '..', 'vsc-extension', 'node_modules')]
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
