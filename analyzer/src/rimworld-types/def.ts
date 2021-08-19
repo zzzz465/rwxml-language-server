@@ -18,6 +18,10 @@ export class Def extends Injectable {
     throw new Error()
   }
 
+  getDefType(): string {
+    return this.name
+  }
+
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getDefName(): string | undefined {
     const defNameNode = this.children.find((d) => d.name == 'defName')

@@ -1,15 +1,18 @@
 import { Def } from './def'
-import { MultiDictionary } from 'typescript-collections'
+import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
 
 export class DefDatabase {
-  private defs: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
+  private defs: DefaultDictionary<string, MultiDictionary<string, Def>> = new DefaultDictionary(
+    () => new MultiDictionary()
+  )
   private uriToDef: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
 
   addDef(def: Def): boolean {
+    const defType = def.getDefType()
     const defName = def.getDefName()
 
     if (defName) {
-      this.defs.setValue(defName, def)
+      this.defs.getValue(defType).setValue(defName, def)
       this.uriToDef.setValue(def.document.uri, def)
 
       return true
@@ -18,8 +21,13 @@ export class DefDatabase {
     }
   }
 
-  getDef(defName: string): Def[] {
-    return this.defs.getValue(defName)
+  getDef(defType: string, defName?: string): Def[] {
+    const defTypeDict = this.defs.getValue(defType)
+    if (defName) {
+      return defTypeDict.getValue(defName)
+    } else {
+      return defTypeDict.values()
+    }
   }
 
   getDefByUri(uri: string): Def[] {
@@ -27,10 +35,12 @@ export class DefDatabase {
   }
 
   removeDef(def: Def): Def {
+    const defType = def.getDefType()
     const defName = def.getDefName()
 
     if (defName) {
-      this.defs.remove(defName, def)
+      const defTypeDict = this.defs.getValue(defType)
+      defTypeDict.remove(defName, def)
       this.uriToDef.remove(def.document.uri, def)
 
       return def
