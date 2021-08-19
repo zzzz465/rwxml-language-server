@@ -1,17 +1,3 @@
 repos:
   - repo: local
-    hooks:
-      - id: analyzer::build
-        name: build analyzer
-        entry: bash -c "cd analyzer; yarn build"
-        files: analyzer/.*
-        language: system
-        stages:
-          - commit
-      - id: language-server::update-analyzer
-        name: update version of analyzer in language-server
-        entry: bash -c "cd language-server; yarn upgrade analyzer"
-        files: analyzer/.*
-        language: system
-        stages:
-          - commit
+    hooks: []
