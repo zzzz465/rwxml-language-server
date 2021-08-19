@@ -19,7 +19,14 @@ export class Def extends Injectable {
   }
 
   getDefType(): string {
-    return this.name
+    const defType = this.typeInfo.getDefType()
+    if (defType) {
+      return defType
+    } else {
+      throw new Error(
+        `node: ${this.name} is DefType, but typeInfo doesn't have defType. uri: ${this.document.uri}, start: ${this.elementRange.start}, end: ${this.elementRange.end}`
+      )
+    }
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })

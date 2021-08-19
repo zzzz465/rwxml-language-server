@@ -20,6 +20,8 @@ export class TypeInfo {
   constructor(
     public readonly metadata: TypeInfoMetadata,
     public readonly fullName: string,
+    public readonly namespaceName: string,
+    public readonly className: string,
     public readonly attributes: Record<string, TypeInfo>, // need to populate typeInfo
     public readonly fields: Record<string, FieldInfo>, // need to populate typeInfo
     public readonly genericArguments: TypeInfo[], // need to populate typeInfo
@@ -70,5 +72,16 @@ export class TypeInfo {
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isColor32() {
     return this.fullName === 'UnityEngine.Color32'
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getDefType(): string | undefined {
+    if (this.isDef()) {
+      if (this.namespaceName.startsWith('Verse') || this.namespaceName.startsWith('RimWorld')) {
+        return this.className
+      } else {
+        return this.fullName
+      }
+    }
   }
 }

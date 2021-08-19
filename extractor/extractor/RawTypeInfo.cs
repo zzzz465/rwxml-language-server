@@ -35,6 +35,8 @@ namespace extractor
 
         public RawTypeInfoMetadata metadata;
         public string fullName;
+        public string className;
+        public string namespaceName;
         public Dictionary<string, string> attributes = new Dictionary<string, string>();
         public Dictionary<string, RawFieldInfo> fields = new Dictionary<string, RawFieldInfo>();
         public List<string> genericArguments = new List<string>();
@@ -51,6 +53,8 @@ namespace extractor
         public RawTypeInfo(Type T)
         {
             this.fullName = NameUtility.GetTypeIdentifier(T);
+            this.namespaceName = NameUtility.GetTypeNamespaceName(T);
+            this.className = NameUtility.GetTypeClassName(T);
             this.isGeneric = T.IsGenericType;
             this.isArray = T.IsArray;
 

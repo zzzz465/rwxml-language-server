@@ -20,6 +20,8 @@ export default class TypeInfoLoader {
           new TypeInfo(
             rawTypeInfo.metadata ?? {},
             rawTypeInfo.fullName ?? '',
+            rawTypeInfo.namespaceName ?? '',
+            rawTypeInfo.className ?? '',
             rawTypeInfo.attributes ?? {},
             rawTypeInfo.fields ?? {},
             rawTypeInfo.genericArguments ?? [],

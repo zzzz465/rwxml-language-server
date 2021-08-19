@@ -30,5 +30,15 @@ namespace extractor
                 return String.Join(".", T.Namespace, T.Name);
             }
         }
+
+        public static string GetTypeClassName(Type T)
+        {
+            return T.Name;
+        }
+
+        public static string GetTypeNamespaceName(Type T)
+        {
+            return T.Namespace;
+        }
     }
 }
