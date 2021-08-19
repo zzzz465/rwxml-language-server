@@ -10,7 +10,7 @@ repos:
           - commit
       - id: language-server::update-analyzer
         name: update version of analyzer in language-server
-        entry: bash -c "cd language-server; yarn add ../analyzer"
+        entry: bash -c "cd language-server; yarn upgrade analyzer"
         files: analyzer/.*
         language: system
         stages:
