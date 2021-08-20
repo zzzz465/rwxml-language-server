@@ -13,7 +13,7 @@ jobs:
       - name: setup libraries
         shell: bash
         run: | 
-          yarn global add vsce semver webpack webpack-cli
+          yarn global add vsce semver webpack webpack-cli rimraf
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
