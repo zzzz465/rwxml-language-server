@@ -5,7 +5,7 @@ import { RawTypeInfo } from './rawTypeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
 
-export default class TypeInfoLoader {
+export class TypeInfoLoader {
   static load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
     const rawTypeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
       (k) => k.fullName,
