@@ -21,6 +21,7 @@ jobs:
         id: semver
         shell: bash
         run: |
+          echo $(git describe --tags --abbrev=0)
           set current_tag $(git describe --tags --abbrev=0)
           set semver $(semver "$current_tag" | tr -d '\-insider')
           echo "semver: $semver"
