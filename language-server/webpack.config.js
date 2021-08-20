@@ -19,9 +19,13 @@ const config = {
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
   devtool: 'source-map',
+  externals: {
+    vscode: 'commonjs',
+  },
   plugins: [
-    new webpack.DefinePlugin({
-      'process.env.isWebpack': JSON.stringify(true),
+    new webpack.EnvironmentPlugin({
+      localTypeInfoBaseURL: path.resolve(__dirname, '../', 'metadata', 'rawTypeInfos'),
+      isWebpack: JSON.stringify(true),
     }),
   ],
   resolve: {
