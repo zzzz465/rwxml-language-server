@@ -23,6 +23,7 @@ jobs:
         run: |
           echo $(git describe --tags --abbrev=0)
           set current_tag $(git describe --tags --abbrev=0)
+          echo "current_tag: $current_tag"
           set semver $(semver "$current_tag" | tr -d '\-insider')
           echo "semver: $semver"
           echo "::set-output name=SEM_VER::$semver"
