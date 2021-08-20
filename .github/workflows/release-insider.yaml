@@ -5,7 +5,7 @@ on:
 
 jobs:
   branch_release:
-    name: push release branch
+    name: Release insider version to marketplace
     runs-on:
       - 'ubuntu-latest'
     steps:
