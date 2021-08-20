@@ -31,6 +31,7 @@ jobs:
           cd "$GITHUB_WORKSPACE/analyzer"; yarn; yarn build
           cd "$GITHUB_WORKSPACE/language-server"; yarn; yarn build
           cd "$GITHUB_WORKSPACE/vsc-extension"; yarn; yarn build
+          cd "$GITHUB_WORKSPACE/publish/insider"; yarn
       - name: run build
         working-directory: ./publish/insider
         run: yarn build
