@@ -42,11 +42,9 @@ export class DefDatabase {
       const defTypeDict = this.defs.getValue(defType)
       defTypeDict.remove(defName, def)
       this.uriToDef.remove(def.document.uri, def)
-
-      return def
-    } else {
-      throw new Error()
     }
+
+    return def
   }
 
   removeAllDefsByUri(uri: string): Def[] {

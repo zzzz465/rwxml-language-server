@@ -32,11 +32,9 @@ export class NameDatabase {
     if (inheritName) {
       this.inheritNames.remove(inheritName, def)
       this.uriToInheritNames.remove(def.document.uri, def)
-
-      return def
-    } else {
-      throw new Error()
     }
+
+    return def
   }
 
   removeAllDefsByUri(uri: string): Def[] {
