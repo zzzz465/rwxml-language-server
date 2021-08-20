@@ -14,9 +14,9 @@ const disposables: Disposable[] = []
 export async function activate(context: ExtensionContext): Promise<void> {
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
-  const languageServerEntryPath = process.env.languageServerEntryPath ?? '../language-server/dist/index.js'
+  const languageServerEntryPath = process.env.languageServerEntryPath
   if (!languageServerEntryPath) {
-    throw new Error('env:languageServerEntryPath is invalid.')
+    throw new Error('env.languageServerEntryPath is invalid.')
   }
   const languageServerModulePath = path.join(context.extensionPath, languageServerEntryPath)
   console.log(`languageServerModulePath: ${languageServerModulePath}`)
