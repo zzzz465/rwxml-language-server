@@ -21,7 +21,7 @@ jobs:
         id: semver
         shell: bash
         run: |
-          set current_tag $(git tag --points-at HEAD)
+          set current_tag $(git describe --tags --abbrev=0)
           set semver $(semver "$current_tag" | tr -d '\-insider')
           echo "semver: $semver"
           echo "::set-output name=SEM_VER::$semver"
