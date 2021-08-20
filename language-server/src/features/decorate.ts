@@ -27,8 +27,10 @@ export function onDecorate(project: Project, uri: URI): Result {
   for (const injectable of injectables) {
     // check def Reference is valid
     if (injectable.fieldInfo && injectable.fieldInfo.fieldType.isDef()) {
-      if (injectable.content) {
-        const defs = project.defManager.getDef(injectable.content)
+      const defType = injectable.fieldInfo.fieldType.getDefType()
+      const defName = injectable.content
+      if (defType && defName) {
+        const defs = project.defManager.getDef(defType, defName)
 
         if (defs.length > 0) {
           const range = project.rangeConverter.toLanguageServerRange(injectable.contentRange, uri.toString())

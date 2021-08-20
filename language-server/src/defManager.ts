@@ -32,8 +32,8 @@ export class DefManager {
     }
   }
 
-  getDef(defName: string): Def[] {
-    return this.defDatabase.getDef(defName)
+  getDef(defType: string, defName?: string): Def[] {
+    return this.defDatabase.getDef(defType, defName)
   }
 
   /**
@@ -110,6 +110,8 @@ export class DefManager {
         this.referenceResolveWanter.remove(injectable.content, injectable)
       }
     }
+
+    this.defDatabase.removeDef(def)
   }
 
   private getInjectables(def: Def): Injectable[] {
@@ -135,7 +137,7 @@ export class DefManager {
     const fieldInfo = injectable.getFieldInfo()
 
     if (fieldInfo) {
-      if (isTypeDerivedFrom(fieldInfo.fieldType, this.defType, this.typeInfoMap)) {
+      if (fieldInfo.fieldType.isDef()) {
         return true
       }
 

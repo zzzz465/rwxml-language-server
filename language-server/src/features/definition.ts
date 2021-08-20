@@ -1,4 +1,4 @@
-import { Injectable } from 'rwxml-analyzer'
+import { Def, Injectable } from 'rwxml-analyzer'
 import { DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -32,9 +32,10 @@ export function onDefinition(project: Project, uri: URI, position: Position): Re
 
   const xmlNode = xmlDocument.findNodeAt(offset)
   if (xmlNode instanceof Injectable && xmlNode.fieldInfo?.fieldType.isDef()) {
+    const defType = xmlNode.fieldInfo.fieldType.getDefType()
     const defName = xmlNode.content
-    if (defName) {
-      const defs = project.defManager.getDef(defName)
+    if (defType && defName) {
+      const defs = project.defManager.getDef(defType, defName)
 
       for (const def of defs) {
         const uri = def.document.uri
