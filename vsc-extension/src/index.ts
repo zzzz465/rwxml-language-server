@@ -64,6 +64,25 @@ export async function activate(context: ExtensionContext): Promise<void> {
   await client.onReady()
   console.log('language-server is ready.')
 
+  console.log('register decorate update hooks...')
+  console.log('interval hook')
+
+  function callUpdateDecoration(timeout_ms: number) {
+    return function () {
+      const uri = vscode.window.activeTextEditor?.document.uri
+      if (uri) {
+        updateDecoration(client, uri.toString(), timeout_ms)
+      }
+    }
+  }
+
+  // interval hook
+  setInterval(callUpdateDecoration(500), 500)
+  vscode.window.onDidChangeActiveTextEditor(callUpdateDecoration(50), undefined, disposables)
+  vscode.window.onDidChangeVisibleTextEditors(callUpdateDecoration(50), undefined, disposables)
+
+  console.log('registering decorate update interval callback done.')
+
   console.log('initializing project Watcher...')
   fileSystemWatcher = workspace.createFileSystemWatcher('**/*.xml')
   fileSystemWatcher.onDidCreate(async (uri) => {

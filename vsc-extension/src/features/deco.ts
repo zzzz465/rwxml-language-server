@@ -9,14 +9,12 @@ import { DefaultDictionary } from 'typescript-collections'
 let timeout: NodeJS.Timeout | undefined = undefined
 
 export function updateDecoration(client: LanguageClient, uri: string, timeout_ms = 250) {
-  if (timeout !== undefined) {
-    clearTimeout(timeout)
+  if (timeout === undefined) {
+    timeout = setTimeout(async () => {
+      await _updateDecoration(client, uri)
+      timeout = undefined
+    }, timeout_ms)
   }
-
-  timeout = setTimeout(async () => {
-    await _updateDecoration(client, uri), timeout_ms
-    timeout = undefined
-  })
 }
 
 async function _updateDecoration(client: LanguageClient, uri: string) {
