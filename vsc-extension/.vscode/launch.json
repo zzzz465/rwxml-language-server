@@ -15,5 +15,22 @@
         "${workspaceRoot}/dist/**/*.js"
       ]
     },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server",
+      "port": 6009,
+      "restart": true,
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}../language-server/dist/**/*.*"
+      ]
+    },
+  ],
+  "compounds": [
+    {
+      "name": "Launch Client + Attach to Server",
+      "configurations": ["Launch Client", "Attach to Server"]
+    }
   ]
 }
