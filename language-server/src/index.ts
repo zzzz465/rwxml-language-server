@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { DefDatabase, Metadata, NameDatabase, TypeInfoInjector, TypeInfoMap } from 'rwxml-analyzer'
 import {
   createConnection,
@@ -22,9 +21,7 @@ import { getVersion } from './utils'
 import { File } from './fs'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Project } from './project'
-import YAML from 'js-yaml'
 import { URI } from 'vscode-uri'
-import Flatted from 'flatted'
 import { RangeConverter } from './utils/rangeConverter'
 import { onDecorate } from './features/decorate'
 import { onDefinition } from './features/definition'
@@ -33,9 +30,7 @@ import { TextDocumentManager } from './textDocumentManager'
 const connection = createConnection(ProposedFeatures.all)
 
 const projects: Map<string, Project> = new Map()
-const metadataURL = 'https://raw.githubusercontent.com/zzzz465/rwxml-language-server/release/metadata/metadata.yaml'
 
-let metadata: Metadata
 let typeInfoMapManager: TypeInfoMapManager
 const textDocuments = new TextDocuments(TextDocument)
 const textDocumentManager = new TextDocumentManager()
@@ -79,22 +74,8 @@ async function getProject(version: RimWorldVersion) {
 
 connection.onInitialize(async (params: InitializeParams) => {
   connection.console.log('hello world! initializing @rwxml-language-server/language-server ...')
-  connection.console.log('receiving metadata from web...')
-  const res = await axios.get(metadataURL)
 
-  if (res.status === 200) {
-    console.log('received metadata.')
-    console.log(res.data)
-    metadata = YAML.load(res.data) as Metadata
-    console.log('metadata parsed as json.')
-    console.log(JSON.stringify(metadata, undefined, 4))
-
-    connection.console.log('ok!')
-  } else {
-    throw new Error(`cannot get metadata from url ${metadataURL}`)
-  }
-
-  typeInfoMapManager = new TypeInfoMapManager(metadata)
+  typeInfoMapManager = new TypeInfoMapManager()
 
   connection.console.log('register notification handlers...')
   connection.onNotification(ProjectFileAdded, async (params) => {
@@ -157,10 +138,6 @@ connection.onInitialize(async (params: InitializeParams) => {
     const project = await getProject(version)
 
     const xmlDocument = project.getXMLDocumentByUri(uri)
-
-    const flatted = Flatted.stringify(xmlDocument)
-    console.log(xmlDocument)
-    const restored = Flatted.parse(flatted)
 
     return {
       document: xmlDocument,
