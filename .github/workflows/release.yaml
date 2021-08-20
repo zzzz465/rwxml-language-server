@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*.*-master'
 
 jobs:
   branch_release:
