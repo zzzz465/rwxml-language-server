@@ -85,7 +85,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log(`${xmlFiles.length} xml files found in current workspace. reading...`)
   const loadedXMLFiles = await Promise.all(
     xmlFiles.map(async (uri) => {
-      const text = Uint8Array.from(await vscode.workspace.fs.readFile(uri)).toString()
+      const rawFile = await vscode.workspace.fs.readFile(uri)
+      const text = Buffer.from(rawFile).toString()
 
       return { uri: uri.toString(), text }
     })
