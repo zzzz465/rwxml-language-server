@@ -114,6 +114,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     project.FileDeleted(file)
   })
 
+  /*
   textDocuments.onDidChangeContent(async (e) => {
     const uri = e.document.uri
     console.log(`onDidChangeContext, uri: ${decodeURIComponent(uri)}`)
@@ -122,6 +123,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     const file = File.create({ uri: URI.parse(uri), text: e.document.getText() })
     project.FileChanged(file)
   })
+  */
 
   connection.onNotification(WorkspaceInitialization, async ({ files }) => {
     for (const { uri, text } of files) {
