@@ -86,7 +86,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     const version = getVersion(params.uri)
     const project = await getProject(version)
-    const file = File.create({ uri: URI.parse(params.uri), text: params.text })
+    const file = File.create({ uri: URI.parse(params.uri), text: params.text, editable: params.editable })
     project.FileAdded(file)
   })
 
@@ -98,7 +98,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     const version = getVersion(params.uri)
     const project = await getProject(version)
-    const file = File.create({ uri: URI.parse(params.uri), text: params.text })
+    const file = File.create({ uri: URI.parse(params.uri), text: params.text, editable: params.editable })
     project.FileChanged(file)
   })
 
@@ -126,10 +126,10 @@ connection.onInitialize(async (params: InitializeParams) => {
   */
 
   connection.onNotification(WorkspaceInitialization, async ({ files }) => {
-    for (const { uri, text } of files) {
+    for (const { uri, text, editable } of files) {
       const version = getVersion(uri)
       const project = await getProject(version)
-      const file = File.create({ uri: URI.parse(uri), text })
+      const file = File.create({ uri: URI.parse(uri), text, editable })
       project.FileAdded(file)
     }
   })

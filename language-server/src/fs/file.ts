@@ -7,12 +7,13 @@ export namespace File {
   interface FileCreateParameters {
     uri: URI
     text?: string
+    editable?: boolean
   }
   export function create(params: FileCreateParameters) {
     const uri = params.uri
 
     if (path.extname(uri.fsPath) === '.xml') {
-      return new XMLFile(uri, params.text ?? '')
+      return new XMLFile(uri, params.text ?? '', params.editable)
     }
 
     return new OtherFile(uri)
@@ -28,5 +29,5 @@ export class OtherFile implements IFile {
 }
 
 export class XMLFile implements IFile {
-  constructor(public readonly uri: URI, public readonly text: string) {}
+  constructor(public readonly uri: URI, public readonly text: string, public readonly editable = true) {}
 }
