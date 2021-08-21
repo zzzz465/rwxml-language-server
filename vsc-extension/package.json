@@ -1,6 +1,6 @@
 {
   "displayName": "RWXML language server",
-  "name": "rwxml-language-server",
+  "name": "@rwxml/vsc-extension",
   "version": "0.1.0",
   "description": "IDE Support for rimworld mod.",
   "main": "dist/index.js",

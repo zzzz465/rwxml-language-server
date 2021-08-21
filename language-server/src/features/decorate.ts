@@ -1,4 +1,4 @@
-import { Injectable } from 'rwxml-analyzer'
+import { Injectable } from '@rwxml/analyzer'
 import { Connection, Position, Range, TextDocuments } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'

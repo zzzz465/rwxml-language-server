@@ -1,4 +1,4 @@
-import rwxml from 'rwxml-analyzer'
+import rwxml from '@rwxml/analyzer'
 import { TextDocuments } from 'vscode-languageserver'
 import { Position, Range, TextDocument } from 'vscode-languageserver-textdocument'
 import { Project } from '../project'

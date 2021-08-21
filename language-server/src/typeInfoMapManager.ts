@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
-import { Metadata, RawTypeInfo, TypeInfoMap, TypeInfoLoader } from 'rwxml-analyzer'
+import { Metadata, RawTypeInfo, TypeInfoMap, TypeInfoLoader } from '@rwxml/analyzer'
 
 //@ts-ignore
 import raw_default_core from '../../metadata/rawTypeInfos/1.3/core.json'

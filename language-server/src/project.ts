@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { DefDatabase, Injectable, NameDatabase, XMLDocument, XMLParser } from 'rwxml-analyzer'
+import { DefDatabase, Injectable, NameDatabase, XMLDocument, XMLParser } from '@rwxml/analyzer'
 import { TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'

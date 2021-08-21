@@ -1,4 +1,4 @@
-import { TypeInfo, TypeInfoMap } from 'rwxml-analyzer'
+import { TypeInfo, TypeInfoMap } from '@rwxml/analyzer'
 
 export function isTypeDerivedFrom(T: TypeInfo, base: TypeInfo, typeInfoMap: TypeInfoMap): boolean {
   let currentType = T

@@ -9,7 +9,7 @@ import {
   Injectable,
   TypeInfoMap,
   TypeInfo,
-} from 'rwxml-analyzer'
+} from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
 import { isTypeDerivedFrom } from './utils'
 

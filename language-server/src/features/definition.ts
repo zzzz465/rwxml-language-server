@@ -1,4 +1,4 @@
-import { Def, Injectable } from 'rwxml-analyzer'
+import { Def, Injectable } from '@rwxml/analyzer'
 import { DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'

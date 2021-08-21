@@ -1,4 +1,4 @@
-import { DefDatabase, Metadata, NameDatabase, TypeInfoInjector, TypeInfoMap } from 'rwxml-analyzer'
+import { DefDatabase, Metadata, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
 import {
   createConnection,
   InitializeParams,

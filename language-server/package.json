@@ -1,5 +1,5 @@
 {
-  "name": "rwxml-language-server-language-server",
+  "name": "@rwxml/language-server",
   "version": "0.0.1",
   "description": "language server of rwxml language server extension.",
   "main": "dist/index.js",
@@ -47,6 +47,7 @@
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
+    "@rwxml/analyzer": "../analyzer",
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
     "double-ended-queue": "^2.1.0-0",
@@ -55,7 +56,6 @@
     "linq-es2015": "^2.5.1",
     "lodash": "^4.17.21",
     "normalize-path": "^3.0.0",
-    "rwxml-analyzer": "../analyzer",
     "tsconfig-paths": "^3.9.0",
     "typescript-collections": "^1.3.3",
     "vscode-languageserver": "^7.0.0",
