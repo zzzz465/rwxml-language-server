@@ -34,6 +34,14 @@ export interface XMLDocumentDecoItemResponse {
   items: DecoItem[]
 }
 
+export interface XMLDocumentDependencyRequest {
+  version: string
+}
+
+export interface XMLDocumentDependencyResponse {
+  items: { readonly: true } & ProjectFileAddedNotificationParams
+}
+
 export interface WorkspaceInitializationNotificationParams {
   files: ProjectFileAddedNotificationParams[]
 }
@@ -65,3 +73,9 @@ export const XMLDocumentDecoItemRequest = new RequestType<
   XMLDocumentDecoItemResponse,
   undefined
 >('rwxml-language-server:request:XMLDocumentDecoItem')
+
+export const XMLDocumentDependencyRequest = new RequestType<
+  XMLDocumentDependencyRequest,
+  XMLDocumentDependencyResponse,
+  undefined
+>('rwxml-language-server:request:XMLDocumentDependency')
