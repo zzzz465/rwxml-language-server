@@ -54,6 +54,7 @@
     "eslint-config-typescript": "^3.0.0",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.3.0",
+    "jest-raw-loader": "^1.0.1",
     "prettier": "^2.3.2",
     "ts-jest": "^26.1.4",
     "ts-loader": "^8.0.3",
@@ -64,17 +65,17 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
-    "@types/xml2js": "^0.4.9",
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
+    "cheerio": "^1.0.0-rc.10",
     "double-ended-queue": "^2.1.0-0",
+    "htmlparser2": "^7.0.0",
     "js-yaml": "^4.1.0",
     "linq-es2015": "^2.5.1",
     "lodash": "^4.17.21",
     "normalize-path": "^3.0.0",
     "tsconfig-paths": "^3.9.0",
     "typescript-collections": "^1.3.3",
-    "vscode-languageclient": "^6.1.3",
-    "xml2js": "^0.4.23"
+    "vscode-languageclient": "^6.1.3"
   }
 }

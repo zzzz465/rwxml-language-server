@@ -1,46 +1,42 @@
 import { Uri } from 'vscode'
 import vscode from 'vscode'
-import xml2js from 'xml2js'
 import { Writable } from '../types/writable'
+import XMLParser from 'htmlparser2'
+import { Document } from 'domhandler'
+import cheerio from 'cheerio'
 
 export interface ModDependency {
   readonly packageId: string
-}
-
-function getFirstElementOrDefault(value: any, defaultValue?: any) {
-  if (value.length > 0) {
-    return value[0]
-  } else {
-    return defaultValue
-  }
 }
 
 export class About {
   static async load(uri: Uri): Promise<About> {
     const raw = await vscode.workspace.fs.readFile(uri)
     const xmlText = Buffer.from(raw).toString()
-    const obj = await xml2js.parseStringPromise(xmlText)
+    const document = XMLParser.parseDocument(xmlText, { xmlMode: true })
 
-    return await About.create(uri, obj)
+    return await About.create(uri, document)
   }
 
-  static async create(uri: Uri, raw: Record<string, any>): Promise<About> {
+  static async create(uri: Uri, document: Document): Promise<About> {
     const about = new About() as Writable<About>
-    const modMetadata = raw.ModMetaData
+    const $ = cheerio.load(document)
 
     about.aboutXMLFile = uri
-    about.name = getFirstElementOrDefault(modMetadata.name, '')
-    about.author = getFirstElementOrDefault(modMetadata.author, '')
-    about.packageId = getFirstElementOrDefault(modMetadata.packageId, '')
-    about.supportedVersions = Object.values(modMetadata.supportedVersions).map(({ li }: any) =>
-      getFirstElementOrDefault(li, '')
-    )
-    about.modDependencies = Object.values(modMetadata.modDependencies).map(
-      ({ li }: any) =>
-        ({
-          packageId: getFirstElementOrDefault(li.packageId, ''),
-        } as ModDependency)
-    )
+    about.name = $('name').text()
+    about.author = $('author').text()
+    about.packageId = $('ModMetaData > packageId').text()
+    about.supportedVersions = $('supportedVersions > li')
+      .toArray()
+      .map((node) => $(node).text())
+    about.modDependencies = $('modDependencies > li > packageId')
+      .toArray()
+      .map((node) => {
+        const packageId = $(node).text()
+        return {
+          packageId,
+        }
+      })
 
     return about
   }

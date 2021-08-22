@@ -2,7 +2,7 @@ jest.mock('vscode', () => ({}), { virtual: true })
 
 import { URI } from 'vscode-uri'
 import path from 'path'
-import xml2js from 'xml2js'
+import * as XMLParser from 'htmlparser2'
 import { About, ModDependency } from '../../../mod'
 
 import exampleAboutFile from './About.xml'
@@ -10,8 +10,8 @@ const exampleAboutFileUri = URI.file(path.resolve(__dirname, 'About.xml'))
 
 describe('About test', () => {
   test('About.create should create About from valid xml file', async () => {
-    const obj = await xml2js.parseStringPromise(exampleAboutFile)
-    const about = await About.create(exampleAboutFileUri, obj)
+    const document = XMLParser.parseDocument(exampleAboutFile)
+    const about = await About.create(exampleAboutFileUri, document)
 
     expect(about.aboutXMLFile).toEqual(exampleAboutFileUri)
     expect(about.author).toEqual('AhnDemi')
