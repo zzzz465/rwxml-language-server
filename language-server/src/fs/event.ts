@@ -4,13 +4,13 @@ import { DecoItem, UrlEncodedString } from '../types'
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
   text?: string
-  editable?: boolean // default true
+  readonly?: boolean
 }
 
 export interface ProjectFileChangedNotificationParams {
   uri: UrlEncodedString
   text?: string
-  editable?: boolean // default true
+  readonly?: boolean
 }
 
 export interface ProjectFileDeletedNotificationParams {
