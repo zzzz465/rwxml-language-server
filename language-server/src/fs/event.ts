@@ -39,7 +39,7 @@ export interface XMLDocumentDependencyRequest {
 }
 
 export interface XMLDocumentDependencyResponse {
-  items: { readonly: true } & ProjectFileAddedNotificationParams
+  items: ({ readonly: true } & ProjectFileAddedNotificationParams)[]
 }
 
 export interface WorkspaceInitializationNotificationParams {
