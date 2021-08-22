@@ -16,5 +16,8 @@
         "paths": {
             "cache-decorator": ["node_modules/cache-decorator/lib/index.d.ts"] // https://github.com/brn/cache-decorator
         }
-    }
+    },
+    "exclude": [
+        "src/tests"
+    ]
 }
