@@ -1,15 +1,18 @@
 import { Def } from './def'
-import { MultiDictionary } from 'typescript-collections'
+import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
 
 export class NameDatabase {
-  private inheritNames: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
+  private inheritNames: DefaultDictionary<string, MultiDictionary<string, Def>> = new DefaultDictionary(
+    () => new MultiDictionary()
+  )
   private uriToInheritNames: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
 
   addDef(def: Def): boolean {
     const inheritName = def.getNameAttributeValue()
+    const defType = def.getDefType()
 
     if (inheritName) {
-      this.inheritNames.setValue(inheritName, def)
+      this.inheritNames.getValue(defType).setValue(inheritName, def)
       this.uriToInheritNames.setValue(def.document.uri, def)
 
       return true
@@ -18,8 +21,13 @@ export class NameDatabase {
     }
   }
 
-  getDef(inheritName: string): Def[] {
-    return this.inheritNames.getValue(inheritName)
+  getDef(defType: string, inheritName?: string): Def[] {
+    const dict = this.inheritNames.getValue(defType)
+    if (inheritName) {
+      return dict.getValue(inheritName)
+    } else {
+      return dict.values()
+    }
   }
 
   getDefByUri(uri: string): Def[] {
@@ -28,9 +36,10 @@ export class NameDatabase {
 
   removeDef(def: Def): Def {
     const inheritName = def.getNameAttributeValue()
+    const defType = def.getDefType()
 
     if (inheritName) {
-      this.inheritNames.remove(inheritName, def)
+      this.inheritNames.getValue(defType).remove(inheritName, def)
       this.uriToInheritNames.remove(def.document.uri, def)
     }
 

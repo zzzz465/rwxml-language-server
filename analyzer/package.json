@@ -1,6 +1,6 @@
 {
   "name": "@rwxml/analyzer",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "analyzer for rimworld xml.",
   "main": "dist/index.js",
   "scripts": {
