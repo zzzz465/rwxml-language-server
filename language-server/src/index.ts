@@ -1,4 +1,4 @@
-import { DefDatabase, Metadata, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
+import { DefDatabase, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
 import {
   createConnection,
   InitializeParams,
@@ -26,6 +26,7 @@ import { RangeConverter } from './utils/rangeConverter'
 import { onDecorate } from './features/decorate'
 import { onDefinition } from './features/definition'
 import { TextDocumentManager } from './textDocumentManager'
+import { codeCompletion } from './features'
 
 const connection = createConnection(ProposedFeatures.all)
 
@@ -114,7 +115,6 @@ connection.onInitialize(async (params: InitializeParams) => {
     project.FileDeleted(file)
   })
 
-  /*
   textDocuments.onDidChangeContent(async (e) => {
     const uri = e.document.uri
     console.log(`onDidChangeContext, uri: ${decodeURIComponent(uri)}`)
@@ -123,7 +123,6 @@ connection.onInitialize(async (params: InitializeParams) => {
     const file = File.create({ uri: URI.parse(uri), text: e.document.getText() })
     project.FileChanged(file)
   })
-  */
 
   connection.onNotification(WorkspaceInitialization, async ({ files }) => {
     for (const { uri, text, readonly } of files) {
@@ -183,6 +182,23 @@ connection.onInitialize(async (params: InitializeParams) => {
 
     return []
   })
+
+  connection.onCompletion(async ({ position, textDocument }) => {
+    const version = getVersion(textDocument.uri)
+    const project = await getProject(version)
+
+    if (project) {
+      const result = codeCompletion(project, URI.parse(textDocument.uri), position)
+
+      return result
+    }
+  })
+
+  // completion vs completionResolve?
+  // https://github.com/prabirshrestha/vim-lsp/issues/304#issuecomment-465895054
+  // connection.onCompletionResolve((e) => {
+  // return []
+  // })
 
   textDocuments.listen(connection)
 

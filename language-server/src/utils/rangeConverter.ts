@@ -8,6 +8,10 @@ export class RangeConverter {
   constructor(private readonly textDocumentManager: TextDocumentManager) {}
 
   toLanguageServerRange(range: rwxml.Range, uri: string): Range | undefined {
+    if (range.start === -1 || range.end === -1) {
+      return
+    }
+
     const textDocument = this.textDocumentManager.get(uri)
 
     if (!textDocument) {
