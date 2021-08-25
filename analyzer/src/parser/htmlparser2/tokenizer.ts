@@ -214,7 +214,7 @@ const stateAfterTitle3 = ifElseState('E', State.AfterTitle4, State.Text)
 
 const stateBeforeNumericEntity = ifElseState('X', State.InHexEntity, State.InNumericEntity)
 
-export default class Tokenizer {
+export class Tokenizer {
   /** The current state the tokenizer is in. */
   _state = State.Text
   /** The read buffer. */

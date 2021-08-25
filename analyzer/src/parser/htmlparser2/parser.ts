@@ -1,6 +1,6 @@
 // source code: https://github.com/fb55/htmlparser2
 // all rights goes to original author.
-import Tokenizer from './Tokenizer'
+import { Tokenizer } from './Tokenizer'
 
 const formTags = new Set(['input', 'option', 'optgroup', 'select', 'button', 'datalist', 'textarea'])
 const pTag = new Set(['p'])
