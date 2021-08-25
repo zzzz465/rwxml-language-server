@@ -2,7 +2,7 @@
 // all rights goes to original author.
 /* eslint-disable prettier/prettier */
 import decodeCodePoint from 'entities/lib/decode_codepoint'
-import { htmlDecodeTree, xmlDecodeTree, BinTrieFlags, determineBranch } from 'entities/lib/decode'
+import { xmlDecodeTree, BinTrieFlags, determineBranch } from 'entities/lib/decode'
 
 const enum CharCodes {
   Tab = 0x9, // "\t"
@@ -237,17 +237,16 @@ export default class Tokenizer {
   /** Indicates whether the tokenizer has finished running / `.end` has been called. */
   private ended = false
 
-  private readonly xmlMode: boolean
+  private readonly xmlMode = true
   private readonly decodeEntities: boolean
   private readonly entityTrie: Uint16Array
 
   constructor(
-    { xmlMode = false, decodeEntities = true }: { xmlMode?: boolean; decodeEntities?: boolean },
+    { decodeEntities = true }: { decodeEntities?: boolean },
     private readonly cbs: Callbacks
   ) {
-    this.xmlMode = xmlMode
     this.decodeEntities = decodeEntities
-    this.entityTrie = xmlMode ? xmlDecodeTree : htmlDecodeTree
+    this.entityTrie = xmlDecodeTree
   }
 
   public reset(): void {
@@ -350,12 +349,7 @@ export default class Tokenizer {
     } else if (!this.isTagStartChar(c)) {
       this._state = State.Text
     } else {
-      this._state =
-        !this.xmlMode && (c === CharCodes.LowerS || c === CharCodes.UpperS)
-          ? State.BeforeSpecialS
-          : !this.xmlMode && (c === CharCodes.LowerT || c === CharCodes.UpperT)
-            ? State.BeforeSpecialT
-            : State.InTagName
+      this._state = State.InTagName
       this.sectionStart = this._index
     }
   }
@@ -650,7 +644,7 @@ export default class Tokenizer {
     // If the branch is a value, store it and continue
     if (this.trieCurrent & BinTrieFlags.HAS_VALUE) {
       // If we have a legacy entity while parsing strictly, just skip the number of bytes
-      if (!this.allowLegacyEntity() && c !== CharCodes.Semi) {
+      if (c !== CharCodes.Semi) {
         // No need to consider multi-byte values, as the legacy entity is always a single byte
         this.trieIndex += 1
       } else {
@@ -689,11 +683,7 @@ export default class Tokenizer {
     if (c === CharCodes.Semi) {
       this.decodeNumericEntity(10, true)
     } else if (c < CharCodes.Zero || c > CharCodes.Nine) {
-      if (this.allowLegacyEntity()) {
-        this.decodeNumericEntity(10, false)
-      } else {
-        this._state = this.baseState
-      }
+      this._state = this.baseState
       this._index--
     }
   }
@@ -705,17 +695,9 @@ export default class Tokenizer {
       (c < CharCodes.UpperA || c > CharCodes.UpperF) &&
       (c < CharCodes.Zero || c > CharCodes.Nine)
     ) {
-      if (this.allowLegacyEntity()) {
-        this.decodeNumericEntity(16, false)
-      } else {
-        this._state = this.baseState
-      }
+      this._state = this.baseState
       this._index--
     }
-  }
-
-  private allowLegacyEntity() {
-    return !this.xmlMode && this.baseState === State.Text
   }
 
   private cleanup() {
@@ -911,7 +893,7 @@ export default class Tokenizer {
       this._state === State.AfterComment2
     ) {
       this.cbs.oncomment(data)
-    } else if (this._state === State.InNamedEntity && !this.xmlMode) {
+    } else if (this._state === State.InNamedEntity) {
       // Increase excess for EOF
       this.trieExcess++
       this.emitNamedEntity()
@@ -919,10 +901,10 @@ export default class Tokenizer {
         this._state = this.baseState
         this.handleTrailingData()
       }
-    } else if (this._state === State.InNumericEntity && !this.xmlMode) {
+    } else if (this._state === State.InNumericEntity) {
       this.decodeNumericEntity(10, false)
       // All trailing data will have been consumed
-    } else if (this._state === State.InHexEntity && !this.xmlMode) {
+    } else if (this._state === State.InHexEntity) {
       this.decodeNumericEntity(16, false)
       // All trailing data will have been consumed
     } else if (

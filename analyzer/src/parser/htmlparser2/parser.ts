@@ -101,9 +101,9 @@ export interface ParserOptions {
    * will be text only. For feeds and other XML content (documents that don't consist of HTML),
    * set this to `true`.
    *
-   * @default false
+   * @default true
    */
-  xmlMode?: boolean
+  xmlMode: true
 
   /**
    * Decode entities within the document.
@@ -111,20 +111,6 @@ export interface ParserOptions {
    * @default true
    */
   decodeEntities?: boolean
-
-  /**
-   * If set to true, all tags will be lowercased.
-   *
-   * @default !xmlMode
-   */
-  lowerCaseTags?: boolean
-
-  /**
-   * If set to `true`, all attribute names will be lowercased. This has noticeable impact on speed.
-   *
-   * @default !xmlMode
-   */
-  lowerCaseAttributeNames?: boolean
 
   /**
    * If set to true, CDATA sections will be recognized as text even if the xmlMode option is not enabled.
@@ -194,15 +180,11 @@ export class Parser {
   private stack: string[] = []
   private readonly foreignContext: boolean[] = []
   private readonly cbs: Partial<Handler>
-  private readonly lowerCaseTagNames: boolean
-  private readonly lowerCaseAttributeNames: boolean
   private readonly tokenizer: Tokenizer
 
-  constructor(cbs?: Partial<Handler> | null, private readonly options: ParserOptions = {}) {
+  constructor(cbs?: Partial<Handler> | null, private readonly options: ParserOptions = { xmlMode: true }) {
     this.options = options
     this.cbs = cbs ?? {}
-    this.lowerCaseTagNames = options.lowerCaseTags ?? !options.xmlMode
-    this.lowerCaseAttributeNames = options.lowerCaseAttributeNames ?? !options.xmlMode
     this.tokenizer = new (options.Tokenizer ?? Tokenizer)(this.options, this)
     this.cbs.onparserinit?.(this)
   }
@@ -219,38 +201,18 @@ export class Parser {
     this.cbs.ontext?.(data)
   }
 
-  protected isVoidElement(name: string): boolean {
-    return !this.options.xmlMode && voidElements.has(name)
-  }
-
   onopentagname(name: string): void {
     this.updatePosition(1)
-
-    if (this.lowerCaseTagNames) {
-      name = name.toLowerCase()
-    }
-
     this.emitOpenTag(name)
   }
 
   private emitOpenTag(name: string) {
     this.tagname = name
-
-    const impliesClose = !this.options.xmlMode && openImpliesClose.get(name)
-
-    if (impliesClose) {
-      while (this.stack.length > 0 && impliesClose.has(this.stack[this.stack.length - 1])) {
-        const el = this.stack.pop()!
-        this.cbs.onclosetag?.(el)
-      }
-    }
-    if (!this.isVoidElement(name)) {
-      this.stack.push(name)
-      if (foreignContextElements.has(name)) {
-        this.foreignContext.push(true)
-      } else if (htmlIntegrationElements.has(name)) {
-        this.foreignContext.push(false)
-      }
+    this.stack.push(name)
+    if (foreignContextElements.has(name)) {
+      this.foreignContext.push(true)
+    } else if (htmlIntegrationElements.has(name)) {
+      this.foreignContext.push(false)
     }
     this.cbs.onopentagname?.(name)
     if (this.cbs.onopentag) this.attribs = {}
@@ -263,21 +225,15 @@ export class Parser {
       this.cbs.onopentag?.(this.tagname, this.attribs)
       this.attribs = null
     }
-    if (this.cbs.onclosetag && this.isVoidElement(this.tagname)) {
-      this.cbs.onclosetag(this.tagname)
-    }
     this.tagname = ''
   }
 
   onclosetag(name: string): void {
     this.updatePosition(2)
-    if (this.lowerCaseTagNames) {
-      name = name.toLowerCase()
-    }
     if (foreignContextElements.has(name) || htmlIntegrationElements.has(name)) {
       this.foreignContext.pop()
     }
-    if (this.stack.length && !this.isVoidElement(name)) {
+    if (this.stack.length) {
       let pos = this.stack.lastIndexOf(name)
       if (pos !== -1) {
         if (this.cbs.onclosetag) {
@@ -286,27 +242,15 @@ export class Parser {
             // We know the stack has sufficient elements.
             this.cbs.onclosetag(this.stack.pop() as string)
           }
-        } else this.stack.length = pos
-      } else if (name === 'p' && !this.options.xmlMode) {
-        this.emitOpenTag(name)
-        this.closeCurrentTag()
+        } else {
+          this.stack.length = pos
+        }
       }
-    } else if (!this.options.xmlMode && (name === 'br' || name === 'p')) {
-      this.emitOpenTag(name)
-      this.closeCurrentTag()
     }
   }
 
   onselfclosingtag(): void {
-    if (
-      this.options.xmlMode ||
-      this.options.recognizeSelfClosing ||
-      this.foreignContext[this.foreignContext.length - 1]
-    ) {
-      this.closeCurrentTag()
-    } else {
-      this.onopentagend()
-    }
+    this.closeCurrentTag()
   }
 
   private closeCurrentTag() {
@@ -323,9 +267,6 @@ export class Parser {
   }
 
   onattribname(name: string): void {
-    if (this.lowerCaseAttributeNames) {
-      name = name.toLowerCase()
-    }
     this.attribname = name
   }
 
@@ -344,11 +285,7 @@ export class Parser {
 
   private getInstructionName(value: string) {
     const idx = value.search(reNameEnd)
-    let name = idx < 0 ? value : value.substr(0, idx)
-
-    if (this.lowerCaseTagNames) {
-      name = name.toLowerCase()
-    }
+    const name = idx < 0 ? value : value.substr(0, idx)
 
     return name
   }
