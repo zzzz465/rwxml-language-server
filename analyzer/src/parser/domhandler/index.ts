@@ -2,7 +2,17 @@
 // all rights goes to original author.
 import { ElementType } from 'domelementtype'
 import { Parser } from '../htmlparser2'
-import { Node, Element, DataNode, Text, Comment, NodeWithChildren, Document, ProcessingInstruction } from './node'
+import {
+  Node,
+  Element,
+  DataNode,
+  Text,
+  Comment,
+  NodeWithChildren,
+  Document,
+  ProcessingInstruction,
+  Attribute,
+} from './node'
 
 export * from './node'
 
@@ -79,7 +89,7 @@ export class DomHandler {
     if (this.elementCB) this.elementCB(elem)
   }
 
-  public onopentag(name: string, attribs: { [key: string]: string }): void {
+  public onopentag(name: string, attribs: { [key: string]: Attribute }): void {
     const type = ElementType.Tag
     const element = new Element(name, attribs, undefined, type)
     this.addNode(element)

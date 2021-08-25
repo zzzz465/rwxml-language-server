@@ -1,5 +1,6 @@
 // source code: https://github.com/fb55/htmlparser2
 // all rights goes to original author.
+import { Attribute } from '../domhandler'
 import { Tokenizer } from './Tokenizer'
 
 export interface ParserOptions {
@@ -64,7 +65,7 @@ export interface Handler {
    * @param quote Quotes used around the attribute. `null` if the attribute has no quotes around the value, `undefined` if the attribute has no value.
    */
   onattribute(name: string, value: string, quote?: string | undefined | null): void
-  onopentag(name: string, attribs: { [s: string]: string }): void
+  onopentag(name: string, attribs: { [s: string]: Attribute }): void
   ontext(data: string): void
   oncomment(data: string): void
   oncdatastart(): void
@@ -84,7 +85,7 @@ export class Parser {
   private tagname = ''
   private attribname = ''
   private attribvalue = ''
-  private attribs: null | { [key: string]: string } = null
+  private attribs: null | { [key: string]: Attribute } = null
   private stack: string[] = []
   private readonly cbs: Partial<Handler>
   private readonly tokenizer: Tokenizer
@@ -176,7 +177,8 @@ export class Parser {
   onattribend(quote: string | undefined | null): void {
     this.cbs.onattribute?.(this.attribname, this.attribvalue, quote)
     if (this.attribs && !Object.prototype.hasOwnProperty.call(this.attribs, this.attribname)) {
-      this.attribs[this.attribname] = this.attribvalue
+      // TODO: implement this
+      // this.attribs[this.attribname] = this.attribvalue
     }
     this.attribname = ''
     this.attribvalue = ''

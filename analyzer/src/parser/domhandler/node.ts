@@ -3,6 +3,7 @@
 // all rights goes to original author.
 
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
+import { Range } from '../range'
 
 const nodeTypes = new Map<ElementType, number>([
   [ElementType.Tag, 1],
@@ -38,6 +39,8 @@ export class Node {
    * @deprecated exists for compability. not used.
    */
   endIndex: number | null = null
+
+  readonly nodeRange?: Range = new Range()
 
   /**
    *
@@ -90,6 +93,8 @@ export class Node {
  * A node that contains some data.
  */
 export class DataNode extends Node {
+  readonly dataRange?: Range = new Range()
+
   /**
    * @param type The type of the node
    * @param data The content of the data node
@@ -142,6 +147,8 @@ export class ProcessingInstruction extends DataNode {
  * A `Node` that can have children.
  */
 export class NodeWithChildren extends Node {
+  readonly childrenRange?: Range = new Range()
+
   /**
    * @param type Type of the node.
    * @param children Children of the node. Only certain node types can have children.
@@ -185,9 +192,11 @@ export class Document extends NodeWithChildren {
 /**
  * The description of an individual attribute.
  */
-interface Attribute {
+export interface Attribute {
   name: string
   value: string
+  nameRange: Range
+  valueRange?: Range
   namespace?: string
   prefix?: string
 }
@@ -203,7 +212,7 @@ export class Element extends NodeWithChildren {
    */
   constructor(
     public name: string,
-    public attribs: { [name: string]: string },
+    public attribs: { [name: string]: Attribute },
     children: Node[] = [],
     type: ElementType.Tag | ElementType.Script | ElementType.Style = name === 'script'
       ? ElementType.Script
@@ -223,13 +232,8 @@ export class Element extends NodeWithChildren {
     this.name = name
   }
 
-  get attributes(): Attribute[] {
-    return Object.keys(this.attribs).map((name) => ({
-      name,
-      value: this.attribs[name],
-      namespace: this['x-attribsNamespace']?.[name],
-      prefix: this['x-attribsPrefix']?.[name],
-    }))
+  get attributes() {
+    return Object.values(this.attribs)
   }
 
   'x-attribsNamespace'?: Record<string, string>
@@ -297,6 +301,7 @@ export function hasChildren(node: Node): node is NodeWithChildren {
  *
  * @param recursive Clone child nodes as well.
  * @returns A clone of the node.
+ * @deprecated not implemented yet.
  */
 export function cloneNode<T extends Node>(node: T, recursive = false): T {
   let result: Node
