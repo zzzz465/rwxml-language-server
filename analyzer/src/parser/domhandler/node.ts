@@ -29,10 +29,14 @@ export class Node {
   /** Next sibling */
   next: Node | null = null
 
-  /** The start index of the node. Requires `withStartIndices` on the handler to be `true. */
+  /**
+   * @deprecated exists for compability. not used.
+   */
   startIndex: number | null = null
 
-  /** The end index of the node. Requires `withEndIndices` on the handler to be `true. */
+  /**
+   * @deprecated exists for compability. not used.
+   */
   endIndex: number | null = null
 
   /**

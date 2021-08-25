@@ -2,98 +2,6 @@
 // all rights goes to original author.
 import { Tokenizer } from './Tokenizer'
 
-const formTags = new Set(['input', 'option', 'optgroup', 'select', 'button', 'datalist', 'textarea'])
-const pTag = new Set(['p'])
-const tableSectionTags = new Set(['thead', 'tbody'])
-const ddtTags = new Set(['dd', 'dt'])
-const rtpTags = new Set(['rt', 'rp'])
-
-const openImpliesClose = new Map<string, Set<string>>([
-  ['tr', new Set(['tr', 'th', 'td'])],
-  ['th', new Set(['th'])],
-  ['td', new Set(['thead', 'th', 'td'])],
-  ['body', new Set(['head', 'link', 'script'])],
-  ['li', new Set(['li'])],
-  ['p', pTag],
-  ['h1', pTag],
-  ['h2', pTag],
-  ['h3', pTag],
-  ['h4', pTag],
-  ['h5', pTag],
-  ['h6', pTag],
-  ['select', formTags],
-  ['input', formTags],
-  ['output', formTags],
-  ['button', formTags],
-  ['datalist', formTags],
-  ['textarea', formTags],
-  ['option', new Set(['option'])],
-  ['optgroup', new Set(['optgroup', 'option'])],
-  ['dd', ddtTags],
-  ['dt', ddtTags],
-  ['address', pTag],
-  ['article', pTag],
-  ['aside', pTag],
-  ['blockquote', pTag],
-  ['details', pTag],
-  ['div', pTag],
-  ['dl', pTag],
-  ['fieldset', pTag],
-  ['figcaption', pTag],
-  ['figure', pTag],
-  ['footer', pTag],
-  ['form', pTag],
-  ['header', pTag],
-  ['hr', pTag],
-  ['main', pTag],
-  ['nav', pTag],
-  ['ol', pTag],
-  ['pre', pTag],
-  ['section', pTag],
-  ['table', pTag],
-  ['ul', pTag],
-  ['rt', rtpTags],
-  ['rp', rtpTags],
-  ['tbody', tableSectionTags],
-  ['tfoot', tableSectionTags],
-])
-
-const voidElements = new Set([
-  'area',
-  'base',
-  'basefont',
-  'br',
-  'col',
-  'command',
-  'embed',
-  'frame',
-  'hr',
-  'img',
-  'input',
-  'isindex',
-  'keygen',
-  'link',
-  'meta',
-  'param',
-  'source',
-  'track',
-  'wbr',
-])
-
-const foreignContextElements = new Set(['math', 'svg'])
-
-const htmlIntegrationElements = new Set([
-  'mi',
-  'mo',
-  'mn',
-  'ms',
-  'mtext',
-  'annotation-xml',
-  'foreignObject',
-  'desc',
-  'title',
-])
-
 export interface ParserOptions {
   /**
    * Indicates whether special tags (`<script>`, `<style>`, and `<title>`) should get special treatment
@@ -178,7 +86,6 @@ export class Parser {
   private attribvalue = ''
   private attribs: null | { [key: string]: string } = null
   private stack: string[] = []
-  private readonly foreignContext: boolean[] = []
   private readonly cbs: Partial<Handler>
   private readonly tokenizer: Tokenizer
 
@@ -209,11 +116,6 @@ export class Parser {
   private emitOpenTag(name: string) {
     this.tagname = name
     this.stack.push(name)
-    if (foreignContextElements.has(name)) {
-      this.foreignContext.push(true)
-    } else if (htmlIntegrationElements.has(name)) {
-      this.foreignContext.push(false)
-    }
     this.cbs.onopentagname?.(name)
     if (this.cbs.onopentag) this.attribs = {}
   }
@@ -230,9 +132,6 @@ export class Parser {
 
   onclosetag(name: string): void {
     this.updatePosition(2)
-    if (foreignContextElements.has(name) || htmlIntegrationElements.has(name)) {
-      this.foreignContext.pop()
-    }
     if (this.stack.length) {
       let pos = this.stack.lastIndexOf(name)
       if (pos !== -1) {

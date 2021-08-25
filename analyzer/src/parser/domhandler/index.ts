@@ -1,47 +1,10 @@
 // source code: https://github.com/fb55/domhandler
 // all rights goes to original author.
 import { ElementType } from 'domelementtype'
+import { Parser } from '../htmlparser2'
 import { Node, Element, DataNode, Text, Comment, NodeWithChildren, Document, ProcessingInstruction } from './node'
 
 export * from './node'
-
-export interface DomHandlerOptions {
-  /**
-   * Add a `startIndex` property to nodes.
-   * When the parser is used in a non-streaming fashion, `startIndex` is an integer
-   * indicating the position of the start of the node in the document.
-   *
-   * @default false
-   */
-  withStartIndices?: boolean
-
-  /**
-   * Add an `endIndex` property to nodes.
-   * When the parser is used in a non-streaming fashion, `endIndex` is an integer
-   * indicating the position of the end of the node in the document.
-   *
-   * @default false
-   */
-  withEndIndices?: boolean
-
-  /**
-   * Treat the markup as XML.
-   *
-   * @default false
-   */
-  xmlMode?: boolean
-}
-
-// Default options
-const defaultOpts: DomHandlerOptions = {
-  withStartIndices: false,
-  withEndIndices: false,
-}
-
-interface ParserInterface {
-  startIndex: number | null
-  endIndex: number | null
-}
 
 type Callback = (error: Error | null, dom: Node[]) => void
 type ElementCallback = (element: Element) => void
@@ -56,9 +19,6 @@ export class DomHandler {
   /** Called once parsing has completed. */
   private readonly callback: Callback | null
 
-  /** Settings for the handler. */
-  private readonly options: DomHandlerOptions
-
   /** Callback whenever a tag is closed. */
   private readonly elementCB: ElementCallback | null
 
@@ -72,30 +32,21 @@ export class DomHandler {
   protected lastNode: DataNode | null = null
 
   /** Reference to the parser instance. Used for location information. */
-  private parser: ParserInterface | null = null
+  private parser!: Parser
 
   /**
    * @param callback Called once parsing has completed.
    * @param options Settings for the handler.
    * @param elementCB Callback whenever a tag is closed.
    */
-  public constructor(callback?: Callback | null, options?: DomHandlerOptions | null, elementCB?: ElementCallback) {
+  public constructor(callback?: Callback | null, elementCB?: ElementCallback) {
     // Make it possible to skip arguments, for backwards-compatibility
-    if (typeof options === 'function') {
-      elementCB = options
-      options = defaultOpts
-    }
-    if (typeof callback === 'object') {
-      options = callback
-      callback = undefined
-    }
 
     this.callback = callback ?? null
-    this.options = options ?? defaultOpts
     this.elementCB = elementCB ?? null
   }
 
-  public onparserinit(parser: ParserInterface): void {
+  public onparserinit(parser: Parser): void {
     this.parser = parser
   }
 
@@ -113,7 +64,6 @@ export class DomHandler {
   public onend(): void {
     if (this.done) return
     this.done = true
-    this.parser = null
     this.handleCallback(null)
   }
 
@@ -126,15 +76,11 @@ export class DomHandler {
 
     const elem = this.tagStack.pop() as Element
 
-    if (this.options.withEndIndices) {
-      elem.endIndex = this.parser!.endIndex
-    }
-
     if (this.elementCB) this.elementCB(elem)
   }
 
   public onopentag(name: string, attribs: { [key: string]: string }): void {
-    const type = this.options.xmlMode ? ElementType.Tag : undefined
+    const type = ElementType.Tag
     const element = new Element(name, attribs, undefined, type)
     this.addNode(element)
     this.tagStack.push(element)
@@ -197,14 +143,6 @@ export class DomHandler {
   protected addNode(node: Node): void {
     const parent = this.tagStack[this.tagStack.length - 1]
     const previousSibling = parent.children[parent.children.length - 1] as Node | undefined
-
-    if (this.options.withStartIndices) {
-      node.startIndex = this.parser!.startIndex
-    }
-
-    if (this.options.withEndIndices) {
-      node.endIndex = this.parser!.endIndex
-    }
 
     parent.children.push(node)
 
