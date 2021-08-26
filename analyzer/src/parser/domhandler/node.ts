@@ -40,8 +40,6 @@ export class Node {
    */
   endIndex: number | null = null
 
-  readonly nodeRange?: Range = new Range()
-
   /**
    *
    * @param type The type of the node.
@@ -93,7 +91,8 @@ export class Node {
  * A node that contains some data.
  */
 export class DataNode extends Node {
-  readonly dataRange?: Range = new Range()
+  readonly nodeRange: Range = new Range()
+  readonly dataRange: Range = new Range()
 
   /**
    * @param type The type of the node
@@ -144,11 +143,9 @@ export class ProcessingInstruction extends DataNode {
 }
 
 /**
- * A `Node` that can have children.
+ * A `Node` that can have children. must not be created, use Element instead.
  */
 export class NodeWithChildren extends Node {
-  readonly childrenRange?: Range = new Range()
-
   /**
    * @param type Type of the node.
    * @param children Children of the node. Only certain node types can have children.
@@ -205,6 +202,8 @@ export interface Attribute {
  * An element within the DOM.
  */
 export class Element extends NodeWithChildren {
+  readonly nodeRange: Range = new Range()
+
   /**
    * @param name Name of the tag, eg. `div`, `span`.
    * @param attribs Object mapping attribute names to attribute values.
