@@ -23,16 +23,18 @@ namespace extractor
 		[Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
 		public bool Verbose { get; set; }
 
-		[Option("OutputMode", Required = true, HelpText = "select extraction ouptut mode, stdout or file")]
-		public OutputMode outputMode { get; set; }
+		// [Option("output-mode", Required = true, HelpText = "select extraction ouptut mode, stdout or file")]
+		// public OutputMode outputMode { get; set; }
 
-		[Option('o', "out", Required = false, HelpText = "Set output file path")]
-		public string outputPath { get; set; }
+		// [Option('o', "out", Required = false, HelpText = "select output mode")]
+		// public string outputPath { get; set; }
 
-		[Option("log", Required = false, HelpText = "Set log output path")]
-		public string logOutputPath { get; set; }
+		[Option("formatted", Required = false, Default = true, HelpText = "print output json as formatted")]
+		public bool formatted { get; set; }
 
-		// [Option("--file", Required = true, Separator = ' ')]
+		// [Option("log", Required = false, Default = false, HelpText = "Set log output path")]
+		// public string logOutputPath { get; set; }
+
 		[Value(0, Required = true, HelpText = "dll file/directory to extract data")]
 		public IEnumerable<string> targetFiles { get; set; }
 	}
@@ -45,37 +47,38 @@ namespace extractor
 			int exitCode = 1;
 			commandline.WithParsed(option =>
 			{
-				if (option.logOutputPath != null)
-				{
-					Log.SetOutput(option.logOutputPath);
-				}
-				try
-				{
+				// if (option.logOutputPath != null)
+				// {
+				// 	Log.SetOutput(option.logOutputPath);
+				// }
+
 					Log.Info("Extracting data from");
-					foreach (var file in option.targetFiles)
+					foreach (var file in option.targetFiles) { 
 						Log.Info(file);
+					}
 					var assemblies = AssemblyLoader.Load(option.targetFiles);
 					Log.Info("extracting data...");
 					var parseResult = Extractor.parse(assemblies);
 					Log.Info($"Completed extracting data, data count: {parseResult.Count}");
 
-					var result = new Dictionary<string, TypeInfo>();
+					var result = new Dictionary<string, RawTypeInfo>();
 					foreach (var pair in parseResult)
 					{
 						var typeInfo = pair.Value;
-						if (result.ContainsKey(typeInfo.typeIdentifier))
+						if (result.ContainsKey(typeInfo.fullName))
 							continue;
-						result.Add(typeInfo.typeIdentifier, typeInfo);
+						result.Add(typeInfo.fullName, typeInfo);
 					}
 
 					var serializerSetting = new JsonSerializerSettings();
-					serializerSetting.Formatting = Formatting.None;
+					serializerSetting.Formatting = option.formatted ? Formatting.Indented : Formatting.None;
 					serializerSetting.NullValueHandling = NullValueHandling.Ignore;
 					serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
 
 					var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
 					Log.Info($"serialized Object string length: {serializedObject.Length}");
 
+					/*
 					switch (option.outputMode)
 					{
 						case OutputMode.stdout:
@@ -93,14 +96,11 @@ namespace extractor
 							File.WriteAllText(path, serializedObject);
 							break;
 					}
+					*/
+
+					Console.WriteLine(serializedObject);
 					Log.Info("Extraction completed!");
 					exitCode = 0;
-				}
-				catch (Exception ex)
-				{
-					Log.Error(ex.ToString());
-					exitCode = 1;
-				}
 			});
 
 			return exitCode;

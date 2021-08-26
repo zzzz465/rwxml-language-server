@@ -41,62 +41,11 @@ namespace extractor
         // public defNodeInfo[] children { get; set; }
     }
 
-    public class Util
-    {
-        public static string GetTypeIdentifier(Type T)
-        {
-            return $"{T.Namespace}.{T.Name}";
-        }
-        public static string GetListTypeIdentifier(Type type)
-        {
-            var T = type.GetGenericArguments()[0];
-            var name = GetTypeIdentifier(T);
-            return $"System.Collections.Generic.List<{name}>";
-        }
-        public static string GetArrayTypeIdentifier(Type type)
-        {
-            var T = type.GetElementType();
-            var name = GetTypeIdentifier(T);
-            return $"{name}[]";
-        }
-        public static string GetGenericTypeIdentifier(Type type)
-        {
-            var generics = type.GetGenericArguments();
-            var Namespace = type.Namespace;
-            var name = type.Name.Split('`')[0];
-
-            var text = $"{Namespace}.{name}<";
-            if (generics.Length > 1)
-            {
-                text += String.Join(", ", generics.Select(t => t.Name));
-                text += ">";
-            }
-            else
-            {
-                text += $"{generics[0].Name}>";
-            }
-            return text;
-        }
-    }
-
     public class TypeInfo
     {
-        public static TypeInfo Create(Type type)
+        public static TypeInfo Create(Type T)
         {
-            string typeId = "undefined";
-            if (type.IsGenericType)
-            {
-                if (type.GetGenericTypeDefinition() == typeof(List<>))
-                    typeId = Util.GetListTypeIdentifier(type);
-                else
-                    typeId = Util.GetGenericTypeIdentifier(type);
-            }
-            else if (type.IsArray)
-            {
-                typeId = Util.GetArrayTypeIdentifier(type);
-            }
-            else
-                typeId = Util.GetTypeIdentifier(type);
+            string typeId = NameUtility.GetTypeIdentifier(T);
             return new TypeInfo() { typeIdentifier = typeId };
         }
 

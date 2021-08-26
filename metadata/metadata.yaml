@@ -1,0 +1,9 @@
+version:
+  '1.3':
+    rawTypeInfos:
+      core:
+        url: &defaultCoreURL https://raw.githubusercontent.com/zzzz465/rwxml-language-server/release/metadata/rawTypeInfos/1.3/core.json
+  default:
+    rawTypeInfos:
+      core:
+        url: *defaultCoreURL

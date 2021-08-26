@@ -1,0 +1,45 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*-insider'
+
+jobs:
+  branch_release:
+    name: Release insider version to marketplace
+    runs-on:
+      - 'ubuntu-latest'
+    steps:
+      - uses: actions/setup-node@v2
+      - name: setup libraries
+        shell: bash
+        run: | 
+          yarn global add vsce semver webpack webpack-cli rimraf
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: get semver
+        id: semver
+        shell: bash
+        run: |
+          echo $(git describe --tags --abbrev=0)
+          current_tag=$(git describe --tags --abbrev=0)
+          echo "current_tag: $current_tag"
+          semver=$(semver "$current_tag" | tr -d '\-insider')
+          echo "semver: $semver"
+          echo "::set-output name=SEM_VER::$semver"
+      - name: install dependencies of each project
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE/analyzer"; yarn; yarn build
+          cd "$GITHUB_WORKSPACE/language-server"; yarn; yarn build
+          cd "$GITHUB_WORKSPACE/vsc-extension"; yarn; yarn build
+          cd "$GITHUB_WORKSPACE/publish/insider"; yarn
+      - name: run build
+        working-directory: ./publish/insider
+        run: yarn build
+      - name: publish insider version
+        working-directory: ./publish/insider
+        run: |
+          vsce publish ${{ steps.semver.outputs.SEM_VER }} -p $VSCE_TOKEN
+        env:
+          VSCE_TOKEN: ${{ secrets.AZURE_VSCE_TOKEN }}

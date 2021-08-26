@@ -1,0 +1,81 @@
+{
+  "displayName": "RWXML language server",
+  "name": "@rwxml/vsc-extension",
+  "version": "0.1.0",
+  "description": "IDE Support for rimworld mod.",
+  "main": "dist/index.js",
+  "activationEvents": [
+    "onLanguage:xml"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "rwxml:debug:printXMLDocumentObject",
+        "title": "RWXML: (debug) print current document's XMLDocument"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch"
+  },
+  "author": "madeline",
+  "contributors": [
+    "madeline"
+  ],
+  "license": "ISC",
+  "engines": {
+    "vscode": "^1.47.0"
+  },
+  "publisher": "madeline",
+  "jest": {
+    "transform": {
+      "^.+\\.ts$": "ts-jest",
+      "^.+\\.xml$": "jest-raw-loader"
+    },
+    "testRegex": "\\.test\\.ts$",
+    "moduleFileExtensions": [
+      "js",
+      "ts"
+    ],
+    "preset": "ts-jest"
+  },
+  "devDependencies": {
+    "@types/double-ended-queue": "^2.1.1",
+    "@types/jest": "^26.0.9",
+    "@types/js-yaml": "^4.0.2",
+    "@types/lodash": "^4.14.159",
+    "@types/normalize-path": "^3.0.0",
+    "@types/vscode": "^1.59.0",
+    "@typescript-eslint/eslint-plugin": "^3.9.0",
+    "@typescript-eslint/parser": "^2.34.0",
+    "eslint": "^6.4.0",
+    "eslint-config-prettier": "7.2.0",
+    "eslint-config-typescript": "^3.0.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "jest": "^26.3.0",
+    "jest-raw-loader": "^1.0.1",
+    "prettier": "^2.3.2",
+    "ts-jest": "^26.1.4",
+    "ts-loader": "^8.0.3",
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5",
+    "vscode-uri": "^3.0.2",
+    "webpack": "^5.51.1",
+    "webpack-cli": "^4.8.0"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "cache-decorator": "^0.1.6",
+    "cheerio": "^1.0.0-rc.10",
+    "double-ended-queue": "^2.1.0-0",
+    "htmlparser2": "^7.0.0",
+    "js-yaml": "^4.1.0",
+    "linq-es2015": "^2.5.1",
+    "lodash": "^4.17.21",
+    "normalize-path": "^3.0.0",
+    "tsconfig-paths": "^3.9.0",
+    "typescript-collections": "^1.3.3",
+    "vscode-languageclient": "^6.1.3"
+  }
+}

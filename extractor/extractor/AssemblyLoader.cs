@@ -68,9 +68,10 @@ namespace extractor
             var list = new List<Assembly>();
             foreach (var path in paths)
             {
-                if (Directory.Exists(path))
+                var fullPath = Path.GetFullPath(path);
+                if (Directory.Exists(fullPath))
                 {
-                    var files = Directory.GetFiles(path, "*.dll");
+                    var files = Directory.GetFiles(fullPath, "*.dll");
                     foreach (var file in files)
                     {
                         if (blacklist.IsMatch(file))
@@ -85,13 +86,13 @@ namespace extractor
                         }
                     }
                 }
-                else if (File.Exists(path))
+                else if (File.Exists(fullPath))
                 {
-                    if (blacklist.IsMatch(path))
+                    if (blacklist.IsMatch(fullPath))
                         continue;
                     try
                     {
-                        list.Add(_Load(path));
+                        list.Add(_Load(fullPath));
                     }
                     catch (Exception ex)
                     {
