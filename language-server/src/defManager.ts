@@ -4,14 +4,13 @@ import {
   DefDatabase,
   TypeInfoInjector,
   Def,
-  XMLDocument,
   NameDatabase,
   Injectable,
   TypeInfoMap,
   TypeInfo,
+  Document,
 } from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
-import { isTypeDerivedFrom } from './utils'
 
 export class DefManager {
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
@@ -39,7 +38,7 @@ export class DefManager {
   /**
    * @returns dirty nodes that require re-evaluation
    */
-  update(document: XMLDocument): Injectable[] {
+  update(document: Document): Injectable[] {
     const injectResult = this.typeInfoInjector.inject(document)
 
     const DefsFromDefDatabase = this.defDatabase.getDefByUri(document.uri)
@@ -123,7 +122,7 @@ export class DefManager {
     while (!!(injectable = queue.dequeue())) {
       injectables.push(injectable)
 
-      for (const child of injectable.children) {
+      for (const child of injectable.ChildElementNodes) {
         if (child instanceof Injectable) {
           queue.enqueue(child)
         }

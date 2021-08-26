@@ -138,10 +138,10 @@ connection.onInitialize(async (params: InitializeParams) => {
     const version = getVersion(uri)
     const project = await getProject(version)
 
-    const xmlDocument = project.getXMLDocumentByUri(uri)
+    const document = project.getXMLDocumentByUri(uri)
 
     return {
-      document: xmlDocument,
+      document: document,
     } as SerializedXMLDocumentResponse
   })
 

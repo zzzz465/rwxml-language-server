@@ -1,8 +1,7 @@
 import { Injectable } from '@rwxml/analyzer'
-import { Connection, Position, Range, TextDocuments } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
-import { DecoItem, DecoType } from '../types'
+import { DecoItem } from '../types'
 
 type Result = {
   decoItems: DecoItem[]
@@ -21,8 +20,7 @@ export function onDecorate(project: Project, uri: URI): Result {
     return ret
   }
 
-  const injectables: Injectable[] = []
-  document.findNode(injectables, (node) => node instanceof Injectable)
+  const injectables: Injectable[] = document.findNode((node) => node instanceof Injectable) as Injectable[]
 
   for (const injectable of injectables) {
     // check def Reference is valid
@@ -32,7 +30,7 @@ export function onDecorate(project: Project, uri: URI): Result {
       if (defType && defName) {
         const defs = project.defManager.getDef(defType, defName)
 
-        if (defs.length > 0) {
+        if (defs.length > 0 && injectable.contentRange) {
           const range = project.rangeConverter.toLanguageServerRange(injectable.contentRange, uri.toString())
           if (range) {
             ret.decoItems.push({
@@ -41,8 +39,8 @@ export function onDecorate(project: Project, uri: URI): Result {
             })
           } else {
             ret.errors.push(
-              `cannot get range, start: ${injectable.contentRange.start}, end: ${
-                injectable.contentRange.end
+              `cannot get range, start: ${injectable.nodeRange.start}, end: ${
+                injectable.nodeRange.end
               }, uri: ${uri.toString()}`
             )
           }

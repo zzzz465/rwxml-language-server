@@ -1,7 +1,5 @@
 import { EventEmitter } from 'events'
-import { DefDatabase, Injectable, NameDatabase, XMLDocument, XMLParser } from '@rwxml/analyzer'
-import { TextDocuments } from 'vscode-languageserver'
-import { TextDocument } from 'vscode-languageserver-textdocument'
+import { DefDatabase, Document, Injectable, NameDatabase, parse } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File } from './fs'
@@ -14,7 +12,7 @@ export interface ProjectEvents {
 
 export class Project {
   public projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
-  private xmlDocumentMap: Map<string, XMLDocument> = new Map()
+  private xmlDocumentMap: Map<string, Document> = new Map()
 
   constructor(
     public readonly version: string,
@@ -64,24 +62,22 @@ export class Project {
 
   private onXMLFileChanged(file: XMLFile) {
     const uri = file.uri.toString()
-    const parser = new XMLParser(file.text, uri)
-    const xmlDocument = parser.parse() as XMLDocument
+    const document = parse(file.text, uri)
 
-    this.xmlDocumentMap.set(uri, xmlDocument)
+    this.xmlDocumentMap.set(uri, document)
     this.textDocumentManager.set(uri, file.text)
 
-    const dirty = this.defManager.update(xmlDocument)
+    const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)
   }
 
   private onXMLFileDeleted(file: XMLFile) {
     const uri = file.uri.toString()
-    const parser = new XMLParser(file.text, uri)
-    const xmlDocument = parser.parse() as XMLDocument
+    const document = parse(file.text, uri)
 
     this.textDocumentManager.delete(uri)
 
-    const dirty = this.defManager.update(xmlDocument)
+    const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)
   }
 }

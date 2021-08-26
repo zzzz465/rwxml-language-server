@@ -1,5 +1,5 @@
 import { Injectable } from '@rwxml/analyzer'
-import { CompletionItem, CompletionItemKind, InsertTextFormat, InsertTextMode, TextEdit } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, InsertTextFormat, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 
@@ -30,7 +30,7 @@ export function completeDefName(project: Project, currentNode: Injectable): Comp
     const completionTexts = getMatchingText(defs, text ?? '')
 
     for (const completion of completionTexts) {
-      if (text) {
+      if (text && currentNode.contentRange) {
         // when <tag>...text...</tag>
         const range = project.rangeConverter.toLanguageServerRange(currentNode.contentRange, uri)
         if (range) {

@@ -1,9 +1,8 @@
-import { Injectable } from '@rwxml/analyzer'
+import { Injectable, Text } from '@rwxml/analyzer'
 import { CompletionList } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
-import { Range } from '../../utils'
 import { completeDefName } from './defName'
 
 export function codeCompletion(project: Project, uri: URI, position: Position): CompletionList {
@@ -13,15 +12,15 @@ export function codeCompletion(project: Project, uri: URI, position: Position): 
   if (xmlDocument && offset) {
     const targetNode = xmlDocument.findNodeAt(offset)
 
-    if (
-      targetNode instanceof Injectable && // <tag></tag> <- content is null
-      (targetNode.content === null || Range.includes(targetNode.contentRange, offset))
-    ) {
-      const completions = completeDefName(project, targetNode)
+    if (targetNode instanceof Text) {
+      const injectable = targetNode.parent as unknown
+      if (injectable instanceof Injectable && injectable.contentRange?.include(offset)) {
+        const completions = completeDefName(project, injectable)
 
-      return {
-        isIncomplete: true,
-        items: completions,
+        return {
+          isIncomplete: true,
+          items: completions,
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-import { Def, Injectable } from '@rwxml/analyzer'
+import { Injectable, Text } from '@rwxml/analyzer'
 import { DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -30,17 +30,18 @@ export function onDefinition(project: Project, uri: URI, position: Position): Re
     return ret
   }
 
-  const xmlNode = xmlDocument.findNodeAt(offset)
-  if (xmlNode instanceof Injectable && xmlNode.fieldInfo?.fieldType.isDef()) {
-    const defType = xmlNode.fieldInfo.fieldType.getDefType()
-    const defName = xmlNode.content
+  const text = xmlDocument.findNodeAt(offset)
+  const injectable = text?.parent as unknown
+  if (injectable instanceof Injectable && injectable.fieldInfo?.fieldType.isDef()) {
+    const defType = injectable.fieldInfo.fieldType.getDefType()
+    const defName = injectable.content
     if (defType && defName) {
       const defs = project.defManager.getDef(defType, defName)
 
       for (const def of defs) {
         const uri = def.document.uri
-        const defNameNode = def.children.find((node) => node.name === 'defName')
-        const targetRange = project.rangeConverter.toLanguageServerRange(def.elementRange, uri)
+        const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
+        const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, uri)
 
         let fail = true
         let targetSelectionRangeExists = true
@@ -48,7 +49,7 @@ export function onDefinition(project: Project, uri: URI, position: Position): Re
         // FIXME: ugly code, must be refactored.
         if (targetRange) {
           if (defNameNode) {
-            const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode?.contentRange, uri)
+            const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode?.nodeRange, uri)
             if (targetSelectionRange) {
               const definitionLink: DefinitionLink = {
                 targetRange,
