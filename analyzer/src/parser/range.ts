@@ -11,12 +11,16 @@ export class Range {
     this.end = end ?? -1
   }
 
-  isValid() {
-    return this.length() >= 0
+  get valid() {
+    return this.length >= 0
   }
 
-  length() {
+  get length() {
     return this.end - this.start
+  }
+
+  include(offset: number): boolean {
+    return this.length > 0 && this.start <= offset && offset <= this.end
   }
 
   copyFrom(other: Range) {
