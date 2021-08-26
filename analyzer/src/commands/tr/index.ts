@@ -1,16 +1,10 @@
 import { Command } from 'commander'
 import { isDirectory } from '../../utils/fs'
-import axios from 'axios'
-import { METADATA_URL } from '../../metadata/const'
-import * as yaml from 'js-yaml'
-import { Metadata } from '../../metadata/metadata'
 import * as path from 'path'
 import glob from 'fast-glob'
 import normalize from 'normalize-path'
 import * as fs from 'fs'
-import { XMLParser } from '../../parser/XMLParser'
 import { TypeInfoLoader } from '../../rimworld-types'
-import { RawTypeInfo } from '../../rimworld-types/rawTypeInfo'
 import { TypeInfoInjector } from '../../rimworld-types/typeInfoInjector'
 import { Injectable } from '../../rimworld-types/injectable'
 import { AsEnumerable } from 'linq-es2015'
@@ -35,7 +29,10 @@ interface Options {
 }
 
 async function extract(dirPath: string, options: Options): Promise<void> {
+  throw new Error('command not implemented.')
+
   // validate directory is valid
+  /*
   if (!(await isDirectory(dirPath))) {
     throw new Error(`directory ${dirPath} is not a valid path.`)
   }
@@ -54,7 +51,7 @@ async function extract(dirPath: string, options: Options): Promise<void> {
   for (const filter of options.addRegex ?? []) {
     regexFilters.push(new RegExp(filter, 'g'))
   }
-
+  */
   // get manifest from web
   /*
   let res = await axios.get(METADATA_URL)
@@ -85,7 +82,7 @@ async function extract(dirPath: string, options: Options): Promise<void> {
   const coreRawTypeInfos = res.data as RawTypeInfo[] // already parsed in axios module
   const typeInfoMap = TypeInfoLoader.load(coreRawTypeInfos)
   */
-
+  /*
   // use local rawTypeInfo
   const corePath = path.join(__dirname, '../../../../metadata/rawTypeInfos/1.3/core.json')
   const coreRawTypeInfoText = await fs.promises.readFile(corePath, {
@@ -93,12 +90,12 @@ async function extract(dirPath: string, options: Options): Promise<void> {
   })
   const coreRawTypeInfos = JSON.parse(coreRawTypeInfoText)
   const typeInfoMap = TypeInfoLoader.load(coreRawTypeInfos)
-
+  */
   // grab all paths of xmls
-  const searchPath = normalize(dirPath)
-  const pathToXMLs = await glob('**/*.xml', { absolute: true, cwd: searchPath })
-
+  // const searchPath = normalize(dirPath)
+  // const pathToXMLs = await glob('**/*.xml', { absolute: true, cwd: searchPath })
   // load all xmls as string
+  /*
   const xmls = await Promise.all(
     pathToXMLs.map(async (uri) => {
       const text = await fs.promises.readFile(uri, { encoding: 'utf-8' })
@@ -144,4 +141,5 @@ async function extract(dirPath: string, options: Options): Promise<void> {
   for (const node of translatorNodes) {
     console.log(`path: ${node.getDefPath()}, content: ${node.content}`)
   }
+  */
 }
