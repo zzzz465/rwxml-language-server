@@ -114,10 +114,26 @@ describe('broken XML parsing test', () => {
 </ModMetaData>\
 `
 
+  const notclosedXML = `\
+<?xml version="1.0" encoding="utf-8" ?>
+<ModMetaData>
+  <name>Paniel the Automata Beta 1.3</
+  <author>AhnDemi</author>
+  <packageId>AhnDemi.PanieltheAutomataBetatwo</packageId>
+</ModMetaData>\
+`
+
   test('invalid xml should be parsed', () => {
     const root = parse(attribBrokenXML)
 
     const nameNode = $(root).find('ModMetaData > name')
     expect(nameNode.text()).toEqual('Paniel the Automata Beta 1.3')
+  })
+
+  test('unclosed xml should be parsed', () => {
+    const root = parse(notclosedXML)
+
+    const nameNode = $(root).find('ModMetaData > name')
+    expect(nameNode.text()).toBe('Paniel the Automata Beta 1.3')
   })
 })

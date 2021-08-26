@@ -140,12 +140,17 @@ export class Parser {
     this.tagname = ''
   }
 
+  /**
+   * called when tag is closed.
+   * when closing tag is not valid, it's still called but name is incomplete.
+   */
   onclosetag(name: string): void {
     this.updatePosition(2)
     this.endIndex += 1 // doesn't include >, so add +1
     if (this.stack.length) {
       let pos = this.stack.lastIndexOf(name)
       if (pos !== -1) {
+        // current node is closed and valid.
         if (this.cbs.onclosetag) {
           pos = this.stack.length - pos
           while (pos--) {
@@ -155,6 +160,9 @@ export class Parser {
         } else {
           this.stack.length = pos
         }
+      } else {
+        // tag is closed but not valid. </...  (no > or something like that.)
+        this.cbs.onclosetag?.(this.stack.pop() as string)
       }
     }
   }
