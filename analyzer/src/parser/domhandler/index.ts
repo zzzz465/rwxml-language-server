@@ -73,6 +73,7 @@ export class DomHandler {
   // Signals the handler that parsing is done
   public onend(): void {
     if (this.done) return
+    this.root.rawText = this.parser.rawText
     this.done = true
     this.handleCallback(null)
   }

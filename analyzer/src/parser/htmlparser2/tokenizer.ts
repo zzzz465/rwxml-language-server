@@ -217,6 +217,11 @@ const stateBeforeNumericEntity = ifElseState('X', State.InHexEntity, State.InNum
 export class Tokenizer {
   /** The current state the tokenizer is in. */
   _state = State.Text
+
+  get curBuffer(): string {
+    return this.buffer
+  }
+
   /** The read buffer. */
   private buffer = ''
   /** The beginning of the section that is currently being read. */

@@ -90,6 +90,10 @@ export class Parser {
   public attributeValueStartIndex = 0
   public attributeValueEndIndex = 0
 
+  get rawText(): string {
+    return this.tokenizer.curBuffer
+  }
+
   private tagname = ''
   private attribname = ''
   private attribvalue = ''

@@ -188,9 +188,12 @@ export class NodeWithChildren extends Node {
  */
 export class Document extends NodeWithChildren {
   uri: string
-  constructor(children: Node[], uri?: string) {
+  rawText: string
+
+  constructor(children: Node[], uri?: string, rawText = '') {
     super(ElementType.Root, children)
     this.uri = uri ?? ''
+    this.rawText = rawText
   }
 
   findNodeAt(offset: number) {
