@@ -4,6 +4,7 @@
   "description": "language server of rwxml language server extension.",
   "main": "dist/index.js",
   "scripts": {
+    "reinstall": "rimraf node_modules && yarn",
     "build": "webpack --mode development",
     "watch": "webpack --mode development --watch"
   },

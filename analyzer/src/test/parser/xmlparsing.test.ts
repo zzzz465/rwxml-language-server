@@ -116,6 +116,15 @@ Paniel the Automata
       expect(node instanceof Element).toBeTruthy()
     }
   })
+
+  test('range should work on TextNode', () => {
+    const root = parse(exampleXML)
+
+    const text = root.findNodeAt(201) as unknown as Text // <packageId>Ahndemi.P[a]...</packageId>
+    expect(text).toBeInstanceOf(Text)
+    expect(text.dataRange.start).toBe(191)
+    expect(text.dataRange.end).toBe(223)
+  })
 })
 
 describe('broken XML parsing test', () => {

@@ -93,7 +93,9 @@ export class Node {
  * A node that contains some data.
  */
 export class DataNode extends Node {
-  readonly nodeRange: Range = new Range()
+  get nodeRange(): Range {
+    return this.dataRange
+  }
   readonly dataRange: Range = new Range()
 
   /**
@@ -444,18 +446,18 @@ type RangedNode = Element | Comment | Text | DataNode
 
 function findNodeAt(node: RangedNode, offset: number): RangedNode | undefined {
   if (node instanceof Document) {
-    const index = sortedFindFirst(node.childNodes, (node) => node instanceof Element && offset <= node.nodeRange.start) - 1
+    const index = sortedFindFirst(node.childNodes, (node: any) => node.nodeRange && offset <= node.nodeRange.start) - 1
     if (index >= 0) {
-      const child = node.childNodes[index]
+      const child = node.childNodes[index] as unknown
       if ((child instanceof Element || child instanceof DataNode) && child.nodeRange.include(offset)) {
         return findNodeAt(child, offset) ?? child
       }
     }
   } else if (node instanceof Element) {
-    const index = sortedFindFirst(node.ChildElementNodes, (node) => offset <= node.nodeRange.start) - 1
+    const index = sortedFindFirst(node.childNodes, (node: any) => node.nodeRange && offset <= node.nodeRange.start) - 1
     if (index >= 0) {
-      const child = node.ChildElementNodes[index]
-      if (child.nodeRange.include(offset)) {
+      const child = node.childNodes[index]
+      if ((child instanceof Element || child instanceof DataNode) && child.nodeRange.include(offset)) {
         return findNodeAt(child, offset) ?? child
       }
     }
