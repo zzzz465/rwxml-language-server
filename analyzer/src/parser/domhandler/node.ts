@@ -3,7 +3,9 @@
 // all rights goes to original author.
 
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
+import { sortedFindFirst } from '../../utils/arrays'
 import { Range } from '../range'
+import $ from 'cheerio'
 
 const nodeTypes = new Map<ElementType, number>([
   [ElementType.Tag, 1],
@@ -109,6 +111,10 @@ export class DataNode extends Node {
   set nodeValue(data: string) {
     this.data = data
   }
+
+  findNodeAt(offset: number): RangedNode | undefined {
+    return findNodeAt(this, offset)
+  }
 }
 
 /**
@@ -185,6 +191,20 @@ export class Document extends NodeWithChildren {
     this.uri = uri ?? ''
   }
 
+  findNodeAt(offset: number) {
+    return findNodeAt(this as unknown as Element, offset)
+  }
+
+  findNode(predicate: (node: Element) => boolean): Element[] {
+    const ret: Element[] = []
+
+    for (const child of this.children.filter((node: any) => node instanceof Element) as Element[]) {
+      findNode(ret, child, predicate)
+    }
+
+    return ret
+  }
+
   'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
 }
 
@@ -239,6 +259,12 @@ export class Element extends NodeWithChildren {
     }
   }
 
+  get contentRange(): Range | undefined {
+    if (this.firstChild && this.firstChild instanceof Text) {
+      return this.firstChild.dataRange
+    }
+  }
+
   get document(): Document {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let node: Node = this
@@ -268,6 +294,18 @@ export class Element extends NodeWithChildren {
 
   get attributes() {
     return Object.values(this.attribs)
+  }
+
+  findNodeAt(offset: number) {
+    return findNodeAt(this, offset)
+  }
+
+  findNode(predicate: (node: Element) => boolean): Element[] {
+    const ret: Element[] = []
+
+    findNode(ret, this, predicate)
+
+    return ret
   }
 
   'x-attribsNamespace'?: Record<string, string>
@@ -400,4 +438,40 @@ function cloneChildren(childs: Node[]): Node[] {
   }
 
   return children
+}
+
+type RangedNode = Element | Comment | Text | DataNode
+
+function findNodeAt(node: RangedNode, offset: number): RangedNode | undefined {
+  if (node instanceof Document) {
+    const index = sortedFindFirst(node.childNodes, (node) => node instanceof Element && offset <= node.nodeRange.start) - 1
+    if (index >= 0) {
+      const child = node.childNodes[index]
+      if ((child instanceof Element || child instanceof DataNode) && child.nodeRange.include(offset)) {
+        return findNodeAt(child, offset) ?? child
+      }
+    }
+  } else if (node instanceof Element) {
+    const index = sortedFindFirst(node.ChildElementNodes, (node) => offset <= node.nodeRange.start) - 1
+    if (index >= 0) {
+      const child = node.ChildElementNodes[index]
+      if (child.nodeRange.include(offset)) {
+        return findNodeAt(child, offset) ?? child
+      }
+    }
+  } else {
+    if (node.dataRange.include(offset)) {
+      return node
+    }
+  }
+}
+
+function findNode<T extends Element>(dest: T[], node: T, predicate: (node: T) => boolean) {
+  if (predicate(node)) {
+    dest.push(node)
+  }
+
+  for (const child of node.ChildElementNodes) {
+    findNode(dest, child as T, predicate)
+  }
 }

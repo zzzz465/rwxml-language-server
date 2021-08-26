@@ -113,7 +113,7 @@ export class Parser {
   // Tokenizer event handlers
   ontext(data: string): void {
     this.startIndex = this.tokenizer.getAbsoluteSectionStart()
-    this.endIndex = this.tokenizer.getAbsoluteIndex() - 1
+    this.endIndex = this.tokenizer.getAbsoluteIndex()
     this.cbs.ontext?.(data)
   }
 

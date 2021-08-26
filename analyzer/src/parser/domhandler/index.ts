@@ -109,6 +109,8 @@ export class DomHandler {
       lastNode.data += data
     } else {
       const node = new Text(data)
+      node.dataRange.start = this.parser.startIndex
+      node.dataRange.end = this.parser.endIndex
       this.addNode(node)
       this.lastNode = node
     }

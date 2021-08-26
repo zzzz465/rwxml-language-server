@@ -3,7 +3,7 @@ import { TypeInfo } from './typeInfo'
 import { Injectable } from './injectable'
 import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
-import { Element } from '../parser'
+import { Document, Element } from '../parser'
 
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) {}
@@ -23,7 +23,7 @@ export class TypeInfoInjector {
 
   // recursively inject all typeInfo to xmlNode
   injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
-    const classAttribute = xmlNode.attribs['ClassName'].value
+    const classAttribute = xmlNode.attribs['ClassName']?.value
 
     // support <li Class="XXXCompProperties_YYY">
     if (classAttribute) {
@@ -60,13 +60,13 @@ export class TypeInfoInjector {
     return injectable
   }
 
-  inject(xmlDocument: XMLDocument) {
+  inject(document: Document) {
     const res = {
-      xmlDocument,
+      document: document,
       defs: [] as Def[],
     }
 
-    const root = xmlDocument.firstChild
+    const root = document.firstChild
 
     if (root instanceof Element) {
       if (root && root.name === 'Defs') {

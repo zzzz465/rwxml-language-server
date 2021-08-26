@@ -1,4 +1,4 @@
-import DomHandler, { Document, Element, NodeWithChildren } from '../../parser/domhandler'
+import DomHandler, { Document, Element, NodeWithChildren, Text } from '../../parser/domhandler'
 import { Parser } from '../../parser/htmlparser2'
 import $ from 'cheerio'
 
@@ -41,8 +41,12 @@ Paniel the Automata
     const author = $(root).find('ModMetaData > author').text()
     expect(author).toEqual('AhnDemi')
 
+    const packageIdNode = $(root).find('ModMetaData > packageId').get(0).firstChild as unknown as Text
     const packageId = $(root).find('ModMetaData > packageId').text()
     expect(packageId).toEqual('AhnDemi.PanieltheAutomataBetatwo')
+    expect(packageIdNode).toBeInstanceOf(Text)
+    expect(packageIdNode.dataRange.start).toEqual(191) // 191 ~ 223
+    expect(packageIdNode.dataRange.end).toEqual(223)
 
     const description = $(root).find('ModMetaData > description').text()
     expect(description.trim()).toEqual('Paniel the Automata')
@@ -63,11 +67,11 @@ Paniel the Automata
 
     expect(ModMetaData.openTagRange.start).toEqual(40)
     expect(ModMetaData.openTagRange.end).toEqual(112)
-    expect(ModMetaData.openTagRange.length()).toEqual(72)
+    expect(ModMetaData.openTagRange.length).toEqual(72)
 
     expect(ModMetaData.openTagNameRange.start).toEqual(41)
     expect(ModMetaData.openTagNameRange.end).toEqual(52)
-    expect(ModMetaData.openTagNameRange.length()).toEqual(11)
+    expect(ModMetaData.openTagNameRange.length).toEqual(11)
 
     const someAttrib = ModMetaData.attribs['SomeAttribute']
     expect(someAttrib).not.toBeNull()
@@ -79,13 +83,21 @@ Paniel the Automata
     expect(someAttrib.valueRange.end).toBe(74)
   })
 
+  test('text must return valid TextNode', () => {
+    const root = parse(exampleXML)
+
+    const descriptionNode = $(root).find('description')
+
+    expect(descriptionNode.text()).toEqual('\nPaniel the Automata\n')
+  })
+
   test('xml parser text node range test', () => {
     const root = parse(exampleXML)
 
     const packageIdNode = $(root).find('packageId').get(0) as unknown as Element
 
     expect($(packageIdNode).text()).toEqual('AhnDemi.PanieltheAutomataBetatwo')
-    expect(packageIdNode.nodeRange.length()).toEqual(55)
+    expect(packageIdNode.nodeRange.length).toEqual(55)
   })
 
   test('it should return Element instance', () => {
