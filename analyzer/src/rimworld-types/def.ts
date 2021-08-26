@@ -27,8 +27,8 @@ export class Def extends Injectable {
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getDefName(): string | undefined {
-    const defNameElement = this.children.find((d: any) => (d as Element).name == 'defName') as Element
-    return defNameElement.content
+    const defNameElement = this.children.find((d: any) => (d as Element).name == 'defName') as Element | undefined
+    return defNameElement?.content
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
