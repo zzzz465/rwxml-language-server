@@ -85,6 +85,7 @@ export class DomHandler {
     this.lastNode = null
 
     const elem = this.tagStack.pop() as Element
+    elem.nodeRange.end = this.parser.endIndex
 
     if (this.elementCB) this.elementCB(elem)
   }
@@ -92,6 +93,11 @@ export class DomHandler {
   public onopentag(name: string, attribs: { [key: string]: Attribute }): void {
     const type = ElementType.Tag
     const element = new Element(name, attribs, undefined, type)
+    element.nodeRange.start = this.parser.startIndex
+    element.openTagRange.start = this.parser.startIndex
+    element.openTagRange.end = this.parser.endIndex
+    element.openTagNameRange.start = this.parser.tagNameStartIndex
+    element.openTagNameRange.end = this.parser.tagNameEndIndex
     this.addNode(element)
     this.tagStack.push(element)
   }

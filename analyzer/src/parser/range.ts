@@ -1,3 +1,7 @@
+/**
+ * Range is start-end offset
+ * indicates half-open section, includes start, excludes end.
+ */
 export class Range {
   start: number
   end: number
@@ -12,7 +16,7 @@ export class Range {
   }
 
   length() {
-    return this.end - this.start + 1
+    return this.end - this.start
   }
 
   copyFrom(other: Range) {

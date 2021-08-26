@@ -193,7 +193,7 @@ export interface Attribute {
   name: string
   value: string
   nameRange: Range
-  valueRange?: Range
+  valueRange: Range
   namespace?: string
   prefix?: string
 }
@@ -202,7 +202,13 @@ export interface Attribute {
  * An element within the DOM.
  */
 export class Element extends NodeWithChildren {
-  readonly nodeRange: Range = new Range()
+  readonly nodeRange = new Range()
+  readonly openTagRange = new Range()
+  readonly openTagNameRange = new Range()
+  readonly closeTagRange = new Range()
+  readonly closeTagNameRange = new Range()
+
+  // what about self closing?
 
   /**
    * @param name Name of the tag, eg. `div`, `span`.

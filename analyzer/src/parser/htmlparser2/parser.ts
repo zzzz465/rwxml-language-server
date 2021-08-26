@@ -1,6 +1,7 @@
 // source code: https://github.com/fb55/htmlparser2
 // all rights goes to original author.
 import { Attribute } from '../domhandler'
+import { Range } from '../range'
 import { Tokenizer } from './Tokenizer'
 
 export interface ParserOptions {
@@ -82,10 +83,17 @@ export class Parser {
   /** The end index of the last event. */
   public endIndex = 0
 
+  public tagNameStartIndex = 0
+  public tagNameEndIndex = 0
+  public attributeNameStartIndex = 0
+  public attributeNameEndIndex = 0
+  public attributeValueStartIndex = 0
+  public attributeValueEndIndex = 0
+
   private tagname = ''
   private attribname = ''
   private attribvalue = ''
-  private attribs: null | { [key: string]: Attribute } = null
+  private attribs: { [key: string]: Attribute } = {}
   private stack: string[] = []
   private readonly cbs: Partial<Handler>
   private readonly tokenizer: Tokenizer
@@ -111,6 +119,8 @@ export class Parser {
 
   onopentagname(name: string): void {
     this.updatePosition(1)
+    this.tagNameStartIndex = this.tokenizer.getAbsoluteSectionStart()
+    this.tagNameEndIndex = this.tokenizer.getAbsoluteIndex()
     this.emitOpenTag(name)
   }
 
@@ -122,17 +132,17 @@ export class Parser {
   }
 
   onopentagend(): void {
-    this.endIndex = this.tokenizer.getAbsoluteIndex()
+    // doesn't include ending >, so adding + 1
+    this.endIndex = this.tokenizer.getAbsoluteIndex() + 1
 
-    if (this.attribs) {
-      this.cbs.onopentag?.(this.tagname, this.attribs)
-      this.attribs = null
-    }
+    this.cbs.onopentag?.(this.tagname, this.attribs)
+    this.attribs = {}
     this.tagname = ''
   }
 
   onclosetag(name: string): void {
     this.updatePosition(2)
+    this.endIndex += 1 // doesn't include >, so add +1
     if (this.stack.length) {
       let pos = this.stack.lastIndexOf(name)
       if (pos !== -1) {
@@ -167,18 +177,27 @@ export class Parser {
   }
 
   onattribname(name: string): void {
+    this.attributeNameStartIndex = this.tokenizer.getAbsoluteSectionStart()
+    this.attributeNameEndIndex = this.tokenizer.getAbsoluteIndex()
     this.attribname = name
   }
 
   onattribdata(value: string): void {
+    this.attributeValueStartIndex = this.tokenizer.getAbsoluteSectionStart()
+    this.attributeValueEndIndex = this.tokenizer.getAbsoluteIndex()
     this.attribvalue += value
   }
 
   onattribend(quote: string | undefined | null): void {
     this.cbs.onattribute?.(this.attribname, this.attribvalue, quote)
     if (this.attribs && !Object.prototype.hasOwnProperty.call(this.attribs, this.attribname)) {
-      // TODO: implement this
-      // this.attribs[this.attribname] = this.attribvalue
+      const newAttrib: Attribute = {
+        name: this.attribname,
+        value: this.attribvalue,
+        nameRange: new Range(this.attributeNameStartIndex, this.attributeNameEndIndex),
+        valueRange: new Range(this.attributeValueStartIndex, this.attributeValueEndIndex),
+      }
+      this.attribs[this.attribname] = newAttrib
     }
     this.attribname = ''
     this.attribvalue = ''
@@ -243,7 +262,7 @@ export class Parser {
     this.tokenizer.reset()
     this.tagname = ''
     this.attribname = ''
-    this.attribs = null
+    this.attribs = {}
     this.stack = []
     this.cbs.onparserinit?.(this)
   }
