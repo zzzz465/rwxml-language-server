@@ -253,6 +253,10 @@ export class Element extends NodeWithChildren {
     return node
   }
 
+  get ChildElementNodes(): Element[] {
+    return this.children.filter(node => node instanceof Element) as Element[]
+  }
+
   // DOM Level 1 aliases
   get tagName(): string {
     return this.name
