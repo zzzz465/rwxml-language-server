@@ -179,8 +179,10 @@ export class NodeWithChildren extends Node {
  * The root node of the document.
  */
 export class Document extends NodeWithChildren {
-  constructor(children: Node[]) {
+  uri: string
+  constructor(children: Node[], uri?: string) {
     super(ElementType.Root, children)
+    this.uri = uri ?? ''
   }
 
   'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
@@ -226,6 +228,29 @@ export class Element extends NodeWithChildren {
         : ElementType.Tag
   ) {
     super(type, children)
+  }
+
+  /**
+   * text content of element if exists. returns undefined.d
+   */
+  get content(): string | undefined {
+    if (this.firstChild && this.firstChild instanceof Text) {
+      return this.firstChild.data
+    }
+  }
+
+  get document(): Document {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let node: Node = this
+    while (!(node instanceof Document)) {
+      if (node.parent) {
+        node = node.parent
+      } else {
+        throw new Error(`node ${node}'s parent is not Document.`)
+      }
+    }
+
+    return node
   }
 
   // DOM Level 1 aliases

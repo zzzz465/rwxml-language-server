@@ -1,11 +1,11 @@
-import { XMLNode } from '../parser/XMLNode'
 import { TypeInfo } from './typeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
+import { Element } from '../parser'
 
-export class Injectable extends XMLNode {
-  static toInjectable(node: XMLNode, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
+export class Injectable extends Element {
+  static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
     const ret = node as Writable<Injectable>
 
     ret.typeInfo = typeInfo
@@ -22,11 +22,6 @@ export class Injectable extends XMLNode {
   readonly fieldInfo?: FieldInfo
   readonly fields!: Map<string, Injectable>
   readonly parent!: Injectable
-
-  protected constructor() {
-    super()
-    throw new Error()
-  }
 
   isLeafNode() {
     return this.children.length == 0

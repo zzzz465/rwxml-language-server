@@ -5,6 +5,7 @@ import { Injectable } from './injectable'
 import { XMLDocument } from '../parser/XMLDocument'
 import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
+import { Element } from '../parser'
 
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) {}
@@ -46,14 +47,14 @@ export class TypeInfoInjector {
       const listGenericType = typeInfo.genericArguments[0]
       console.assert(!!listGenericType, `listGenericType for type: ${typeInfo.fullName} is invalid.`)
 
-      for (const childNode of injectable.children) {
-        if (childNode.validNode && childNode.name) {
+      for (const childNode of injectable.children.filter((node: any) => node instanceof Element) as Element[]) {
+        if (childNode.name) {
           this.injectType(childNode, listGenericType)
         }
       }
     } else {
-      for (const childNode of injectable.children) {
-        if (childNode.validNode && childNode.name) {
+      for (const childNode of injectable.children.filter((node: any) => node instanceof Element) as Element[]) {
+        if (childNode.name) {
           const fieldInfo = injectable.typeInfo.fields[childNode.name]
 
           if (fieldInfo) {

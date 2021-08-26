@@ -1,4 +1,2 @@
-export * from './XMLNode'
-export * from './XMLDocument'
-export * from './XMLParser'
-export * from './XMLScanner'
+export * from './domhandler'
+export * from './htmlparser2'
