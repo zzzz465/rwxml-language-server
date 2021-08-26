@@ -4,6 +4,9 @@ import { Injectable } from './injectable'
 import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
 import { Document, Element } from '../parser'
+import $ from 'cheerio'
+
+$._options.xmlMode = true
 
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) {}
@@ -66,7 +69,7 @@ export class TypeInfoInjector {
       defs: [] as Def[],
     }
 
-    const root = document.firstChild
+    const root = $(document).children('Defs').get(0) // possible undefined, but type isn't showing
 
     if (root instanceof Element) {
       if (root && root.name === 'Defs') {
