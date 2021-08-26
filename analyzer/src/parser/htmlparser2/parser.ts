@@ -2,7 +2,7 @@
 // all rights goes to original author.
 import { Attribute } from '../domhandler'
 import { Range } from '../range'
-import { Tokenizer } from './Tokenizer'
+import { Tokenizer } from './tokenizer'
 
 export interface ParserOptions {
   /**
