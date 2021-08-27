@@ -3,8 +3,8 @@ import { Uri } from 'vscode'
 import vscode from 'vscode'
 import { xml } from '../utils'
 import { CheerioAPI, Node } from 'cheerio'
+import { RimWorldVersion } from './version'
 
-type RimWorldVersion = 'v1.0' | 'v1.1' | 'v1.2' | 'v1.3'
 type LoadFolderData = {
   [key in RimWorldVersion]: string[]
 }
