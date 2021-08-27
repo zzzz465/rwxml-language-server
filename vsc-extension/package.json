@@ -69,6 +69,7 @@
     "cache-decorator": "^0.1.6",
     "cheerio": "^1.0.0-rc.10",
     "double-ended-queue": "^2.1.0-0",
+    "fast-glob": "^3.2.7",
     "htmlparser2": "^7.0.0",
     "js-yaml": "^4.1.0",
     "linq-es2015": "^2.5.1",
