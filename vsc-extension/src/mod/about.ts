@@ -20,7 +20,7 @@ export class About {
 
   static async create(uri: Uri, document: Document): Promise<About> {
     const about = new About() as Writable<About>
-    const $ = cheerio.load(document)
+    const $ = cheerio.load(document, { xmlMode: true })
 
     about.aboutXMLFile = uri
     about.name = $('name').text()
