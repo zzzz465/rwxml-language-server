@@ -35,7 +35,6 @@ namespace LoadFolderData {
         .map((_, node) => $(node).text())
         .toArray(),
     }
-    $($('li').get(0)).parent()
 
     return data
   }
