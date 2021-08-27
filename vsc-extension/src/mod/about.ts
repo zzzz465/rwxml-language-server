@@ -2,8 +2,8 @@ import { Uri } from 'vscode'
 import vscode from 'vscode'
 import { Writable } from '../types/writable'
 import XMLParser from 'htmlparser2'
-import { Document } from 'domhandler'
-import cheerio from 'cheerio'
+import { CheerioAPI } from 'cheerio'
+import { xml } from '../utils'
 
 export interface ModDependency {
   readonly packageId: string
@@ -13,14 +13,13 @@ export class About {
   static async load(uri: Uri): Promise<About> {
     const raw = await vscode.workspace.fs.readFile(uri)
     const xmlText = Buffer.from(raw).toString()
-    const document = XMLParser.parseDocument(xmlText, { xmlMode: true })
+    const $ = xml.parse(xmlText)
 
-    return await About.create(uri, document)
+    return await About.create(uri, $)
   }
 
-  static async create(uri: Uri, document: Document): Promise<About> {
+  static async create(uri: Uri, $: CheerioAPI): Promise<About> {
     const about = new About() as Writable<About>
-    const $ = cheerio.load(document, { xmlMode: true })
 
     about.aboutXMLFile = uri
     about.name = $('name').text()
