@@ -35,7 +35,7 @@ export class ModManager {
     this._initialized = true
   }
 
-  getDependencies(packageIds: string): { [packageId: string]: Mod | undefined } {
+  getDependencies(packageIds: string[]): { [packageId: string]: Mod | undefined } {
     const ret: { [packageId: string]: Mod | undefined } = {}
 
     for (const pkgId of packageIds) {

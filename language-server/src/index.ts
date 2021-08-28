@@ -15,6 +15,7 @@ import {
   SerializedXMLDocumentResponse,
   WorkspaceInitialization,
   XMLDocumentDecoItemRequest,
+  XMLDocumentDependencyRequest,
 } from './fs'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { getVersion } from './utils'
@@ -54,18 +55,31 @@ async function getProject(version: RimWorldVersion) {
     const typeInfoMap = await getTypeInfoMap(version)
     const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
     const defManager = new DefManager(defDatabase, nameDatabase, typeInfoMap, typeInfoInjector)
-
-    projects.set(
+    const project = new Project(
       version,
-      new Project(
-        version,
-        defManager,
-        defDatabase,
-        nameDatabase,
-        new RangeConverter(textDocumentManager),
-        textDocumentManager
-      )
+      defManager,
+      defDatabase,
+      nameDatabase,
+      new RangeConverter(textDocumentManager),
+      textDocumentManager
     )
+
+    project.projectEvent.on('requestDependencyMods', async (version, dependencies) => {
+      console.log(`requesting dependency of version: ${version}, dependencies: ${dependencies}`)
+      const pkgIds = dependencies.map((dep) => dep.packageId)
+      const res = await connection.sendRequest(XMLDocumentDependencyRequest, {
+        version: project.version,
+        packageIds: pkgIds,
+      })
+
+      console.log(`received dependency ${res.items.length} items from client, version: ${version}`)
+
+      for (const { readonly, uri, text, packageId } of res.items) {
+        project.FileAdded(File.create({ uri: URI.parse(uri), text: text, readonly, ownerPackageId: packageId }))
+      }
+    })
+
+    projects.set(version, project)
   }
 
   const targetProject = projects.get(version) as Project

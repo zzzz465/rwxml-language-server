@@ -1,4 +1,5 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
+import { RimWorldVersion } from '../typeInfoMapManager'
 import { DecoItem, UrlEncodedString } from '../types'
 
 export interface ProjectFileAddedNotificationParams {
@@ -35,11 +36,12 @@ export interface XMLDocumentDecoItemResponse {
 }
 
 export interface XMLDocumentDependencyRequest {
-  version: string
+  version: RimWorldVersion
+  packageIds: string[]
 }
 
 export interface XMLDocumentDependencyResponse {
-  items: ({ readonly: true } & ProjectFileAddedNotificationParams)[]
+  items: ({ readonly: true; packageId: string } & ProjectFileAddedNotificationParams)[]
 }
 
 export interface WorkspaceInitializationNotificationParams {

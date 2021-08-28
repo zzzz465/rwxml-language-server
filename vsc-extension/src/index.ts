@@ -7,11 +7,13 @@ import { updateDecoration } from './features'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted, WorkspaceInitialization } from './events'
 import { ModManager } from './mod/modManager'
 import { getWorkshopModsDirectoryUri } from './mod'
+import { DependencyManager } from './dependencyManager'
 
 let client: LanguageClient
 let disposed = false
 let fileSystemWatcher: FileSystemWatcher
 let modManager: ModManager
+let dependencyManager: DependencyManager
 const disposables: Disposable[] = []
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -59,14 +61,17 @@ export async function activate(context: ExtensionContext): Promise<void> {
     disposables
   )
 
-  console.log('registering client features done.')
-
   console.log('initializing modManager...')
   const workshopModsDirectoryUri = getWorkshopModsDirectoryUri()
   console.log(`current workshop Directory: ${decodeURIComponent(workshopModsDirectoryUri.toString())}`)
   modManager = new ModManager([workshopModsDirectoryUri])
   await modManager.init()
   console.log('initializing modManager completed.')
+
+  console.log('initializing dependencyManager...')
+  dependencyManager = new DependencyManager(modManager)
+  dependencyManager.listen(client)
+  console.log('dependencyManager initialized.')
 
   // wait server to be ready
   console.log('waiting language-server to be ready...')

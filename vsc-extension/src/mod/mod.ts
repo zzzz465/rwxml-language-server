@@ -7,12 +7,17 @@ import { RimWorldVersion } from './version'
 import glob from 'fast-glob'
 import fs from 'fs/promises'
 import fsSync from 'fs'
+import { AsEnumerable } from 'linq-es2015'
+
+type retType = {
+  defs: { uri: Uri; text: string }[]
+}
 
 export class Mod {
   static async create(rootDirectory: Uri) {
     const fileOrDirsOnRoot = await vscode.workspace.fs.readDirectory(rootDirectory)
 
-    if (!fileOrDirsOnRoot.find(([name, type]) => name === 'About' && type === FileType.Directory)) {
+    if (!fileOrDirsOnRoot.find(([name, type]) => name.toLowerCase() === 'about' && type === FileType.Directory)) {
       throw new Error(`directory About not exists on directory root ${decodeURIComponent(rootDirectory.toString())}`)
     }
 
@@ -20,7 +25,7 @@ export class Mod {
     const about = await About.load(aboutPath)
 
     let loadFolder: LoadFolder | null = null
-    if (fileOrDirsOnRoot.find(([name, type]) => name === 'LoadFolders.xml' && type === FileType.File)) {
+    if (fileOrDirsOnRoot.find(([name, type]) => name.toLowerCase() === 'loadfolders.xml' && type === FileType.File)) {
       const loadFolderPath = vscode.Uri.file(path.resolve(rootDirectory.fsPath, 'LoadFolders.xml'))
       loadFolder = await LoadFolder.Load(loadFolderPath)
     }
@@ -34,23 +39,35 @@ export class Mod {
     public readonly loadFolder?: LoadFolder
   ) {}
 
-  getDependencyFiles(version?: RimWorldVersion) {
+  async getDependencyFiles(version?: RimWorldVersion) {
+    const ret: retType = {
+      defs: [],
+    }
+
+    // TODO: refactor this ugly code
     if (version && this.loadFolder) {
-      const dirs = this.loadFolder.getRequiredPaths(version)
-      return dirs.map((dir) => this.getDependencyFilesFromDirectory(Uri.file(dir)))
+      const dirs = this.loadFolder.getRequiredPaths(version) ?? ['/']
+      const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
+      ret.defs = AsEnumerable(dependencyFiles)
+        .Select((d) => d.defs)
+        .SelectMany((d) => d)
+        .ToArray()
+
+      return ret
     } else {
-      return [this.getDependencyFilesFromDirectory(this.rootDirectory)]
+      return await this.getDependencyFilesFromDirectory('/')
     }
   }
 
-  private async getDependencyFilesFromDirectory(directoryUri: Uri) {
-    type retType = {
-      defs?: { uri: Uri; text: string }[]
+  private async getDependencyFilesFromDirectory(relativeURL: string) {
+    const ret: retType = {
+      defs: [],
     }
-    const ret: retType = {}
+
+    const loadDirectoryRoot = path.resolve(this.rootDirectory.fsPath, relativeURL)
 
     // check Defs
-    const defsPath = path.resolve(directoryUri.fsPath, 'Defs')
+    const defsPath = path.resolve(loadDirectoryRoot, 'Defs')
     if (fsSync.existsSync(defsPath)) {
       const defs = await this.getXMLDependencyFiles(Uri.file(defsPath))
       ret.defs = defs
