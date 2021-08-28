@@ -19,11 +19,11 @@ export interface ProjectEvents {
 
 export class Project {
   public readonly projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
-  private readonly about = new About()
   private xmlDocumentMap: Map<string, Document> = new Map()
   private dependencyFiles: MultiDictionary<string, string> = new MultiDictionary(undefined, undefined, true)
 
   constructor(
+    private readonly about: About,
     public readonly version: RimWorldVersion,
     public readonly defManager: DefManager,
     private readonly defDatabase: DefDatabase,
@@ -72,20 +72,11 @@ export class Project {
   }
 
   private onXMLFileChanged(file: XMLFile) {
-    if (this.isAboutFile(file)) {
-      console.log(`about updated, uri: ${decodeURIComponent(file.uri.toString())}`)
-      this.about.updateAboutXML(file.text)
-    } else {
-      this.onDefFileChanged(file)
-    }
+    this.onDefFileChanged(file)
   }
 
   private onXMLFileDeleted(file: XMLFile) {
-    if (this.isAboutFile(file)) {
-      this.about.updateAboutXML('')
-    } else {
-      this.onDefFileDeleted(file)
-    }
+    this.onDefFileDeleted(file)
   }
 
   private onDefFileChanged(file: XMLFile) {
@@ -107,14 +98,6 @@ export class Project {
 
     const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)
-  }
-
-  private isAboutFile({ uri }: File) {
-    const fsPath = uri.fsPath
-    const name = path.basename(path.normalize(fsPath))
-    const dirname = path.basename(path.dirname(fsPath))
-
-    return dirname.toLowerCase() === 'about' && name.toLowerCase() === 'about.xml'
   }
 
   private onDependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]) {
