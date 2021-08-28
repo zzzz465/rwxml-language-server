@@ -5,10 +5,15 @@ import * as path from 'path'
 import vscode from 'vscode'
 import { updateDecoration } from './features'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted, WorkspaceInitialization } from './events'
+import { ModManager } from './mod/modManager'
+import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri } from './mod'
+import { DependencyManager } from './dependencyManager'
 
 let client: LanguageClient
 let disposed = false
 let fileSystemWatcher: FileSystemWatcher
+let modManager: ModManager
+let dependencyManager: DependencyManager
 const disposables: Disposable[] = []
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -56,7 +61,21 @@ export async function activate(context: ExtensionContext): Promise<void> {
     disposables
   )
 
-  console.log('registering client features done.')
+  console.log('initializing modManager...')
+  const coreDirectoryUri = getCoreDirectoryUri()
+  const workshopModDirectoryUri = getWorkshopModsDirectoryUri()
+  const localModDirectoryUri = getLocalModDirectoryUri()
+  console.log(`core directory: ${decodeURIComponent(coreDirectoryUri.toString())}`)
+  console.log(`workshop Directory: ${decodeURIComponent(workshopModDirectoryUri.toString())}`)
+  console.log(`local mod directory: ${decodeURIComponent(localModDirectoryUri.toString())}`)
+  modManager = new ModManager([coreDirectoryUri, workshopModDirectoryUri, localModDirectoryUri])
+  await modManager.init()
+  console.log('initializing modManager completed.')
+
+  console.log('initializing dependencyManager...')
+  dependencyManager = new DependencyManager(modManager)
+  dependencyManager.listen(client)
+  console.log('dependencyManager initialized.')
 
   // wait server to be ready
   console.log('waiting language-server to be ready...')
