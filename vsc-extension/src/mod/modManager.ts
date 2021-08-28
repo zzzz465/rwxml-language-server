@@ -24,9 +24,11 @@ export class ModManager {
         this.mods.set(mod.about.packageId, mod)
       }
 
-      console.error(`cannot create ${errors.length} Mod from directory ${decodeURIComponent(uri.toString())}`)
-      for (const err of errors) {
-        console.error(err)
+      if (errors.length > 0) {
+        console.error(`cannot create ${errors.length} Mod from directory ${decodeURIComponent(uri.toString())}`)
+        for (const err of errors) {
+          console.error(err)
+        }
       }
     }
 
