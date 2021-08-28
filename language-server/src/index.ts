@@ -28,10 +28,12 @@ import { onDecorate } from './features/decorate'
 import { onDefinition } from './features/definition'
 import { TextDocumentManager } from './textDocumentManager'
 import { codeCompletion } from './features'
+import { About, isAboutFile } from './mod'
 
 const connection = createConnection(ProposedFeatures.all)
 
 const projects: Map<string, Project> = new Map()
+const about = new About()
 
 let typeInfoMapManager: TypeInfoMapManager
 const textDocuments = new TextDocuments(TextDocument)
@@ -56,6 +58,7 @@ async function getProject(version: RimWorldVersion) {
     const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
     const defManager = new DefManager(defDatabase, nameDatabase, typeInfoMap, typeInfoInjector)
     const project = new Project(
+      about,
       version,
       defManager,
       defDatabase,
@@ -99,10 +102,14 @@ connection.onInitialize(async (params: InitializeParams) => {
       return
     }
 
-    const version = getVersion(params.uri)
-    const project = await getProject(version)
     const file = File.create({ uri: URI.parse(params.uri), text: params.text, readonly: params.readonly })
-    project.FileAdded(file)
+    if (isAboutFile(file)) {
+      about.updateAboutXML(file.text)
+    } else {
+      const version = getVersion(params.uri)
+      const project = await getProject(version)
+      project.FileAdded(file)
+    }
   })
 
   connection.onNotification(ProjectFileChanged, async (params) => {
@@ -111,10 +118,14 @@ connection.onInitialize(async (params: InitializeParams) => {
       return
     }
 
-    const version = getVersion(params.uri)
-    const project = await getProject(version)
     const file = File.create({ uri: URI.parse(params.uri), text: params.text, readonly: params.readonly })
-    project.FileChanged(file)
+    if (isAboutFile(file)) {
+      about.updateAboutXML(file.text)
+    } else {
+      const version = getVersion(params.uri)
+      const project = await getProject(version)
+      project.FileChanged(file)
+    }
   })
 
   connection.onNotification(ProjectFileDeleted, async (params) => {
@@ -123,27 +134,37 @@ connection.onInitialize(async (params: InitializeParams) => {
       return
     }
 
-    const version = getVersion(params.uri)
-    const project = await getProject(version)
-    const file = File.create({ uri: URI.parse(params.uri) })
-    project.FileDeleted(file)
+    if (isAboutFile(File.create({ uri: URI.parse(params.uri) }))) {
+      about.updateAboutXML('')
+    } else {
+      const version = getVersion(params.uri)
+      const project = await getProject(version)
+      const file = File.create({ uri: URI.parse(params.uri) })
+      project.FileDeleted(file)
+    }
   })
 
   textDocuments.onDidChangeContent(async (e) => {
-    const uri = e.document.uri
-    console.log(`onDidChangeContext, uri: ${decodeURIComponent(uri)}`)
-    const version = getVersion(uri)
-    const project = await getProject(version)
-    const file = File.create({ uri: URI.parse(uri), text: e.document.getText() })
-    project.FileChanged(file)
+    const file = File.create({ uri: URI.parse(e.document.uri), text: e.document.getText() })
+    if (isAboutFile(file)) {
+      about.updateAboutXML(file.text)
+    } else {
+      const version = getVersion(e.document.uri)
+      const project = await getProject(version)
+      project.FileChanged(file)
+    }
   })
 
   connection.onNotification(WorkspaceInitialization, async ({ files }) => {
     for (const { uri, text, readonly } of files) {
-      const version = getVersion(uri)
-      const project = await getProject(version)
       const file = File.create({ uri: URI.parse(uri), text, readonly })
-      project.FileAdded(file)
+      if (isAboutFile(file)) {
+        about.updateAboutXML(file.text)
+      } else {
+        const version = getVersion(uri)
+        const project = await getProject(version)
+        project.FileAdded(file)
+      }
     }
   })
 

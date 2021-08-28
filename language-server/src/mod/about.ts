@@ -1,8 +1,10 @@
 import EventEmitter from 'events'
 import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapManager'
 import { Writable } from '../types'
-import { xml } from '../utils'
 import deepEqual from 'fast-deep-equal'
+import path from 'path'
+import { xml } from '../utils'
+import { File, XMLFile } from '../fs'
 
 export interface AboutEvents {
   dependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]): void
@@ -111,4 +113,12 @@ export class About {
 
     return data
   }
+}
+
+export function isAboutFile(file: File): file is XMLFile & boolean {
+  const fsPath = file.uri.fsPath
+  const name = path.basename(path.normalize(fsPath))
+  const dirname = path.basename(path.dirname(fsPath))
+
+  return file instanceof XMLFile && dirname.toLowerCase() === 'about' && name.toLowerCase() === 'about.xml'
 }
