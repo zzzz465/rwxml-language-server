@@ -64,7 +64,7 @@ export class Mod {
       defs: [],
     }
 
-    const loadDirectoryRoot = path.resolve(this.rootDirectory.fsPath, relativeURL)
+    const loadDirectoryRoot = path.join(this.rootDirectory.fsPath, relativeURL)
 
     // check Defs
     const defsPath = path.resolve(loadDirectoryRoot, 'Defs')

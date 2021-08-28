@@ -6,7 +6,7 @@ import vscode from 'vscode'
 import { updateDecoration } from './features'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted, WorkspaceInitialization } from './events'
 import { ModManager } from './mod/modManager'
-import { getWorkshopModsDirectoryUri } from './mod'
+import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri } from './mod'
 import { DependencyManager } from './dependencyManager'
 
 let client: LanguageClient
@@ -62,9 +62,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
   )
 
   console.log('initializing modManager...')
-  const workshopModsDirectoryUri = getWorkshopModsDirectoryUri()
-  console.log(`current workshop Directory: ${decodeURIComponent(workshopModsDirectoryUri.toString())}`)
-  modManager = new ModManager([workshopModsDirectoryUri])
+  const coreDirectoryUri = getCoreDirectoryUri()
+  const workshopModDirectoryUri = getWorkshopModsDirectoryUri()
+  const localModDirectoryUri = getLocalModDirectoryUri()
+  console.log(`core directory: ${decodeURIComponent(coreDirectoryUri.toString())}`)
+  console.log(`workshop Directory: ${decodeURIComponent(workshopModDirectoryUri.toString())}`)
+  console.log(`local mod directory: ${decodeURIComponent(localModDirectoryUri.toString())}`)
+  modManager = new ModManager([coreDirectoryUri, workshopModDirectoryUri, localModDirectoryUri])
   await modManager.init()
   console.log('initializing modManager completed.')
 

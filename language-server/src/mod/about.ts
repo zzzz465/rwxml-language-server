@@ -56,6 +56,13 @@ export class About {
     this._rawXML = text
     const newVal = this.parseNewXML()
 
+    // add packageId of Core, it is always loaded but not included on About.xml
+    if (newVal.modDependencies && !newVal.modDependencies?.find((d) => d.packageId === 'Ludeon.RimWorld')) {
+      newVal.modDependencies.push({
+        packageId: 'Ludeon.RimWorld',
+      })
+    }
+
     console.log(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
     console.log(`new dependencies: ${newVal.modDependencies}`)
 
