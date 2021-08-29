@@ -12,9 +12,17 @@ import { RimWorldVersion } from './typeInfoMapManager'
 import { MultiDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 
+// event that Project will emit
 export interface ProjectEvents {
   requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
   defChanged(injectables: Injectable[]): void
+}
+
+// events that Project will listen
+interface ListeningEvents {
+  fileAdded(file: File): void
+  fileChanged(file: File): void
+  fileDeleted(file: File): void
 }
 
 export class Project {
@@ -23,7 +31,7 @@ export class Project {
   private dependencyFiles: MultiDictionary<string, string> = new MultiDictionary(undefined, undefined, true)
 
   constructor(
-    private readonly about: About,
+    public readonly about: About,
     public readonly version: RimWorldVersion,
     public readonly defManager: DefManager,
     private readonly defDatabase: DefDatabase,
@@ -32,27 +40,6 @@ export class Project {
     private readonly textDocumentManager: TextDocumentManager
   ) {
     this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
-  }
-
-  FileAdded(file: File) {
-    console.log(`file added: ${file.uri.toString()}`)
-    if (file instanceof XMLFile) {
-      this.onXMLFileChanged(file)
-    }
-  }
-
-  FileChanged(file: File) {
-    console.log(`file changed: ${file.uri.toString()}`)
-    if (file instanceof XMLFile) {
-      this.onXMLFileChanged(file)
-    }
-  }
-
-  FileDeleted(file: File) {
-    console.log(`file deleted: ${file.uri.toString()}`)
-    if (file instanceof XMLFile) {
-      this.onXMLFileDeleted(file)
-    }
   }
 
   getXMLDocumentByUri(uri: string | URI) {
@@ -69,6 +56,33 @@ export class Project {
     }
 
     return this.textDocumentManager.get(uri)
+  }
+
+  listen(eventEmitter: EventEmitter<ListeningEvents>) {
+    eventEmitter.on('fileAdded', this.fileAdded.bind(this))
+    eventEmitter.on('fileChanged', this.fileChanged.bind(this))
+    eventEmitter.on('fileDeleted', this.fileDeleted.bind(this))
+  }
+
+  fileAdded(file: File) {
+    console.log(`ver: ${this.version} file added: ${file.uri.toString()}`)
+    if (file instanceof XMLFile) {
+      this.onXMLFileChanged(file)
+    }
+  }
+
+  fileChanged(file: File) {
+    console.log(`ver: ${this.version} file changed: ${file.uri.toString()}`)
+    if (file instanceof XMLFile) {
+      this.onXMLFileChanged(file)
+    }
+  }
+
+  fileDeleted(file: File) {
+    console.log(`ver: ${this.version} file deleted: ${file.uri.toString()}`)
+    if (file instanceof XMLFile) {
+      this.onXMLFileDeleted(file)
+    }
   }
 
   private onXMLFileChanged(file: XMLFile) {
@@ -110,7 +124,7 @@ export class Project {
       .Select((uri) => File.create({ uri: URI.parse(uri) }))
 
     for (const file of removedFiles) {
-      this.FileDeleted(file)
+      this.fileDeleted(file)
     }
 
     this.projectEvent.emit('requestDependencyMods', this.version, added)

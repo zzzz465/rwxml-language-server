@@ -5,6 +5,7 @@ import deepEqual from 'fast-deep-equal'
 import path from 'path'
 import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
+import { URI } from 'vscode-languageserver'
 
 export interface AboutEvents {
   dependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]): void
