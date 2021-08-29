@@ -57,7 +57,7 @@ export class LoadFolder {
     const res = RimWorldVersionArray.filter((ver) => ver !== 'default' && this.isBelongsToVersion(uri, ver))
     if (res.length === 0) {
       // if the file doesn't belongs to anywhere, it goes to default version.
-      _.remove(res, 'default')
+      res.push('default')
     }
 
     return res
