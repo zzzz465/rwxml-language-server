@@ -5,6 +5,7 @@ import { About } from './mod'
 import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
+import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from './fs'
 
 const connection = createConnection(ProposedFeatures.all)
 const about = new About()
@@ -26,8 +27,8 @@ connection.onInitialize(async (params: InitializeParams) => {
     return []
   })
 
-  /*
   connection.onRequest(XMLDocumentDecoItemRequest, async ({ uri }) => {
+    /*
     const version = getVersion(uri)
     const project = await getProject(version)
 
@@ -42,11 +43,12 @@ connection.onInitialize(async (params: InitializeParams) => {
     } else {
       return []
     }
+    */
+    return { items: [], uri } as XMLDocumentDecoItemResponse
   })
-  */
 
-  /*
   connection.onDefinition(async ({ position, textDocument }) => {
+    /*
     const version = getVersion(textDocument.uri)
     const project = await getProject(version)
 
@@ -60,12 +62,12 @@ connection.onInitialize(async (params: InitializeParams) => {
       return definitionLinks
     }
 
+    */
     return []
   })
-  */
 
-  /*
   connection.onCompletion(async ({ position, textDocument }) => {
+    /*
     const version = getVersion(textDocument.uri)
     const project = await getProject(version)
 
@@ -74,8 +76,9 @@ connection.onInitialize(async (params: InitializeParams) => {
 
       return result
     }
+    */
+    return []
   })
-  */
 
   // completion vs completionResolve?
   // https://github.com/prabirshrestha/vim-lsp/issues/304#issuecomment-465895054
