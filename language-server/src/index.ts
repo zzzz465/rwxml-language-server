@@ -1,4 +1,11 @@
-import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver/node'
+import {
+  CompletionList,
+  createConnection,
+  InitializeParams,
+  InitializeResult,
+  LocationLink,
+  ProposedFeatures,
+} from 'vscode-languageserver/node'
 import { TypeInfoMapManager } from './typeInfoMapManager'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
@@ -6,6 +13,10 @@ import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from './fs'
+import { URI } from 'vscode-uri'
+import { onDecorate } from './features/decorate'
+import { onDefinition } from './features/definition'
+import { codeCompletion } from './features'
 
 const connection = createConnection(ProposedFeatures.all)
 const about = new About()
@@ -28,57 +39,58 @@ connection.onInitialize(async (params: InitializeParams) => {
     return []
   })
 
-  connection.onRequest(XMLDocumentDecoItemRequest, async ({ uri }) => {
-    /*
-    const version = getVersion(uri)
-    const project = await getProject(version)
+  connection.onRequest(XMLDocumentDecoItemRequest, async ({ uri: uriString }) => {
+    const uri = URI.parse(uriString)
+    const versions = loadFolder.isBelongsTo(uri)
+    const result: XMLDocumentDecoItemResponse = { uri: uriString, items: [] }
 
-    if (project) {
-      const { decoItems, errors } = onDecorate(project, URI.parse(uri))
+    for (const version of versions) {
+      const project = await projectManager.getProject(version)
+      const { decoItems, errors } = onDecorate(project, uri)
 
       if (errors.length > 0) {
         console.log(errors)
       }
 
-      return { uri, items: decoItems }
-    } else {
-      return []
+      result.items.push(...decoItems)
     }
-    */
-    return { items: [], uri } as XMLDocumentDecoItemResponse
+
+    return result
   })
 
   connection.onDefinition(async ({ position, textDocument }) => {
-    /*
-    const version = getVersion(textDocument.uri)
-    const project = await getProject(version)
+    const uri = URI.parse(textDocument.uri)
+    const versions = loadFolder.isBelongsTo(uri)
+    const result: LocationLink[] = []
 
-    if (project) {
-      const { definitionLinks, errors } = onDefinition(project, URI.parse(textDocument.uri), position)
+    for (const version of versions) {
+      const project = await projectManager.getProject(version)
+      const { definitionLinks, errors } = onDefinition(project, uri, position)
 
       if (errors.length > 0) {
         console.log(errors)
       }
 
-      return definitionLinks
+      result.push(...definitionLinks)
     }
 
-    */
-    return []
+    return result
   })
 
   connection.onCompletion(async ({ position, textDocument }) => {
-    /*
-    const version = getVersion(textDocument.uri)
-    const project = await getProject(version)
+    const uri = URI.parse(textDocument.uri)
+    const versions = loadFolder.isBelongsTo(uri)
+    const result: CompletionList = { isIncomplete: true, items: [] }
 
-    if (project) {
-      const result = codeCompletion(project, URI.parse(textDocument.uri), position)
+    for (const version of versions) {
+      const project = await projectManager.getProject(version)
+      const { isIncomplete, items } = codeCompletion(project, uri, position)
 
-      return result
+      result.isIncomplete ||= isIncomplete
+      result.items.push(...items)
     }
-    */
-    return []
+
+    return result
   })
 
   // completion vs completionResolve?
