@@ -4,15 +4,25 @@ import { AsEnumerable } from 'linq-es2015'
 import { Metadata, RawTypeInfo, TypeInfoMap, TypeInfoLoader } from '@rwxml/analyzer'
 
 //@ts-ignore
-import raw_default_core from '../../metadata/rawTypeInfos/1.3/core.json'
+import raw_default_core from '../../metadata/rawTypeInfos/default/core.json'
 //@ts-ignore
-import raw_1_3_core from '../../metadata/rawTypeInfos/default/core.json'
+import raw_1_3_core from '../../metadata/rawTypeInfos/1.3/core.json'
 
+// TODO: add data for other versions
 const rawTypeInfoMap: Record<string, Record<string, any>> = {
   default: {
     core: raw_default_core,
   },
   '1.3': {
+    core: raw_1_3_core,
+  },
+  '1.2': {
+    core: raw_1_3_core,
+  },
+  '1.1': {
+    core: raw_1_3_core,
+  },
+  '1.0': {
     core: raw_1_3_core,
   },
 }
