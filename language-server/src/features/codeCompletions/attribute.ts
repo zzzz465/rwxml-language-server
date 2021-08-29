@@ -1,62 +1,70 @@
 /* eslint-disable prettier/prettier */
-import { Attribute, Element, Injectable } from '@rwxml/analyzer'
-import { CompletionItem, CompletionItemKind } from 'vscode-languageserver'
+import { Attribute, Element, Injectable, Node } from '@rwxml/analyzer'
+import { AsEnumerable } from 'linq-es2015'
+import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { expandUntil, isAlpha } from '../../utils/strings'
 
-// TODO
+const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
 
-export function completeAttribute(project: Project, node: Injectable, offset: number): CompletionItem[] {
-  const uri = node.document.uri
-  const rawText = node.document.rawText
+export function completeAttribute(project: Project, node: Node, offset: number): CompletionItem[] {
+  if (!(node instanceof Element) || !node.openTagRange.include(offset)) {
+    return []
+  }
+
   const attribs = node.attribs
+  const items: CompletionItem[] = []
   const currentAttribute = findCurrentAttribute(node, offset)
-  const candidates: string[] = []
+  const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAlpha(c), (c) => isAlpha(c))
+  const textRange = project.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
 
-  if (!attribs['Name']) {
-    candidates.push('Name')
+  if (!textRange) {
+    return []
   }
 
-  if (!attribs['ParentName']) {
-    candidates.push('ParentName')
-  }
+  if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset) === ' ')) {
+    // selecting attribute name, or selecting whitespace inside starting tag
+    const attrNameCandidates = AsEnumerable(knownAttributeNames)
+      .Where((name) => !attribs[name])
+      .ToArray()
+    const completions = getMatchingText(attrNameCandidates, currentPointingText.text)
 
-  function completeAttributeName() {
+    items.push(...completions.map((label) => ({
+      label,
+      kind: CompletionItemKind.Enum,
+      textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
+    }) as CompletionItem))
+  } else if (currentAttribute && isPointingAttributeValue(currentAttribute, offset)) {
+    // selecting attribute values
+    switch(currentAttribute.name) {
+      case 'ParentName': {
+        const defs = project.nameDatabase.getDef(node.name)
+        const candidates = AsEnumerable(defs)
+          .Where((def) => !!def.getNameAttributeValue())
+          .Select((def) => def.getNameAttributeValue() as string)
+          .ToArray()
+        
+        const completions = getMatchingText(candidates, currentPointingText.text)
 
-  }
+        items.push(...completions.map((label) => ({
+          label,
+          kind: CompletionItemKind.EnumMember,
+          textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
+        } as CompletionItem)))
+      } break
 
-  function completeAttributeValue() {
-
-  }
-
-  if (currentAttribute) {
-    if (isPointingAttributeName(currentAttribute, offset)) {
-      completeAttributeName()
-    } else if (isPointingAttributeValue(currentAttribute, offset)) {
-      completeAttributeValue()
+      case 'Class':
+        // TODO: how to implement this...?
+        break
+      
+      case 'Abstract':
+      case 'Inherit':
+        items.push({ label: 'true', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'true') })
+        items.push({ label: 'false', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'false') })
+        break
     }
-  } else {
-    if (offset > 0 && rawText[offset - 1] === ' ') {
-      completeAttributeName()
-    } else {
-      return []
-    }
   }
-
-  const { text } = expandUntil(
-    rawText,
-    offset,
-    (c) => c === ' ',
-    (c) => isAlpha(c)
-  )
-
-  const matchingTexts = getMatchingText(candidates, text)
-
-  const items = matchingTexts.map(label => ({
-    label,
-    kind: CompletionItemKind.Enum
-  } as CompletionItem))
 
   return items
 }
