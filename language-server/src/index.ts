@@ -18,6 +18,7 @@ const projectManager = new ProjectManager(about, loadFolder, typeInfoMapManager,
 connection.onInitialize(async (params: InitializeParams) => {
   connection.console.log('hello world! initializing @rwxml-language-server/language-server ...')
 
+  loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(connection)
   notificationEventManager.listen(connection, textDocumentManager.event)
   projectManager.listen(notificationEventManager.event)

@@ -6,17 +6,19 @@ import EventEmitter from 'events'
 import path from 'path'
 import { URI } from 'vscode-uri'
 import _ from 'lodash'
+import { File, XMLFile } from '../fs'
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface LoadFolderEvents {
-  // '1.0': ()
+// events that LoadFolder will listen
+interface ListeningEvents {
+  projectFileChanged(file: File): void
+  contentChanged(file: File): void
 }
 
 // TODO: support on LoadFolder changes.
 export class LoadFolder {
   private _rawXML = ''
 
-  readonly loadFolderEvents: EventEmitter<LoadFolderEvents> = new EventEmitter()
+  readonly loadFolderEvents: EventEmitter<ListeningEvents> = new EventEmitter()
   rootDirectory: URI = URI.file('')
 
   private '_1.0': URI[] = []
@@ -122,5 +124,25 @@ export class LoadFolder {
     const absPath = path.join(root, relativePath)
 
     return URI.file(absPath)
+  }
+
+  listen(event: EventEmitter<ListeningEvents>) {
+    event.on('contentChanged', this.onFileChanged.bind(this))
+    event.on('projectFileChanged', this.onFileChanged.bind(this))
+  }
+
+  private onFileChanged(file: File) {
+    const uri = file.uri
+    if (file instanceof XMLFile && this.isLoadFolderFile(file.uri)) {
+      const baseDir = path.basename(uri.fsPath)
+      const baseDirUri = URI.file(baseDir)
+      this.rootDirectory = baseDirUri
+      this.updateLoadFolderXML(file.text)
+    }
+  }
+
+  private isLoadFolderFile(uri: URI) {
+    const basename = path.basename(uri.fsPath)
+    return basename.toLowerCase() === 'loadfolders.xml'
   }
 }
