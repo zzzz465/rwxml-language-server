@@ -12,26 +12,25 @@ import { RimWorldVersion } from './typeInfoMapManager'
 import { MultiDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 
+// event that Project will emit
 export interface ProjectEvents {
-  requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
   defChanged(injectables: Injectable[]): void
 }
 
 export class Project {
   public readonly projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
   private xmlDocumentMap: Map<string, Document> = new Map()
-  private dependencyFiles: MultiDictionary<string, string> = new MultiDictionary(undefined, undefined, true)
 
   constructor(
-    private readonly about: About,
+    public readonly about: About,
     public readonly version: RimWorldVersion,
     public readonly defManager: DefManager,
     private readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
     public readonly rangeConverter: RangeConverter,
     private readonly textDocumentManager: TextDocumentManager
-  ) {
-    this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
+  ) {}
+
   }
 
   FileAdded(file: File) {
@@ -98,21 +97,5 @@ export class Project {
 
     const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)
-  }
-
-  private onDependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]) {
-    const added = _.difference(newVal, oldVal)
-    const removed = _.difference(oldVal, newVal)
-
-    const removedFiles = AsEnumerable(removed)
-      .Select((dep) => this.dependencyFiles.getValue(dep.packageId))
-      .SelectMany((it) => it)
-      .Select((uri) => File.create({ uri: URI.parse(uri) }))
-
-    for (const file of removedFiles) {
-      this.FileDeleted(file)
-    }
-
-    this.projectEvent.emit('requestDependencyMods', this.version, added)
   }
 }
