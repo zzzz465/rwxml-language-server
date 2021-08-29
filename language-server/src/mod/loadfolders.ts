@@ -17,6 +17,7 @@ interface ListeningEvents {
 // TODO: support on LoadFolder changes.
 export class LoadFolder {
   private _rawXML = ''
+  private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
 
   readonly loadFolderEvents: EventEmitter<ListeningEvents> = new EventEmitter()
   rootDirectory: URI = URI.file('')
@@ -57,8 +58,17 @@ export class LoadFolder {
 
   isBelongsTo(uri: URI): RimWorldVersion[] {
     const res = RimWorldVersionArray.filter((ver) => ver !== 'default' && this.isBelongsToVersion(uri, ver))
+
+    // might the case where LoadFolders.xml is not valid nor exists.
     if (res.length === 0) {
-      // if the file doesn't belongs to anywhere, it goes to default version.
+      const match = this.versionRegex.exec(uri.fsPath)
+      if (match && match.length > 0) {
+        res.push(match[1] as RimWorldVersion)
+      }
+    }
+
+    // can't assume version from parent directory names, give it default version instead.
+    if (res.length === 0) {
       res.push('default')
     }
 
