@@ -65,21 +65,21 @@ export class Project {
   }
 
   fileAdded(file: File) {
-    console.log(`file added: ${file.uri.toString()}`)
+    console.log(`ver: ${this.version} file added: ${file.uri.toString()}`)
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
   fileChanged(file: File) {
-    console.log(`file changed: ${file.uri.toString()}`)
+    console.log(`ver: ${this.version} file changed: ${file.uri.toString()}`)
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
   fileDeleted(file: File) {
-    console.log(`file deleted: ${file.uri.toString()}`)
+    console.log(`ver: ${this.version} file deleted: ${file.uri.toString()}`)
     if (file instanceof XMLFile) {
       this.onXMLFileDeleted(file)
     }
