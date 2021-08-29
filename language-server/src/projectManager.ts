@@ -73,6 +73,7 @@ export class ProjectManager {
       this.textDocumentManager
     )
 
+    eventFilter.listen(this.event)
     project.listen(eventFilter.event)
     project.projectEvent.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
 
