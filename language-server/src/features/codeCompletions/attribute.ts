@@ -33,7 +33,7 @@ export function completeAttribute(project: Project, node: Node, offset: number):
     items.push(...completions.map((label) => ({
       label,
       kind: CompletionItemKind.Enum,
-      textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
+      textEdit: label.length > 0 ? TextEdit.replace(textRange, `${label}=""`) : undefined
     }) as CompletionItem))
   } else if (currentAttribute && isPointingAttributeValue(currentAttribute, offset)) {
     // selecting attribute values
