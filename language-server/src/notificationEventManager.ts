@@ -15,7 +15,7 @@ import {
 } from './fs'
 
 // events that this manager will emit
-interface NotificationEvents {
+export interface NotificationEvents {
   projectFileAdded(file: File): void
   projectFileChanged(file: File): void
   projectFileDeleted(file: File): void

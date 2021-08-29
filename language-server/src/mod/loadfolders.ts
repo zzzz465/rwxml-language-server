@@ -7,19 +7,15 @@ import path from 'path'
 import { URI } from 'vscode-uri'
 import _ from 'lodash'
 import { File, XMLFile } from '../fs'
-
-// events that LoadFolder will listen
-interface ListeningEvents {
-  projectFileChanged(file: File): void
-  contentChanged(file: File): void
-}
+import { NotificationEvents } from '../notificationEventManager'
+import { AsEnumerable } from 'linq-es2015'
 
 // TODO: support on LoadFolder changes.
 export class LoadFolder {
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
+  private readonly resourceDirs = ['Defs', 'Textures', 'Languages', 'Sounds']
 
-  readonly loadFolderEvents: EventEmitter<ListeningEvents> = new EventEmitter()
   rootDirectory: URI = URI.file('')
 
   private '_1.0': URI[] = []
@@ -43,7 +39,7 @@ export class LoadFolder {
     return [this.rootDirectory]
   }
 
-  updateLoadFolderXML(text: string) {
+  updateLoadFolderXML(uri: URI, text: string) {
     this._rawXML = text
 
     const $ = xml.parse(this._rawXML)
@@ -88,12 +84,22 @@ export class LoadFolder {
     // check file is under loadDirectory according to LoadFolders.xml
     const loadDirs = this[version]
     for (const dir of loadDirs) {
-      if (isSubFileOf(dir.fsPath, uri.fsPath)) {
-        return true
+      const resourcePaths = this.getResourceDirectories(dir)
+      for (const path of resourcePaths) {
+        if (isSubFileOf(path.fsPath, uri.fsPath)) {
+          return true
+        }
       }
     }
 
     return false
+  }
+
+  private getResourceDirectories(parent: URI) {
+    return AsEnumerable(this.resourceDirs)
+      .Select((resPath) => path.join(parent.fsPath, resPath))
+      .Select((p) => URI.file(p))
+      .ToArray()
   }
 
   private parseNewXML($: CheerioAPI) {
@@ -136,18 +142,26 @@ export class LoadFolder {
     return URI.file(absPath)
   }
 
-  listen(event: EventEmitter<ListeningEvents>) {
-    event.on('contentChanged', this.onFileChanged.bind(this))
+  listen(event: EventEmitter<NotificationEvents>) {
+    event.on('projectFileAdded', this.onFileChanged.bind(this))
     event.on('projectFileChanged', this.onFileChanged.bind(this))
+    event.on('projectFileDeleted', this.onFileChanged.bind(this))
+    event.on('contentChanged', this.onFileChanged.bind(this))
+    event.on('workspaceInitialized', (files) => {
+      const aboutFile = files.find((file) => this.isLoadFolderFile(file.uri))
+      if (aboutFile) {
+        this.onFileChanged(aboutFile)
+      }
+    })
   }
 
   private onFileChanged(file: File) {
     const uri = file.uri
     if (file instanceof XMLFile && this.isLoadFolderFile(file.uri)) {
-      const baseDir = path.basename(uri.fsPath)
+      const baseDir = path.dirname(uri.fsPath)
       const baseDirUri = URI.file(baseDir)
       this.rootDirectory = baseDirUri
-      this.updateLoadFolderXML(file.text)
+      this.updateLoadFolderXML(file.uri, file.text)
     }
   }
 
