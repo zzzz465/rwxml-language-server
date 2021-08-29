@@ -221,7 +221,7 @@ export class Tokenizer {
   private _texts: string[] = []
   // full content that tokenizer had passed.
   get fullText(): string {
-    return this._texts.join()
+    return this._texts.join('')
   }
 
   /** The read buffer. */
