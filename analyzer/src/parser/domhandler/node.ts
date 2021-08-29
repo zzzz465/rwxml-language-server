@@ -196,6 +196,10 @@ export class Document extends NodeWithChildren {
     this.rawText = rawText
   }
 
+  getCharAt(offset: number): string {
+    return this.rawText.charAt(offset)
+  }
+
   findNodeAt(offset: number) {
     return findNodeAt(this as unknown as Element, offset)
   }
