@@ -18,6 +18,13 @@ export interface ProjectEvents {
   defChanged(injectables: Injectable[]): void
 }
 
+// events that Project will listen
+interface ListeningEvents {
+  fileAdded(file: File): void
+  fileChanged(file: File): void
+  fileDeleted(file: File): void
+}
+
 export class Project {
   public readonly projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
   private xmlDocumentMap: Map<string, Document> = new Map()
@@ -33,28 +40,6 @@ export class Project {
     private readonly textDocumentManager: TextDocumentManager
   ) {
     this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
-
-  }
-
-  FileAdded(file: File) {
-    console.log(`file added: ${file.uri.toString()}`)
-    if (file instanceof XMLFile) {
-      this.onXMLFileChanged(file)
-    }
-  }
-
-  FileChanged(file: File) {
-    console.log(`file changed: ${file.uri.toString()}`)
-    if (file instanceof XMLFile) {
-      this.onXMLFileChanged(file)
-    }
-  }
-
-  FileDeleted(file: File) {
-    console.log(`file deleted: ${file.uri.toString()}`)
-    if (file instanceof XMLFile) {
-      this.onXMLFileDeleted(file)
-    }
   }
 
   getXMLDocumentByUri(uri: string | URI) {
@@ -71,6 +56,33 @@ export class Project {
     }
 
     return this.textDocumentManager.get(uri)
+  }
+
+  listen(eventEmitter: EventEmitter<ListeningEvents>) {
+    eventEmitter.on('fileAdded', this.fileAdded.bind(this))
+    eventEmitter.on('fileChanged', this.fileChanged.bind(this))
+    eventEmitter.on('fileDeleted', this.fileDeleted.bind(this))
+  }
+
+  fileAdded(file: File) {
+    console.log(`file added: ${file.uri.toString()}`)
+    if (file instanceof XMLFile) {
+      this.onXMLFileChanged(file)
+    }
+  }
+
+  fileChanged(file: File) {
+    console.log(`file changed: ${file.uri.toString()}`)
+    if (file instanceof XMLFile) {
+      this.onXMLFileChanged(file)
+    }
+  }
+
+  fileDeleted(file: File) {
+    console.log(`file deleted: ${file.uri.toString()}`)
+    if (file instanceof XMLFile) {
+      this.onXMLFileDeleted(file)
+    }
   }
 
   private onXMLFileChanged(file: XMLFile) {

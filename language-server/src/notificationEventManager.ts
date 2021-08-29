@@ -14,6 +14,7 @@ import {
   WorkspaceInitializationNotificationParams,
 } from './fs'
 
+// events that this manager will emit
 export interface NotificationEvents {
   projectFileAdded(file: File): void
   projectFileChanged(file: File): void

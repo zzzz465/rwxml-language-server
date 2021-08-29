@@ -78,7 +78,7 @@ async function getProject(version: RimWorldVersion) {
       console.log(`received dependency ${res.items.length} items from client, version: ${version}`)
 
       for (const { readonly, uri, text, packageId } of res.items) {
-        project.FileAdded(File.create({ uri: URI.parse(uri), text: text, readonly, ownerPackageId: packageId }))
+        project.fileAdded(File.create({ uri: URI.parse(uri), text: text, readonly, ownerPackageId: packageId }))
       }
     })
 
@@ -108,7 +108,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     } else {
       const version = getVersion(params.uri)
       const project = await getProject(version)
-      project.FileAdded(file)
+      project.fileAdded(file)
     }
   })
 
@@ -124,7 +124,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     } else {
       const version = getVersion(params.uri)
       const project = await getProject(version)
-      project.FileChanged(file)
+      project.fileChanged(file)
     }
   })
 
@@ -140,7 +140,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       const version = getVersion(params.uri)
       const project = await getProject(version)
       const file = File.create({ uri: URI.parse(params.uri) })
-      project.FileDeleted(file)
+      project.fileDeleted(file)
     }
   })
 
@@ -151,7 +151,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     } else {
       const version = getVersion(e.document.uri)
       const project = await getProject(version)
-      project.FileChanged(file)
+      project.fileChanged(file)
     }
   })
 
@@ -163,7 +163,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       } else {
         const version = getVersion(uri)
         const project = await getProject(version)
-        project.FileAdded(file)
+        project.fileAdded(file)
       }
     }
   })
