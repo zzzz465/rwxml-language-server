@@ -75,49 +75,6 @@ describe('API', () => {
     expect(text).toBe('0&#xn')
   })
 
-  test('should update the position', () => {
-    const p = new Parser()
-
-    p.write('foo')
-
-    expect(p.startIndex).toBe(0)
-    expect(p.endIndex).toBe(2)
-
-    p.write('<select>')
-
-    expect(p.startIndex).toBe(3)
-    expect(p.endIndex).toBe(10)
-
-    p.write('<select>')
-
-    expect(p.startIndex).toBe(11)
-    expect(p.endIndex).toBe(18)
-
-    p.parseChunk('</select>')
-
-    expect(p.startIndex).toBe(19)
-    expect(p.endIndex).toBe(27)
-  })
-
-  test('should update the position when a single tag is spread across multiple chunks', () => {
-    const p = new Parser()
-
-    p.write('<div ')
-    p.write('foo=bar>')
-
-    expect(p.startIndex).toBe(0)
-    expect(p.endIndex).toBe(12)
-  })
-
-  test('should have the correct position for implied opening tags', () => {
-    const p = new Parser()
-
-    p.write('</p>')
-
-    expect(p.startIndex).toBe(0)
-    expect(p.endIndex).toBe(3)
-  })
-
   test('should parse <__proto__> (#387)', () => {
     const p = new Parser(null)
 
