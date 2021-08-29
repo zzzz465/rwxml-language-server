@@ -27,6 +27,13 @@ Paniel the Automata
 </description>
 </ModMetaData>\
 `
+  test('root document should contains rawXML', () => {
+    const root = parse(exampleXML) as Document
+
+    expect(root).toBeInstanceOf(Document)
+    expect(root.rawText).toEqual(exampleXML)
+  })
+
   test('it should parse xml with ranges', () => {
     const domHandler = new DomHandler()
     const parser = new Parser(domHandler)

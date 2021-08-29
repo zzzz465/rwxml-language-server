@@ -91,7 +91,7 @@ export class Parser {
   public attributeValueEndIndex = 0
 
   get rawText(): string {
-    return this.tokenizer.curBuffer
+    return this.tokenizer.fullText
   }
 
   private tagname = ''

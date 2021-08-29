@@ -218,8 +218,10 @@ export class Tokenizer {
   /** The current state the tokenizer is in. */
   _state = State.Text
 
-  get curBuffer(): string {
-    return this.buffer
+  private _texts: string[] = []
+  // full content that tokenizer had passed.
+  get fullText(): string {
+    return this._texts.join()
   }
 
   /** The read buffer. */
@@ -270,6 +272,7 @@ export class Tokenizer {
     if (this.ended) return this.cbs.onerror(Error('.write() after done!'))
     if (this.buffer.length) this.buffer += chunk
     else this.buffer = chunk
+    this._texts.push(chunk)
     this.parse()
   }
 
