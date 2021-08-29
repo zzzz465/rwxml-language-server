@@ -32,7 +32,7 @@ export class ProjectManager {
 
   constructor(
     private readonly about: About,
-    private readonly loadFolders: LoadFolder,
+    private readonly loadFolder: LoadFolder,
     private readonly typeInfoMapManager: TypeInfoMapManager,
     private readonly textDocumentManager: TextDocumentManager
   ) {}
@@ -62,7 +62,7 @@ export class ProjectManager {
     const typeInfoMap = await this.typeInfoMapManager.getTypeInfoMap(version)
     const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
     const defManager = new DefManager(defDatabase, nameDatabase, typeInfoMap, typeInfoInjector)
-    const eventFilter = new EventVersionFilter(version, this.loadFolders)
+    const eventFilter = new EventVersionFilter(version, this.loadFolder)
     const project = new Project(
       this.about,
       version,
@@ -80,7 +80,7 @@ export class ProjectManager {
   }
 
   private async onProjectFileAdded(file: File) {
-    const versions = this.loadFolders.isBelongsTo(file.uri)
+    const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
       await this.ensureProjectOfVersionExists(version)
@@ -89,7 +89,7 @@ export class ProjectManager {
   }
 
   private async onProjectFileChanged(file: File) {
-    const versions = this.loadFolders.isBelongsTo(file.uri)
+    const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
       await this.ensureProjectOfVersionExists(version)
@@ -98,7 +98,7 @@ export class ProjectManager {
   }
 
   private async onProjectFileDeleted(file: File) {
-    const versions = this.loadFolders.isBelongsTo(file.uri)
+    const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
       await this.ensureProjectOfVersionExists(version)
@@ -108,7 +108,7 @@ export class ProjectManager {
 
   private async onWorkspaceInitialization(files: File[]) {
     for (const file of files) {
-      const versions = this.loadFolders.isBelongsTo(file.uri)
+      const versions = this.loadFolder.isBelongsTo(file.uri)
 
       for (const version of versions) {
         await this.ensureProjectOfVersionExists(version)
@@ -118,7 +118,7 @@ export class ProjectManager {
   }
 
   private async onContentChanged(file: File) {
-    const versions = this.loadFolders.isBelongsTo(file.uri)
+    const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
       await this.ensureProjectOfVersionExists(version)
@@ -155,19 +155,19 @@ class EventVersionFilter {
   }
 
   private onFileAdded(version: RimWorldVersion, file: File) {
-    if (this.loadFolders.isBelongsToVersion(file.uri, version)) {
+    if (this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileAdded', file)
     }
   }
 
   private onFileChanged(version: RimWorldVersion, file: File) {
-    if (this.loadFolders.isBelongsToVersion(file.uri, version)) {
+    if (this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileChanged', file)
     }
   }
 
   private onFileDeleted(version: RimWorldVersion, file: File) {
-    if (this.loadFolders.isBelongsToVersion(file.uri, version)) {
+    if (this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileDeleted', file)
     }
   }
