@@ -17,6 +17,7 @@ export class LoadFolder {
   private _rawXML = ''
 
   readonly loadFolderEvents: EventEmitter<LoadFolderEvents> = new EventEmitter()
+  rootDirectory: URI = URI.file('')
 
   private '_1.0': URI[] = []
   private '_1.1': URI[] = []
@@ -38,8 +39,6 @@ export class LoadFolder {
   get default(): URI[] {
     return [this.rootDirectory]
   }
-
-  constructor(public readonly rootDirectory: URI) {}
 
   updateLoadFolderXML(text: string) {
     this._rawXML = text
@@ -65,7 +64,7 @@ export class LoadFolder {
   }
 
   // determine the file belongs to specific rimworld version.
-  isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
+  private isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
     const root = this.rootDirectory.fsPath
     const child = uri.fsPath
 

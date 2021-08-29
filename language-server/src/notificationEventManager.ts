@@ -23,15 +23,19 @@ export interface NotificationEvents {
   contentChanged(file: File): void
 }
 
+interface TextDocumentListeningEvent {
+  onContentChange(e: TextDocumentChangeEvent<TextDocument>): void
+}
+
 export class NotificationEventManager {
   public readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
 
-  listen(connection: Connection, textDocuments: TextDocuments<TextDocument>): void {
+  listen(connection: Connection, textDocumentEvent: EventEmitter<TextDocumentListeningEvent>): void {
     connection.onNotification(ProjectFileAdded, this.onProjectFileAdded.bind(this))
     connection.onNotification(ProjectFileChanged, this.onProjectFileChanged.bind(this))
     connection.onNotification(ProjectFileDeleted, this.onProjectFileDeleted.bind(this))
     connection.onNotification(WorkspaceInitialization, this.onWorkspaceInitialized.bind(this))
-    textDocuments.onDidChangeContent(this.onContentChanged.bind(this))
+    textDocumentEvent.on('onContentChange', this.onContentChanged.bind(this))
   }
 
   private onProjectFileAdded({ uri, readonly, text }: ProjectFileAddedNotificationParams): void {
