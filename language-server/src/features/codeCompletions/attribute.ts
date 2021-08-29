@@ -23,7 +23,7 @@ export function completeAttribute(project: Project, node: Node, offset: number):
     return []
   }
 
-  if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset) === ' ')) {
+  if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset - 1) === ' ')) {
     // selecting attribute name, or selecting whitespace inside starting tag
     const attrNameCandidates = AsEnumerable(knownAttributeNames)
       .Where((name) => !attribs[name])

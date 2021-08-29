@@ -16,7 +16,7 @@ export function expandUntil(text: string, offset: number, prefix: Predicate, pos
   let start = offset
   let end = offset
 
-  while (start > 0 && prefix(text[start])) {
+  while (start > 0 && prefix(text[start - 1])) {
     start -= 1
   }
 
