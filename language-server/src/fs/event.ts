@@ -1,4 +1,5 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
+import { SerializedAbout } from '../mod/mod'
 import { RimWorldVersion } from '../typeInfoMapManager'
 import { DecoItem, UrlEncodedString } from '../types'
 
@@ -48,6 +49,12 @@ export interface WorkspaceInitializationNotificationParams {
   files: ProjectFileAddedNotificationParams[]
 }
 
+export interface ModChangedNotificationParams {
+  mods: {
+    about: SerializedAbout
+  }[]
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -62,6 +69,10 @@ export const ProjectFileDeleted = new NotificationType<ProjectFileDeletedNotific
 
 export const WorkspaceInitialization = new NotificationType<WorkspaceInitializationNotificationParams>(
   'rwxml-language-server:notification:WorkspaceInitialization'
+)
+
+export const ModChangedNotification = new NotificationType<ModChangedNotificationParams>(
+  'rwxml-language-server:notification:ModChanged'
 )
 
 export const SerializedXMLDocumentRequest = new RequestType<

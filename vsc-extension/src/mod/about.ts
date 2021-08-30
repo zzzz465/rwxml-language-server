@@ -5,6 +5,13 @@ import XMLParser from 'htmlparser2'
 import { CheerioAPI } from 'cheerio'
 import { xml } from '../utils'
 
+export interface SerializedAbout {
+  readonly name: string
+  readonly author: string
+  readonly packageId: string
+  readonly supportedVersions: string[]
+}
+
 export interface ModDependency {
   readonly packageId: string
 }

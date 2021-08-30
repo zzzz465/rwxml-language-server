@@ -5,7 +5,11 @@ import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
 
 export class ModManager {
-  private readonly mods: Map<string, Mod> = new Map()
+  private readonly _mods: Map<string, Mod> = new Map()
+  get mods() {
+    return [...this._mods.values()]
+  }
+
   private _initialized = false
   get initialized() {
     return this._initialized
@@ -21,7 +25,7 @@ export class ModManager {
     for (const uri of this.directoryUris) {
       const { mods, errors } = await loadModFromDirectroy(uri)
       for (const mod of mods) {
-        this.mods.set(mod.about.packageId, mod)
+        this._mods.set(mod.about.packageId, mod)
       }
 
       if (errors.length > 0) {
@@ -39,7 +43,7 @@ export class ModManager {
     const ret: { [packageId: string]: Mod | undefined } = {}
 
     for (const pkgId of packageIds) {
-      ret[pkgId] = this.mods.get(pkgId)
+      ret[pkgId] = this._mods.get(pkgId)
     }
 
     return ret
