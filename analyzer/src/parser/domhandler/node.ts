@@ -112,6 +112,20 @@ export class DataNode extends Node {
     this.data = data
   }
 
+  get document(): Document {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let node: Node = this
+    while (!(node instanceof Document)) {
+      if (node.parent) {
+        node = node.parent
+      } else {
+        throw new Error(`node ${node}'s parent is not Document.`)
+      }
+    }
+
+    return node
+  }
+
   findNodeAt(offset: number): RangedNode | undefined {
     return findNodeAt(this, offset)
   }
