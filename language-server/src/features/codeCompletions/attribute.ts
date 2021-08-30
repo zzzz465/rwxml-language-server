@@ -1,73 +1,120 @@
 /* eslint-disable prettier/prettier */
-import { Attribute, Element, Injectable, Node } from '@rwxml/analyzer'
+import { Attribute, Element, Node, TypeInfo } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
+import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
+import { RimWorldVersion } from '../../typeInfoMapManager'
 import { expandUntil, isAlpha } from '../../utils/strings'
 
 const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
+const ClassValueRegex = [
+  /StockGenerator_[\w]+/, // stockgenerator_XXX
+  /CompProperties_[\w]+/, // CompProperties_XXX
+  /IngestionOutcomeDoer_[\w]+/, // IngestionOutcomeDoer_XXX
+  /ScenPart_[\w]+/, // ScenPart_XXX_XXX
+  /AudioGrain_[\w]+/, // AudioGrain_XXX
+  /ColorGenerator_[\w]+/, // ColorGenerator_XXX
+  /PatchOperation_[\w]+/, // PatchOperation_XXX
+  /HediffGiver_[\w]+/, // HediffGiver_XXX
+]
 
-export function completeAttribute(project: Project, node: Node, offset: number): CompletionItem[] {
-  if (!(node instanceof Element) || !node.openTagRange.include(offset)) {
-    return []
-  }
+export class CompleteAttribute {
+  private readonly classValue: MultiDictionary<RimWorldVersion, string> = new MultiDictionary()
 
-  const attribs = node.attribs
-  const items: CompletionItem[] = []
-  const currentAttribute = findCurrentAttribute(node, offset)
-  const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAlpha(c), (c) => isAlpha(c))
-  const textRange = project.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
+  completeAttribute(project: Project, node: Node, offset: number): CompletionItem[] {
+    if (!(node instanceof Element) || !node.openTagRange.include(offset)) {
+      return []
+    }
 
-  if (!textRange) {
-    return []
-  }
+    const attribs = node.attribs
+    const items: CompletionItem[] = []
+    const currentAttribute = findCurrentAttribute(node, offset)
+    const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAlpha(c), (c) => isAlpha(c))
+    const textRange = project.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
 
-  if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset - 1) === ' ')) {
+    if (!textRange) {
+      return []
+    }
+
+    if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset - 1) === ' ')) {
     // selecting attribute name, or selecting whitespace inside starting tag
-    const attrNameCandidates = AsEnumerable(knownAttributeNames)
-      .Where((name) => !attribs[name])
-      .ToArray()
-    const completions = getMatchingText(attrNameCandidates, currentPointingText.text)
+      const attrNameCandidates = AsEnumerable(knownAttributeNames)
+        .Where((name) => !attribs[name])
+        .ToArray()
+      const completions = getMatchingText(attrNameCandidates, currentPointingText.text)
 
-    items.push(...completions.map((label) => ({
-      label,
-      kind: CompletionItemKind.Enum,
-      textEdit: label.length > 0 ? TextEdit.replace(textRange, `${label}=""`) : undefined
-    }) as CompletionItem))
-  } else if (currentAttribute && isPointingAttributeValue(currentAttribute, offset)) {
+      items.push(...completions.map((label) => ({
+        label,
+        kind: CompletionItemKind.Enum,
+        textEdit: label.length > 0 ? TextEdit.replace(textRange, `${label}=""`) : undefined
+      }) as CompletionItem))
+    } else if (currentAttribute && isPointingAttributeValue(currentAttribute, offset)) {
     // selecting attribute values
-    switch(currentAttribute.name) {
-      case 'ParentName': {
-        const defs = project.defManager.nameDatabase.getDef(node.name)
-        const candidates = AsEnumerable(defs)
-          .Where((def) => !!def.getNameAttributeValue())
-          .Select((def) => def.getNameAttributeValue() as string)
-          .ToArray()
+      switch(currentAttribute.name) {
+        case 'ParentName': {
+          const defs = project.defManager.nameDatabase.getDef(node.name)
+          const candidates = AsEnumerable(defs)
+            .Where((def) => !!def.getNameAttributeValue())
+            .Select((def) => def.getNameAttributeValue() as string)
+            .ToArray()
         
-        const completions = getMatchingText(candidates, currentPointingText.text)
+          const completions = getMatchingText(candidates, currentPointingText.text)
 
-        items.push(...completions.map((label) => ({
-          label,
-          kind: CompletionItemKind.EnumMember,
-          textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
-        } as CompletionItem)))
-      } break
+          items.push(...completions.map((label) => ({
+            label,
+            kind: CompletionItemKind.EnumMember,
+            textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
+          } as CompletionItem)))
+        } break
 
-      case 'Class':
-        project.defManager.typeInfoMap
-        // TODO: how to implement this...?
-        break
+        case 'Class': {
+          const classValues = this.getClassValues(project)
+          const completions = getMatchingText(classValues, currentPointingText.text)
+
+          items.push(...completions.map((label) => ({
+            label,
+            kind: CompletionItemKind.EnumMember,
+            textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
+          } as CompletionItem)))
+        } break
       
-      case 'Abstract':
-      case 'Inherit':
-        items.push({ label: 'true', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'true') })
-        items.push({ label: 'false', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'false') })
-        break
+        case 'Abstract':
+        case 'Inherit':
+          items.push({ label: 'true', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'true') })
+          items.push({ label: 'false', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'false') })
+          break
+      }
+    }
+
+    return items
+  }
+
+  private getClassValues(project: Project) {
+    const cached = this.classValue.getValue(project.version)
+
+    if (cached.length === 0) {
+      const values = AsEnumerable(project.defManager.typeInfoMap.getAllNodes())
+        .Where((t) => !!ClassValueRegex.find((reg) => reg.test(t.fullName)))
+        .Select((t) => this.toClassValue(t))
+        .ToArray()
+      
+      for (const value of values) {
+        this.classValue.setValue(project.version, value)
+      }
+    }
+
+    return cached
+  }
+
+  private toClassValue(typeInfo: TypeInfo): string {
+    if (typeInfo.namespaceName === 'Verse' || typeInfo.namespaceName === 'RimWorld') {
+      return typeInfo.className
+    } else {
+      return `${typeInfo.namespaceName}.${typeInfo.className}`
     }
   }
-
-  return items
 }
 
 function findCurrentAttribute(node: Element, offset: number): Attribute | undefined {

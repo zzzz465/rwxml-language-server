@@ -3,10 +3,12 @@ import { CompletionList } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
-import { completeAttribute } from './attribute'
+import { CompleteAttribute } from './attribute'
 import { completeDefName } from './defName'
 
 export class CodeCompletion {
+  private readonly completeAttribute = new CompleteAttribute()
+
   codeCompletion(project: Project, uri: URI, position: Position): CompletionList {
     const xmlDocument = project.getXMLDocumentByUri(uri)
     const offset = project.rangeConverter.toOffset(position, uri.toString())
@@ -29,7 +31,7 @@ export class CodeCompletion {
       }
     }
 
-    const attributes = completeAttribute(project, targetNode, offset)
+    const attributes = this.completeAttribute.completeAttribute(project, targetNode, offset)
     ret.items.push(...attributes)
 
     return ret
