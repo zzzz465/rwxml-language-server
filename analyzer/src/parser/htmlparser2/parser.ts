@@ -89,6 +89,8 @@ export class Parser {
   public attributeNameEndIndex = 0
   public attributeValueStartIndex = 0
   public attributeValueEndIndex = 0
+  public commentStartIndex = 0
+  public commentEndIndex = 0
 
   get rawText(): string {
     return this.tokenizer.fullText
@@ -109,9 +111,9 @@ export class Parser {
     this.cbs.onparserinit?.(this)
   }
 
-  private updatePosition(offset: number) {
-    this.startIndex = this.tokenizer.getAbsoluteSectionStart() - offset
-    this.endIndex = this.tokenizer.getAbsoluteIndex()
+  private updatePosition(startIndexOffset = 0, endIndexOffset = 0) {
+    this.startIndex = this.tokenizer.getAbsoluteSectionStart() - startIndexOffset
+    this.endIndex = this.tokenizer.getAbsoluteIndex() + endIndexOffset
   }
 
   // Tokenizer event handlers
@@ -239,7 +241,9 @@ export class Parser {
   }
 
   oncomment(value: string): void {
-    this.updatePosition(4)
+    this.updatePosition(4, 1)
+    this.commentStartIndex = this.tokenizer.getAbsoluteSectionStart()
+    this.commentEndIndex = this.tokenizer.getAbsoluteIndex() - 2 // remove -- in -->
     this.cbs.oncomment?.(value)
     this.cbs.oncommentend?.()
   }
