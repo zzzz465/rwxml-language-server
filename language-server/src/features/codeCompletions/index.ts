@@ -33,11 +33,3 @@ export function codeCompletion(project: Project, uri: URI, position: Position): 
 
   return ret
 }
-
-function isPointingOpenTagName(node: Element, offset: number): boolean {
-  return node.openTagNameRange.include(offset)
-}
-
-function isInsideOpenTag(node: Element, offset: number): boolean {
-  return node.openTagRange.include(offset)
-}
