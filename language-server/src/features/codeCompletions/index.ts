@@ -5,9 +5,11 @@ import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { CompleteAttribute } from './attribute'
 import { completeDefName } from './defName'
+import { OpenTagCompletion } from './opentag'
 
 export class CodeCompletion {
   private readonly completeAttribute = new CompleteAttribute()
+  private readonly openTagCompletion = new OpenTagCompletion()
 
   codeCompletion(project: Project, uri: URI, position: Position): CompletionList {
     const xmlDocument = project.getXMLDocumentByUri(uri)
@@ -31,6 +33,8 @@ export class CodeCompletion {
       }
     }
 
+    const openTagCompletions = this.openTagCompletion.complete(project, targetNode, offset)
+    ret.items.push(...openTagCompletions)
     const attributes = this.completeAttribute.completeAttribute(project, targetNode, offset)
     ret.items.push(...attributes)
 
