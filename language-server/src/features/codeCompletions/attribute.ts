@@ -55,6 +55,7 @@ export function completeAttribute(project: Project, node: Node, offset: number):
       } break
 
       case 'Class':
+        project.defManager.typeInfoMap
         // TODO: how to implement this...?
         break
       
