@@ -18,6 +18,9 @@ const ClassValueRegex = [
   /ColorGenerator_[\w]+/, // ColorGenerator_XXX
   /PatchOperation_[\w]+/, // PatchOperation_XXX
   /HediffGiver_[\w]+/, // HediffGiver_XXX
+  /ThinkNode_[\w]+/, // ThinkNode_XXX
+  /JobGiver_[\w]+/, // JobGiver_XXX
+  /PerceptComp_[\w]+/, // PerceptComp_XXX
 ]
 
 export class CompleteAttribute {
