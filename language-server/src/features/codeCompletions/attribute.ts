@@ -82,6 +82,17 @@ export class CompleteAttribute {
             textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
           } as CompletionItem)))
         } break
+
+        case 'MayRequire': {
+          const packageIds = project.modManager.packageIds
+          const completions = getMatchingText(packageIds, currentPointingText.text)
+
+          items.push(...completions.map((label) => ({
+            label,
+            kind: CompletionItemKind.EnumMember,
+            textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
+          } as CompletionItem)))
+        } break
       
         case 'Abstract':
         case 'Inherit':

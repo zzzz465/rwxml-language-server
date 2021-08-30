@@ -6,6 +6,7 @@ import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
+import { ModManager } from './mod/modManager'
 
 const connection = createConnection(ProposedFeatures.all)
 const about = new About()
@@ -13,7 +14,8 @@ const loadFolder: LoadFolder = new LoadFolder()
 const textDocumentManager = new TextDocumentManager()
 const typeInfoMapManager = new TypeInfoMapManager()
 const notificationEventManager = new NotificationEventManager()
-const projectManager = new ProjectManager(about, loadFolder, typeInfoMapManager, textDocumentManager)
+const modManager = new ModManager()
+const projectManager = new ProjectManager(about, loadFolder, modManager, typeInfoMapManager, textDocumentManager)
 const languageFeature = new LanguageFeature(loadFolder, projectManager)
 
 connection.onInitialize(async (params: InitializeParams) => {
@@ -24,6 +26,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   notificationEventManager.listen(connection, textDocumentManager.event)
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
+  modManager.listen(connection)
 
   const initializeResult: InitializeResult = {
     capabilities: {

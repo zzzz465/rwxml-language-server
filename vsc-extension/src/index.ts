@@ -95,9 +95,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   await modManager.init()
   console.log('initializing modManager completed.')
 
-  console.log('sending mod list to language server...')
-  await sendMods(client, modManager)
-
   console.log('initializing dependencyManager...')
   dependencyManager = new DependencyManager(modManager)
   dependencyManager.listen(client)
@@ -109,8 +106,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   await client.onReady()
   console.log('language-server is ready.')
 
+  console.log('sending mod list to language server...')
+  await sendMods(client, modManager)
+
   console.log('register decorate update hooks...')
-  console.log('interval hook')
 
   function callUpdateDecoration(timeout_ms: number) {
     return function () {
