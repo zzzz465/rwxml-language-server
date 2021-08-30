@@ -11,6 +11,7 @@ import path from 'path'
 import { RimWorldVersion } from './typeInfoMapManager'
 import { MultiDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
+import { ModManager } from './mod/modManager'
 
 // event that Project will emit
 export interface ProjectEvents {
@@ -33,9 +34,8 @@ export class Project {
   constructor(
     public readonly about: About,
     public readonly version: RimWorldVersion,
+    public readonly modManager: ModManager,
     public readonly defManager: DefManager,
-    private readonly defDatabase: DefDatabase,
-    public readonly nameDatabase: NameDatabase,
     public readonly rangeConverter: RangeConverter,
     private readonly textDocumentManager: TextDocumentManager
   ) {

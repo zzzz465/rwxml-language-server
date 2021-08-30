@@ -217,6 +217,13 @@ const stateBeforeNumericEntity = ifElseState('X', State.InHexEntity, State.InNum
 export class Tokenizer {
   /** The current state the tokenizer is in. */
   _state = State.Text
+
+  private _texts: string[] = []
+  // full content that tokenizer had passed.
+  get fullText(): string {
+    return this._texts.join('')
+  }
+
   /** The read buffer. */
   private buffer = ''
   /** The beginning of the section that is currently being read. */
@@ -265,6 +272,7 @@ export class Tokenizer {
     if (this.ended) return this.cbs.onerror(Error('.write() after done!'))
     if (this.buffer.length) this.buffer += chunk
     else this.buffer = chunk
+    this._texts.push(chunk)
     this.parse()
   }
 

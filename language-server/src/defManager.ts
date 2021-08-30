@@ -18,9 +18,9 @@ export class DefManager {
   private defType: TypeInfo
 
   constructor(
-    private readonly defDatabase: DefDatabase,
-    private readonly nameDatabase: NameDatabase,
-    private readonly typeInfoMap: TypeInfoMap,
+    public readonly defDatabase: DefDatabase,
+    public readonly nameDatabase: NameDatabase,
+    public readonly typeInfoMap: TypeInfoMap,
     private readonly typeInfoInjector: TypeInfoInjector
   ) {
     const defType = typeInfoMap.getTypeInfoByName('Def')

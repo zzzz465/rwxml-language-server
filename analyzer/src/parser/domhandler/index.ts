@@ -73,6 +73,7 @@ export class DomHandler {
   // Signals the handler that parsing is done
   public onend(): void {
     if (this.done) return
+    this.root.rawText = this.parser.rawText
     this.done = true
     this.handleCallback(null)
   }
@@ -107,8 +108,12 @@ export class DomHandler {
 
     if (lastNode && lastNode.type === ElementType.Text) {
       lastNode.data += data
+      lastNode.nodeRange.end = this.parser.endIndex
+      lastNode.dataRange.end = this.parser.endIndex
     } else {
       const node = new Text(data)
+      node.nodeRange.start = this.parser.startIndex
+      node.nodeRange.end = this.parser.endIndex
       node.dataRange.start = this.parser.startIndex
       node.dataRange.end = this.parser.endIndex
       this.addNode(node)
@@ -119,10 +124,16 @@ export class DomHandler {
   public oncomment(data: string): void {
     if (this.lastNode && this.lastNode.type === ElementType.Comment) {
       this.lastNode.data += data
+      this.lastNode.nodeRange.end = this.parser.endIndex
+      this.lastNode.dataRange.end = this.parser.commentEndIndex
       return
     }
 
     const node = new Comment(data)
+    node.nodeRange.start = this.parser.startIndex
+    node.nodeRange.end = this.parser.endIndex
+    node.dataRange.start = this.parser.commentStartIndex
+    node.dataRange.end = this.parser.commentEndIndex
     this.addNode(node)
     this.lastNode = node
   }

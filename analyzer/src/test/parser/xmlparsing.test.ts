@@ -1,6 +1,9 @@
-import DomHandler, { Document, Element, NodeWithChildren, Text } from '../../parser/domhandler'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import DomHandler, { Comment, Document, Element, Text } from '../../parser/domhandler'
 import { Parser } from '../../parser/htmlparser2'
 import $ from 'cheerio'
+import { readFileSync } from 'fs'
+import path from 'path'
 
 $._options.xmlMode = true
 
@@ -11,6 +14,8 @@ function parse(text: string): Document {
 
   return domHandler.root
 }
+
+const longXML = readFileSync(path.resolve(__dirname, 'longXML.xml'))
 
 describe('XML Parsing test', () => {
   const exampleXML = `\
@@ -27,6 +32,13 @@ Paniel the Automata
 </description>
 </ModMetaData>\
 `
+  test('root document should contains rawXML', () => {
+    const root = parse(exampleXML) as Document
+
+    expect(root).toBeInstanceOf(Document)
+    expect(root.rawText).toEqual(exampleXML)
+  })
+
   test('it should parse xml with ranges', () => {
     const domHandler = new DomHandler()
     const parser = new Parser(domHandler)
@@ -124,6 +136,33 @@ Paniel the Automata
     expect(text).toBeInstanceOf(Text)
     expect(text.dataRange.start).toBe(191)
     expect(text.dataRange.end).toBe(223)
+  })
+
+  // eslint-disable-next-line quotes
+  test("Text and Comment's nodeRange and dataRange should be parsed correctly", () => {
+    const root = parse(longXML.toString())
+
+    // line 594, PNRP_T|ierB_Apparel
+    const offset = 18134
+    const nodeStart = 18128
+    const nodeEnd = 18146
+    const rangedNode = root.findNodeAt(offset)! as Text
+
+    expect(rangedNode).not.toBeUndefined()
+    expect(rangedNode).toBeInstanceOf(Text)
+    expect(rangedNode.nodeRange.start).toEqual(nodeStart)
+    expect(rangedNode.nodeRange.end).toEqual(nodeEnd)
+    expect(rangedNode.dataRange.start).toEqual(rangedNode.nodeRange.start)
+    expect(rangedNode.dataRange.end).toEqual(rangedNode.nodeRange.end)
+
+    const commentNode = root.findNodeAt(1312)! as Comment // line 49, 기본|옷
+
+    expect(commentNode).not.toBeUndefined()
+    expect(commentNode).toBeInstanceOf(Comment)
+    expect(commentNode.nodeRange.start).toEqual(1270)
+    expect(commentNode.nodeRange.end).toEqual(1354)
+    expect(commentNode.dataRange.start).toEqual(1274)
+    expect(commentNode.dataRange.end).toEqual(1351)
   })
 })
 

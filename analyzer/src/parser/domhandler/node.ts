@@ -93,10 +93,8 @@ export class Node {
  * A node that contains some data.
  */
 export class DataNode extends Node {
-  get nodeRange(): Range {
-    return this.dataRange
-  }
-  readonly dataRange: Range = new Range()
+  readonly nodeRange = new Range()
+  readonly dataRange = new Range()
 
   /**
    * @param type The type of the node
@@ -188,9 +186,16 @@ export class NodeWithChildren extends Node {
  */
 export class Document extends NodeWithChildren {
   uri: string
-  constructor(children: Node[], uri?: string) {
+  rawText: string
+
+  constructor(children: Node[], uri?: string, rawText = '') {
     super(ElementType.Root, children)
     this.uri = uri ?? ''
+    this.rawText = rawText
+  }
+
+  getCharAt(offset: number): string {
+    return this.rawText.charAt(offset)
   }
 
   findNodeAt(offset: number) {

@@ -20,7 +20,7 @@ export class Range {
   }
 
   include(offset: number): boolean {
-    return this.length > 0 && this.start <= offset && offset <= this.end
+    return this.start <= offset && offset <= this.end
   }
 
   copyFrom(other: Range) {

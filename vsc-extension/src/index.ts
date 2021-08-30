@@ -4,9 +4,15 @@ import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
 import vscode from 'vscode'
 import { updateDecoration } from './features'
-import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted, WorkspaceInitialization } from './events'
+import {
+  ModChangedNotificationParams,
+  ProjectFileAdded,
+  ProjectFileChanged,
+  ProjectFileDeleted,
+  WorkspaceInitialization,
+} from './events'
 import { ModManager } from './mod/modManager'
-import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri } from './mod'
+import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri, SerializedAbout } from './mod'
 import { DependencyManager } from './dependencyManager'
 
 let client: LanguageClient
@@ -15,6 +21,23 @@ let fileSystemWatcher: FileSystemWatcher
 let modManager: ModManager
 let dependencyManager: DependencyManager
 const disposables: Disposable[] = []
+
+async function sendMods(client: LanguageClient, modManager: ModManager) {
+  type simpleMod = {
+    about: SerializedAbout
+  }
+
+  const mods: simpleMod[] = modManager.mods.map((mod) => ({
+    about: {
+      name: mod.about.name,
+      author: mod.about.author,
+      packageId: mod.about.packageId,
+      supportedVersions: mod.about.supportedVersions,
+    },
+  }))
+
+  await client.sendNotification(ModChangedNotificationParams, { mods })
+}
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // initalize language server
@@ -83,8 +106,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   await client.onReady()
   console.log('language-server is ready.')
 
+  console.log('sending mod list to language server...')
+  await sendMods(client, modManager)
+
   console.log('register decorate update hooks...')
-  console.log('interval hook')
 
   function callUpdateDecoration(timeout_ms: number) {
     return function () {

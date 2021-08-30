@@ -4,6 +4,7 @@ import { DefManager } from './defManager'
 import { File } from './fs'
 import { About, Dependency } from './mod'
 import { LoadFolder } from './mod/loadfolders'
+import { ModManager } from './mod/modManager'
 import { Project } from './project'
 import { TextDocumentManager } from './textDocumentManager'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
@@ -33,6 +34,7 @@ export class ProjectManager {
   constructor(
     private readonly about: About,
     private readonly loadFolder: LoadFolder,
+    private readonly modManager: ModManager,
     private readonly typeInfoMapManager: TypeInfoMapManager,
     private readonly textDocumentManager: TextDocumentManager
   ) {}
@@ -66,9 +68,8 @@ export class ProjectManager {
     const project = new Project(
       this.about,
       version,
+      this.modManager,
       defManager,
-      defDatabase,
-      nameDatabase,
       new RangeConverter(this.textDocumentManager),
       this.textDocumentManager
     )
