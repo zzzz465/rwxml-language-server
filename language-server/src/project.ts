@@ -34,8 +34,6 @@ export class Project {
     public readonly about: About,
     public readonly version: RimWorldVersion,
     public readonly defManager: DefManager,
-    private readonly defDatabase: DefDatabase,
-    public readonly nameDatabase: NameDatabase,
     public readonly rangeConverter: RangeConverter,
     private readonly textDocumentManager: TextDocumentManager
   ) {

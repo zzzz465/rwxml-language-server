@@ -67,8 +67,6 @@ export class ProjectManager {
       this.about,
       version,
       defManager,
-      defDatabase,
-      nameDatabase,
       new RangeConverter(this.textDocumentManager),
       this.textDocumentManager
     )

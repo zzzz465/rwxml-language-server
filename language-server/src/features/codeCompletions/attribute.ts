@@ -39,7 +39,7 @@ export function completeAttribute(project: Project, node: Node, offset: number):
     // selecting attribute values
     switch(currentAttribute.name) {
       case 'ParentName': {
-        const defs = project.nameDatabase.getDef(node.name)
+        const defs = project.defManager.nameDatabase.getDef(node.name)
         const candidates = AsEnumerable(defs)
           .Where((def) => !!def.getNameAttributeValue())
           .Select((def) => def.getNameAttributeValue() as string)
