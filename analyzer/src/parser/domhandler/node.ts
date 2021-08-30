@@ -93,10 +93,8 @@ export class Node {
  * A node that contains some data.
  */
 export class DataNode extends Node {
-  get nodeRange(): Range {
-    return this.dataRange
-  }
-  readonly dataRange: Range = new Range()
+  readonly nodeRange = new Range()
+  readonly dataRange = new Range()
 
   /**
    * @param type The type of the node
