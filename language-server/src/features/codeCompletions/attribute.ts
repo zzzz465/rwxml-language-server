@@ -112,7 +112,7 @@ export class CompleteAttribute {
   }
 
   private toClassValue(typeInfo: TypeInfo): string {
-    if (typeInfo.namespaceName === 'Verse' || typeInfo.namespaceName === 'RimWorld') {
+    if (typeInfo.namespaceName.startsWith('Verse') || typeInfo.namespaceName.startsWith('RimWorld')) {
       return typeInfo.className
     } else {
       return `${typeInfo.namespaceName}.${typeInfo.className}`
