@@ -16,9 +16,9 @@ export class ResourcePath {
       return []
     }
 
-    const fieldTypeClassName = parentNode.fieldInfo?.fieldType.className
-    if (fieldTypeClassName === 'AudioGrain_Clip' || fieldTypeClassName === 'AudioGrain_Folder') {
-      return this.completeTexturePath(project, node, parentNode, offset, editRange, fieldTypeClassName)
+    const liFieldtypeClassName = parentNode.parent.typeInfo.className
+    if (liFieldtypeClassName === 'AudioGrain_Clip' || liFieldtypeClassName === 'AudioGrain_Folder') {
+      return this.completeTexturePath(project, node, parentNode, offset, editRange, liFieldtypeClassName)
     } else if (parentNode.name.endsWith('path')) {
       // TODO:
       return []
