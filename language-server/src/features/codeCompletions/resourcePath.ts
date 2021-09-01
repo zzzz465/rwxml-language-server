@@ -40,9 +40,9 @@ export class ResourcePath {
     const possibleValues: string[] = []
 
     if (fieldTypeClassName === 'AudioGrain_Clip') {
-      possibleValues.push(...project.fileManager.audios.values())
+      possibleValues.push(...project.resourceManager.audios.values())
     } else if (fieldTypeClassName === 'AudioGrain_Folder') {
-      possibleValues.push(...project.fileManager.audioDirectories.values())
+      possibleValues.push(...project.resourceManager.audioDirectories.values())
     }
 
     const candidates = getMatchingText(possibleValues, text)

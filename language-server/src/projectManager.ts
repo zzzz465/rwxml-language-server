@@ -2,7 +2,7 @@ import { DefDatabase, NameDatabase, TypeInfoInjector } from '@rwxml/analyzer'
 import EventEmitter from 'events'
 import { DefManager } from './defManager'
 import { File } from './fs'
-import { FileManager } from './fs/fileManager'
+import { resourceManager } from './fs/resourceManager'
 import { About, Dependency } from './mod'
 import { LoadFolder } from './mod/loadfolders'
 import { ModManager } from './mod/modManager'
@@ -60,7 +60,7 @@ export class ProjectManager {
   }
 
   private async newProject(version: RimWorldVersion): Promise<Project> {
-    const fileManager = new FileManager(version, this.loadFolder)
+    const resourceManger = new resourceManager(version, this.loadFolder)
     const defDatabase = new DefDatabase()
     const nameDatabase = new NameDatabase()
     const typeInfoMap = await this.typeInfoMapManager.getTypeInfoMap(version)
@@ -70,16 +70,16 @@ export class ProjectManager {
     const project = new Project(
       this.about,
       version,
-      fileManager,
+      resourceManger,
       this.modManager,
       defManager,
       new RangeConverter(this.textDocumentManager),
       this.textDocumentManager
     )
 
-    fileManager.listen(this.event)
     eventFilter.listen(this.event)
     project.listen(eventFilter.event)
+    resourceManger.listen(eventFilter.event)
     project.projectEvent.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
 
     return project
