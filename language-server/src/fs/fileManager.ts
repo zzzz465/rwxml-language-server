@@ -3,6 +3,8 @@ import { LoadFolder } from 'src/mod/loadfolders'
 import { RimWorldVersion } from 'src/typeInfoMapManager'
 import { URI } from 'vscode-uri'
 import { AudioFile, TextureFile } from './file'
+import path from 'path'
+import { Counter } from 'src/utils/counter'
 
 interface ListeningEvents {
   fileAdded(file: File): void
@@ -13,6 +15,7 @@ interface ListeningEvents {
 export class FileManager {
   textures: Set<string> = new Set()
   audios: Set<string> = new Set()
+  audioDirectories = new Counter<string>()
 
   constructor(private readonly version: RimWorldVersion, private readonly loadFolder: LoadFolder) {}
 
@@ -63,14 +66,20 @@ export class FileManager {
   private onAudioFileChanged(file: AudioFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
+      const resourceDir = path.dirname(resourcePath)
+
       this.audios.add(resourcePath)
+      this.audioDirectories.add(resourceDir)
     }
   }
 
   private onAudioFileDeleted(file: AudioFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
+      const resourceDir = path.dirname(resourcePath)
+
       this.audios.delete(resourcePath)
+      this.audioDirectories.remove(resourceDir)
     }
   }
 }
