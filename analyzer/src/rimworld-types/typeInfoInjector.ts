@@ -41,12 +41,16 @@ export class TypeInfoInjector {
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
     if (typeInfo.isEnumerable()) {
       // <li> types
-      const listGenericType = typeInfo.genericArguments[0]
-      console.assert(!!listGenericType, `listGenericType for type: ${typeInfo.fullName} is invalid.`)
+      const listGenericType = typeInfo.genericArguments[0] as TypeInfo | undefined
 
-      for (const childNode of injectable.ChildElementNodes) {
-        if (childNode.name) {
-          this.injectType(childNode, listGenericType)
+      if (listGenericType) {
+        for (const childNode of injectable.ChildElementNodes) {
+          const classAttributeValue = childNode.attribs['Class']?.value
+          const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', listGenericType)
+
+          // use Specific typeInfo annotated in attribute Class="", use generic otherwise.
+          const injectType = specificTypeInfo ?? listGenericType
+          this.injectType(childNode, injectType)
         }
       }
     } else {
@@ -61,6 +65,13 @@ export class TypeInfoInjector {
       }
     }
     return injectable
+  }
+
+  private getDerivedTypeOf(classAttributeValue: string, baseClass: TypeInfo) {
+    const typeInfo = this.typeInfoMap.getTypeInfoByName(classAttributeValue)
+    if (typeInfo?.isDerivedFrom(baseClass)) {
+      return typeInfo
+    }
   }
 
   inject(document: Document) {
