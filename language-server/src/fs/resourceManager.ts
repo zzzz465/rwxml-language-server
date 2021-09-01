@@ -1,8 +1,8 @@
-import EventEmitter from "events"
-import { TextureFile, AudioFile } from "."
-import { LoadFolder } from "../mod/loadfolders"
-import { RimWorldVersion } from "../typeInfoMapManager"
-import { Counter } from "../utils/counter"
+import EventEmitter from 'events'
+import { TextureFile, AudioFile } from '.'
+import { LoadFolder } from '../mod/loadfolders'
+import { RimWorldVersion } from '../typeInfoMapManager'
+import { Counter } from '../utils/counter'
 import path from 'path'
 
 interface ListeningEvents {
@@ -11,7 +11,7 @@ interface ListeningEvents {
   fileDeleted(file: File): void
 }
 
-export class FileManager {
+export class resourceManager {
   textures: Set<string> = new Set()
   audios: Set<string> = new Set()
   audioDirectories = new Counter<string>()
@@ -51,6 +51,7 @@ export class FileManager {
   private onTextureFileChanged(file: TextureFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
+      console.log(`v${this.version} textureAdded: ${file.toString()}`)
       this.textures.add(resourcePath)
     }
   }
@@ -58,6 +59,7 @@ export class FileManager {
   private onTextureFileDeleted(file: TextureFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
+      console.log(`v${this.version} textureDeleted: ${file.toString()}`)
       this.textures.delete(resourcePath)
     }
   }
@@ -67,6 +69,7 @@ export class FileManager {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
+      console.log(`v${this.version} audioAdded: ${file.toString()}`)
       this.audios.add(resourcePath)
       this.audioDirectories.add(resourceDir)
     }
@@ -77,6 +80,7 @@ export class FileManager {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
+      console.log(`v${this.version} audioDeleted: ${file.toString()}`)
       this.audios.delete(resourcePath)
       this.audioDirectories.remove(resourceDir)
     }

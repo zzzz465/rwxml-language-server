@@ -49,6 +49,7 @@ export namespace File {
 
 export interface IFile {
   readonly uri: URI
+  toString(): string
 }
 
 export interface DependencyFile {
@@ -64,18 +65,34 @@ export namespace DependencyFile {
 
 export class OtherFile implements IFile {
   constructor(public readonly uri: URI) {}
+
+  toString() {
+    return `OtherFile: ${decodeURIComponent(this.uri.toString())}`
+  }
 }
 
 export class XMLFile implements IFile {
   constructor(public readonly uri: URI, public readonly text: string, public readonly readonly?: boolean) {}
+
+  toString() {
+    return `XMLFile: ${decodeURIComponent(this.uri.toString())}`
+  }
 }
 
 export class TextureFile implements IFile {
   readonly readonly = true
   constructor(public readonly uri: URI) {}
+
+  toString() {
+    return `TextureFile ${decodeURIComponent(this.uri.toString())}`
+  }
 }
 
 export class AudioFile implements IFile {
   readonly readonly = true
   constructor(public readonly uri: URI) {}
+
+  toString() {
+    return `Audiofile ${decodeURIComponent(this.uri.toString())}`
+  }
 }
