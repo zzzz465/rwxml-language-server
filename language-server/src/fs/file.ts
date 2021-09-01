@@ -15,10 +15,28 @@ export namespace File {
 
     let file: File
 
-    if (path.extname(uri.fsPath) === '.xml') {
-      file = new XMLFile(uri, params.text ?? '', params.readonly)
-    } else {
-      file = new OtherFile(uri)
+    const extname = path.extname(uri.fsPath)
+
+    switch (extname) {
+      case '.xml':
+        file = new XMLFile(uri, params.text ?? '', params.readonly)
+        break
+
+      case '.wav':
+      case '.mp3':
+        file = new AudioFile(uri)
+        break
+
+      case '.bmp':
+      case '.jpeg':
+      case '.jpg':
+      case '.png':
+        file = new TextureFile(uri)
+        break
+
+      default:
+        file = new OtherFile(uri)
+        break
     }
 
     if (params.ownerPackageId) {

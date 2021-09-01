@@ -1,7 +1,8 @@
 import EventEmitter from 'events'
 import { LoadFolder } from 'src/mod/loadfolders'
+import { RimWorldVersion } from 'src/typeInfoMapManager'
 import { URI } from 'vscode-uri'
-import { TextureFile } from './file'
+import { AudioFile, TextureFile } from './file'
 
 interface ListeningEvents {
   fileAdded(file: File): void
@@ -13,12 +14,7 @@ export class FileManager {
   textures: Set<string> = new Set()
   audios: Set<string> = new Set()
 
-  constructor(private readonly loadFolder: LoadFolder) {}
-
-  isUnderResourceDirectory(uri: URI) {
-    // TODO:
-    // this.loadFolder.
-  }
+  constructor(private readonly version: RimWorldVersion, private readonly loadFolder: LoadFolder) {}
 
   listen(event: EventEmitter<ListeningEvents>) {
     event.on('fileAdded', this.onFileAdded.bind(this))
@@ -28,11 +24,53 @@ export class FileManager {
 
   private onFileAdded(file: File) {
     if (file instanceof TextureFile) {
-      this.textures.add(file.uri.toString())
+      this.onTextureFileChanged(file)
+    } else if (file instanceof AudioFile) {
+      this.onAudioFileChanged(file)
     }
   }
 
-  private onFileChanged(file: File) {}
+  private onFileChanged(file: File) {
+    if (file instanceof TextureFile) {
+      this.onTextureFileChanged(file)
+    } else if (file instanceof AudioFile) {
+      this.onAudioFileChanged(file)
+    }
+  }
 
-  private onFileDeleted(file: File) {}
+  private onFileDeleted(file: File) {
+    if (file instanceof TextureFile) {
+      this.onTextureFileDeleted(file)
+    } else if (file instanceof AudioFile) {
+      this.onAudioFileDeleted(file)
+    }
+  }
+
+  private onTextureFileChanged(file: TextureFile) {
+    const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
+    if (resourcePath) {
+      this.textures.add(resourcePath)
+    }
+  }
+
+  private onTextureFileDeleted(file: TextureFile) {
+    const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
+    if (resourcePath) {
+      this.textures.delete(resourcePath)
+    }
+  }
+
+  private onAudioFileChanged(file: AudioFile) {
+    const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
+    if (resourcePath) {
+      this.audios.add(resourcePath)
+    }
+  }
+
+  private onAudioFileDeleted(file: AudioFile) {
+    const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
+    if (resourcePath) {
+      this.audios.delete(resourcePath)
+    }
+  }
 }
