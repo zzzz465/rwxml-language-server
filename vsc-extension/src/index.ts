@@ -39,6 +39,9 @@ async function sendMods(client: LanguageClient, modManager: ModManager) {
   await client.sendNotification(ModChangedNotificationParams, { mods })
 }
 
+const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
+const globPattern = `**/*.{${watchedExts.join(',')}}`
+
 export async function activate(context: ExtensionContext): Promise<void> {
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
@@ -128,7 +131,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('registering decorate update interval callback done.')
 
   console.log('initializing project Watcher...')
-  fileSystemWatcher = workspace.createFileSystemWatcher('**/*.xml')
+  fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
   fileSystemWatcher.onDidCreate(async (uri) => {
     const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString()
     client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
@@ -144,7 +147,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('project Watcher initialized.')
 
   console.log('loading all files from current workspace...')
-  const xmlFiles = await vscode.workspace.findFiles('**/*.xml')
+  const xmlFiles = await vscode.workspace.findFiles(globPattern)
   console.log(`${xmlFiles.length} xml files found in current workspace. reading...`)
   const loadedXMLFiles = await Promise.all(
     xmlFiles.map(async (uri) => {
