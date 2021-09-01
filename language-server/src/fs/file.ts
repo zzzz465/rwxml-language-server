@@ -51,3 +51,13 @@ export class OtherFile implements IFile {
 export class XMLFile implements IFile {
   constructor(public readonly uri: URI, public readonly text: string, public readonly readonly?: boolean) {}
 }
+
+export class TextureFile implements IFile {
+  readonly readonly = true
+  constructor(public readonly uri: URI) {}
+}
+
+export class AudioFile implements IFile {
+  readonly readonly = true
+  constructor(public readonly uri: URI) {}
+}
