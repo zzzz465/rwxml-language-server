@@ -1,10 +1,9 @@
-import EventEmitter from 'events'
-import { LoadFolder } from 'src/mod/loadfolders'
-import { RimWorldVersion } from 'src/typeInfoMapManager'
-import { URI } from 'vscode-uri'
-import { AudioFile, TextureFile } from './file'
+import EventEmitter from "events"
+import { TextureFile, AudioFile } from "."
+import { LoadFolder } from "../mod/loadfolders"
+import { RimWorldVersion } from "../typeInfoMapManager"
+import { Counter } from "../utils/counter"
 import path from 'path'
-import { Counter } from 'src/utils/counter'
 
 interface ListeningEvents {
   fileAdded(file: File): void

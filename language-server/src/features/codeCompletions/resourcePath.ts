@@ -1,8 +1,8 @@
 import { Injectable, Node, Text } from '@rwxml/analyzer'
-import { getMatchingText } from 'src/data-structures/trie-ext'
-import { Project } from 'src/project'
 import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { Range } from 'vscode-languageserver-textdocument'
+import { getMatchingText } from '../../data-structures/trie-ext'
+import { Project } from '../../project'
 
 export class ResourcePath {
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
