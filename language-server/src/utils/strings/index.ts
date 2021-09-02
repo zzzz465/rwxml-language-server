@@ -1,4 +1,4 @@
-import { Range } from '@rwxml/analyzer/dist/parser/range'
+import { Range } from '@rwxml/analyzer'
 
 type Predicate = (char: string) => boolean
 

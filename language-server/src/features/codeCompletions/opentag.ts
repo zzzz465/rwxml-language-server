@@ -1,7 +1,7 @@
 import { Element, Injectable, Node, Text } from '@rwxml/analyzer'
-import { Range } from '@rwxml/analyzer/dist/parser/range'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
+import { Range } from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'

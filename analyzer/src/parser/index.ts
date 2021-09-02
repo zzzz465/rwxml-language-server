@@ -3,6 +3,7 @@ import { Parser } from './htmlparser2'
 
 export * from './domhandler'
 export * from './htmlparser2'
+export * from './range'
 
 export function parse(text: string, uri = '') {
   const domHandler = new DomHandler()
