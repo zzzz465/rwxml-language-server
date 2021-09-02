@@ -34,7 +34,7 @@ export class RangeConverter {
     const start = textDocument.offsetAt(range.start)
     const end = textDocument.offsetAt(range.end)
 
-    return { start, end }
+    return new rwxml.Range(start, end)
   }
 
   toOffset(position: Position, uri: string): number | undefined {

@@ -1,4 +1,5 @@
 import { Injectable, Node, Text } from '@rwxml/analyzer'
+import * as rwxml from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { Range } from 'vscode-languageserver-textdocument'
@@ -8,21 +9,30 @@ import path from 'path'
 
 export class ResourcePath {
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
-    // TODO: if <clipPath></clipPath>, no Text, fix this later.
-    const parentNode = node.parent
-    if (!(node instanceof Text) || !(parentNode instanceof Injectable)) {
+    let tagNode: Injectable
+    let editRange: Range | undefined
+    let text: string
+
+    if (node instanceof Text && node.parent instanceof Injectable) {
+      tagNode = node.parent
+      text = node.nodeValue
+      editRange = project.rangeConverter.toLanguageServerRange(node.dataRange, node.document.uri)
+    } else if (node instanceof Injectable) {
+      tagNode = node
+      text = ''
+      editRange = project.rangeConverter.toLanguageServerRange(new rwxml.Range(offset, offset), node.document.uri)
+    } else {
       return []
     }
 
-    const editRange = project.rangeConverter.toLanguageServerRange(node.dataRange, node.document.uri)
     if (!editRange) {
       return []
     }
 
-    const liFieldtypeClassName = parentNode.parent.typeInfo.className
+    const liFieldtypeClassName = tagNode.parent.typeInfo.className
     if (liFieldtypeClassName === 'AudioGrain_Clip' || liFieldtypeClassName === 'AudioGrain_Folder') {
-      return this.completeTexturePath(project, node, parentNode, offset, editRange, liFieldtypeClassName)
-    } else if (parentNode.name.endsWith('path')) {
+      return this.completeTexturePath(project, text, editRange, liFieldtypeClassName)
+    } else if (tagNode.name.endsWith('path')) {
       // TODO:
       return []
     } else {
@@ -32,14 +42,10 @@ export class ResourcePath {
 
   private completeTexturePath(
     project: Project,
-    node: Text,
-    parentNode: Injectable,
-    offset: number,
+    text: string,
     editRange: Range,
     fieldTypeClassName: string
   ): CompletionItem[] {
-    const text = node.data
-
     const possibleValues: string[] = []
 
     if (fieldTypeClassName === 'AudioGrain_Clip') {
