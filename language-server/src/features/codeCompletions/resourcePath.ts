@@ -31,7 +31,7 @@ export class ResourcePath {
 
     const liFieldtypeClassName = tagNode.parent.typeInfo.className
     if (liFieldtypeClassName === 'AudioGrain_Clip' || liFieldtypeClassName === 'AudioGrain_Folder') {
-      return this.completeTexturePath(project, text, editRange, liFieldtypeClassName)
+      return this.completeAudioPath(project, text, editRange, liFieldtypeClassName)
     } else if (tagNode.name.endsWith('path')) {
       // TODO:
       return []
@@ -40,7 +40,7 @@ export class ResourcePath {
     }
   }
 
-  private completeTexturePath(
+  private completeAudioPath(
     project: Project,
     text: string,
     editRange: Range,
