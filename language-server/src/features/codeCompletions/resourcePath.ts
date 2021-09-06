@@ -32,9 +32,8 @@ export class ResourcePath {
     const liFieldtypeClassName = tagNode.parent.typeInfo.className
     if (liFieldtypeClassName === 'AudioGrain_Clip' || liFieldtypeClassName === 'AudioGrain_Folder') {
       return this.completeAudioPath(project, text, editRange, liFieldtypeClassName)
-    } else if (tagNode.name.endsWith('path')) {
-      // TODO:
-      return []
+    } else if (tagNode.name.toLowerCase().endsWith('path')) {
+      return this.completeTexturePath(project, text, editRange)
     } else {
       return []
     }
@@ -71,5 +70,16 @@ export class ResourcePath {
           textEdit: text.length > 0 ? TextEdit.replace(editRange, label) : undefined,
         } as CompletionItem)
     )
+  }
+
+  private completeTexturePath(project: Project, text: string, editRange: Range): CompletionItem[] {
+    const possibleValues = [...project.resourceManager.textures.values()]
+    const candidates = getMatchingText(possibleValues, text)
+
+    return candidates.map((label) => ({
+      label,
+      kind: CompletionItemKind.File,
+      textEdit: TextEdit.replace(editRange, label),
+    }))
   }
 }
