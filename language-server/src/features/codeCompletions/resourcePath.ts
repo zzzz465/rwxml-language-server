@@ -6,6 +6,7 @@ import { Range } from 'vscode-languageserver-textdocument'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import path from 'path'
+import { getTextureResourceNodeType, TextureResourceType } from '../utils'
 
 export class ResourcePath {
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
@@ -33,7 +34,7 @@ export class ResourcePath {
     if (liFieldtypeClassName === 'AudioGrain_Clip' || liFieldtypeClassName === 'AudioGrain_Folder') {
       return this.completeAudioPath(project, text, editRange, liFieldtypeClassName)
     } else if (tagNode.name.toLowerCase().endsWith('path')) {
-      return this.completeTexturePath(project, text, editRange)
+      return this.completeTexturePath(project, tagNode, text, editRange)
     } else {
       return []
     }
@@ -72,8 +73,22 @@ export class ResourcePath {
     )
   }
 
-  private completeTexturePath(project: Project, text: string, editRange: Range): CompletionItem[] {
-    const possibleValues = [...project.resourceManager.textures.values()]
+  private completeTexturePath(project: Project, node: Injectable, text: string, editRange: Range): CompletionItem[] {
+    const nodeType = getTextureResourceNodeType(project, node)
+    const possibleValues: string[] = []
+
+    switch (nodeType) {
+      case TextureResourceType.SingleFile:
+        possibleValues.push(...project.resourceManager.textures.values())
+        break
+      case TextureResourceType.FileWithCompass:
+        break
+      case TextureResourceType.Directory:
+        break
+      case TextureResourceType.Unknown:
+        break
+    }
+
     const candidates = getMatchingText(possibleValues, text)
 
     return candidates.map((label) => ({
