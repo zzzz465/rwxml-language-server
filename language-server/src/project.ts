@@ -12,6 +12,7 @@ import { RimWorldVersion } from './typeInfoMapManager'
 import { MultiDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 import { ModManager } from './mod/modManager'
+import { resourceManager } from './fs/resourceManager'
 
 // event that Project will emit
 export interface ProjectEvents {
@@ -34,6 +35,7 @@ export class Project {
   constructor(
     public readonly about: About,
     public readonly version: RimWorldVersion,
+    public readonly resourceManager: resourceManager,
     public readonly modManager: ModManager,
     public readonly defManager: DefManager,
     public readonly rangeConverter: RangeConverter,
@@ -65,21 +67,18 @@ export class Project {
   }
 
   fileAdded(file: File) {
-    console.log(`ver: ${this.version} file added: ${file.uri.toString()}`)
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
   fileChanged(file: File) {
-    console.log(`ver: ${this.version} file changed: ${file.uri.toString()}`)
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
   fileDeleted(file: File) {
-    console.log(`ver: ${this.version} file deleted: ${file.uri.toString()}`)
     if (file instanceof XMLFile) {
       this.onXMLFileDeleted(file)
     }
@@ -94,6 +93,7 @@ export class Project {
   }
 
   private onDefFileChanged(file: XMLFile) {
+    console.log(`v${this.version} defChanged: ${file.toString()}`)
     const uri = file.uri.toString()
     const document = parse(file.text, uri)
 
@@ -105,6 +105,7 @@ export class Project {
   }
 
   private onDefFileDeleted(file: XMLFile) {
+    console.log(`v${this.version} defDeleted: ${file.toString()}`)
     const uri = file.uri.toString()
     const document = parse(file.text, uri)
 

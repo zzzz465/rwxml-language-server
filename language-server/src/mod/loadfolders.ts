@@ -9,6 +9,7 @@ import _ from 'lodash'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import { AsEnumerable } from 'linq-es2015'
+import normalize_path from 'normalize-path'
 
 // TODO: support on LoadFolder changes.
 export class LoadFolder {
@@ -71,6 +72,20 @@ export class LoadFolder {
     return res
   }
 
+  /**
+   * @returns string posix-normalized relative path from Resource directory root
+   * returns undefined if uri is not under resource directory, or not valid uri
+   */
+  getResourcePath(uri: URI, version: RimWorldVersion): string | undefined {
+    const resourceDirectoryUri = this.getResourceDirectoryOf(uri, version)
+    if (resourceDirectoryUri) {
+      const relativePath = path.relative(resourceDirectoryUri.fsPath, uri.fsPath)
+      const normalized = normalize_path(relativePath)
+
+      return normalized
+    }
+  }
+
   // determine the file belongs to specific rimworld version.
   private isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
     const root = this.rootDirectory.fsPath
@@ -82,17 +97,27 @@ export class LoadFolder {
     }
 
     // check file is under loadDirectory according to LoadFolders.xml
+    if (this.isUnderResourceDirectory(uri, version)) {
+      return true
+    }
+
+    return false
+  }
+
+  isUnderResourceDirectory(uri: URI, version: RimWorldVersion) {
+    return !!this.getResourceDirectoryOf(uri, version)
+  }
+
+  getResourceDirectoryOf(uri: URI, version: RimWorldVersion) {
     const loadDirs = this[version]
     for (const dir of loadDirs) {
       const resourcePaths = this.getResourceDirectories(dir)
       for (const path of resourcePaths) {
         if (isSubFileOf(path.fsPath, uri.fsPath)) {
-          return true
+          return path
         }
       }
     }
-
-    return false
   }
 
   private getResourceDirectories(parent: URI) {

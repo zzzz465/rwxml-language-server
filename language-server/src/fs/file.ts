@@ -15,10 +15,28 @@ export namespace File {
 
     let file: File
 
-    if (path.extname(uri.fsPath) === '.xml') {
-      file = new XMLFile(uri, params.text ?? '', params.readonly)
-    } else {
-      file = new OtherFile(uri)
+    const extname = path.extname(uri.fsPath)
+
+    switch (extname) {
+      case '.xml':
+        file = new XMLFile(uri, params.text ?? '', params.readonly)
+        break
+
+      case '.wav':
+      case '.mp3':
+        file = new AudioFile(uri)
+        break
+
+      case '.bmp':
+      case '.jpeg':
+      case '.jpg':
+      case '.png':
+        file = new TextureFile(uri)
+        break
+
+      default:
+        file = new OtherFile(uri)
+        break
     }
 
     if (params.ownerPackageId) {
@@ -31,6 +49,7 @@ export namespace File {
 
 export interface IFile {
   readonly uri: URI
+  toString(): string
 }
 
 export interface DependencyFile {
@@ -46,8 +65,34 @@ export namespace DependencyFile {
 
 export class OtherFile implements IFile {
   constructor(public readonly uri: URI) {}
+
+  toString() {
+    return `OtherFile: ${decodeURIComponent(this.uri.toString())}`
+  }
 }
 
 export class XMLFile implements IFile {
   constructor(public readonly uri: URI, public readonly text: string, public readonly readonly?: boolean) {}
+
+  toString() {
+    return `XMLFile: ${decodeURIComponent(this.uri.toString())}`
+  }
+}
+
+export class TextureFile implements IFile {
+  readonly readonly = true
+  constructor(public readonly uri: URI) {}
+
+  toString() {
+    return `TextureFile ${decodeURIComponent(this.uri.toString())}`
+  }
+}
+
+export class AudioFile implements IFile {
+  readonly readonly = true
+  constructor(public readonly uri: URI) {}
+
+  toString() {
+    return `Audiofile ${decodeURIComponent(this.uri.toString())}`
+  }
 }

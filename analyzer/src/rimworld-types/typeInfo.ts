@@ -31,6 +31,20 @@ export class TypeInfo {
     public readonly isArray: boolean
   ) {}
 
+  isDerivedFrom(base: TypeInfo) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let parent: TypeInfo = this
+    while (parent !== base && !!parent.baseClass) {
+      parent = parent.baseClass
+    }
+
+    if (parent === base) {
+      return true
+    } else {
+      return false
+    }
+  }
+
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isDef(): boolean {
     if (this.fullName === 'Verse.Def') {
