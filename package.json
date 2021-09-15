@@ -8,11 +8,14 @@
   "scripts": {
     "install/analyzer": "yarn --cwd analyzer",
     "install/language-server": "yarn --cwd language-server",
-    "link-analyzer": "cd analyzer && yarn link && cd ../language-server && yarn link @rwxml/analyzer",
-    "clear": "yarn exec rimraf ./**/dist",
-    "purge": "yarn exec rimraf ./**/node_modules",
+    "link-analyzer": "yarn --cwd analyzer link && yarn --cwd language-server link @rwxml/analyzer",
+    "build/analyzer": "yarn --cwd analyzer build",
+    "build/language-server": "yarn --cwd language-server build",
+    "build": "yarn build/analyzer && yarn build/language-server",
+    "clear": "npx rimraf ./**/dist",
+    "purge": "npx rimraf ./**/node_modules",
     "reinstall": "yarn clear && yarn purge && yarn",
-    "postinstall": "yarn install/analyzer && yarn install/language-server && yarn link-analyzer"
+    "postinstall": "yarn install/analyzer && yarn install/language-server && yarn build/analyzer && yarn link-analyzer"
   },
   "dependencies": {
     "rimraf": "^3.0.2"
