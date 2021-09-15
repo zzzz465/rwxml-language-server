@@ -11,5 +11,29 @@
         "${workspaceRoot}/dist/**/*.*"
       ]
     },
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Launch Client",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceRoot}/../vsc-extension"
+      ],
+      "env": {
+        "languageServerEntryPath": "../language-server/dist/index.js"
+      },
+      "outFiles": [
+        "${workspaceRoot}/../vsc-extension/dist/**/*.js"
+      ]
+    },
+  ],
+  "compounds": [
+    {
+      "name": "Launch vscode extension Debug Session",
+      "configurations": [
+        "Launch Client",
+        "Attach to Server"
+      ]
+    }
   ]
 }
