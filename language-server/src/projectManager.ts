@@ -1,7 +1,7 @@
 import { DefDatabase, NameDatabase, TypeInfoInjector } from '@rwxml/analyzer'
 import EventEmitter from 'events'
 import { DefManager } from './defManager'
-import { File } from './fs'
+import { DependencyFile, File } from './fs'
 import { resourceManager } from './fs/resourceManager'
 import { About, Dependency } from './mod'
 import { LoadFolder } from './mod/loadfolders'
@@ -14,6 +14,7 @@ import { RangeConverter } from './utils/rangeConverter'
 // event that Projects will emit.
 interface ProjectManagerEvent {
   requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
+  dependencyModsResponse(_: unknown, files: File[]): void
   fileAdded(version: string, file: File): void
   fileChanged(version: string, file: File): void
   fileDeleted(version: string, file: File): void
@@ -85,7 +86,7 @@ export class ProjectManager {
     return project
   }
 
-  private async onProjectFileAdded(file: File) {
+  async onProjectFileAdded(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -94,7 +95,7 @@ export class ProjectManager {
     }
   }
 
-  private async onProjectFileChanged(file: File) {
+  async onProjectFileChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -103,7 +104,7 @@ export class ProjectManager {
     }
   }
 
-  private async onProjectFileDeleted(file: File) {
+  async onProjectFileDeleted(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -112,7 +113,7 @@ export class ProjectManager {
     }
   }
 
-  private async onWorkspaceInitialization(files: File[]) {
+  async onWorkspaceInitialization(files: File[]) {
     console.log(`received workspaceInitialization files... count: ${files.length}`)
     for (const file of files) {
       const versions = this.loadFolder.isBelongsTo(file.uri)
@@ -124,13 +125,17 @@ export class ProjectManager {
     }
   }
 
-  private async onContentChanged(file: File) {
+  async onContentChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
       await this.ensureProjectOfVersionExists(version)
       this.event.emit('fileChanged', version, file)
     }
+  }
+
+  onDependencyModsResponse(files: File[]) {
+    this.event.emit('dependencyModsResponse', undefined, files)
   }
 
   private async ensureProjectOfVersionExists(version: RimWorldVersion): Promise<void> {
@@ -159,23 +164,36 @@ class EventVersionFilter {
     event.on('fileAdded', this.onFileAdded.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))
+    event.on('dependencyModsResponse', (_, files) => this.event.emit('dependencyModsResponse', files))
   }
 
   private onFileAdded(version: RimWorldVersion, file: File) {
-    if (this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
+    if (this.ignoreFilter(file) || this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileAdded', file)
     }
   }
 
   private onFileChanged(version: RimWorldVersion, file: File) {
-    if (this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
+    if (this.ignoreFilter(file) || this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileChanged', file)
     }
   }
 
   private onFileDeleted(version: RimWorldVersion, file: File) {
-    if (this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
+    if (this.ignoreFilter(file) || this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileDeleted', file)
     }
+  }
+
+  private ignoreFilter(file: File) {
+    if (DependencyFile.is(file)) {
+      if (file.ownerPackageId.startsWith('Ludeon.RimWorld')) {
+        // core, royalty, ideology is loaded from local directory
+        // and it always have version "default"
+        return true
+      }
+    }
+
+    return false
   }
 }

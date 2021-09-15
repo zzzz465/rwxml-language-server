@@ -7,6 +7,7 @@ import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
 import { ModManager } from './mod/modManager'
+import { DependencyRequester } from './dependencyRequester'
 
 const connection = createConnection(ProposedFeatures.all)
 const about = new About()
@@ -17,6 +18,7 @@ const notificationEventManager = new NotificationEventManager()
 const modManager = new ModManager()
 const projectManager = new ProjectManager(about, loadFolder, modManager, typeInfoMapManager, textDocumentManager)
 const languageFeature = new LanguageFeature(loadFolder, projectManager)
+const dependencyRequester = new DependencyRequester(connection)
 
 connection.onInitialize(async (params: InitializeParams) => {
   connection.console.log('hello world! initializing @rwxml-language-server/language-server ...')
@@ -27,6 +29,11 @@ connection.onInitialize(async (params: InitializeParams) => {
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
   modManager.listen(connection)
+  about.listen(notificationEventManager.preEvent)
+  dependencyRequester.listen(projectManager.event)
+
+  // bind
+  dependencyRequester.event.on('dependencyModsResponse', (files) => projectManager.onDependencyModsResponse(files))
 
   const initializeResult: InitializeResult = {
     capabilities: {

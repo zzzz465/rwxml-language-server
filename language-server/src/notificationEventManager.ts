@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { Connection, TextDocumentChangeEvent, TextDocuments } from 'vscode-languageserver'
+import { Connection, TextDocumentChangeEvent } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import {
