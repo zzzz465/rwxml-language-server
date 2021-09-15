@@ -187,3 +187,11 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 .idea
+
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
