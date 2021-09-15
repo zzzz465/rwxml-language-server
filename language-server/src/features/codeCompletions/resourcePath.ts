@@ -7,12 +7,18 @@ import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import path from 'path'
 import { getTextureResourceNodeType, TextureResourceType } from '../utils'
+import { isPointingContentOfNode } from '../utils/node'
 
+// completes value
 export class ResourcePath {
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
     let tagNode: Injectable
     let editRange: Range | undefined
     let text: string
+
+    if (!isPointingContentOfNode(node, offset)) {
+      return []
+    }
 
     if (node instanceof Text && node.parent instanceof Injectable) {
       tagNode = node.parent
