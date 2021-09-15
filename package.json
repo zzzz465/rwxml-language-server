@@ -7,11 +7,13 @@
   "private": true,
   "workspaces": [
     "analyzer",
-    "language-server"
+    "language-server",
+    "vsc-extension"
   ],
   "scripts": {
     "install/analyzer": "pnpm --dir analyzer install",
     "install/language-server": "pnpm --dir language-server install",
+    "install/vsc-extension": "pnpm --dir vsc-extension install",
     "link-analyzer": "pnpm --dir analyzer link && pnpm --dir language-server link @rwxml/analyzer",
     "build/analyzer": "pnpm --dir analyzer build",
     "build/language-server": "pnpm --dir language-server build",
@@ -19,7 +21,7 @@
     "clear": "pnpx rimraf ./**/dist",
     "purge": "pnpx rimraf ./**/node_modules",
     "reinstall": "pnpm run clear && pnpm run purge && pnpm install",
-    "postinstall": "pnpm run install/analyzer && pnpm run install/language-server && pnpm run build/analyzer && pnpm run link-analyzer"
+    "postinstall": "pnpm run install/analyzer && pnpm run install/language-server && pnpm run install/vsc-extension && pnpm run build/analyzer"
   },
   "dependencies": {
     "rimraf": "^3.0.2"
