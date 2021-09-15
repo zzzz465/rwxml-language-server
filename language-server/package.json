@@ -51,6 +51,7 @@
     "@rwxml/analyzer": "../analyzer",
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
+    "cheerio": "^1.0.0-rc.10",
     "double-ended-queue": "^2.1.0-0",
     "events": "^3.3.0",
     "fast-deep-equal": "^3.1.3",
