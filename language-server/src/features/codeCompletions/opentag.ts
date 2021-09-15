@@ -18,8 +18,8 @@ export class OpenTagCompletion {
     }
 
     const isPointingTagName =
-      (node instanceof Element && node.openTagNameRange.include(offset)) ||
-      (node instanceof Text && node.nodeRange.include(offset) && node.document.getCharAt(offset - 1))
+      (node instanceof Element && node.openTagNameRange.include(offset)) || // <ta... ?
+      (node instanceof Text && node.nodeRange.include(offset) && node.document.getCharAt(offset - 1) === '<') // <... ?
 
     if (!isPointingTagName) {
       return []
