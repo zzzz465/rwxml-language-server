@@ -85,7 +85,7 @@ export class ProjectManager {
     return project
   }
 
-  private async onProjectFileAdded(file: File) {
+  async onProjectFileAdded(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -94,7 +94,7 @@ export class ProjectManager {
     }
   }
 
-  private async onProjectFileChanged(file: File) {
+  async onProjectFileChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -103,7 +103,7 @@ export class ProjectManager {
     }
   }
 
-  private async onProjectFileDeleted(file: File) {
+  async onProjectFileDeleted(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -112,7 +112,7 @@ export class ProjectManager {
     }
   }
 
-  private async onWorkspaceInitialization(files: File[]) {
+  async onWorkspaceInitialization(files: File[]) {
     console.log(`received workspaceInitialization files... count: ${files.length}`)
     for (const file of files) {
       const versions = this.loadFolder.isBelongsTo(file.uri)
@@ -124,7 +124,7 @@ export class ProjectManager {
     }
   }
 
-  private async onContentChanged(file: File) {
+  async onContentChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
