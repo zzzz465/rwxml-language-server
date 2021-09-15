@@ -15,9 +15,9 @@ export class LanguageFeature {
   constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
 
   listen(connection: Connection) {
-    connection.onRequest(XMLDocumentDecoItemRequest, this.onDecorate.bind(this))
-    connection.onDefinition(this.onDefinition.bind(this))
-    connection.onCompletion(this.onCompletion.bind(this))
+    connection.onRequest(XMLDocumentDecoItemRequest, this.wrapExceptionStackTraces(this.onDecorate.bind(this)))
+    connection.onDefinition(this.wrapExceptionStackTraces(this.onDefinition.bind(this)))
+    connection.onCompletion(this.wrapExceptionStackTraces(this.onCompletion.bind(this)))
   }
 
   private async onCompletion({ position, textDocument }: CompletionParams) {
@@ -73,6 +73,20 @@ export class LanguageFeature {
         console.error(message)
       }
       console.error(errors)
+    }
+  }
+
+  /**
+   * a wrapper for lsp request. prints stacktrace if error exists.
+   */
+  private wrapExceptionStackTraces<P, R>(func: (arg: P) => Promise<R>): (arg: P) => Promise<R | undefined> {
+    return async (arg: P) => {
+      try {
+        return await func(arg)
+      } catch (e: unknown) {
+        console.error(e)
+        throw e
+      }
     }
   }
 }
