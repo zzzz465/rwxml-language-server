@@ -1,6 +1,6 @@
 {
   "name": "@rwxml/language-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "language server of rwxml language server extension.",
   "main": "dist/index.js",
   "scripts": {

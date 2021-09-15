@@ -18,8 +18,8 @@
     "build/analyzer": "pnpm --dir analyzer build",
     "build/language-server": "pnpm --dir language-server build",
     "build": "pnpm run build/analyzer && pnpm run build/language-server",
-    "clear": "pnpx rimraf ./**/dist",
-    "purge": "pnpx rimraf ./**/node_modules",
+    "clear": "pnpx rimraf ./*/dist",
+    "purge": "pnpx rimraf ./*/node_modules",
     "reinstall": "pnpm run clear && pnpm run purge && pnpm install",
     "postinstall": "pnpm run install/analyzer && pnpm run install/language-server && pnpm run install/vsc-extension && pnpm run build/analyzer"
   },

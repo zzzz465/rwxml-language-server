@@ -7,7 +7,7 @@
     "compile": "tsc -b",
     "watch": "tsc -b -w",
     "test": "jest",
-    "build": "tsc --outDir dist"
+    "build": "tsc -b"
   },
   "author": "madeline",
   "contributors": [
