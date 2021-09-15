@@ -33,9 +33,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   dependencyRequester.listen(projectManager.event)
 
   // bind
-  dependencyRequester.event.on('dependencyModsResponse', (files) =>
-    files.forEach((file) => projectManager.onProjectFileAdded(file))
-  )
+  dependencyRequester.event.on('dependencyModsResponse', (files) => projectManager.onDependencyModsResponse(files))
 
   const initializeResult: InitializeResult = {
     capabilities: {

@@ -30,10 +30,15 @@ export class DependencyRequester {
     })
 
     const files = AsEnumerable(items)
-      .Select((item) => ({
-        ...item,
-        uri: URI.parse(item.uri),
-      }))
+      .Select(
+        (item) =>
+          ({
+            uri: URI.parse(item.uri),
+            ownerPackageId: item.packageId,
+            readonly: item.readonly,
+            text: item.text,
+          } as File.FileCreateParameters)
+      )
       .Select((item) => File.create(item))
       .ToArray()
 

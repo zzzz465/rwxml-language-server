@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import { DefDatabase, Document, Injectable, NameDatabase, parse } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
-import { XMLFile, File } from './fs'
+import { XMLFile, File, DependencyFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { RangeConverter } from './utils/rangeConverter'
 import { About, Dependency } from './mod'
@@ -25,6 +25,7 @@ interface ListeningEvents {
   fileAdded(file: File): void
   fileChanged(file: File): void
   fileDeleted(file: File): void
+  dependencyModsResponse(files: File[]): void
 }
 
 export class Project {
@@ -64,6 +65,7 @@ export class Project {
     eventEmitter.on('fileAdded', this.fileAdded.bind(this))
     eventEmitter.on('fileChanged', this.fileChanged.bind(this))
     eventEmitter.on('fileDeleted', this.fileDeleted.bind(this))
+    eventEmitter.on('dependencyModsResponse', this.dependencyModsResponse.bind(this))
   }
 
   fileAdded(file: File) {
@@ -81,6 +83,14 @@ export class Project {
   fileDeleted(file: File) {
     if (file instanceof XMLFile) {
       this.onXMLFileDeleted(file)
+    }
+  }
+
+  dependencyModsResponse(files: File[]) {
+    for (const file of files) {
+      if (DependencyFile.is(file) && file instanceof XMLFile) {
+        this.onXMLFileChanged(file)
+      }
     }
   }
 

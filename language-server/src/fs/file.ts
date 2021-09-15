@@ -4,7 +4,7 @@ import { URI } from 'vscode-uri'
 export type File = XMLFile | OtherFile
 
 export namespace File {
-  interface FileCreateParameters {
+  export interface FileCreateParameters {
     uri: URI
     text?: string
     readonly?: boolean
