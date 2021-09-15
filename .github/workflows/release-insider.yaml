@@ -13,7 +13,7 @@ jobs:
       - name: setup libraries
         shell: bash
         run: |
-          npm i -g pnpm
+          npm i -g pnpm semver
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
