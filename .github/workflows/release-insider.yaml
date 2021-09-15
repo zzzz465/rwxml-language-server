@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - 'v*.*.*-insider'
+      - 'v*.*.*-insider\++[a-zA-Z0-9]+'
 
 jobs:
   branch_release:
@@ -12,34 +12,39 @@ jobs:
       - uses: actions/setup-node@v2
       - name: setup libraries
         shell: bash
-        run: | 
-          yarn global add vsce semver webpack webpack-cli rimraf
+        run: |
+          npm i -g pnpm
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: get semver
-        id: semver
+      - name: get project variables
+        id: var
         shell: bash
         run: |
           echo $(git describe --tags --abbrev=0)
           current_tag=$(git describe --tags --abbrev=0)
           echo "current_tag: $current_tag"
+
+          # get tag
+          echo "::set-output name=tag::$current_tag"
+
+          # get semver from tag
           semver=$(semver "$current_tag" | tr -d '\-insider')
           echo "semver: $semver"
-          echo "::set-output name=SEM_VER::$semver"
-      - name: install dependencies of each project
+          echo "::set-output name=semver::$semver"
+      - name: install project
         shell: bash
         run: |
-          cd "$GITHUB_WORKSPACE/analyzer"; yarn; yarn build
-          cd "$GITHUB_WORKSPACE/language-server"; yarn; yarn build
-          cd "$GITHUB_WORKSPACE/vsc-extension"; yarn; yarn build
-          cd "$GITHUB_WORKSPACE/publish/insider"; yarn
+          pnpm install
       - name: run build
         working-directory: ./publish/insider
-        run: yarn build
+        run: |
+          pnpm install
+          pnpm build
       - name: publish insider version
         working-directory: ./publish/insider
+        if: contains(steps.var.outputs.tag, 'nopublish') == false
         run: |
-          vsce publish ${{ steps.semver.outputs.SEM_VER }} -p $VSCE_TOKEN
+          vsce publish ${{ steps.var.outputs.semver }} -p $VSCE_TOKEN
         env:
           VSCE_TOKEN: ${{ secrets.AZURE_VSCE_TOKEN }}

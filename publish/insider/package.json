@@ -6,10 +6,10 @@
   "module": "node",
   "main": "dist/client/index.js",
   "scripts": {
-    "vsc-extension:build": "webpack --config client.webpack.config.js --mode production",
-    "language-server:build": "webpack --config server.webpack.config.js --mode production",
-    "clear-build": "rimraf dist",
-    "build": "yarn clear-build && yarn vsc-extension:build && yarn language-server:build"
+    "vsc-extension:build": "pnpx webpack --config client.webpack.config.js --mode production",
+    "language-server:build": "pnpx webpack --config server.webpack.config.js --mode production",
+    "clear-build": "pnpx rimraf dist",
+    "build": "pnpm run clear-build && pnpm run vsc-extension:build && pnpm run language-server:build"
   },
   "repository": "https://www.github.com/zzzz465/rwxml-language-server",
   "bugs": {
