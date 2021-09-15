@@ -1,0 +1,20 @@
+{
+  "name": "rwxml-language-server",
+  "version": "1.0.0",
+  "repository": "https://github.com/zzzz465/rwxml-language-server.git",
+  "author": "madeline <zzzz465@naver.com>",
+  "license": "",
+  "private": true,
+  "scripts": {
+    "install/analyzer": "cd analyzer && yarn",
+    "install/language-server": "cd language-server && yarn",
+    "link-analyzer": "cd analyzer && yarn link && cd ../language-server && yarn link @rwxml/analyzer",
+    "clear": "yarn exec rimraf ./**/dist",
+    "purge": "yarn exec rimraf ./**/node_modules",
+    "reinstall": "yarn clear && yarn purge && yarn",
+    "postinstall": "yarn install/analyzer && yarn install/language-server && yarn link-analyzer"
+  },
+  "dependencies": {
+    "rimraf": "^3.0.2"
+  }
+}
