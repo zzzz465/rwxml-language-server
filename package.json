@@ -14,7 +14,6 @@
     "install/analyzer": "pnpm --dir analyzer install",
     "install/language-server": "pnpm --dir language-server install",
     "install/vsc-extension": "pnpm --dir vsc-extension install",
-    "link-analyzer": "pnpm --dir analyzer link && pnpm --dir language-server link @rwxml/analyzer",
     "build/analyzer": "pnpm --dir analyzer build",
     "build/language-server": "pnpm --dir language-server build",
     "build": "pnpm run build/analyzer && pnpm run build/language-server",
