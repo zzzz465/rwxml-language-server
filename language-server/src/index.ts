@@ -27,6 +27,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
   modManager.listen(connection)
+  about.listen(notificationEventManager.preEvent)
 
   const initializeResult: InitializeResult = {
     capabilities: {
