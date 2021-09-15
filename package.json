@@ -6,8 +6,8 @@
   "license": "",
   "private": true,
   "scripts": {
-    "install/analyzer": "cd analyzer && yarn",
-    "install/language-server": "cd language-server && yarn",
+    "install/analyzer": "yarn --cwd analyzer",
+    "install/language-server": "yarn --cwd language-server",
     "link-analyzer": "cd analyzer && yarn link && cd ../language-server && yarn link @rwxml/analyzer",
     "clear": "yarn exec rimraf ./**/dist",
     "purge": "yarn exec rimraf ./**/node_modules",
