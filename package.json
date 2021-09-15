@@ -5,17 +5,21 @@
   "author": "madeline <zzzz465@naver.com>",
   "license": "",
   "private": true,
+  "workspaces": [
+    "analyzer",
+    "language-server"
+  ],
   "scripts": {
-    "install/analyzer": "yarn --cwd analyzer",
-    "install/language-server": "yarn --cwd language-server",
-    "link-analyzer": "yarn --cwd analyzer link && yarn --cwd language-server link @rwxml/analyzer",
-    "build/analyzer": "yarn --cwd analyzer build",
-    "build/language-server": "yarn --cwd language-server build",
-    "build": "yarn build/analyzer && yarn build/language-server",
-    "clear": "npx rimraf ./**/dist",
-    "purge": "npx rimraf ./**/node_modules",
-    "reinstall": "yarn clear && yarn purge && yarn",
-    "postinstall": "yarn install/analyzer && yarn install/language-server && yarn build/analyzer && yarn link-analyzer"
+    "install/analyzer": "pnpm --dir analyzer install",
+    "install/language-server": "pnpm --dir language-server install",
+    "link-analyzer": "pnpm --dir analyzer link && pnpm --dir language-server link @rwxml/analyzer",
+    "build/analyzer": "pnpm --dir analyzer build",
+    "build/language-server": "pnpm --dir language-server build",
+    "build": "pnpm run build/analyzer && pnpm run build/language-server",
+    "clear": "pnpx rimraf ./**/dist",
+    "purge": "pnpx rimraf ./**/node_modules",
+    "reinstall": "pnpm run clear && pnpm run purge && pnpm install",
+    "postinstall": "pnpm run install/analyzer && pnpm run install/language-server && pnpm run build/analyzer && pnpm run link-analyzer"
   },
   "dependencies": {
     "rimraf": "^3.0.2"
