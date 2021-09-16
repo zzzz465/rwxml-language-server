@@ -4,7 +4,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } f
 import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
 import vscode from 'vscode'
-import { updateDecoration } from './features'
+import { registerFeatures, updateDecoration } from './features'
 import {
   ModChangedNotificationParams,
   ProjectFileAdded,
@@ -56,12 +56,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   // register commands
   console.log('register commands...')
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'rwxml:debug:printXMLDocumentObject',
-      printXMLDocumentObjectHandler(context, client)
-    )
-  )
+  context.subscriptions.push(...registerFeatures())
 
   console.log('registering commands done.')
 

@@ -40,7 +40,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
   const initializeResult: InitializeResult = {
     capabilities: {
-      codeLensProvider: undefined,
+      codeLensProvider: {},
       colorProvider: false,
       completionProvider: { resolveProvider: false, workDoneProgress: false, triggerCharacters: ['<', ' '] },
       declarationProvider: false, // 선언으로 바로가기
@@ -48,7 +48,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
       hoverProvider: false,
-      referencesProvider: false,
+      referencesProvider: true,
       typeDefinitionProvider: false,
       workspace: {
         workspaceFolders: {

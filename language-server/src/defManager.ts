@@ -1,21 +1,11 @@
 import Deque from 'double-ended-queue'
 import _ from 'lodash'
-import {
-  DefDatabase,
-  TypeInfoInjector,
-  Def,
-  NameDatabase,
-  Injectable,
-  TypeInfoMap,
-  TypeInfo,
-  Document,
-} from '@rwxml/analyzer'
+import { DefDatabase, TypeInfoInjector, Def, NameDatabase, Injectable, TypeInfoMap, Document } from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
 
 export class DefManager {
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
   private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
-  private defType: TypeInfo
 
   constructor(
     public readonly defDatabase: DefDatabase,
@@ -24,11 +14,17 @@ export class DefManager {
     private readonly typeInfoInjector: TypeInfoInjector
   ) {
     const defType = typeInfoMap.getTypeInfoByName('Def')
-    if (defType) {
-      this.defType = defType
-    } else {
+    if (!defType) {
       throw new Error('cannot find def Type in typeInfoMap')
     }
+  }
+
+  getReferenceResolveWanters(defName: string): Injectable[] {
+    return this.referenceResolveWanter.getValue(defName)
+  }
+
+  getInheritResolveWanters(name: string): Def[] {
+    return this.inheritResolveWanter.getValue(name)
   }
 
   getDef(defType: string, defName?: string): Def[] {

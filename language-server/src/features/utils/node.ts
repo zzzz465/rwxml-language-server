@@ -1,4 +1,6 @@
-import { Element, Node, Text } from '@rwxml/analyzer'
+import { Def, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Project } from '../../project'
+import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -10,6 +12,31 @@ export function isPointingContentOfNode(node: Node, offset: number): boolean {
   }
 }
 
+// is cursor pointing defName content? (note: content not empty)
+// TODO: check empty content when offset is provided
+export function isPointingDefNameContent(node: Node, offset?: number): boolean {
+  if (node instanceof Text) {
+    if (node.parent instanceof Injectable && node.parent.name === 'defName' && node.parent.parent instanceof Def) {
+      return true
+    }
+  } else if (offset !== undefined) {
+    if (node instanceof Element && node.name === 'defName') {
+      if (node.contentRange) {
+        return node.contentRange.include(offset)
+      } else {
+        return offset === node.openTagRange.end + 1
+      }
+    }
+  }
+
+  return false
+}
+
 export function makeTagNode(tag: string): string {
   return `<${tag}></${tag}>`
+}
+
+export function toLocation(converter: RangeConverter, node: Element | Text) {
+  const range = converter.toLanguageServerRange(node.nodeRange, node.document.uri)
+  return range
 }
