@@ -56,6 +56,8 @@ export class About {
   }
 
   updateAboutXML(text: string) {
+    log.debug('About.xml changed.')
+
     this._rawXML = text
     const newVal = this.parseNewXML()
 
@@ -66,8 +68,8 @@ export class About {
       })
     }
 
-    console.log(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
-    console.log(`new dependencies: ${newVal.modDependencies}`)
+    log.debug(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
+    log.debug(`new dependencies: ${newVal.modDependencies}`)
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
       this.eventEmitter.emit('dependencyModsChanged', this._modDependencies, newVal.modDependencies)

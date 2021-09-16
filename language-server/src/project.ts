@@ -103,7 +103,7 @@ export class Project {
   }
 
   private onDefFileChanged(file: XMLFile) {
-    console.log(`v${this.version} defChanged: ${file.toString()}`)
+    log.debug(`def changed, version: ${this.version}, uri: ${file.toString()}`)
     const uri = file.uri.toString()
     const document = parse(file.text, uri)
 
@@ -115,7 +115,7 @@ export class Project {
   }
 
   private onDefFileDeleted(file: XMLFile) {
-    console.log(`v${this.version} defDeleted: ${file.toString()}`)
+    log.debug(`def deleted, version: ${this.version}, uri: ${file.toString()}`)
     const uri = file.uri.toString()
     const document = parse(file.text, uri)
 

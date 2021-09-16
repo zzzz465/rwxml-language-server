@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Disposable, env, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { printXMLDocumentObjectHandler } from './commands'

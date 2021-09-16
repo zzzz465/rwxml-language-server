@@ -114,7 +114,7 @@ export class ProjectManager {
   }
 
   async onWorkspaceInitialization(files: File[]) {
-    console.log(`received workspaceInitialization files... count: ${files.length}`)
+    log.debug(`received workspaceInitialization event, file count: ${files.length}`)
     for (const file of files) {
       const versions = this.loadFolder.isBelongsTo(file.uri)
 
