@@ -39,7 +39,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     capabilities: {
       codeLensProvider: undefined,
       colorProvider: false,
-      completionProvider: { resolveProvider: false, workDoneProgress: false },
+      completionProvider: { resolveProvider: false, workDoneProgress: false, triggerCharacters: ['<', ' '] },
       declarationProvider: false, // 선언으로 바로가기
       definitionProvider: true, // 정의로 바로가기
       documentHighlightProvider: false,

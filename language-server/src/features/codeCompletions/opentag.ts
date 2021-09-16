@@ -1,39 +1,23 @@
-import { Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Document, Element, Injectable, Node, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import { Range } from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
-import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, TextEdit, Command } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
+import { makeTagNode } from '../utils/node'
+import { RangeConverter } from '../../utils/rangeConverter'
 
 export class OpenTagCompletion {
   private defs: MultiDictionary<string, string> = new MultiDictionary()
 
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
-    // <>... 의 경우, node 는 Text
-    // <a ... 의 경우, node 는 Element
-    if (!(node instanceof Text) && !(node instanceof Element)) {
+    if (!this.shouldSuggestTagNames(node, offset)) {
       return []
     }
 
-    const isPointingTagName =
-      (node instanceof Element && node.openTagNameRange.include(offset)) || // <ta... ?
-      (node instanceof Text && node.nodeRange.include(offset) && node.document.getCharAt(offset - 1) === '<') // <... ?
-
-    if (!isPointingTagName) {
-      return []
-    }
-
-    const range = new Range()
-    if (node instanceof Element) {
-      range.copyFrom(node.openTagNameRange)
-    } else if (node instanceof Text) {
-      range.start = offset
-      range.end = offset
-    }
-
-    const textEditRange = project.rangeConverter.toLanguageServerRange(range, node.document.uri)
+    const textEditRange = this.getTextEditRange(node, offset, project.rangeConverter)
     if (!textEditRange) {
       return []
     }
@@ -50,23 +34,10 @@ export class OpenTagCompletion {
       const tags = this.getDefNames(project)
       const completions = getMatchingText(tags, nodeName)
 
-      return completions.map(
-        (label) =>
-          ({
-            label,
-            kind: CompletionItemKind.Field,
-            textEdit: nodeName.length > 0 ? TextEdit.replace(textEditRange, label) : undefined,
-          } as CompletionItem)
-      )
+      return this.toCompletionItems(node, offset, project.rangeConverter, node.document, completions)
     } else if (parentNode instanceof Injectable) {
       if (parentNode.typeInfo.isEnumerable()) {
-        return [
-          {
-            label: 'li',
-            kind: CompletionItemKind.Field,
-            textEdit: nodeName.length > 0 ? TextEdit.replace(textEditRange, 'li') : undefined,
-          },
-        ]
+        return this.toCompletionItems(node, offset, project.rangeConverter, node.document, ['li'])
       } else {
         const childNodes = AsEnumerable(parentNode.ChildElementNodes)
           .Where((e) => e instanceof Injectable)
@@ -75,18 +46,35 @@ export class OpenTagCompletion {
         const candidates = _.difference(Object.keys(parentNode.typeInfo.fields), childNodes)
         const completions = getMatchingText(candidates, nodeName)
 
-        return completions.map(
-          (label) =>
-            ({
-              label,
-              kind: CompletionItemKind.Field,
-              textEdit: nodeName.length > 0 ? TextEdit.replace(textEditRange, label) : undefined,
-            } as CompletionItem)
-        )
+        return this.toCompletionItems(node, offset, project.rangeConverter, node.document, completions)
       }
     } else {
       return []
     }
+  }
+
+  private shouldSuggestTagNames(node: Node, offset: number): node is Element | Text {
+    if (node instanceof Element && node.openTagNameRange.include(offset)) {
+      // <ta|... Key="Value"...>
+      return true
+    } else if (node instanceof Text) {
+      if (
+        node.nodeRange.include(offset) && // is inside text range?
+        node.parent instanceof Element &&
+        !node.parent.leafNode
+      ) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private getTextEditRange(node: Element | Text, offset: number, converter: RangeConverter) {
+    const range = node instanceof Element ? node.openTagNameRange.clone() : new Range(offset, offset)
+
+    const textEditRange = converter.toLanguageServerRange(range, node.document.uri)
+    return textEditRange
   }
 
   private getDefNames(project: Project) {
@@ -106,5 +94,74 @@ export class OpenTagCompletion {
     }
 
     return cached
+  }
+
+  private toCompletionItems(
+    node: Text | Element,
+    offset: number,
+    converter: RangeConverter,
+    document: Document,
+    labels: string[]
+  ): CompletionItem[] {
+    return AsEnumerable(labels)
+      .Select((label) => this.makeCompletionItem(node, label, offset, converter, document))
+      .Where((item) => item !== null)
+      .ToArray() as CompletionItem[]
+  }
+
+  private makeCompletionItem(
+    node: Text | Element,
+    label: string,
+    offset: number,
+    converter: RangeConverter,
+    document: Document
+  ): CompletionItem | null {
+    const editRange = this.getTextEditRange(node, offset, converter)
+
+    const additionalTextEdits: TextEdit[] = []
+    const cursorCommand: Command = {
+      command: 'cursorMove',
+      title: '',
+      arguments: [
+        {
+          to: '',
+          by: '',
+          value: '',
+          select: false,
+        },
+      ],
+    }
+
+    // textEdit will be ignored if range starts before cursor position
+    if (node instanceof Element) {
+      // delete <
+      const range = converter.toLanguageServerRange(
+        new Range(node.openTagRange.start, node.openTagRange.start + 1),
+        document.uri
+      )
+      if (range) {
+        additionalTextEdits.push(TextEdit.del(range))
+      }
+    } else if (node instanceof Text) {
+      // delete <
+      if (document.getCharAt(offset - 1) === '<') {
+        const range = converter.toLanguageServerRange(new Range(offset - 1, offset), document.uri)
+        if (range) {
+          additionalTextEdits.push(TextEdit.del(range))
+        }
+      }
+    }
+
+    if (editRange) {
+      return {
+        label,
+        // command: cursorCommand,
+        kind: CompletionItemKind.Field,
+        textEdit: TextEdit.replace(editRange, makeTagNode(label)),
+        additionalTextEdits,
+      }
+    } else {
+      return null
+    }
   }
 }
