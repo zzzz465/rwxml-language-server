@@ -1,4 +1,6 @@
 import { Def, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Project } from '../../project'
+import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -24,4 +26,9 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
 
 export function makeTagNode(tag: string): string {
   return `<${tag}></${tag}>`
+}
+
+export function toLocation(converter: RangeConverter, node: Element | Text) {
+  const range = converter.toLanguageServerRange(node.nodeRange, node.document.uri)
+  return range
 }

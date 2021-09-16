@@ -1,7 +1,9 @@
-import { Def, Element } from '@rwxml/analyzer'
+import { Def, Element, Injectable, Range } from '@rwxml/analyzer'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
+import { RangeConverter } from '../utils/rangeConverter'
+import { toLocation } from './utils/node'
 
 export class CodeLens {
   onCodeLens(project: Project, uri: URI): lsp.CodeLens[] {
@@ -26,21 +28,39 @@ export class CodeLens {
       }
 
       const defName = def.getDefName()
-      const defNameContentStartingOffset = def.ChildElementNodes.find((node) => node.name === 'defName')?.contentRange
-        ?.start
-      if (defName && defNameContentStartingOffset) {
-        const counts = project.defManager.getReferenceResolveWanters(defName).length
+      const defNameContentRange =
+        def.ChildElementNodes.find((node) => node.name === 'defName')?.contentRange ?? new Range()
+      const position = project.rangeConverter.toLanguageServerRange(defNameContentRange, uri.toString())?.start
+      if (defName && defNameContentRange && position) {
+        const injectables = project.defManager.getReferenceResolveWanters(defName)
+
         res.push({
           range,
-          command: lsp.Command.create(`${counts} References`, 'rwxml-language-server:CodeLens:defReference'),
-          data: {
-            uri: uri.toString(),
-            offset: defNameContentStartingOffset,
+          // for command, see https://github.com/microsoft/vscode/blob/3c33989855def32ab5f614ab62d99b2cdaaf958e/src/vs/editor/contrib/gotoSymbol/goToCommands.ts#L742-L756
+          // cannot call editor.action.showReferences directly because plain JSON is sended on grpc instead of object.
+          command: {
+            title: `${injectables.length} Def References`,
+            command: injectables.length ? 'rwxml-language-server:CodeLens:defReference' : '',
+            arguments: [
+              uri.toString(),
+              position,
+              injectables.map((node) => this.toLocations(project.rangeConverter, node)),
+            ],
           },
         })
       }
     }
 
     return res
+  }
+
+  private toLocations(converter: RangeConverter, node: Injectable): lsp.Location {
+    const range = toLocation(converter, node)
+
+    if (range) {
+      return { range, uri: node.document.uri }
+    } else {
+      throw new Error(`cannot convert node ${node.name} to location, uri: ${decodeURIComponent(node.document.uri)}`)
+    }
   }
 }

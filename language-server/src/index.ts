@@ -48,7 +48,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
       hoverProvider: false,
-      referencesProvider: false,
+      referencesProvider: true,
       typeDefinitionProvider: false,
       workspace: {
         workspaceFolders: {
