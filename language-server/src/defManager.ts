@@ -129,6 +129,7 @@ export class DefManager {
   }
 
   private isReferenceWanter(injectable: Injectable): boolean {
+    // why not injectable.typeInfo ???
     const fieldInfo = injectable.getFieldInfo()
 
     if (fieldInfo) {
@@ -137,6 +138,10 @@ export class DefManager {
       }
 
       // TODO: support for CompProperties_XXX or something else.
+    } else if (injectable.parent instanceof Injectable && injectable.parent.typeInfo.isEnumerable()) {
+      if (injectable.typeInfo.isDef()) {
+        return true
+      }
     }
 
     return false
