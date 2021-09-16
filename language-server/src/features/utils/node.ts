@@ -1,4 +1,4 @@
-import { Element, Node, Text } from '@rwxml/analyzer'
+import { Def, Element, Injectable, Node, Text } from '@rwxml/analyzer'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -8,6 +8,18 @@ export function isPointingContentOfNode(node: Node, offset: number): boolean {
   } else {
     return false
   }
+}
+
+// is cursor pointing defName content? (note: content not empty)
+// TODO: check empty content when offset is provided
+export function isPointingDefNameContent(node: Node, offset?: number): boolean {
+  if (node instanceof Text) {
+    if (node.parent instanceof Injectable && node.parent.name === 'defName' && node.parent.parent instanceof Def) {
+      return true
+    }
+  }
+
+  return false
 }
 
 export function makeTagNode(tag: string): string {

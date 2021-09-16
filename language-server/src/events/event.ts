@@ -1,4 +1,5 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
+import * as lsp from 'vscode-languageserver'
 import { SerializedAbout } from '../mod'
 import { RimWorldVersion } from '../typeInfoMapManager'
 import { DecoItem, UrlEncodedString } from '../types'

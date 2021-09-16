@@ -3,16 +3,19 @@ import { URI } from 'vscode-uri'
 import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../events'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
+import { RimWorldVersionArray } from '../typeInfoMapManager'
 import { CodeCompletion } from './codeCompletions'
 import { CodeLens } from './codeLens'
 import { Decorate } from './decorate'
 import { Definition } from './definition'
+import { Reference } from './reference'
 
 export class LanguageFeature {
   private readonly decorate = new Decorate()
   private readonly definition = new Definition()
   private readonly codeCompletion = new CodeCompletion()
   private readonly codeLens = new CodeLens()
+  private readonly reference = new Reference()
 
   constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
 
@@ -21,6 +24,7 @@ export class LanguageFeature {
     connection.onDefinition(this.wrapExceptionStackTraces(this.onDefinition.bind(this)))
     connection.onCompletion(this.wrapExceptionStackTraces(this.onCompletion.bind(this)))
     connection.onCodeLens(this.wrapExceptionStackTraces(this.onCodeLens.bind(this)))
+    connection.onReferences(this.wrapExceptionStackTraces(this.onReference.bind(this)))
   }
 
   private async onCompletion({ position, textDocument }: lsp.CompletionParams) {
@@ -78,6 +82,19 @@ export class LanguageFeature {
     for (const version of versions) {
       const project = await this.projectManager.getProject(version)
       const res = this.codeLens.onCodeLens(project, uri)
+      result.push(...res)
+    }
+
+    return result
+  }
+
+  private async onReference({ position, textDocument }: lsp.ReferenceParams) {
+    const uri = URI.parse(textDocument.uri)
+    const result: lsp.Location[] = []
+
+    for (const version of RimWorldVersionArray) {
+      const project = await this.projectManager.getProject(version)
+      const res = this.reference.onReference(project, uri, position)
       result.push(...res)
     }
 

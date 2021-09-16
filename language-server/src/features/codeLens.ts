@@ -1,4 +1,4 @@
-import { Def, Element, Injectable } from '@rwxml/analyzer'
+import { Def, Element } from '@rwxml/analyzer'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
@@ -26,11 +26,17 @@ export class CodeLens {
       }
 
       const defName = def.getDefName()
-      if (defName) {
+      const defNameContentStartingOffset = def.ChildElementNodes.find((node) => node.name === 'defName')?.contentRange
+        ?.start
+      if (defName && defNameContentStartingOffset) {
         const counts = project.defManager.getReferenceResolveWanters(defName).length
         res.push({
           range,
           command: lsp.Command.create(`${counts} References`, 'rwxml-language-server:CodeLens:defReference'),
+          data: {
+            uri: uri.toString(),
+            offset: defNameContentStartingOffset,
+          },
         })
       }
     }
