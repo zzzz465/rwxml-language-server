@@ -9,3 +9,7 @@ export function isPointingContentOfNode(node: Node, offset: number): boolean {
     return false
   }
 }
+
+export function makeTagNode(tag: string): string {
+  return `<${tag}></${tag}>`
+}
