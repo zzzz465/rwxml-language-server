@@ -51,7 +51,7 @@ export class resourceManager {
   private onTextureFileChanged(file: TextureFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
-      console.log(`v${this.version} textureAdded: ${file.toString()}`)
+      log.debug(`texture added, version: ${this.version}, uri: ${file.toString()}`)
       this.textures.add(resourcePath)
     }
   }
@@ -59,7 +59,7 @@ export class resourceManager {
   private onTextureFileDeleted(file: TextureFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
-      console.log(`v${this.version} textureDeleted: ${file.toString()}`)
+      log.debug(`texture deleted, version: ${this.version}, uri: ${file.toString()}`)
       this.textures.delete(resourcePath)
     }
   }
@@ -69,7 +69,7 @@ export class resourceManager {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
-      console.log(`v${this.version} audioAdded: ${file.toString()}`)
+      log.debug(`audio changed, version: ${this.version}, uri: ${file.toString()}`)
       this.audios.add(resourcePath)
       this.audioDirectories.add(resourceDir)
     }
@@ -80,7 +80,7 @@ export class resourceManager {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
-      console.log(`v${this.version} audioDeleted: ${file.toString()}`)
+      log.debug(`audio deleted, version: ${this.version}, uri: ${file.toString()}`)
       this.audios.delete(resourcePath)
       this.audioDirectories.remove(resourceDir)
     }
