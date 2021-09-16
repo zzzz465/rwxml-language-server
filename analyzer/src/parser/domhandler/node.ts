@@ -317,6 +317,10 @@ export class Element extends NodeWithChildren {
     return Object.values(this.attribs)
   }
 
+  get leafNode() {
+    return this.ChildElementNodes.length === 0
+  }
+
   findNodeAt(offset: number) {
     return findNodeAt(this, offset)
   }
