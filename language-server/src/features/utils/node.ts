@@ -19,6 +19,14 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
     if (node.parent instanceof Injectable && node.parent.name === 'defName' && node.parent.parent instanceof Def) {
       return true
     }
+  } else if (offset !== undefined) {
+    if (node instanceof Element && node.name === 'defName') {
+      if (node.contentRange) {
+        return node.contentRange.include(offset)
+      } else {
+        return offset === node.openTagRange.end + 1
+      }
+    }
   }
 
   return false

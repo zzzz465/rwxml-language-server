@@ -41,11 +41,7 @@ export class CodeLens {
           command: {
             title: `${injectables.length} Def References`,
             command: injectables.length ? 'rwxml-language-server:CodeLens:defReference' : '',
-            arguments: [
-              uri.toString(),
-              position,
-              injectables.map((node) => this.toLocations(project.rangeConverter, node)),
-            ],
+            arguments: [uri.toString(), position],
           },
         })
       }

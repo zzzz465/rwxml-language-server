@@ -1,7 +1,7 @@
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import * as lsp from 'vscode-languageserver'
-import { Injectable, Text } from '@rwxml/analyzer'
+import { Element, Injectable, Text } from '@rwxml/analyzer'
 import { isPointingDefNameContent } from './utils/node'
 
 export class Reference {
@@ -18,8 +18,8 @@ export class Reference {
       return res
     }
 
-    if (isPointingDefNameContent(node) && node instanceof Text && node.parent instanceof Injectable) {
-      const defName = node.parent.content
+    if (isPointingDefNameContent(node, offset) && (node instanceof Element || node instanceof Text)) {
+      const defName: string | undefined = node instanceof Text ? node.data : node.content
       if (defName) {
         res.push(...this.findDefNameReferences(project, defName, uri.toString()))
       }
