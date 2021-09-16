@@ -1,6 +1,7 @@
 import { Injectable, Text } from '@rwxml/analyzer'
 import { Connection, DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
+import lsp from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 
@@ -10,11 +11,15 @@ type Result = {
 }
 
 export class Definition {
+  private project: Project = void 0 as unknown as Project
+
   onDefinition(project: Project, uri: URI, position: Position): Result {
     const ret: Result = {
       definitionLinks: [],
       errors: [],
     }
+
+    this.project = project
 
     const document = project.getXMLDocumentByUri(uri.toString())
     if (!document) {
@@ -32,96 +37,92 @@ export class Definition {
     }
 
     const text = xmlDocument.findNodeAt(offset)
-    const injectable = text?.parent as unknown
-    if (injectable instanceof Injectable) {
-      if (
-        injectable.parentNode instanceof Injectable &&
-        injectable.parentNode.typeInfo.isEnumerable() &&
-        injectable.typeInfo.isDef()
-      ) {
+    const node = text?.parent as unknown
+    if (node instanceof Injectable) {
+      let defType: string | undefined = undefined
+      let defName: string | undefined = undefined
+      if (node.parentNode instanceof Injectable && node.parentNode.typeInfo.isEnumerable() && node.typeInfo.isDef()) {
         // when node is inside list node
-        const defType = injectable.typeInfo.getDefType()
-        const defName = injectable.content
-        const contentRange = injectable.contentRange
+        defType = node.typeInfo.getDefType()
+        defName = node.content
 
-        if (!(defType && defName && contentRange)) {
+        if (!(defType && defName)) {
           return ret
         }
 
-        const range = project.rangeConverter.toLanguageServerRange(contentRange, injectable.document.uri)
-        if (!range) {
+        ret.definitionLinks.push(...this.getDefinitionLinksInsideListNode(defType, defName))
+      } else if (node.fieldInfo?.fieldType.isDef()) {
+        defType = node.fieldInfo.fieldType.getDefType()
+        defName = node.content
+
+        if (!(defType && defName)) {
           return ret
         }
 
-        const defs = project.defManager.getDef(defType, defName)
-
-        for (const def of defs) {
-          const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-          const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
-
-          if (!(defNameNode && targetRange)) {
-            continue
-          }
-
-          const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
-          if (!targetSelectionRange) {
-            continue
-          }
-          
-          ret.definitionLinks.push({
-            targetRange,
-            targetSelectionRange,
-            targetUri: def.document.uri
-          })
-        }
-      } else if (injectable.fieldInfo?.fieldType.isDef()) {
-
-        const defType = injectable.fieldInfo.fieldType.getDefType()
-        const defName = injectable.content
-        if (defType && defName) {
-          const defs = project.defManager.getDef(defType, defName)
-          
-          for (const def of defs) {
-          const uri = def.document.uri
-          const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-          const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, uri)
-          
-          let fail = true
-          let targetSelectionRangeExists = true
-          
-          // FIXME: ugly code, must be refactored.
-          if (targetRange) {
-            if (defNameNode) {
-              const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode?.nodeRange, uri)
-              if (targetSelectionRange) {
-                const definitionLink: DefinitionLink = {
-                  targetRange,
-                  targetSelectionRange,
-                  targetUri: uri,
-                  // originSelectionRange // ???
-                }
-                
-                ret.definitionLinks.push(definitionLink)
-                fail = false
-              } else {
-                targetSelectionRangeExists = false
-              }
-            }
-          }
-          
-          if (fail) {
-            ret.errors.push({
-              message: 'cannot create definitionLink.',
-              uri: uri,
-              defNameNodeExists: !!defNameNode,
-              targetRangeExists: !!targetRange,
-              targetSelectionRangeExists,
-            })
-          }
-        }
+        ret.definitionLinks.push(...this.getDefinitionLinks(defType, defName))
       }
     }
 
     return ret
+  }
+
+  private getDefinitionLinks(defType: string, defName: string): DefinitionLink[] {
+    const links: DefinitionLink[] = []
+    const defs = this.project.defManager.getDef(defType, defName)
+
+    for (const def of defs) {
+      const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
+      const targetRange = this.project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+
+      if (!(defNameNode && targetRange)) {
+        continue
+      }
+
+      const targetSelectionRange = this.project.rangeConverter.toLanguageServerRange(
+        defNameNode.nodeRange,
+        def.document.uri
+      )
+      if (!targetSelectionRange) {
+        continue
+      }
+
+      links.push({
+        targetRange,
+        targetSelectionRange,
+        targetUri: def.document.uri,
+      })
+    }
+
+    return links
+  }
+
+  private getDefinitionLinksInsideListNode(defType: string, defName: string): DefinitionLink[] {
+    const links: DefinitionLink[] = []
+    const defs = this.project.defManager.getDef(defType, defName)
+
+    for (const def of defs) {
+      const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
+      const targetRange = this.project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+
+      if (!(defNameNode && targetRange)) {
+        continue
+      }
+
+      const targetSelectionRange = this.project.rangeConverter.toLanguageServerRange(
+        defNameNode.nodeRange,
+        def.document.uri
+      )
+      if (!targetSelectionRange) {
+        continue
+      }
+
+      links.push({
+        targetRange,
+        targetSelectionRange,
+        targetUri: def.document.uri,
+      })
+    }
+
+    return links
   }
 }
