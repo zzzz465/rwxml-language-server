@@ -33,20 +33,62 @@ export class Definition {
 
     const text = xmlDocument.findNodeAt(offset)
     const injectable = text?.parent as unknown
-    if (injectable instanceof Injectable && injectable.fieldInfo?.fieldType.isDef()) {
-      const defType = injectable.fieldInfo.fieldType.getDefType()
-      const defName = injectable.content
-      if (defType && defName) {
+    if (injectable instanceof Injectable) {
+      if (
+        injectable.parentNode instanceof Injectable &&
+        injectable.parentNode.typeInfo.isEnumerable() &&
+        injectable.typeInfo.isDef()
+      ) {
+        // when node is inside list node
+        const defType = injectable.typeInfo.getDefType()
+        const defName = injectable.content
+        const contentRange = injectable.contentRange
+
+        if (!(defType && defName && contentRange)) {
+          return ret
+        }
+
+        const range = project.rangeConverter.toLanguageServerRange(contentRange, injectable.document.uri)
+        if (!range) {
+          return ret
+        }
+
         const defs = project.defManager.getDef(defType, defName)
 
         for (const def of defs) {
+          const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
+          const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+
+          if (!(defNameNode && targetRange)) {
+            continue
+          }
+
+          const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
+          if (!targetSelectionRange) {
+            continue
+          }
+          
+          ret.definitionLinks.push({
+            targetRange,
+            targetSelectionRange,
+            targetUri: def.document.uri
+          })
+        }
+      } else if (injectable.fieldInfo?.fieldType.isDef()) {
+
+        const defType = injectable.fieldInfo.fieldType.getDefType()
+        const defName = injectable.content
+        if (defType && defName) {
+          const defs = project.defManager.getDef(defType, defName)
+          
+          for (const def of defs) {
           const uri = def.document.uri
           const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
           const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, uri)
-
+          
           let fail = true
           let targetSelectionRangeExists = true
-
+          
           // FIXME: ugly code, must be refactored.
           if (targetRange) {
             if (defNameNode) {
@@ -58,7 +100,7 @@ export class Definition {
                   targetUri: uri,
                   // originSelectionRange // ???
                 }
-
+                
                 ret.definitionLinks.push(definitionLink)
                 fail = false
               } else {
@@ -66,7 +108,7 @@ export class Definition {
               }
             }
           }
-
+          
           if (fail) {
             ret.errors.push({
               message: 'cannot create definitionLink.',
