@@ -1,5 +1,8 @@
-import { Injectable } from '@rwxml/analyzer'
+import { Element, Injectable, Node, NodeWithChildren, Range, Text } from '@rwxml/analyzer'
+import { AsEnumerable } from 'linq-es2015'
+import { allowedNodeEnvironmentFlags } from 'process'
 import { CompletionItem, CompletionItemKind, InsertTextFormat, TextEdit } from 'vscode-languageserver'
+import { CodeCompletion } from '.'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 
@@ -14,45 +17,54 @@ import { Project } from '../../project'
 그러면, skip 할 수 있게 pointer 를 줘야하나?
 */
 
-export function completeDefName(project: Project, currentNode: Injectable): CompletionItem[] {
-  const ret: CompletionItem[] = []
-  const uri = currentNode.document.uri
-  const text = currentNode.content
-  const fieldType = currentNode.fieldInfo?.fieldType
-  const defType = fieldType?.getDefType()
-
-  if (fieldType && defType) {
-    const defs = project.defManager
-      .getDef(defType)
-      .map((def) => def.getDefName())
-      .filter((defName) => !!defName) as string[]
-
-    const completionTexts = getMatchingText(defs, text ?? '')
-
-    for (const completion of completionTexts) {
-      if (text && currentNode.contentRange) {
-        // when <tag>...text...</tag>
-        const range = project.rangeConverter.toLanguageServerRange(currentNode.contentRange, uri)
-        if (range) {
-          const textEdit = TextEdit.replace(range, completion)
-          ret.push({
-            label: completion,
-            kind: CompletionItemKind.Value,
-            textEdit,
-          })
-        } else {
-          console.error(`cannot get range of completion: ${completion} for node: ${currentNode.name}, uri: ${uri}`)
-        }
-      } else {
-        // when <tag></tag>
-        ret.push({
-          label: completion,
-          kind: CompletionItemKind.Value,
-          insertTextFormat: InsertTextFormat.PlainText,
-        })
-      }
+export class DefNameCompletion {
+  complete(project: Project, selection: Node, offset: number): CompletionItem[] {
+    if (!this.shouldSuggestDefNames(selection, offset)) {
+      return []
     }
+
+    const node = selection instanceof Injectable ? selection : selection.parent
+    if (!(node instanceof Injectable)) {
+      return []
+    }
+
+    const fieldType = node.fieldInfo?.fieldType
+    const defType = fieldType?.getDefType()
+    const range = node.contentRange ?? new Range(offset, offset)
+    const editRange = project.rangeConverter.toLanguageServerRange(range, node.document.uri)
+
+    if (!(fieldType && defType && editRange)) {
+      return []
+    }
+
+    const defs = AsEnumerable(project.defManager.getDef(defType))
+      .Select((def) => def.getDefName())
+      .Where((defName) => !!defName)
+      .ToArray() as string[]
+
+    const completionTexts = getMatchingText(defs, node.content ?? '')
+
+    return completionTexts.map(
+      (label) =>
+        ({
+          label,
+          kind: CompletionItemKind.Value,
+          textEdit: TextEdit.replace(editRange, label),
+        } as CompletionItem)
+    )
   }
 
-  return ret
+  /**
+   * is selecting <tag>|</tag> or <tag>...|...</tag> ?
+   */
+  private shouldSuggestDefNames(node: Node, offset: number): node is Element | Text {
+    if (node instanceof Element && node.openTagRange.end === offset) {
+      // after > ?
+      return true
+    } else if (node instanceof Text && node.parent instanceof Element && node.parent.contentRange?.include(offset)) {
+      return true
+    } else {
+      return false
+    }
+  }
 }
