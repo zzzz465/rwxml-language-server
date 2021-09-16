@@ -1,7 +1,6 @@
 import { Injectable, Text } from '@rwxml/analyzer'
-import { Connection, DefinitionLink } from 'vscode-languageserver'
+import { DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
-import lsp from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 
