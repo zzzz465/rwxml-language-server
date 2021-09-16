@@ -8,6 +8,9 @@ import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
 import { ModManager } from './mod/modManager'
 import { DependencyRequester } from './dependencyRequester'
+import { initializeLogger } from './logging'
+
+initializeLogger()
 
 const connection = createConnection(ProposedFeatures.all)
 const about = new About()
@@ -21,7 +24,8 @@ const languageFeature = new LanguageFeature(loadFolder, projectManager)
 const dependencyRequester = new DependencyRequester(connection)
 
 connection.onInitialize(async (params: InitializeParams) => {
-  connection.console.log('hello world! initializing @rwxml-language-server/language-server ...')
+  log.level = 'info'
+  log.info('hello world! initializing @rwxml-language-server/language-server ...')
 
   loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(connection)
