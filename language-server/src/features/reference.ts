@@ -33,10 +33,16 @@ export class Reference {
     const res: lsp.Location[] = []
 
     for (const node of nodes) {
-      const range = project.rangeConverter.toLanguageServerRange(node.nodeRange, uri)
+      if (!node.contentRange) {
+        throw new Error(
+          `node ${node.name} marked as defNameReference but contentRange is undefined. uri: ${decodeURIComponent(uri)}`
+        )
+      }
+
+      const range = project.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
 
       if (range) {
-        res.push({ range, uri })
+        res.push({ range, uri: node.document.uri })
       }
     }
 
