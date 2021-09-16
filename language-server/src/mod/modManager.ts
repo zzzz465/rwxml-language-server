@@ -1,5 +1,5 @@
 import { Connection } from 'vscode-languageserver'
-import { ModChangedNotification, ModChangedNotificationParams } from '../fs'
+import { ModChangedNotification, ModChangedNotificationParams } from '../events'
 import { Mod } from './mod'
 
 export class ModManager {

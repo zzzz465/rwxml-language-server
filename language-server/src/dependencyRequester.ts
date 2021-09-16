@@ -2,8 +2,9 @@ import { EventEmitter } from 'events'
 import { AsEnumerable } from 'linq-es2015'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { File, XMLDocumentDependencyRequest } from './fs'
+import { XMLDocumentDependencyRequest } from './events'
 import { Dependency } from './mod'
+import { File } from './fs'
 import { RimWorldVersion } from './typeInfoMapManager'
 
 interface ListeningEvents {

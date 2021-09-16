@@ -1,6 +1,6 @@
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../fs'
+import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../events'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { CodeCompletion } from './codeCompletions'

@@ -3,7 +3,6 @@ import { Connection, TextDocumentChangeEvent } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import {
-  File,
   ProjectFileAdded,
   ProjectFileAddedNotificationParams,
   ProjectFileChanged,
@@ -12,7 +11,8 @@ import {
   ProjectFileDeletedNotificationParams,
   WorkspaceInitialization,
   WorkspaceInitializationNotificationParams,
-} from './fs'
+} from './events'
+import { File } from './fs'
 
 // events that this manager will emit
 export interface NotificationEvents {
