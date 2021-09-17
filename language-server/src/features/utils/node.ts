@@ -1,6 +1,8 @@
 import { Def, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
+import * as lsp from 'vscode-languageserver'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -39,4 +41,10 @@ export function makeTagNode(tag: string): string {
 export function toLocation(converter: RangeConverter, node: Element | Text) {
   const range = converter.toLanguageServerRange(node.nodeRange, node.document.uri)
   return range
+}
+
+export function getNodeAndOffset(project: Project, uri: URI, position: lsp.Position) {
+  const offset = project.rangeConverter.toOffset(position, uri.toString())
+  const document = project.getXMLDocumentByUri(uri)
+  const node = 
 }

@@ -5,6 +5,7 @@ import { Element, Injectable, Text } from '@rwxml/analyzer'
 import { isPointingDefNameContent } from './utils/node'
 
 export class Reference {
+  // TODO: seperate this to two methods, event handler and actual reference finder
   onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
     const res: lsp.Location[] = []
     const offset = project.rangeConverter.toOffset(position, uri.toString())
@@ -26,6 +27,17 @@ export class Reference {
     }
 
     return res
+  }
+
+  findDefReference(project: Project, node: Element | Text, offset: number) {
+    if (isPointingDefNameContent(node, offset)) {
+      const defName: string | undefined = node instanceof Text ? node.data : node.content
+      if (defName) {
+        res.push(...this.findDefNameReferences(project, defName, uri.toString()))
+      }
+    }
+
+    return undefined
   }
 
   private findDefNameReferences(project: Project, defName: string, uri: string): lsp.Location[] {
