@@ -34,7 +34,7 @@ export class DefManager {
   /**
    * @returns dirty nodes that require re-evaluation
    */
-  update(document: Document): Injectable[] {
+  update(document: Document): (Injectable | Def)[] {
     const injectResult = this.typeInfoInjector.inject(document)
 
     const DefsFromDefDatabase = this.defDatabase.getDefByUri(document.uri)
@@ -52,7 +52,7 @@ export class DefManager {
     }
 
     // grab dirty nodes
-    const dirtyInjectables: Set<Injectable> = new Set()
+    const dirtyInjectables: Set<Def | Injectable> = new Set()
     for (const def of removedDefs.concat(injectResult.defs)) {
       const defName = def.getDefName()
       const nameAttribute = def.getNameAttributeValue()
@@ -112,11 +112,14 @@ export class DefManager {
   private getInjectables(def: Def): Injectable[] {
     const injectables: Injectable[] = []
 
-    const queue: Deque<Injectable> = new Deque([def])
+    const queue: Deque<Def | Injectable> = new Deque([def])
 
-    let injectable: Injectable | undefined = undefined
+    let injectable: Def | Injectable | undefined = undefined
     while (!!(injectable = queue.dequeue())) {
-      injectables.push(injectable)
+      // Def should not added because only Injectables (not Def) wants reference to be resolved.
+      if (injectable instanceof Injectable) {
+        injectables.push(injectable)
+      }
 
       for (const child of injectable.ChildElementNodes) {
         if (child instanceof Injectable) {

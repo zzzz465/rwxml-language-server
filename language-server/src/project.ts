@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { DefDatabase, Document, Injectable, NameDatabase, parse } from '@rwxml/analyzer'
+import { Def, DefDatabase, Document, Injectable, NameDatabase, parse } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File, DependencyFile } from './fs'
@@ -9,7 +9,7 @@ import { About, Dependency } from './mod'
 import _ from 'lodash'
 import path from 'path'
 import { RimWorldVersion } from './typeInfoMapManager'
-import { MultiDictionary } from 'typescript-collections'
+import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 import { ModManager } from './mod/modManager'
 import { resourceManager } from './fs/resourceManager'
@@ -17,7 +17,7 @@ import { resourceManager } from './fs/resourceManager'
 // event that Project will emit
 export interface ProjectEvents {
   requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
-  defChanged(injectables: Injectable[]): void
+  defChanged(injectables: (Injectable | Def)[]): void
 }
 
 // events that Project will listen
@@ -31,7 +31,8 @@ interface ListeningEvents {
 export class Project {
   public readonly projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
   private xmlDocumentMap: Map<string, Document> = new Map()
-  private dependencyFiles: MultiDictionary<string, string> = new MultiDictionary(undefined, undefined, true)
+  // Dict<packageId, Set<uri>>
+  private dependencyFiles: DefaultDictionary<string, Set<string>> = new DefaultDictionary(() => new Set())
 
   constructor(
     public readonly about: About,
@@ -43,6 +44,14 @@ export class Project {
     private readonly textDocumentManager: TextDocumentManager
   ) {
     this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
+  }
+
+  isDependencyFile(uri: string | URI) {
+    if (uri instanceof URI) {
+      uri = uri.toString()
+    }
+
+    return this.dependencyFiles.getValue(uri).has(uri)
   }
 
   getXMLDocumentByUri(uri: string | URI) {
@@ -110,6 +119,10 @@ export class Project {
     this.xmlDocumentMap.set(uri, document)
     this.textDocumentManager.set(uri, file.text)
 
+    if (DependencyFile.is(file)) {
+      this.dependencyFiles.getValue(file.ownerPackageId).add(file.uri.toString())
+    }
+
     const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)
   }
@@ -120,6 +133,9 @@ export class Project {
     const document = parse(file.text, uri)
 
     this.textDocumentManager.delete(uri)
+    if (DependencyFile.is(file)) {
+      this.dependencyFiles.getValue(file.ownerPackageId).delete(file.uri.toString())
+    }
 
     const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)

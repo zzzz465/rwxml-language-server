@@ -4,6 +4,10 @@ import * as lsp from 'vscode-languageserver'
 import { Element, Injectable, Text } from '@rwxml/analyzer'
 import { isPointingDefNameContent } from './utils/node'
 
+interface DefReferenceTextNode extends Text {
+  parent: Injectable
+}
+
 export class Reference {
   // TODO: seperate this to two methods, event handler and actual reference finder
   onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
@@ -22,7 +26,7 @@ export class Reference {
     if (isPointingDefNameContent(node, offset) && (node instanceof Element || node instanceof Text)) {
       const defName: string | undefined = node instanceof Text ? node.data : node.content
       if (defName) {
-        res.push(...this.findDefNameReferences(project, defName, uri.toString()))
+        res.push(...this.findDefNameReferences(project, defName))
       }
     }
 
@@ -30,25 +34,19 @@ export class Reference {
   }
 
   findDefReference(project: Project, node: Element | Text, offset: number) {
-    if (isPointingDefNameContent(node, offset)) {
-      const defName: string | undefined = node instanceof Text ? node.data : node.content
-      if (defName) {
-        res.push(...this.findDefNameReferences(project, defName, uri.toString()))
-      }
+    if (node instanceof Text && isPointingDefNameContent(node, offset)) {
+      const defName = node.data
+      return this.findDefNameReferences(project, defName)
     }
-
-    return undefined
   }
 
-  private findDefNameReferences(project: Project, defName: string, uri: string): lsp.Location[] {
+  private findDefNameReferences(project: Project, defName: string): lsp.Location[] {
     const nodes = project.defManager.getReferenceResolveWanters(defName)
     const res: lsp.Location[] = []
 
     for (const node of nodes) {
       if (!node.contentRange) {
-        throw new Error(
-          `node ${node.name} marked as defNameReference but contentRange is undefined. uri: ${decodeURIComponent(uri)}`
-        )
+        throw new Error(`node ${node.name} marked as defNameReference but contentRange is undefined.`)
       }
 
       const range = project.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)

@@ -18,7 +18,7 @@ export class LanguageFeature {
   private readonly codeCompletion = new CodeCompletion()
   private readonly codeLens = new CodeLens()
   private readonly reference = new Reference()
-  private readonly rename = new Rename(this.reference)
+  private readonly rename = new Rename(this.reference, this.definition)
 
   constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
 
