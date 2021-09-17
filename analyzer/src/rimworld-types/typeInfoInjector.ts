@@ -16,7 +16,7 @@ export class TypeInfoInjector {
     const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
-      const def = this.injectType(xmlNode, defTypeInfo) as Def
+      const def = this.injectType(xmlNode, defTypeInfo) as Injectable
       Def.toDef(def)
       return true
     } else {

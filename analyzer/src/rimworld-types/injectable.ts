@@ -3,6 +3,7 @@ import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { Element } from '../parser'
+import { Def } from './def'
 
 export class Injectable extends Element {
   static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
@@ -21,7 +22,7 @@ export class Injectable extends Element {
   readonly typeInfo!: TypeInfo
   readonly fieldInfo?: FieldInfo
   readonly fields!: Map<string, Injectable>
-  readonly parent!: Injectable
+  readonly parent!: Injectable | Def
 
   isLeafNode() {
     return this.children.length == 0
@@ -43,14 +44,5 @@ export class Injectable extends Element {
 
   getFieldInfo(): FieldInfo | undefined {
     return this.fieldInfo
-  }
-
-  @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
-  private indexOfParent(): number {
-    if (this.parent.typeInfo.isEnumerable()) {
-      return this.parent.children.indexOf(this)
-    } else {
-      throw new Error('indexOfParent called but parent node is not enumerable.')
-    }
   }
 }

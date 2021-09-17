@@ -2,10 +2,17 @@ import { Injectable } from './injectable'
 import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { Element } from '../parser'
+import { TypeInfo } from './typeInfo'
+import { FieldInfo } from './fieldInfo'
 
 export type DefNameType = string
 
-export class Def extends Injectable {
+export class Def extends Element {
+  /*
+    def is actually a subset of class Injectable, but we cannot override parent as Element
+    since typeof Injectable.parent is fixed to Injectable | Def
+  */
+
   static toDef(injectable: Injectable): Def {
     const def = injectable as unknown as Writable<Def>
 
@@ -23,6 +30,16 @@ export class Def extends Injectable {
         `node: ${this.name} is DefType, but typeInfo doesn't have defType. uri: ${this.document.uri}, start: ${this.nodeRange.start}, end: ${this.nodeRange.end}`
       )
     }
+  }
+
+  readonly name!: string
+  readonly typeInfo!: TypeInfo
+  readonly fieldInfo?: FieldInfo
+  readonly fields!: Map<string, Injectable>
+  readonly parent!: Element
+
+  isLeafNode() {
+    return this.children.length == 0
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
@@ -44,7 +61,7 @@ export class Def extends Injectable {
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
-  override getDefPath(): string | undefined {
+  getDefPath(): string | undefined {
     const defName = this.getDefName()
 
     if (defName) {
