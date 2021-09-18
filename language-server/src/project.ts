@@ -31,8 +31,10 @@ interface ListeningEvents {
 export class Project {
   public readonly projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
   private xmlDocumentMap: Map<string, Document> = new Map()
+  // Map<uri, File>
+  private files: Map<string, File> = new Map()
   // Dict<packageId, Set<uri>>
-  private dependencyFiles: DefaultDictionary<string, Set<string>> = new DefaultDictionary(() => new Set())
+  private dependencyFiles: DefaultDictionary<string, Set<DependencyFile>> = new DefaultDictionary(() => new Set())
 
   constructor(
     public readonly about: About,
@@ -46,12 +48,21 @@ export class Project {
     this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
   }
 
-  isDependencyFile(uri: string | URI) {
+  isDependencyFile(uri: string | URI): boolean | undefined {
     if (uri instanceof URI) {
       uri = uri.toString()
     }
 
-    return this.dependencyFiles.getValue(uri).has(uri)
+    const file = this.files.get(uri)
+    if (!file) {
+      return undefined
+    }
+
+    if (DependencyFile.is(file)) {
+      return this.dependencyFiles.getValue(file.ownerPackageId).has(file)
+    }
+
+    return undefined
   }
 
   getXMLDocumentByUri(uri: string | URI) {
@@ -78,18 +89,24 @@ export class Project {
   }
 
   fileAdded(file: File) {
+    this.files.set(file.uri.toString(), file)
+
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
   fileChanged(file: File) {
+    this.files.set(file.uri.toString(), file)
+
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     }
   }
 
   fileDeleted(file: File) {
+    this.files.delete(file.uri.toString())
+
     if (file instanceof XMLFile) {
       this.onXMLFileDeleted(file)
     }
@@ -98,7 +115,7 @@ export class Project {
   dependencyModsResponse(files: File[]) {
     for (const file of files) {
       if (DependencyFile.is(file) && file instanceof XMLFile) {
-        this.onXMLFileChanged(file)
+        this.fileChanged(file)
       }
     }
   }
@@ -120,7 +137,7 @@ export class Project {
     this.textDocumentManager.set(uri, file.text)
 
     if (DependencyFile.is(file)) {
-      this.dependencyFiles.getValue(file.ownerPackageId).add(file.uri.toString())
+      this.dependencyFiles.getValue(file.ownerPackageId).add(file)
     }
 
     const dirty = this.defManager.update(document)
@@ -134,7 +151,7 @@ export class Project {
 
     this.textDocumentManager.delete(uri)
     if (DependencyFile.is(file)) {
-      this.dependencyFiles.getValue(file.ownerPackageId).delete(file.uri.toString())
+      this.dependencyFiles.getValue(file.ownerPackageId).delete(file)
     }
 
     const dirty = this.defManager.update(document)
@@ -148,7 +165,7 @@ export class Project {
     const removedFiles = AsEnumerable(removed)
       .Select((dep) => this.dependencyFiles.getValue(dep.packageId))
       .SelectMany((it) => it)
-      .Select((uri) => File.create({ uri: URI.parse(uri) }))
+      .Select(({ uri }) => File.create({ uri }))
 
     for (const file of removedFiles) {
       this.fileDeleted(file)

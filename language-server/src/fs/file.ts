@@ -52,7 +52,7 @@ export interface IFile {
   toString(): string
 }
 
-export interface DependencyFile {
+export interface DependencyFile extends IFile {
   // packageId of this File's owner.
   readonly ownerPackageId: string
 }
