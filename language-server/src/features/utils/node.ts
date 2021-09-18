@@ -72,3 +72,7 @@ export function getNodeAndOffset(project: Project, uri: URI, position: lsp.Posit
 
   return { offset, document, node }
 }
+
+export function isDefOrInjectable(node: Node | null | undefined): node is Def | Injectable {
+  return !!node && (node instanceof Def || node instanceof Injectable)
+}

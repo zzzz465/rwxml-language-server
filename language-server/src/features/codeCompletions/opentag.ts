@@ -1,4 +1,4 @@
-import { Document, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Def, Document, Element, Injectable, Node, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import { Range } from '@rwxml/analyzer'
@@ -6,7 +6,7 @@ import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit, Command } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
-import { makeTagNode } from '../utils/node'
+import { getNodeAndOffset, isDefOrInjectable, makeTagNode } from '../utils/node'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export class OpenTagCompletion {
@@ -22,35 +22,37 @@ export class OpenTagCompletion {
       return []
     }
 
-    const nodeName = node instanceof Element ? node.name : '' // node name is '' when type is Text
-    const parentNode = node.parent instanceof Element ? node.parent : undefined
-    const parentTagName = node.parent instanceof Element ? node.parent.name : undefined
-    if (!parentTagName || !parentNode) {
+    // Element (<Defs> node), Def, Injectable or nothing
+    const parent: Def | Injectable | Element | null = node.parent as unknown as Def | Injectable | null
+    if (!(parent instanceof Def || parent instanceof Injectable || parent instanceof Element)) {
       return []
     }
 
-    if (parentNode.name === 'Defs') {
+    const nodeName = node instanceof Element ? node.name : '' // node name is '' when type is Text
+
+    if (parent instanceof Element && parent.name === 'Defs') {
       // completes defType
       const tags = this.getDefNames(project)
       const completions = getMatchingText(tags, nodeName)
 
       return this.toCompletionItems(node, offset, project.rangeConverter, node.document, completions)
-    } else if (parentNode instanceof Injectable) {
-      if (parentNode.typeInfo.isEnumerable()) {
+    } else if (parent instanceof Def || parent instanceof Injectable) {
+      if (parent.typeInfo.isEnumerable()) {
         return this.toCompletionItems(node, offset, project.rangeConverter, node.document, ['li'])
       } else {
-        const childNodes = AsEnumerable(parentNode.ChildElementNodes)
+        const childNodes = AsEnumerable(parent.ChildElementNodes)
           .Where((e) => e instanceof Injectable)
           .Select((e) => e.name)
           .ToArray()
-        const candidates = _.difference(Object.keys(parentNode.typeInfo.fields), childNodes)
+
+        const candidates = _.difference(Object.keys(parent.typeInfo.fields), childNodes)
         const completions = getMatchingText(candidates, nodeName)
 
         return this.toCompletionItems(node, offset, project.rangeConverter, node.document, completions)
       }
-    } else {
-      return []
     }
+
+    return []
   }
 
   private shouldSuggestTagNames(node: Node, offset: number): node is Element | Text {
