@@ -55,6 +55,7 @@ connection.onInitialize(async (params: InitializeParams) => {
           supported: false,
         },
       },
+      renameProvider: true,
     },
   }
 

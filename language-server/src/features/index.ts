@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../events'
@@ -9,6 +10,7 @@ import { CodeLens } from './codeLens'
 import { Decorate } from './decorate'
 import { Definition } from './definition'
 import { Reference } from './reference'
+import { Rename } from './rename'
 
 export class LanguageFeature {
   private readonly decorate = new Decorate()
@@ -16,6 +18,7 @@ export class LanguageFeature {
   private readonly codeCompletion = new CodeCompletion()
   private readonly codeLens = new CodeLens()
   private readonly reference = new Reference()
+  private readonly rename = new Rename(this.reference, this.definition)
 
   constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
 
@@ -25,6 +28,7 @@ export class LanguageFeature {
     connection.onCompletion(this.wrapExceptionStackTraces(this.onCompletion.bind(this)))
     connection.onCodeLens(this.wrapExceptionStackTraces(this.onCodeLens.bind(this)))
     connection.onReferences(this.wrapExceptionStackTraces(this.onReference.bind(this)))
+    connection.onRenameRequest(this.wrapExceptionStackTraces(this.onRenameRequest.bind(this)))
   }
 
   private async onCompletion({ position, textDocument }: lsp.CompletionParams) {
@@ -99,6 +103,20 @@ export class LanguageFeature {
     }
 
     return result
+  }
+
+  private async onRenameRequest({ textDocument, newName, position }: lsp.RenameParams): Promise<lsp.WorkspaceEdit> {
+    const uri = URI.parse(textDocument.uri)
+
+    const edit: lsp.WorkspaceEdit = { changes: {} }
+
+    for (const version of RimWorldVersionArray) {
+      const project = await this.projectManager.getProject(version)
+      const res = this.rename.rename(project, uri, newName, position)
+      edit.changes = _.merge(edit.changes, res)
+    }
+
+    return edit
   }
 
   private handleError(errors: any[], message?: string) {

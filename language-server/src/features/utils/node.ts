@@ -1,6 +1,8 @@
 import { Def, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
+import * as lsp from 'vscode-languageserver'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -12,7 +14,7 @@ export function isPointingContentOfNode(node: Node, offset: number): boolean {
   }
 }
 
-// is cursor pointing defName content? (note: content not empty)
+// is cursor pointing Def.defName content? (note: content not empty)
 // TODO: check empty content when offset is provided
 export function isPointingDefNameContent(node: Node, offset?: number): boolean {
   if (node instanceof Text) {
@@ -32,6 +34,19 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
   return false
 }
 
+export function isPointingDefReferenceContent(node: Node, offset: number): node is Text {
+  if (node instanceof Text && node.parent instanceof Injectable && node.parent.parent instanceof Injectable) {
+    if (node.parent.parent.typeInfo.isEnumerable() && node.parent.typeInfo.isDef()) {
+      // if node is child of list node
+      return true
+    } else if (node.parent.fieldInfo?.fieldType.isDef()) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function makeTagNode(tag: string): string {
   return `<${tag}></${tag}>`
 }
@@ -39,4 +54,21 @@ export function makeTagNode(tag: string): string {
 export function toLocation(converter: RangeConverter, node: Element | Text) {
   const range = converter.toLanguageServerRange(node.nodeRange, node.document.uri)
   return range
+}
+
+export function getNodeAndOffset(project: Project, uri: URI, position: lsp.Position) {
+  const offset = project.rangeConverter.toOffset(position, uri.toString())
+  const document = project.getXMLDocumentByUri(uri)
+
+  if (!offset || !document) {
+    return
+  }
+
+  const node = document?.findNodeAt(offset)
+
+  if (!node) {
+    return
+  }
+
+  return { offset, document, node }
 }

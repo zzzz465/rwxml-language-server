@@ -1,86 +1,73 @@
-import { Injectable, Text } from '@rwxml/analyzer'
+import { Def, Injectable, Text } from '@rwxml/analyzer'
 import { DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
+import { getNodeAndOffset, isPointingDefNameContent, isPointingDefReferenceContent } from './utils/node'
 
 type Result = {
   definitionLinks: DefinitionLink[]
   errors: any[]
 }
 
-export class Definition {
-  private project: Project = void 0 as unknown as Project
+interface DefReferenceText extends Text {
+  parent: Injectable
+}
 
+export class Definition {
   onDefinition(project: Project, uri: URI, position: Position): Result {
-    const ret: Result = {
-      definitionLinks: [],
+    return {
+      definitionLinks: this.findDefinition(project, uri, position),
       errors: [],
     }
+  }
 
-    this.project = project
+  findDefinition(project: Project, uri: URI, position: Position): DefinitionLink[] {
+    const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
+    // is cursor is pointing definition?
+    if (definitionTextNode) {
+      let defType: string
+      const defName = definitionTextNode.data
+      if (definitionTextNode.parent.parent.typeInfo.isEnumerable() && definitionTextNode.parent.typeInfo.isDef()) {
+        defType = definitionTextNode.parent.typeInfo.getDefType() ?? ''
 
-    const document = project.getXMLDocumentByUri(uri.toString())
-    if (!document) {
-      return ret
-    }
+        return this.getDefinitionLinksInsideListNode(project, defType, defName)
+      } else if (definitionTextNode.parent.fieldInfo?.fieldType.isDef()) {
+        defType = definitionTextNode.parent.fieldInfo.fieldType.getDefType() ?? ''
 
-    const offset = project.rangeConverter.toOffset(position, uri.toString())
-    if (!offset) {
-      return ret
-    }
-
-    const xmlDocument = project.getXMLDocumentByUri(uri)
-    if (!xmlDocument) {
-      return ret
-    }
-
-    const text = xmlDocument.findNodeAt(offset)
-    const node = text?.parent as unknown
-    if (node instanceof Injectable) {
-      let defType: string | undefined = undefined
-      let defName: string | undefined = undefined
-      if (node.parentNode instanceof Injectable && node.parentNode.typeInfo.isEnumerable() && node.typeInfo.isDef()) {
-        // when node is inside list node
-        defType = node.typeInfo.getDefType()
-        defName = node.content
-
-        if (!(defType && defName)) {
-          return ret
-        }
-
-        ret.definitionLinks.push(...this.getDefinitionLinksInsideListNode(defType, defName))
-      } else if (node.fieldInfo?.fieldType.isDef()) {
-        defType = node.fieldInfo.fieldType.getDefType()
-        defName = node.content
-
-        if (!(defType && defName)) {
-          return ret
-        }
-
-        ret.definitionLinks.push(...this.getDefinitionLinks(defType, defName))
+        return this.getDefinitionLinks(project, defType, defName)
       }
     }
 
-    return ret
+    return []
   }
 
-  private getDefinitionLinks(defType: string, defName: string): DefinitionLink[] {
+  findDefinitionTextNode(project: Project, uri: URI, position: Position): DefReferenceText | undefined {
+    const data = getNodeAndOffset(project, uri, position)
+    if (!data) {
+      return
+    }
+
+    const { node, offset } = data
+    if (isPointingDefReferenceContent(node, offset) || isPointingDefNameContent(node, offset)) {
+      // is it refernced defName text? or defName text itself?
+      return node as DefReferenceText
+    }
+  }
+
+  private getDefinitionLinks(project: Project, defType: string, defName: string): DefinitionLink[] {
     const links: DefinitionLink[] = []
-    const defs = this.project.defManager.getDef(defType, defName)
+    const defs = project.defManager.getDef(defType, defName)
 
     for (const def of defs) {
       const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-      const targetRange = this.project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+      const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 
       if (!(defNameNode && targetRange)) {
         continue
       }
 
-      const targetSelectionRange = this.project.rangeConverter.toLanguageServerRange(
-        defNameNode.nodeRange,
-        def.document.uri
-      )
+      const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
       if (!targetSelectionRange) {
         continue
       }
@@ -95,22 +82,19 @@ export class Definition {
     return links
   }
 
-  private getDefinitionLinksInsideListNode(defType: string, defName: string): DefinitionLink[] {
+  private getDefinitionLinksInsideListNode(project: Project, defType: string, defName: string): DefinitionLink[] {
     const links: DefinitionLink[] = []
-    const defs = this.project.defManager.getDef(defType, defName)
+    const defs = project.defManager.getDef(defType, defName)
 
     for (const def of defs) {
       const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-      const targetRange = this.project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+      const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 
       if (!(defNameNode && targetRange)) {
         continue
       }
 
-      const targetSelectionRange = this.project.rangeConverter.toLanguageServerRange(
-        defNameNode.nodeRange,
-        def.document.uri
-      )
+      const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
       if (!targetSelectionRange) {
         continue
       }
