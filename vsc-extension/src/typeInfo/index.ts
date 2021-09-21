@@ -1,6 +1,7 @@
 import * as semver from 'semver'
 import { execSync } from 'child_process'
 import * as vscode from 'vscode'
+import { container } from 'tsyringe'
 
 const dotnetName = getDotnetName()
 
@@ -20,6 +21,9 @@ function getDotnetName() {
 export function checkTypeInfoAnalyzeAvailable() {
   if (!dotnetAvailable()) {
     promptDotnetInstall()
+    container.register('DOTNET_AVAILABLE', { useValue: false })
+  } else {
+    container.register('DOTNET_AVAILABLE', { useValue: true })
   }
 }
 

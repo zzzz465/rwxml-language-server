@@ -27,11 +27,13 @@ specifiers:
   lodash: ^4.17.21
   normalize-path: ^3.0.0
   prettier: ^2.3.2
+  reflect-metadata: ^0.1.13
   semver: ^7.3.5
   ts-jest: ^26.1.4
   ts-loader: ^8.0.3
   ts-node: ^10.1.0
   tsconfig-paths: ^3.9.0
+  tsyringe: ^4.6.0
   typescript: ^4.3.5
   typescript-collections: ^1.3.3
   vscode-languageclient: ^6.1.3
@@ -51,8 +53,10 @@ dependencies:
   linq-es2015: 2.5.1
   lodash: 4.17.21
   normalize-path: 3.0.0
+  reflect-metadata: 0.1.13
   semver: 7.3.5
   tsconfig-paths: 3.11.0
+  tsyringe: 4.6.0
   typescript-collections: 1.3.3
   vscode-languageclient: 6.1.4
   xpath: 0.0.32
@@ -4026,6 +4030,10 @@ packages:
       resolve: 1.20.0
     dev: true
 
+  /reflect-metadata/0.1.13:
+    resolution: {integrity: sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==}
+    dev: false
+
   /regex-not/1.0.2:
     resolution: {integrity: sha512-J6SDjUgDxQj5NusnOtdFxDwN/+HWykR8GELwctJ7mdqhcyy1xEc4SRFHUXvxTp661YaVKAjfRLZ9cCqS6tn32A==}
     engines: {node: '>=0.10.0'}
@@ -4739,7 +4747,6 @@ packages:
 
   /tslib/1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-    dev: true
 
   /tslib/2.3.1:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
@@ -4754,6 +4761,13 @@ packages:
       tslib: 1.14.1
       typescript: 4.4.3
     dev: true
+
+  /tsyringe/4.6.0:
+    resolution: {integrity: sha512-BMQAZamSfEmIQzH8WJeRu1yZGQbPSDuI9g+yEiKZFIcO46GPZuMOC2d0b52cVBdw1d++06JnDSIIZvEnogMdAw==}
+    engines: {node: '>= 6.0.0'}
+    dependencies:
+      tslib: 1.14.1
+    dev: false
 
   /type-check/0.3.2:
     resolution: {integrity: sha1-WITKtRLPHTVeP7eE8wgEsrUg23I=}
