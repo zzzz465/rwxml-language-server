@@ -1,0 +1,11 @@
+{
+  "name": "extractor",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "install": "nuget restore",
+    "build": "dotnet build"
+  },
+  "author": "madeline",
+  "license": ""
+}
