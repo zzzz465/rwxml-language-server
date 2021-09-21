@@ -15,6 +15,7 @@ import {
 import { ModManager } from './mod/modManager'
 import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri, SerializedAbout } from './mod'
 import { DependencyManager } from './dependencyManager'
+import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 
 let client: LanguageClient
 let disposed = false
@@ -104,6 +105,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
   client.start()
   await client.onReady()
   console.log('language-server is ready.')
+
+  console.log('initializing Runtime TypeInfo Extractor...')
+  checkTypeInfoAnalyzeAvailable()
 
   console.log('sending mod list to language server...')
   await sendMods(client, modManager)
