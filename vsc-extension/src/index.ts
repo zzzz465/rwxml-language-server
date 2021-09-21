@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
+import 'reflect-metadata'
 import { Disposable, env, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
-import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
 import vscode from 'vscode'
+import { container } from 'tsyringe'
 import { registerFeatures, updateDecoration } from './features'
 import {
   ModChangedNotificationParams,
@@ -45,6 +46,8 @@ const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
 const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 export async function activate(context: ExtensionContext): Promise<void> {
+  container.reset()
+
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
   const languageServerEntryPath = process.env.languageServerEntryPath
