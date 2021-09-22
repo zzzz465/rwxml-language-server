@@ -8,9 +8,11 @@ import glob from 'fast-glob'
 import fs from 'fs/promises'
 import fsSync from 'fs'
 import { AsEnumerable } from 'linq-es2015'
+import { extractTypeInfos } from '../typeInfo'
 
 type retType = {
   defs: { uri: Uri; text: string }[]
+  typeInfos: unknown
 }
 
 export class Mod {
@@ -42,6 +44,7 @@ export class Mod {
   async getDependencyFiles(version?: RimWorldVersion) {
     const ret: retType = {
       defs: [],
+      typeInfos: undefined,
     }
 
     // TODO: refactor this ugly code
@@ -59,9 +62,14 @@ export class Mod {
     }
   }
 
+  isDLCMod(): boolean {
+    return this.about.author === 'Ludeon Studios'
+  }
+
   private async getDependencyFilesFromDirectory(relativeURL: string) {
     const ret: retType = {
       defs: [],
+      typeInfos: undefined,
     }
 
     const loadDirectoryRoot = path.join(this.rootDirectory.fsPath, relativeURL)
@@ -76,6 +84,13 @@ export class Mod {
     // check Texture
 
     // check Sound
+
+    // check Assemblies
+    const assembliesPath = path.resolve(loadDirectoryRoot, 'Assemblies')
+    if (!this.isDLCMod() && fsSync.existsSync(assembliesPath)) {
+      const TypeInfos = await this.getDependencyTypeInfos(Uri.file(assembliesPath))
+      ret.typeInfos = TypeInfos as unknown
+    }
 
     // check etc...??
 
@@ -93,5 +108,18 @@ export class Mod {
     const files = await Promise.all(promises)
 
     return files
+  }
+
+  private async getDependencyTypeInfos(dllDirectoryUri: Uri): Promise<unknown> {
+    const urls = await glob('**/*.dll', { cwd: dllDirectoryUri.fsPath, absolute: true })
+
+    // should provide core dll directory in order to extract Type Infos
+
+    try {
+      const typeInfos = await extractTypeInfos(...urls)
+      return typeInfos
+    } catch (err) {
+      console.error(`error while extracting TypeInfo from mod: ${this.about.name}, err: ${err}`)
+    }
   }
 }

@@ -2,6 +2,7 @@ import * as semver from 'semver'
 import { execSync } from 'child_process'
 import * as vscode from 'vscode'
 import { container } from 'tsyringe'
+export * from './extract'
 
 const dotnetName = getDotnetName()
 
