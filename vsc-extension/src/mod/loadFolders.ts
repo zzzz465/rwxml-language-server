@@ -3,7 +3,7 @@ import { Uri } from 'vscode'
 import vscode from 'vscode'
 import { xml } from '../utils'
 import { CheerioAPI, Node } from 'cheerio'
-import { RimWorldVersion } from './version'
+import { RimWorldVersion, RimWorldVersions } from './version'
 
 type LoadFolderData = {
   [key in RimWorldVersion]: string[]
@@ -11,29 +11,30 @@ type LoadFolderData = {
 
 namespace LoadFolderData {
   export function parse($: CheerioAPI): LoadFolderData {
-    function predicate(tag: RimWorldVersion) {
+    function predicate(tag: string) {
       return function (_: number, node: Node): boolean {
         return $(node).parent().prop('name') === tag
       }
     }
 
     const data: LoadFolderData = {
-      'v1.0': $('li')
+      '1.0': $('li')
         .filter(predicate('v1.0'))
         .map((_, node) => $(node).text())
         .toArray(),
-      'v1.1': $('li')
+      '1.1': $('li')
         .filter(predicate('v1.1'))
         .map((_, node) => $(node).text())
         .toArray(),
-      'v1.2': $('li')
+      '1.2': $('li')
         .filter(predicate('v1.2'))
         .map((_, node) => $(node).text())
         .toArray(),
-      'v1.3': $('li')
+      '1.3': $('li')
         .filter(predicate('v1.3'))
         .map((_, node) => $(node).text())
         .toArray(),
+      default: [],
     }
 
     return data
@@ -54,6 +55,7 @@ export class LoadFolder {
   constructor(private data: LoadFolderData) {}
 
   getRequiredPaths(version: RimWorldVersion): string[] {
-    return this.data[version]
+    console.assert(RimWorldVersions.includes(version), `version: ${version} is not allowed.`)
+    return this.data[version] ?? []
   }
 }
