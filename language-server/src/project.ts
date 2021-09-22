@@ -158,6 +158,18 @@ export class Project {
     this.projectEvent.emit('defChanged', dirty)
   }
 
+  reloadDependencyMods() {
+    const removedFiles = AsEnumerable(this.dependencyFiles.values())
+      .SelectMany((files) => files)
+      .Select(({ uri }) => File.create({ uri }))
+
+    for (const file of removedFiles) {
+      this.fileDeleted(file)
+    }
+
+    this.projectEvent.emit('requestDependencyMods', this.version, this.about.modDependencies)
+  }
+
   private onDependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]) {
     const added = _.difference(newVal, oldVal)
     const removed = _.difference(oldVal, newVal)

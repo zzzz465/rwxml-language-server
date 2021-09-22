@@ -55,6 +55,8 @@ export class ProjectManager {
     if (!project) {
       project = await this.newProject(version)
       this.projects.set(version, project)
+      // if project is created, it must request dependencyMods first, otherwise dependency will not loaded.
+      project.reloadDependencyMods()
     }
 
     return project
