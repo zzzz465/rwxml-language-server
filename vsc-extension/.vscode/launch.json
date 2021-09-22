@@ -26,11 +26,34 @@
         "${workspaceRoot}../language-server/dist/**/*.*"
       ]
     },
+    {
+      "name": "Launch single file with ts-node",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register/transpile-only"
+      ],
+      "args": [
+        "${file}",
+      ],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    }
   ],
   "compounds": [
     {
       "name": "Launch Client + Attach to Server",
-      "configurations": ["Launch Client", "Attach to Server"]
+      "configurations": [
+        "Launch Client",
+        "Attach to Server"
+      ]
     }
   ]
 }

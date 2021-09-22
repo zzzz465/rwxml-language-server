@@ -23,10 +23,11 @@ const config = {
     vscode: 'commonjs vscode',
   },
   plugins: [
+    // definePlugin's value must be passed with JSON.stringify()
     new webpack.DefinePlugin({
       'process.env.languageServerModulePath': '../language-server/dist/index.js',
       'process.env.isWebpack': JSON.stringify(true),
-      'process.env.EXTRACTOR_PATH': '../extractor/extractor/bin/Debug/extractor.exe', // debug on windows only
+      'process.env.EXTRACTOR_PATH': JSON.stringify('../extractor/extractor/bin/Debug'), // debug on windows only
     }),
   ],
   resolve: {

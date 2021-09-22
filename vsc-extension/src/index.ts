@@ -94,6 +94,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log(`core directory: ${decodeURIComponent(coreDirectoryUri.toString())}`)
   console.log(`workshop Directory: ${decodeURIComponent(workshopModDirectoryUri.toString())}`)
   console.log(`local mod directory: ${decodeURIComponent(localModDirectoryUri.toString())}`)
+
   modManager = new ModManager([coreDirectoryUri, workshopModDirectoryUri, localModDirectoryUri])
   await modManager.init()
   console.log('initializing modManager completed.')
