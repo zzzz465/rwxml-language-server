@@ -12,7 +12,7 @@ import { extractTypeInfos } from '../typeInfo'
 
 type retType = {
   defs: { uri: Uri; text: string }[]
-  typeInfos: unknown
+  typeInfos: unknown[]
 }
 
 export class Mod {
@@ -41,35 +41,43 @@ export class Mod {
     public readonly loadFolder?: LoadFolder
   ) {}
 
+  isDLCMod(): boolean {
+    return this.about.author === 'Ludeon Studios'
+  }
+
   async getDependencyFiles(version?: RimWorldVersion) {
     const ret: retType = {
       defs: [],
-      typeInfos: undefined,
+      typeInfos: [],
     }
 
-    // TODO: refactor this ugly code
+    const dirs: string[] = []
+
     if (version && this.loadFolder) {
-      const dirs = this.loadFolder.getRequiredPaths(version) ?? ['/']
-      const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
-      ret.defs = AsEnumerable(dependencyFiles)
-        .Select((d) => d.defs)
-        .SelectMany((d) => d)
-        .ToArray()
-
-      return ret
+      dirs.push(...this.loadFolder.getRequiredPaths(version))
     } else {
-      return await this.getDependencyFilesFromDirectory('/')
+      // prior to version 1.2, RimWorld only supports Root-Level loading
+      if (!version || version === 'default' || version === '1.0' || version === '1.1') {
+        dirs.push('/')
+      } else {
+        dirs.push('/', version)
+      }
     }
-  }
 
-  isDLCMod(): boolean {
-    return this.about.author === 'Ludeon Studios'
+    const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
+
+    for (const { defs, typeInfos } of dependencyFiles) {
+      ret.defs.concat(defs)
+      ret.typeInfos.concat(typeInfos)
+    }
+
+    return ret
   }
 
   private async getDependencyFilesFromDirectory(relativeURL: string) {
     const ret: retType = {
       defs: [],
-      typeInfos: undefined,
+      typeInfos: [],
     }
 
     const loadDirectoryRoot = path.join(this.rootDirectory.fsPath, relativeURL)
@@ -89,7 +97,7 @@ export class Mod {
     const assembliesPath = path.resolve(loadDirectoryRoot, 'Assemblies')
     if (!this.isDLCMod() && fsSync.existsSync(assembliesPath)) {
       const TypeInfos = await this.getDependencyTypeInfos(Uri.file(assembliesPath))
-      ret.typeInfos = TypeInfos as unknown
+      ret.typeInfos = TypeInfos as unknown[]
     }
 
     // check etc...??
@@ -110,16 +118,17 @@ export class Mod {
     return files
   }
 
-  private async getDependencyTypeInfos(dllDirectoryUri: Uri): Promise<unknown> {
+  private async getDependencyTypeInfos(dllDirectoryUri: Uri): Promise<unknown[]> {
     const urls = await glob('**/*.dll', { cwd: dllDirectoryUri.fsPath, absolute: true })
 
     // should provide core dll directory in order to extract Type Infos
 
     try {
-      const typeInfos = await extractTypeInfos(...urls)
+      const typeInfos = (await extractTypeInfos(...urls)) as unknown[]
       return typeInfos
     } catch (err) {
       console.error(`error while extracting TypeInfo from mod: ${this.about.name}, err: ${err}`)
+      return []
     }
   }
 }
