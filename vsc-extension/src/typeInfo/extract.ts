@@ -1,7 +1,7 @@
 import { execFile } from 'child_process'
 
 export function getExtractorPath() {
-  const path = process.env.EXTRACTOR_PATH
+  const path = process.env.extractorPath
   if (path) {
     return path
   } else {
