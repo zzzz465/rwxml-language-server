@@ -26,6 +26,7 @@ const config = {
     new webpack.DefinePlugin({
       'process.env.languageServerModulePath': '../language-server/dist/index.js',
       'process.env.isWebpack': JSON.stringify(true),
+      'process.env.EXTRACTOR_PATH': '../extractor/extractor/bin/Debug/extractor.exe', // debug on windows only
     }),
   ],
   resolve: {
