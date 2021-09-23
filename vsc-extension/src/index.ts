@@ -98,7 +98,7 @@ export function deactivate() {
 
 async function initServer() {
   const context = container.resolve('ExtensionContext') as ExtensionContext
-  const serverModuleRelativePath = container.resolve(containerVars.languageServerEntryPathKey) as string
+  const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
   const module = path.join(context.extensionPath, serverModuleRelativePath)
   console.log(`server module absolute path: ${module}`)
 
