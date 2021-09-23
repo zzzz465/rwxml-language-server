@@ -13,6 +13,7 @@ import {
   WorkspaceInitializationNotificationParams,
 } from './events'
 import { File } from './fs'
+import { RimWorldVersion } from './typeInfoMapManager'
 
 // events that this manager will emit
 export interface NotificationEvents {

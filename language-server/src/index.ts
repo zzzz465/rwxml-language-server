@@ -55,6 +55,10 @@ connection.onInitialize(async (params: InitializeParams) => {
       }
     }
 
+    if (response.typeInfos.length > 0) {
+      typeInfoMapManager.typeInfoChanged(response.version, response.typeInfos)
+    }
+
     projectManager.onDependencyModsResponse(files)
   })
 

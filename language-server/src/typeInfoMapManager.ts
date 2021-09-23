@@ -7,6 +7,7 @@ import { Metadata, RawTypeInfo, TypeInfoMap, TypeInfoLoader } from '@rwxml/analy
 import raw_default_core from '../../metadata/rawTypeInfos/default/core.json'
 //@ts-ignore
 import raw_1_3_core from '../../metadata/rawTypeInfos/1.3/core.json'
+import EventEmitter from 'events'
 
 // TODO: add data for other versions
 const rawTypeInfoMap: Record<string, Record<string, any>> = {
@@ -31,7 +32,13 @@ export type RimWorldVersion = typeof RimWorldVersionArray[number]
 
 export const RimWorldVersionArray = ['1.0', '1.1', '1.2', '1.3', 'default'] as const
 
+interface Events {
+  typeInfoChanged(version: RimWorldVersion): void
+}
+
 export class TypeInfoMapManager {
+  readonly event: EventEmitter<Events> = new EventEmitter()
+
   async getTypeInfoMap(version: RimWorldVersion): Promise<TypeInfoMap> {
     const data = rawTypeInfoMap[version]
     if (data) {
@@ -42,5 +49,11 @@ export class TypeInfoMapManager {
     } else {
       throw new Error(`version ${version} is not supported. cannot find any TypeInfo...`)
     }
+  }
+
+  typeInfoChanged(version: RimWorldVersion, typeInfos: unknown[]) {
+    rawTypeInfoMap[version] = typeInfos
+
+    this.event.emit('typeInfoChanged', version)
   }
 }

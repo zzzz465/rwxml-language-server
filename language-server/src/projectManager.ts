@@ -1,4 +1,4 @@
-import { DefDatabase, NameDatabase, TypeInfoInjector } from '@rwxml/analyzer'
+import { DefDatabase, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
 import EventEmitter from 'events'
 import { DefManager } from './defManager'
 import { DependencyFile, File } from './fs'
@@ -18,6 +18,7 @@ interface ProjectManagerEvent {
   fileAdded(version: string, file: File): void
   fileChanged(version: string, file: File): void
   fileDeleted(version: string, file: File): void
+  typeInfoChanged(version: string, typeInfoMap: TypeInfoMap): void
 }
 
 // events that ProjectManager will listen.
@@ -27,6 +28,7 @@ interface ListeningEvents {
   projectFileDeleted(file: File): void
   workspaceInitialized(files: File[]): void
   contentChanged(file: File): void
+  typeInfoChanged(): void
 }
 
 export class ProjectManager {
@@ -39,7 +41,9 @@ export class ProjectManager {
     private readonly modManager: ModManager,
     private readonly typeInfoMapManager: TypeInfoMapManager,
     private readonly textDocumentManager: TextDocumentManager
-  ) {}
+  ) {
+    typeInfoMapManager.event.on('typeInfoChanged', this.onTypeInfoChanged.bind(this))
+  }
 
   listen(notiEvent: EventEmitter<ListeningEvents>): void {
     notiEvent.on('projectFileAdded', this.onProjectFileAdded.bind(this))
@@ -63,6 +67,7 @@ export class ProjectManager {
   }
 
   private async newProject(version: RimWorldVersion): Promise<Project> {
+    // TODO: stop doing DI
     const resourceManger = new resourceManager(version, this.loadFolder)
     const defDatabase = new DefDatabase()
     const nameDatabase = new NameDatabase()
@@ -147,6 +152,11 @@ export class ProjectManager {
   private async onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
     this.event.emit('requestDependencyMods', version, dependencies)
   }
+
+  private async onTypeInfoChanged(version: RimWorldVersion) {
+    const typeInfoMap = await this.typeInfoMapManager.getTypeInfoMap(version)
+    this.event.emit('typeInfoChanged', version, typeInfoMap)
+  }
 }
 
 // checks event is acceptable, ignore if not.
@@ -167,6 +177,7 @@ class EventVersionFilter {
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))
     event.on('dependencyModsResponse', (_, files) => this.event.emit('dependencyModsResponse', files))
+    event.on('typeInfoChanged', this.typeInfoChanged.bind(this))
   }
 
   private onFileAdded(version: RimWorldVersion, file: File) {
@@ -184,6 +195,12 @@ class EventVersionFilter {
   private onFileDeleted(version: RimWorldVersion, file: File) {
     if (this.ignoreFilter(file) || this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileDeleted', file)
+    }
+  }
+
+  private typeInfoChanged(version: RimWorldVersion, typeInfoMap: TypeInfoMap) {
+    if (this.version === version) {
+      this.event.emit('typeInfoChanged', typeInfoMap)
     }
   }
 

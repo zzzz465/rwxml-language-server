@@ -1,5 +1,14 @@
 import { EventEmitter } from 'events'
-import { Def, DefDatabase, Document, Injectable, NameDatabase, parse } from '@rwxml/analyzer'
+import {
+  Def,
+  DefDatabase,
+  Document,
+  Injectable,
+  NameDatabase,
+  parse,
+  TypeInfoInjector,
+  TypeInfoMap,
+} from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File, DependencyFile } from './fs'
@@ -26,6 +35,7 @@ interface ListeningEvents {
   fileChanged(file: File): void
   fileDeleted(file: File): void
   dependencyModsResponse(files: File[]): void
+  typeInfoChanged(typeInfoMap: TypeInfoMap): void
 }
 
 export class Project {
@@ -35,16 +45,18 @@ export class Project {
   private files: Map<string, File> = new Map()
   // Dict<packageId, Set<uri>>
   private dependencyFiles: DefaultDictionary<string, Set<DependencyFile>> = new DefaultDictionary(() => new Set())
+  public defManager: DefManager
 
   constructor(
     public readonly about: About,
     public readonly version: RimWorldVersion,
     public readonly resourceManager: resourceManager,
     public readonly modManager: ModManager,
-    public readonly defManager: DefManager,
+    defManager: DefManager,
     public readonly rangeConverter: RangeConverter,
     private readonly textDocumentManager: TextDocumentManager
   ) {
+    this.defManager = defManager
     this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
   }
 
@@ -86,6 +98,7 @@ export class Project {
     eventEmitter.on('fileChanged', this.fileChanged.bind(this))
     eventEmitter.on('fileDeleted', this.fileDeleted.bind(this))
     eventEmitter.on('dependencyModsResponse', this.dependencyModsResponse.bind(this))
+    eventEmitter.on('typeInfoChanged', this.onTypeInfoChanged.bind(this))
   }
 
   fileAdded(file: File) {
@@ -184,5 +197,28 @@ export class Project {
     }
 
     this.projectEvent.emit('requestDependencyMods', this.version, added)
+  }
+
+  private onTypeInfoChanged(typeInfoMap: TypeInfoMap) {
+    const files = [...this.files]
+    for (const [uri, file] of files) {
+      this.fileDeleted(file)
+    }
+
+    const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
+    const nameDB = new NameDatabase()
+    const defDB = new DefDatabase()
+    this.defManager = new DefManager(defDB, nameDB, typeInfoMap, typeInfoInjector)
+
+    /*
+    const oldFiles = [...this.files]
+    this.xmlDocumentMap.clear()
+    this.files.clear()
+    this.dependencyFiles.clear()
+    */
+
+    for (const [uri, file] of files) {
+      this.fileAdded(file)
+    }
   }
 }
