@@ -46,6 +46,30 @@ const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
 const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 export async function activate(context: ExtensionContext): Promise<void> {
+  // 1. reset container
+
+  // 2. initialize containers (set values)
+
+  // 2-1. language server entry path
+
+  // 2-2. register commands
+
+  // 2-3. modManager
+
+  // 2-4. dependencyManager
+
+  // 3. wait language-server to be ready
+
+  // 4. initialize && wait Runtime TypeInfo Extractor
+
+  // 5. send mod list to language server
+
+  // 6. add decorate update
+
+  // 7. set project watcher
+
+  // 8. load all files from workspace, send files
+
   container.reset()
 
   // initalize language server
