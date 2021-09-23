@@ -50,6 +50,10 @@ namespace extractor
             int exitCode = 1;
             commandline.WithParsed(option =>
             {
+                if (option.outputMode != OutputMode.stdout || option.outputMode != OutputMode.stdoutBytes)
+                {
+                    Log.SetStdOutput();
+                }
                 // if (option.logOutputPath != null)
                 // {
                 // 	Log.SetOutput(option.logOutputPath);
@@ -83,8 +87,6 @@ namespace extractor
                 Log.Info($"serialized Object string length: {serializedObject.Length}");
 
                 SendSerializedData(option.outputMode, serializedObject);
-
-                Console.WriteLine(serializedObject);
                 Log.Info("Extraction completed!");
                 exitCode = 0;
             });

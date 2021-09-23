@@ -7,6 +7,7 @@ export const localDirectoryKey = Symbol('container key of local directory uri')
 export const workshopDirectoryKey = Symbol('container key of workshop directory uri')
 export const DependencyDirectoriesKey = Symbol('container key of all dependnecy directories uri')
 export const languageServerModuleRelativePathKey = Symbol('continer key of language server path (relative to entry)')
+export const RimWorldDLLDirectoryKey = Symbol('container key of Directory URL containing RimWorld DLLs')
 
 // initialize container for global variables
 export function initialize(): Disposable {
@@ -14,6 +15,7 @@ export function initialize(): Disposable {
   initLocalDirectoryUri()
   initWorkshopDirectoryUri()
   initLanguageServerEntryPath()
+  initRimWorldDLLDirectoryPath()
 
   // TODO: mock disposable, fill this later
   return { dispose: () => {} }
@@ -45,4 +47,22 @@ function initLanguageServerEntryPath() {
   }
 
   container.register(languageServerModuleRelativePathKey, { useValue: path })
+}
+
+function initRimWorldDLLDirectoryPath() {
+  const path = getRimWorldDLLDirectoryPath()
+
+  if (typeof path !== 'string') {
+    throw new Error(`DLL Path ${path} is invalid.`)
+  }
+
+  container.register(RimWorldDLLDirectoryKey, { useValue: path })
+}
+
+function getRimWorldDLLDirectoryPath() {
+  return getDefaultRimWorldDLLDirectoryPath()
+}
+
+function getDefaultRimWorldDLLDirectoryPath() {
+  return String.raw`C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed`
 }

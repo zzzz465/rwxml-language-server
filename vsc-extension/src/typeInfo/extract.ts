@@ -1,7 +1,11 @@
 import { execFile } from 'child_process'
 import { createConnection, createServer } from 'net'
+import { container } from 'tsyringe'
+import { ExtensionContext } from 'vscode'
+import * as path from 'path'
+import { RimWorldDLLDirectoryKey } from '../containerVars'
 
-export function getExtractorDirectory() {
+function getExtractorDirectory() {
   const path = process.env.EXTRACTOR_PATH
   if (path) {
     return path
@@ -10,22 +14,36 @@ export function getExtractorDirectory() {
   }
 }
 
-const timeout = 60000 // 60 second
-export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
-  const cwd = getExtractorDirectory()
+function getCWD() {
+  const extensionContext = container.resolve<ExtensionContext>('ExtensionContext')
+  const cwd = extensionContext.asAbsolutePath(getExtractorDirectory())
 
+  return cwd
+}
+
+function initExtractorProcess(dllPaths: string[]) {
+  const cwd = getCWD()
+  const dllPath = container.resolve<string>(RimWorldDLLDirectoryKey)
+
+  const process = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
+
+  return process
+}
+
+const timeout = 30000 // 30 second
+export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
   const server = createServer()
   server.listen(9870, '127.0.0.1')
 
   // on windows, process cannot be launched with execFile
   // https://stackoverflow.com/questions/46445805/exec-vs-execfile-nodejs
-  const p = execFile('extractor.exe', [...dllPaths, '--output-mode=TCP'], { cwd })
-  p.stdout?.setEncoding('utf-8')
-  p.stderr?.setEncoding('utf-8')
-  p.stdout?.on('data', (chunk: string) => {
+  const process = initExtractorProcess(dllPaths)
+  process.stdout?.setEncoding('utf-8')
+  process.stderr?.setEncoding('utf-8')
+  process.stdout?.on('data', (chunk: string) => {
     console.log(chunk)
   })
-  p.stderr?.on('data', (chunk: string) => {
+  process.stderr?.on('data', (chunk: string) => {
     console.log(chunk)
   })
 
@@ -40,28 +58,36 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
   })
 
   const closePromise = new Promise((res) => {
-    server.on('close', () => res(true))
+    server.on('close', () => {
+      res(true)
+    })
   })
-  const timeoutPromise = new Promise((res) => setTimeout(() => res(false), timeout))
-
-  const success = (await Promise.race([closePromise, timeoutPromise])) as boolean
-
-  if (!success) {
-    p.kill()
-    return []
-  }
-
-  const exitCode = await new Promise((res) => {
-    p.on('exit', (code) => {
+  const timeoutPromise = new Promise((res) =>
+    setTimeout(() => {
+      res(false)
+    }, timeout)
+  )
+  const exitPromise = new Promise((res) => {
+    process.on('exit', (code) => {
       res(code)
     })
   })
 
-  if (exitCode && exitCode !== 0) {
-    throw new Error(`failed to extract TypeInfos from files: ${dllPaths}`)
+  const result = (await Promise.race([closePromise, timeoutPromise, exitPromise])) as
+    | number
+    | null
+    | boolean
+    | undefined
+
+  if ((typeof result === 'number' && result !== 0) || (typeof result === 'boolean' && !result)) {
+    if (!process.killed) {
+      process.kill()
+    }
+
+    throw new Error(`failed to extract TypeInfos on Runtime, files: ${dllPaths}`)
   }
 
-  const raw = buffers.map((buff) => buff.toString('utf-8')).join('')
+  const raw = Buffer.concat(buffers).toString('utf-8')
   const typeInfos = JSON.parse(raw)
 
   return typeInfos

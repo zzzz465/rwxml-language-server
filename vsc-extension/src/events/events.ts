@@ -43,11 +43,11 @@ export interface DependencyRequest {
 
 export interface DependencyResponse {
   version: RimWorldVersion
+  typeInfos: unknown[]
   items: {
     readonly: true
     packageId: string
     defs: { uri: UrlEncodedString; text?: string }[]
-    typeInfos: unknown[]
   }[]
 }
 

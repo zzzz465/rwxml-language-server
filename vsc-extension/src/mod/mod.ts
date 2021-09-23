@@ -7,11 +7,10 @@ import { RimWorldVersion } from './version'
 import glob from 'fast-glob'
 import fs from 'fs/promises'
 import fsSync from 'fs'
-import { extractTypeInfos } from '../typeInfo'
 
 type retType = {
   defs: { uri: Uri; text: string }[]
-  typeInfos: unknown[]
+  dlls: string[]
 }
 
 export class Mod {
@@ -47,7 +46,7 @@ export class Mod {
   async getDependencyFiles(version?: RimWorldVersion) {
     const ret: retType = {
       defs: [],
-      typeInfos: [],
+      dlls: [],
     }
 
     const dirs: string[] = []
@@ -65,9 +64,9 @@ export class Mod {
 
     const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
 
-    for (const { defs, typeInfos } of dependencyFiles) {
+    for (const { defs, dlls } of dependencyFiles) {
       ret.defs = ret.defs.concat(defs)
-      ret.typeInfos = ret.typeInfos.concat(typeInfos)
+      ret.dlls = ret.dlls.concat(dlls)
     }
 
     return ret
@@ -76,7 +75,7 @@ export class Mod {
   private async getDependencyFilesFromDirectory(relativeURL: string) {
     const ret: retType = {
       defs: [],
-      typeInfos: [],
+      dlls: [],
     }
 
     const loadDirectoryRoot = path.join(this.rootDirectory.fsPath, relativeURL)
@@ -95,8 +94,8 @@ export class Mod {
     // check Assemblies
     const assembliesPath = path.resolve(loadDirectoryRoot, 'Assemblies')
     if (!this.isDLCMod() && fsSync.existsSync(assembliesPath)) {
-      const TypeInfos = await this.getDependencyTypeInfos(Uri.file(assembliesPath))
-      ret.typeInfos = TypeInfos as unknown[]
+      const dlls = await this.getDLLAbsUrls(Uri.file(assembliesPath))
+      ret.dlls = dlls
     }
 
     // check etc...??
@@ -117,17 +116,9 @@ export class Mod {
     return files
   }
 
-  private async getDependencyTypeInfos(dllDirectoryUri: Uri): Promise<unknown[]> {
+  private async getDLLAbsUrls(dllDirectoryUri: Uri): Promise<string[]> {
     const urls = await glob('**/*.dll', { cwd: dllDirectoryUri.fsPath, absolute: true })
 
-    // should provide core dll directory in order to extract Type Infos
-
-    try {
-      const typeInfos = (await extractTypeInfos(...urls)) as unknown[]
-      return typeInfos
-    } catch (err) {
-      console.error(`error while extracting TypeInfo from mod: ${this.about.name}, err: ${err}`)
-      return []
-    }
+    return urls
   }
 }

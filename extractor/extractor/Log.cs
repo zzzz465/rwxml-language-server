@@ -14,6 +14,29 @@ namespace extractor
     public static class Log
     {
         static ILog log = LogManager.GetLogger("Extractor");
+        static PatternLayout layout;
+
+        static Log()
+        {
+            layout = new PatternLayout();
+            layout.ConversionPattern = "%d %c [%p]: %m%n";
+            layout.ActivateOptions();
+        }
+
+        public static void SetStdOutput()
+        {
+            var hierarchy = (Hierarchy)LogManager.GetRepository();
+
+            var appender = new ConsoleAppender();
+            appender.Layout = layout;
+            appender.ActivateOptions();
+
+            hierarchy.Root.AddAppender(appender);
+
+            hierarchy.Root.Level = Level.Info;
+            hierarchy.Configured = true;
+        }
+
         // https://stackoverflow.com/questions/16336917/can-you-configure-log4net-in-code-instead-of-using-a-config-file
         public static void SetOutput(string path)
         {
@@ -24,10 +47,6 @@ namespace extractor
             appender.File = path;
             appender.AppendToFile = false;
             appender.StaticLogFileName = true;
-
-            var layout = new PatternLayout();
-            layout.ConversionPattern = "%d %c [%p]: %m%n";
-            layout.ActivateOptions();
 
             appender.Layout = layout;
             appender.ActivateOptions();
