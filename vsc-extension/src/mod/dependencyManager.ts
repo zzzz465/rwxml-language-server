@@ -1,14 +1,14 @@
 import { AsEnumerable } from 'linq-es2015'
 import { Uri } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
-import { XMLDocumentDependencyRequest, XMLDocumentDependencyResponse } from './events'
-import { ModManager } from './mod/modManager'
+import { XMLDocumentDependencyRequest, XMLDocumentDependencyResponse } from '../events'
+import { ModManager } from './modManager'
 
 export interface DependencyMetadata {
   dependencies: Map<string, ModDependency>
 }
 
-export interface ModDependency {
+interface ModDependency {
   defs: Uri[]
   modId: string
 }
