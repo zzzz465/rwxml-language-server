@@ -44,6 +44,22 @@ async function sendMods() {
   await client.sendNotification(ModChangedNotificationParams, { mods })
 }
 
+async function initialLoadFilesFromWorkspace() {
+  const uris = await vscode.workspace.findFiles(projectWatcher.globPattern)
+
+  const files = await Promise.all(
+    uris.map(async (uri) => {
+      const rawFile = await vscode.workspace.fs.readFile(uri)
+      const text = Buffer.from(rawFile).toString()
+
+      return { uri: uri.toString(), text }
+    })
+  )
+
+  const client = container.resolve(LanguageClient)
+  client.sendNotification(WorkspaceInitialization, { files })
+}
+
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
 const globPattern = `**/*.{${watchedExts.join(',')}}`
 
@@ -79,6 +95,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   projectWatcher.initialize()
 
   // 8. load all files from workspace, send files
+  await initialLoadFilesFromWorkspace()
 
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
