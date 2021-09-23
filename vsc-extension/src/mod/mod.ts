@@ -7,7 +7,6 @@ import { RimWorldVersion } from './version'
 import glob from 'fast-glob'
 import fs from 'fs/promises'
 import fsSync from 'fs'
-import { AsEnumerable } from 'linq-es2015'
 import { extractTypeInfos } from '../typeInfo'
 
 type retType = {

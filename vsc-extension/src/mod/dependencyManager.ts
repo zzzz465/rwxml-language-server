@@ -1,4 +1,3 @@
-import { AsEnumerable } from 'linq-es2015'
 import { Uri } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { XMLDocumentDependencyRequest, XMLDocumentDependencyResponse } from '../events'

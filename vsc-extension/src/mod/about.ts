@@ -1,7 +1,6 @@
 import { Uri } from 'vscode'
 import vscode from 'vscode'
 import { Writable } from '../types/writable'
-import XMLParser from 'htmlparser2'
 import { CheerioAPI } from 'cheerio'
 import { xml } from '../utils'
 

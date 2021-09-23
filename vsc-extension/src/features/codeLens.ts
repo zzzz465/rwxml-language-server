@@ -1,4 +1,4 @@
-import { commands, languages, Location, Position, Range, Uri } from 'vscode'
+import { commands, Position, Uri } from 'vscode'
 
 export function registerFeature() {
   // cannot call editor.action.showReferences directly because plain JSON is sended on grpc instead of object.
