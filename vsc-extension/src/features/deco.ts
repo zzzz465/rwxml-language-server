@@ -1,4 +1,4 @@
-import { Disposable, ExtensionContext, window } from 'vscode'
+import { Disposable, window } from 'vscode'
 import vscode from 'vscode'
 const { createTextEditorDecorationType } = vscode.window
 import { LanguageClient, Range } from 'vscode-languageclient'

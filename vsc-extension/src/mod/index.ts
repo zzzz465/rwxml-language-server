@@ -97,7 +97,7 @@ function getDefaultLocalModDirectoryUri(): Uri {
 export function getRimWorldDLLDirectoryUri(): Uri {
   // TODO: add custom config
 
-  return getRimWorldDLLDirectoryUri()
+  return getDefaultRimWorldDLLDirectoryUri()
 }
 
 function getDefaultRimWorldDLLDirectoryUri(): Uri {
