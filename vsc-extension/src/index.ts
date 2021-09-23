@@ -17,6 +17,7 @@ import { ModManager } from './mod/modManager'
 import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri, SerializedAbout } from './mod'
 import { DependencyManager } from './dependencyManager'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
+import * as containerVars from './containerVars'
 
 let client: LanguageClient
 let disposed = false
@@ -47,8 +48,10 @@ const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // 1. reset container
+  container.reset()
 
   // 2. initialize containers (set values)
+  disposables.push(containerVars.initialize(container))
 
   // 2-1. language server entry path
 
@@ -69,8 +72,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   // 7. set project watcher
 
   // 8. load all files from workspace, send files
-
-  container.reset()
 
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
