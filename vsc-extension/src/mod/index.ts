@@ -7,6 +7,7 @@ import { DependencyDirectoriesKey } from '../containerVars'
 export * from './about'
 export * from './mod'
 export * from './loadFolders'
+export * from './dependencyManager'
 
 export function initialize(container: DependencyContainer) {
   initModManager(container)

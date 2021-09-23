@@ -15,7 +15,7 @@ import {
 } from './events'
 import { ModManager } from './mod/modManager'
 import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri, SerializedAbout } from './mod'
-import { DependencyManager } from './dependencyManager'
+import { DependencyManager } from './mod/dependencyManager'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
