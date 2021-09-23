@@ -3,6 +3,7 @@ import process from 'process'
 import { DependencyContainer } from 'tsyringe'
 import { ModManager } from './modManager'
 import { DependencyDirectoriesKey } from '../containerVars'
+import { DependencyManager } from './dependencyManager'
 
 export * from './about'
 export * from './mod'
@@ -11,12 +12,19 @@ export * from './dependencyManager'
 
 export function initialize(container: DependencyContainer) {
   initModManager(container)
+  initDependencyManager(container)
 }
 
 function initModManager(container: DependencyContainer) {
   const uris = container.resolveAll(DependencyDirectoriesKey) as Uri[]
   const modManager = new ModManager(uris)
   container.register(ModManager, { useValue: modManager })
+}
+
+function initDependencyManager(container: DependencyContainer) {
+  const modManager = container.resolve(ModManager)
+  const dependencyManager = new DependencyManager(modManager)
+  container.register(DependencyManager, { useValue: dependencyManager })
 }
 
 export function getWorkshopModsDirectoryUri(): Uri {
