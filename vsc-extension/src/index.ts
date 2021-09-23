@@ -18,6 +18,7 @@ import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryU
 import { DependencyManager } from './dependencyManager'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
+import * as commands from './commands'
 
 let client: LanguageClient
 let disposed = false
@@ -53,9 +54,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   // 2. initialize containers (set values)
   disposables.push(containerVars.initialize(container))
 
-  // 2-1. language server entry path
-
   // 2-2. register commands
+  disposables.push(...commands.initialize())
 
   // 2-3. modManager
 
