@@ -66,34 +66,35 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('register commands...')
   disposables.push(...commands.initialize())
 
-  // 2-3. modManager
-  // 2-4. dependencyManager
-  console.log('initialize modManager, dependencyManager...')
-  mods.initialize()
-
-  // 3. wait language-server to be ready
+  // 3. initialize language server
   console.log('initializing Language Server...')
   const client = await createServer()
+
+  // 4. initialize modManager, dependencyManager
+  console.log('initialize modManager, dependencyManager...')
+  await mods.initialize()
+
+  // 5. start language server and wait
   client.start()
   await client.onReady()
 
-  // 4. initialize && wait Runtime TypeInfo Extractor
+  // 6. initialize && wait Runtime TypeInfo Extractor
   console.log('checking Runtime TypeInfo Extractor available...')
   checkTypeInfoAnalyzeAvailable()
 
-  // 5. send mod list to language server
+  // 7. send mod list to language server
   console.log('sending external mods...')
   await sendMods()
 
-  // 6. add decorate update
+  // 8. add decorate update
   console.log('register lsp features...')
   disposables.push(...features.registerFeatures())
 
-  // 7. set project watcher
+  // 9. set project watcher
   console.log('initialize Project Watcher...')
   projectWatcher.initialize()
 
-  // 8. load all files from workspace, send files
+  // 10. load all files from workspace, send files
   console.log('load all files from current workspace...')
   await initialLoadFilesFromWorkspace()
 
