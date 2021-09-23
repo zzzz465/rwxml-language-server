@@ -5,7 +5,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } f
 import * as path from 'path'
 import vscode from 'vscode'
 import { container } from 'tsyringe'
-import { registerFeatures, updateDecoration } from './features'
+import * as features from './features'
 import {
   ModChangedNotificationParams,
   ProjectFileAdded,
@@ -20,15 +20,14 @@ import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
 import * as mods from './mod'
+import * as projectWatcher from './projectWatcher'
 
-let client: LanguageClient
-let disposed = false
-let fileSystemWatcher: FileSystemWatcher
-let modManager: ModManager
-let dependencyManager: DependencyManager
 const disposables: Disposable[] = []
 
-async function sendMods(client: LanguageClient, modManager: ModManager) {
+async function sendMods() {
+  const client = container.resolve(LanguageClient)
+  const modManager = container.resolve(ModManager)
+
   type simpleMod = {
     about: SerializedAbout
   }
@@ -68,12 +67,16 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const client = await initServer()
 
   // 4. initialize && wait Runtime TypeInfo Extractor
+  checkTypeInfoAnalyzeAvailable()
 
   // 5. send mod list to language server
+  await sendMods()
 
   // 6. add decorate update
+  disposables.push(...features.registerFeatures())
 
   // 7. set project watcher
+  projectWatcher.initialize()
 
   // 8. load all files from workspace, send files
 
