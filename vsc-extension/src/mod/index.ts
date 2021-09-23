@@ -71,3 +71,19 @@ function getDefaultLocalModDirectoryUri(): Uri {
       throw new Error(`current platform: ${process.platform} is not supported.`)
   }
 }
+
+export function getRimWorldDLLDirectoryUri(): Uri {
+  // TODO: add custom config
+
+  return getRimWorldDLLDirectoryUri()
+}
+
+function getDefaultRimWorldDLLDirectoryUri(): Uri {
+  switch (process.platform) {
+    case 'win32':
+      return Uri.file(String.raw`C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed`)
+
+    default:
+      throw new Error(`platform ${process.platform} is not supported.`)
+  }
+}
