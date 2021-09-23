@@ -10,7 +10,7 @@ export interface DependencyMetadata {
 
 interface ModDependency {
   defs: Uri[]
-  modId: string
+  packageId: string
 }
 
 export class DependencyManager {
