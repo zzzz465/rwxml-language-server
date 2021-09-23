@@ -19,6 +19,7 @@ import { DependencyManager } from './dependencyManager'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
+import * as mods from './mod'
 
 let client: LanguageClient
 let disposed = false
@@ -58,6 +59,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   disposables.push(...commands.initialize())
 
   // 2-3. modManager
+  mods.initialize(container)
 
   // 2-4. dependencyManager
 
