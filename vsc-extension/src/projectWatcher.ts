@@ -4,7 +4,7 @@ import { LanguageClient } from 'vscode-languageclient'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
-const globPattern = `**/*.{${watchedExts.join(',')}}`
+export const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 export function initialize() {
   const projectWatcher = container.resolve(ProjectWatcher)
