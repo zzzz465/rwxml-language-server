@@ -59,9 +59,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   disposables.push(...commands.initialize())
 
   // 2-3. modManager
-  mods.initialize(container)
-
   // 2-4. dependencyManager
+  mods.initialize(container)
 
   // 3. wait language-server to be ready
 
