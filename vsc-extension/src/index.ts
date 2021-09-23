@@ -49,8 +49,10 @@ const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
 const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 export async function activate(context: ExtensionContext): Promise<void> {
-  // 1. reset container
+  // 1. reset container && set extensionContext
   container.reset()
+
+  container.register('ExtensionContext', { useValue: context })
 
   // 2. initialize containers (set values)
   disposables.push(containerVars.initialize(container))
@@ -63,6 +65,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   mods.initialize(container)
 
   // 3. wait language-server to be ready
+  const client = await initServer()
 
   // 4. initialize && wait Runtime TypeInfo Extractor
 
@@ -209,11 +212,16 @@ export function deactivate() {
   }
 }
 
-async function initServer(modulePath: string) {
+async function initServer() {
+  const context = container.resolve('ExtensionContext') as ExtensionContext
+  const serverModuleRelativePath = container.resolve(containerVars.languageServerEntryPathKey) as string
+  const module = path.join(context.extensionPath, serverModuleRelativePath)
+  console.log(`server module absolute path: ${module}`)
+
   const serverOptions: ServerOptions = {
-    run: { module: modulePath, transport: TransportKind.ipc },
+    run: { module, transport: TransportKind.ipc },
     debug: {
-      module: modulePath,
+      module,
       transport: TransportKind.ipc,
       options: {
         execArgv: ['--nolazy', '--inspect=6009'],
@@ -230,6 +238,7 @@ async function initServer(modulePath: string) {
   }
 
   const client = new LanguageClient('rwxml-language-server', 'RWXML Language Server', serverOptions, clientOptions)
+  container.register(LanguageClient, { useValue: client })
 
   return client
 }
