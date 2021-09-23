@@ -53,39 +53,51 @@ async function initialLoadFilesFromWorkspace() {
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // 1. reset container && set extensionContext
+  console.log('initializing @rwxml/vsc-extension...')
   container.reset()
 
   container.register('ExtensionContext', { useValue: context })
 
   // 2. initialize containers (set values)
+  console.log('initializing container variables...')
   disposables.push(containerVars.initialize())
 
   // 2-2. register commands
+  console.log('register commands...')
   disposables.push(...commands.initialize())
 
   // 2-3. modManager
   // 2-4. dependencyManager
+  console.log('initialize modManager, dependencyManager...')
   mods.initialize()
 
   // 3. wait language-server to be ready
+  console.log('initializing Language Server...')
   const client = await createServer()
   client.start()
   await client.onReady()
 
   // 4. initialize && wait Runtime TypeInfo Extractor
+  console.log('checking Runtime TypeInfo Extractor available...')
   checkTypeInfoAnalyzeAvailable()
 
   // 5. send mod list to language server
+  console.log('sending external mods...')
   await sendMods()
 
   // 6. add decorate update
+  console.log('register lsp features...')
   disposables.push(...features.registerFeatures())
 
   // 7. set project watcher
+  console.log('initialize Project Watcher...')
   projectWatcher.initialize()
 
   // 8. load all files from workspace, send files
+  console.log('load all files from current workspace...')
   await initialLoadFilesFromWorkspace()
+
+  console.log('initialization completed.')
 }
 
 export function deactivate() {
