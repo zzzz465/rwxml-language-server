@@ -4,6 +4,7 @@ import { container } from 'tsyringe'
 import { ModManager } from './modManager'
 import { DependencyDirectoriesKey } from '../containerVars'
 import { DependencyManager } from './dependencyManager'
+import { LanguageClient } from 'vscode-languageclient'
 
 export * from './about'
 export * from './mod'
@@ -22,8 +23,11 @@ function initModManager() {
 }
 
 function initDependencyManager() {
+  const client = container.resolve(LanguageClient)
   const modManager = container.resolve(ModManager)
   const dependencyManager = new DependencyManager(modManager)
+  dependencyManager.listen(client)
+
   container.register(DependencyManager, { useValue: dependencyManager })
 }
 
