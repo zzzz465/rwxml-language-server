@@ -54,14 +54,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
   container.register('ExtensionContext', { useValue: context })
 
   // 2. initialize containers (set values)
-  disposables.push(containerVars.initialize(container))
+  disposables.push(containerVars.initialize())
 
   // 2-2. register commands
   disposables.push(...commands.initialize())
 
   // 2-3. modManager
   // 2-4. dependencyManager
-  mods.initialize(container)
+  mods.initialize()
 
   // 3. wait language-server to be ready
   const client = await initServer()

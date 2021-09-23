@@ -1,4 +1,4 @@
-import { DependencyContainer } from 'tsyringe'
+import { container } from 'tsyringe'
 import { Disposable } from 'vscode'
 import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri } from './mod'
 
@@ -9,35 +9,35 @@ export const DependencyDirectoriesKey = Symbol('container key of all dependnecy 
 export const languageServerEntryPathKey = Symbol('continer key of language server path (relative to entry)')
 
 // initialize container for global variables
-export function initialize(container: DependencyContainer): Disposable {
-  initCoreDirectoryUri(container)
-  initLocalDirectoryUri(container)
-  initWorkshopDirectoryUri(container)
-  initLanguageServerEntryPath(container)
+export function initialize(): Disposable {
+  initCoreDirectoryUri()
+  initLocalDirectoryUri()
+  initWorkshopDirectoryUri()
+  initLanguageServerEntryPath()
 
   // TODO: mock disposable, fill this later
   return { dispose: () => {} }
 }
 
-function initCoreDirectoryUri(container: DependencyContainer) {
+function initCoreDirectoryUri() {
   const uri = getCoreDirectoryUri()
   container.register(coreDirectoryKey, { useValue: uri })
   container.register(DependencyDirectoriesKey, { useValue: uri })
 }
 
-function initLocalDirectoryUri(container: DependencyContainer) {
+function initLocalDirectoryUri() {
   const uri = getLocalModDirectoryUri()
   container.register(localDirectoryKey, { useValue: uri })
   container.register(DependencyDirectoriesKey, { useValue: uri })
 }
 
-function initWorkshopDirectoryUri(container: DependencyContainer) {
+function initWorkshopDirectoryUri() {
   const uri = getWorkshopModsDirectoryUri()
   container.register(workshopDirectoryKey, { useValue: uri })
   container.register(DependencyDirectoriesKey, { useValue: uri })
 }
 
-function initLanguageServerEntryPath(container: DependencyContainer) {
+function initLanguageServerEntryPath() {
   const path = process.env.LANGUAGE_SERVER_ENTRY_PATH
 
   if (typeof path !== 'string') {
