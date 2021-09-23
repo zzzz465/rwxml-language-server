@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import { AsEnumerable } from 'linq-es2015'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { XMLDocumentDependencyRequest } from './events'
+import { DependencyRequest, DependencyResponse } from './events'
 import { Dependency } from './mod'
 import { File } from './fs'
 import { RimWorldVersion } from './typeInfoMapManager'
@@ -12,7 +12,7 @@ interface ListeningEvents {
 }
 
 export interface DependencyRequesterEvents {
-  dependencyModsResponse(files: File[]): void
+  dependencyModsResponse(response: DependencyResponse): void
 }
 
 export class DependencyRequester {
@@ -25,24 +25,18 @@ export class DependencyRequester {
   }
 
   private async onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
-    const { items } = await this.connection.sendRequest(XMLDocumentDependencyRequest, {
+    const response = await this.connection.sendRequest(DependencyRequest, {
       version,
       packageIds: dependencies.map((d) => d.packageId),
     })
 
-    const files = AsEnumerable(items)
-      .Select(
-        (item) =>
-          ({
-            uri: URI.parse(item.uri),
-            ownerPackageId: item.packageId,
-            readonly: item.readonly,
-            text: item.text,
-          } as File.FileCreateParameters)
-      )
-      .Select((item) => File.create(item))
-      .ToArray()
+    // convert encoded string to Uri
+    for (const item of response.items) {
+      for (const def of item.defs) {
+        def.uri = URI.parse(def.uri) as any
+      }
+    }
 
-    this.event.emit('dependencyModsResponse', files)
+    this.event.emit('dependencyModsResponse', response)
   }
 }

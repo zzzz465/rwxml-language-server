@@ -66,8 +66,8 @@ export class Mod {
     const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
 
     for (const { defs, typeInfos } of dependencyFiles) {
-      ret.defs.concat(defs)
-      ret.typeInfos.concat(typeInfos)
+      ret.defs = ret.defs.concat(defs)
+      ret.typeInfos = ret.typeInfos.concat(typeInfos)
     }
 
     return ret

@@ -15,7 +15,9 @@ export class ModManager {
     return this._initialized
   }
 
-  constructor(public readonly directoryUris: Uri[]) {}
+  constructor(public readonly directoryUris: Uri[]) {
+    console.log(`ModManager watching directories: ${directoryUris}`)
+  }
 
   async init() {
     if (this.initialized) {

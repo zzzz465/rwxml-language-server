@@ -9,6 +9,9 @@ import { LanguageFeature } from './features'
 import { ModManager } from './mod/modManager'
 import { DependencyRequester } from './dependencyRequester'
 import { initializeLogger } from './logging'
+import { File } from './fs'
+import { AsEnumerable } from 'linq-es2015'
+import { URI } from 'vscode-uri'
 
 initializeLogger()
 
@@ -36,7 +39,24 @@ connection.onInitialize(async (params: InitializeParams) => {
   dependencyRequester.listen(projectManager.event)
 
   // bind
-  dependencyRequester.event.on('dependencyModsResponse', (files) => projectManager.onDependencyModsResponse(files))
+  // TODO: improve this code
+  dependencyRequester.event.on('dependencyModsResponse', (response) => {
+    const files: File[] = []
+    for (const { defs, packageId, readonly } of response.items) {
+      for (const { uri, text } of defs) {
+        files.push(
+          File.create({
+            uri: URI.parse(uri),
+            ownerPackageId: packageId,
+            readonly,
+            text,
+          })
+        )
+      }
+    }
+
+    projectManager.onDependencyModsResponse(files)
+  })
 
   const initializeResult: InitializeResult = {
     capabilities: {
