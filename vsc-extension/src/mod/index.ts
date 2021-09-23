@@ -11,20 +11,23 @@ export * from './mod'
 export * from './loadFolders'
 export * from './dependencyManager'
 
-export function initialize() {
-  initModManager()
+export async function initialize() {
+  await initModManager()
   initDependencyManager()
 }
 
-function initModManager() {
+async function initModManager() {
   const uris = container.resolveAll(DependencyDirectoriesKey) as Uri[]
   const modManager = new ModManager(uris)
+  await modManager.init()
+
   container.register(ModManager, { useValue: modManager })
 }
 
-function initDependencyManager() {
+async function initDependencyManager() {
   const client = container.resolve(LanguageClient)
   const modManager = container.resolve(ModManager)
+
   const dependencyManager = new DependencyManager(modManager)
   dependencyManager.listen(client)
 
