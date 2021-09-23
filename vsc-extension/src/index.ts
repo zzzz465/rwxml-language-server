@@ -68,7 +68,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
   mods.initialize()
 
   // 3. wait language-server to be ready
-  await initServer()
+  const client = await createServer()
+  client.start()
+  await client.onReady()
 
   // 4. initialize && wait Runtime TypeInfo Extractor
   checkTypeInfoAnalyzeAvailable()
@@ -96,7 +98,7 @@ export function deactivate() {
   disposables.map((disposable) => disposable.dispose())
 }
 
-async function initServer() {
+async function createServer() {
   const context = container.resolve('ExtensionContext') as ExtensionContext
   const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
   const module = path.join(context.extensionPath, serverModuleRelativePath)
