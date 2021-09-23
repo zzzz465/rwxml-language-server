@@ -1,6 +1,6 @@
 import { Uri } from 'vscode'
 import process from 'process'
-import { DependencyContainer } from 'tsyringe'
+import { container } from 'tsyringe'
 import { ModManager } from './modManager'
 import { DependencyDirectoriesKey } from '../containerVars'
 import { DependencyManager } from './dependencyManager'
@@ -10,18 +10,18 @@ export * from './mod'
 export * from './loadFolders'
 export * from './dependencyManager'
 
-export function initialize(container: DependencyContainer) {
-  initModManager(container)
-  initDependencyManager(container)
+export function initialize() {
+  initModManager()
+  initDependencyManager()
 }
 
-function initModManager(container: DependencyContainer) {
+function initModManager() {
   const uris = container.resolveAll(DependencyDirectoriesKey) as Uri[]
   const modManager = new ModManager(uris)
   container.register(ModManager, { useValue: modManager })
 }
 
-function initDependencyManager(container: DependencyContainer) {
+function initDependencyManager() {
   const modManager = container.resolve(ModManager)
   const dependencyManager = new DependencyManager(modManager)
   container.register(DependencyManager, { useValue: dependencyManager })
