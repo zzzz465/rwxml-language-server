@@ -10,7 +10,7 @@ export function getExtractorDirectory() {
   }
 }
 
-const timeout = 20000 // ms
+const timeout = 60000 // 60 second
 export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
   const cwd = getExtractorDirectory()
 
