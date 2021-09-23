@@ -6,7 +6,7 @@ export const coreDirectoryKey = Symbol('container key of core directory uri')
 export const localDirectoryKey = Symbol('container key of local directory uri')
 export const workshopDirectoryKey = Symbol('container key of workshop directory uri')
 export const DependencyDirectoriesKey = Symbol('container key of all dependnecy directories uri')
-export const languageServerEntryPathKey = Symbol('continer key of language server path (relative to entry)')
+export const languageServerModuleRelativePathKey = Symbol('continer key of language server path (relative to entry)')
 
 // initialize container for global variables
 export function initialize(): Disposable {
@@ -38,11 +38,11 @@ function initWorkshopDirectoryUri() {
 }
 
 function initLanguageServerEntryPath() {
-  const path = process.env.LANGUAGE_SERVER_ENTRY_PATH
+  const path = process.env.LANGUAGE_SERVER_MODULE_PATH_RELATIVE
 
   if (typeof path !== 'string') {
     throw new Error(`language-server path ${path} is invalid.`)
   }
 
-  container.register(languageServerEntryPathKey, { useValue: path })
+  container.register(languageServerModuleRelativePathKey, { useValue: path })
 }
