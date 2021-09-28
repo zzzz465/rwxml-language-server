@@ -34,6 +34,9 @@ export namespace File {
         file = new TextureFile(uri)
         break
 
+      case '.dll':
+        file = new DLLFile(uri)
+
       default:
         file = new OtherFile(uri)
         break
@@ -94,5 +97,18 @@ export class AudioFile implements IFile {
 
   toString() {
     return `Audiofile ${decodeURIComponent(this.uri.toString())}`
+  }
+}
+
+export class DLLFile implements IFile {
+  readonly readonly = true
+  constructor(public readonly uri: URI) {}
+
+  get fsPath() {
+    return this.uri.fsPath
+  }
+
+  toString() {
+    return `DLLFile ${decodeURIComponent(this.uri.toString())}`
   }
 }
