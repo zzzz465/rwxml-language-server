@@ -88,11 +88,11 @@ export class DependencyManager {
 
   listen(client: LanguageClient) {
     client.onReady().then(() => {
-      client.onRequest(DependencyRequest, this.onXMLDocumentDependencyRequest.bind(this))
+      client.onRequest(DependencyRequest, this.onDependencyRequest.bind(this))
     })
   }
 
-  private async onXMLDocumentDependencyRequest({ version, packageIds }: DependencyRequest) {
+  private async onDependencyRequest({ version, packageIds }: DependencyRequest) {
     let token: CancellationToken
     let progressHelper = this.progressHelper[version]
 
