@@ -1,8 +1,7 @@
 import { execFile } from 'child_process'
-import { createConnection, createServer } from 'net'
+import { createServer } from 'net'
 import { container } from 'tsyringe'
 import { ExtensionContext } from 'vscode'
-import * as path from 'path'
 import { RimWorldDLLDirectoryKey } from '../containerVars'
 
 function getExtractorDirectory() {
@@ -42,47 +41,50 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
 
   const process = initExtractorProcess(dllPaths)
 
-  const buffers: Buffer[] = []
-  server.on('connection', (socket) => {
-    socket.on('data', (chunk: Buffer) => {
-      buffers.push(chunk)
-    })
-    socket.on('close', () => {
-      server.close()
+  const connectionPromise = new Promise<Buffer>((res) => {
+    server.on('connection', async (socket) => {
+      const buffers: Buffer[] = []
+
+      socket.on('data', (chunk) => {
+        buffers.push(chunk)
+      })
+
+      socket.on('close', () => {
+        const buffer = Buffer.concat(buffers)
+        res(buffer)
+      })
     })
   })
 
-  const closePromise = new Promise((res) => {
-    server.on('close', () => {
-      res(true)
-    })
-  })
-  const timeoutPromise = new Promise((res) =>
+  const timeoutPromise = new Promise<number>((res) =>
     setTimeout(() => {
-      res(false)
+      res(-1)
     }, timeout)
   )
-  const exitPromise = new Promise((res) => {
+  const exitPromise = new Promise<number>((res) => {
     process.on('exit', (code) => {
-      res(code)
+      res(code ?? 0)
     })
   })
 
-  const result = (await Promise.race([closePromise, timeoutPromise, exitPromise])) as
-    | number
-    | null
-    | boolean
-    | undefined
+  const exitCode = await Promise.race([timeoutPromise, exitPromise])
 
-  if ((typeof result === 'number' && result !== 0) || (typeof result === 'boolean' && !result)) {
+  // await new Promise((res) => server.close(res))
+
+  if (exitCode !== 0) {
     if (!process.killed) {
       process.kill()
     }
 
-    throw new Error(`failed to extract TypeInfos on Runtime, files: ${dllPaths}`)
+    server.close()
+
+    throw new Error(`failed to extract TypeInfos on runtime, files: ${dllPaths}`)
   }
 
-  const raw = Buffer.concat(buffers).toString('utf-8')
+  const result = await connectionPromise
+  server.close()
+
+  const raw = result.toString('utf-8')
   const typeInfos = JSON.parse(raw)
 
   return typeInfos
