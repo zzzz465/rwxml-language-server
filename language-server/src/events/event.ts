@@ -40,6 +40,7 @@ export interface XMLDocumentDecoItemResponse {
 export interface DependencyRequest {
   version: RimWorldVersion
   packageIds: string[]
+  dlls: string[]
 }
 
 export interface DependencyResponse {
