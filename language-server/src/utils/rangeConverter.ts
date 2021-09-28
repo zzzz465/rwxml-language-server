@@ -1,9 +1,9 @@
 import rwxml from '@rwxml/analyzer'
-import { TextDocuments } from 'vscode-languageserver'
-import { Position, Range, TextDocument } from 'vscode-languageserver-textdocument'
-import { Project } from '../project'
+import { injectable } from 'tsyringe'
+import { Position, Range } from 'vscode-languageserver-textdocument'
 import { TextDocumentManager } from '../textDocumentManager'
 
+@injectable()
 export class RangeConverter {
   constructor(private readonly textDocumentManager: TextDocumentManager) {}
 

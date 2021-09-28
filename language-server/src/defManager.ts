@@ -6,17 +6,19 @@ import { MultiDictionary } from 'typescript-collections'
 export class DefManager {
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
   private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
+  private readonly typeInfoInjector: TypeInfoInjector
 
   constructor(
     public readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
-    public readonly typeInfoMap: TypeInfoMap,
-    private readonly typeInfoInjector: TypeInfoInjector
+    public readonly typeInfoMap: TypeInfoMap
   ) {
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {
       throw new Error('cannot find def Type in typeInfoMap')
     }
+
+    this.typeInfoInjector = new TypeInfoInjector(typeInfoMap)
   }
 
   getReferenceResolveWanters(defName: string): Injectable[] {

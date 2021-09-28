@@ -17,11 +17,13 @@ import { RangeConverter } from './utils/rangeConverter'
 import { About, Dependency } from './mod'
 import _ from 'lodash'
 import path from 'path'
-import { RimWorldVersion } from './typeInfoMapManager'
+import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 import { ModManager } from './mod/modManager'
 import { ResourceManager } from './fs/resourceManager'
+import { container, injectable, Lifecycle, registry } from 'tsyringe'
+import { LoadFolder } from './mod/loadfolders'
 
 // event that Project will emit
 export interface ProjectEvents {
@@ -38,6 +40,7 @@ interface ListeningEvents {
   typeInfoChanged(typeInfoMap: TypeInfoMap): void
 }
 
+@injectable()
 export class Project {
   public readonly projectEvent: EventEmitter<ProjectEvents> = new EventEmitter()
   private xmlDocumentMap: Map<string, Document> = new Map()
@@ -45,19 +48,33 @@ export class Project {
   private files: Map<string, File> = new Map()
   // Dict<packageId, Set<uri>>
   private dependencyFiles: DefaultDictionary<string, Set<DependencyFile>> = new DefaultDictionary(() => new Set())
-  public defManager: DefManager
+  public readonly about!: About
+  public readonly modManager!: ModManager
+  public readonly rangeConverter!: RangeConverter
+  private readonly textDocumentManager!: TextDocumentManager
+  public resourceManager!: ResourceManager
+  public defManager!: DefManager
 
-  constructor(
-    public readonly about: About,
-    public readonly version: RimWorldVersion,
-    public readonly resourceManager: ResourceManager,
-    public readonly modManager: ModManager,
-    defManager: DefManager,
-    public readonly rangeConverter: RangeConverter,
-    private readonly textDocumentManager: TextDocumentManager
-  ) {
-    this.defManager = defManager
+  constructor(public readonly version: RimWorldVersion) {
+    this.about = container.resolve(About)
+    this.modManager = container.resolve(ModManager)
+    this.rangeConverter = container.resolve(RangeConverter)
+    this.textDocumentManager = container.resolve(TextDocumentManager)
+
+    this.clear()
+
     this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
+  }
+
+  private clear() {
+    const loadFolder = container.resolve(LoadFolder)
+    const typeInfoMapManager = container.resolve(TypeInfoMapManager)
+    const typeInfoMap = typeInfoMapManager.getTypeInfoMap(this.version)
+
+    this.resourceManager = new ResourceManager(this.version, loadFolder)
+    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
+
+    this.resourceManager.listen(this.projectEvent)
   }
 
   isDependencyFile(uri: string | URI): boolean | undefined {
@@ -205,10 +222,8 @@ export class Project {
       this.fileDeleted(file)
     }
 
-    const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
-    const nameDB = new NameDatabase()
-    const defDB = new DefDatabase()
-    this.defManager = new DefManager(defDB, nameDB, typeInfoMap, typeInfoInjector)
+    this.clear()
+    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
 
     /*
     const oldFiles = [...this.files]

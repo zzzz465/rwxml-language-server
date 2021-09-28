@@ -1,6 +1,6 @@
 import { DefDatabase, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
 import EventEmitter from 'events'
-import { singleton } from 'tsyringe'
+import { container, singleton } from 'tsyringe'
 import { DefManager } from './defManager'
 import { DependencyFile, File } from './fs'
 import { ResourceManager } from './fs/resourceManager'
@@ -36,15 +36,13 @@ interface ListeningEvents {
 export class ProjectManager {
   public readonly event: EventEmitter<ProjectManagerEvent> = new EventEmitter()
   private projects: Map<RimWorldVersion, Project> = new Map()
+  private readonly loadFolder: LoadFolder
+  private readonly typeInfoMapManager: TypeInfoMapManager
 
-  constructor(
-    private readonly about: About,
-    private readonly loadFolder: LoadFolder,
-    private readonly modManager: ModManager,
-    private readonly typeInfoMapManager: TypeInfoMapManager,
-    private readonly textDocumentManager: TextDocumentManager
-  ) {
-    typeInfoMapManager.event.on('typeInfoChanged', this.onTypeInfoChanged.bind(this))
+  constructor() {
+    this.loadFolder = container.resolve(LoadFolder)
+    this.typeInfoMapManager = container.resolve(TypeInfoMapManager)
+    this.typeInfoMapManager.event.on('typeInfoChanged', this.onTypeInfoChanged.bind(this))
   }
 
   listen(notiEvent: EventEmitter<ListeningEvents>): void {
@@ -69,27 +67,11 @@ export class ProjectManager {
   }
 
   private newProject(version: RimWorldVersion): Project {
-    // TODO: stop doing DI
-    const resourceManger = new ResourceManager(version, this.loadFolder)
-    const defDatabase = new DefDatabase()
-    const nameDatabase = new NameDatabase()
-    const typeInfoMap = this.typeInfoMapManager.getTypeInfoMap(version)
-    const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
-    const defManager = new DefManager(defDatabase, nameDatabase, typeInfoMap, typeInfoInjector)
     const eventFilter = new EventVersionFilter(version, this.loadFolder)
-    const project = new Project(
-      this.about,
-      version,
-      resourceManger,
-      this.modManager,
-      defManager,
-      new RangeConverter(this.textDocumentManager),
-      this.textDocumentManager
-    )
+    const project = new Project(version)
 
     eventFilter.listen(this.event)
     project.listen(eventFilter.event)
-    resourceManger.listen(eventFilter.event)
     project.projectEvent.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
 
     return project
