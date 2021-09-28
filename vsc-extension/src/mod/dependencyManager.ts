@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { CancellationToken, CancellationTokenSource, Progress, ProgressLocation, Uri, window } from 'vscode'
+import { CancellationTokenSource, Progress, ProgressLocation, Uri, window } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { DependencyRequest, DependencyResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
@@ -21,16 +21,19 @@ class ProgressHelper {
   public static async create(version: RimWorldVersion) {
     const p = new ProgressHelper(version)
     p.disposedPromise = new Promise((res) => {
-      if (p.disposed) {
-        res(undefined)
-      }
+      const interval = setInterval(() => {
+        if (p.disposed) {
+          res(undefined)
+          clearInterval(interval)
+        }
+      }, 500)
     })
 
-    await window.withProgress(
+    window.withProgress(
       {
         location: ProgressLocation.Notification,
         cancellable: false,
-        title: 'RWXML: Runtime TypeInfo Extraction',
+        title: `RWXML: Runtime TypeInfo Extraction (RWVersion: ${version})`,
       },
       async (progress) => {
         p.progress = progress
@@ -48,17 +51,22 @@ class ProgressHelper {
 
   get token() {
     if (this.disposed) {
-      return undefined
+      throw new Error()
     }
 
     if (!this.cancellationTokenSource) {
       this.cancellationTokenSource = new CancellationTokenSource()
+      return this.cancellationTokenSource.token
     }
 
-    return this.cancellationTokenSource?.token
+    return this.cancellationTokenSource.token
   }
 
   constructor(public readonly version: RimWorldVersion) {}
+
+  report(message: string, increment?: number) {
+    this.progress.report({ message, increment })
+  }
 
   cancel() {
     if (this.cancellationTokenSource) {
@@ -69,9 +77,11 @@ class ProgressHelper {
   }
 
   dispose() {
-    this.cancellationTokenSource?.dispose()
-    this.cancellationTokenSource = undefined
-    this.disposed = true
+    if (!this.disposed) {
+      this.cancellationTokenSource?.dispose()
+      this.cancellationTokenSource = undefined
+      this.disposed = true
+    }
   }
 }
 
@@ -93,63 +103,27 @@ export class DependencyManager {
   }
 
   private async onDependencyRequest({ version, packageIds }: DependencyRequest) {
-    let token: CancellationToken
-    let progressHelper = this.progressHelper[version]
-
-    if (progressHelper) {
-      if (progressHelper.token) {
-        progressHelper.cancel()
-        token = progressHelper.token
-      } else {
-        throw new Error()
-      }
-    } else {
-      progressHelper = await ProgressHelper.create(version)
-      if (progressHelper.token) {
-        token = progressHelper.token
-      }
-    }
-
-    console.log(`got XMLDocumentDependecy request, version: ${version}, packageIds: ${packageIds}`)
+    console.log(`ver: ${version}: DependencyRequest, packageIds: ${packageIds}`)
     const response: DependencyResponse = {
       version,
       typeInfos: [],
       items: [],
     }
-
-    if (version !== '1.3') {
-      return response
-    }
-
-    // set undefined as any otherwise compiler will throw ts2454: Variable is used before being assigned
-    let progress: Progress<{ message?: string; increment?: number }> = undefined as any
-    await window.withProgress(
-      {
-        location: ProgressLocation.Notification,
-        cancellable: false,
-        title: `v: ${version} running Runtime TypeInfo Extraction...`,
-      },
-      async (p) => {
-        progress = p
-        return this
-      }
-    )
-
-    // callback not called immediately, so wait until variable assignment actually happens.
-    await new Promise((res) => {
-      if (progress !== undefined) {
-        res(undefined)
-      }
-    })
+    const { helper, token } = await this.getProgressHelper(version)
 
     const dllUrls: string[] = []
     const dependencyMods = this.modManager.getDependencies(packageIds)
+    console.log(`ver: ${version}: loading ${Object.values(dependencyMods).length} dependencies...`)
     for (const [pkgId, mod] of Object.entries(dependencyMods)) {
+      if (token.isCancellationRequested) {
+        return undefined
+      }
+
       if (!mod) {
         continue
       }
 
-      progress.report({ message: `loading defs from ${mod.about.name}` })
+      helper.report(`loading defs from ${mod.about.name}`)
 
       const data = await mod.getDependencyFiles(version)
       response.items.push({
@@ -160,7 +134,7 @@ export class DependencyManager {
       dllUrls.push(...data.dlls)
     }
 
-    progress.report({ message: 'extracting TypeInfos from dependencies...' })
+    helper.report('extracting TypeInfo from dependencies...')
 
     try {
       if (dllUrls.length > 0) {
@@ -172,10 +146,27 @@ export class DependencyManager {
       console.error(err)
     }
 
-    progress.report({ message: 'extracting TypeInfos from dependencies...' })
-
-    console.log(`sending ${response.items.length} items...`)
+    console.log(`ver: ${version}: loading completed.`)
+    this.disposeProgressHelper(helper)
 
     return response
+  }
+
+  private async getProgressHelper(version: RimWorldVersion) {
+    // cancel if exists
+    this.progressHelper[version]?.cancel()
+
+    let helper = this.progressHelper[version]
+    if (!helper) {
+      helper = await ProgressHelper.create(version)
+      this.progressHelper[version] = helper
+    }
+
+    return { helper, token: helper.token }
+  }
+
+  private disposeProgressHelper(helper: ProgressHelper) {
+    helper.dispose()
+    this.progressHelper[helper.version] = null
   }
 }
