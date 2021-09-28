@@ -26,6 +26,11 @@ function initExtractorProcess(dllPaths: string[]) {
   const dllPath = container.resolve<string>(RimWorldDLLDirectoryKey)
 
   const process = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
+  process.stdout?.setEncoding('utf-8')
+  process.stderr?.setEncoding('utf-8')
+
+  process.stdout?.on('data', console.log)
+  process.stderr?.on('data', console.error)
 
   return process
 }
@@ -35,17 +40,7 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
   const server = createServer()
   server.listen(9870, '127.0.0.1')
 
-  // on windows, process cannot be launched with execFile
-  // https://stackoverflow.com/questions/46445805/exec-vs-execfile-nodejs
   const process = initExtractorProcess(dllPaths)
-  process.stdout?.setEncoding('utf-8')
-  process.stderr?.setEncoding('utf-8')
-  process.stdout?.on('data', (chunk: string) => {
-    console.log(chunk)
-  })
-  process.stderr?.on('data', (chunk: string) => {
-    console.log(chunk)
-  })
 
   const buffers: Buffer[] = []
   server.on('connection', (socket) => {
