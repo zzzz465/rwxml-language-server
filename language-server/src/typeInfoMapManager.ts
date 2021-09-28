@@ -41,7 +41,7 @@ interface Events {
 export class TypeInfoMapManager {
   readonly event: EventEmitter<Events> = new EventEmitter()
 
-  async getTypeInfoMap(version: RimWorldVersion): Promise<TypeInfoMap> {
+  getTypeInfoMap(version: RimWorldVersion): TypeInfoMap {
     const data = rawTypeInfoMap[version]
     if (data) {
       const rawTypeInfos = Object.values(data).flat(1)

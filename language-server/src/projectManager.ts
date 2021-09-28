@@ -55,11 +55,11 @@ export class ProjectManager {
     notiEvent.on('contentChanged', this.onContentChanged.bind(this))
   }
 
-  async getProject(version: RimWorldVersion): Promise<Project> {
+  getProject(version: RimWorldVersion): Project {
     let project = this.projects.get(version)
 
     if (!project) {
-      project = await this.newProject(version)
+      project = this.newProject(version)
       this.projects.set(version, project)
       // if project is created, it must request dependencyMods first, otherwise dependency will not loaded.
       project.reloadDependencyMods()
@@ -68,12 +68,12 @@ export class ProjectManager {
     return project
   }
 
-  private async newProject(version: RimWorldVersion): Promise<Project> {
+  private newProject(version: RimWorldVersion): Project {
     // TODO: stop doing DI
     const resourceManger = new resourceManager(version, this.loadFolder)
     const defDatabase = new DefDatabase()
     const nameDatabase = new NameDatabase()
-    const typeInfoMap = await this.typeInfoMapManager.getTypeInfoMap(version)
+    const typeInfoMap = this.typeInfoMapManager.getTypeInfoMap(version)
     const typeInfoInjector = new TypeInfoInjector(typeInfoMap)
     const defManager = new DefManager(defDatabase, nameDatabase, typeInfoMap, typeInfoInjector)
     const eventFilter = new EventVersionFilter(version, this.loadFolder)
@@ -95,50 +95,50 @@ export class ProjectManager {
     return project
   }
 
-  async onProjectFileAdded(file: File) {
+  onProjectFileAdded(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
-      await this.ensureProjectOfVersionExists(version)
+      this.ensureProjectOfVersionExists(version)
       this.event.emit('fileAdded', version, file)
     }
   }
 
-  async onProjectFileChanged(file: File) {
+  onProjectFileChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
-      await this.ensureProjectOfVersionExists(version)
+      this.ensureProjectOfVersionExists(version)
       this.event.emit('fileChanged', version, file)
     }
   }
 
-  async onProjectFileDeleted(file: File) {
+  onProjectFileDeleted(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
-      await this.ensureProjectOfVersionExists(version)
+      this.ensureProjectOfVersionExists(version)
       this.event.emit('fileDeleted', version, file)
     }
   }
 
-  async onWorkspaceInitialization(files: File[]) {
+  onWorkspaceInitialization(files: File[]) {
     log.debug(`received workspaceInitialization event, file count: ${files.length}`)
     for (const file of files) {
       const versions = this.loadFolder.isBelongsTo(file.uri)
 
       for (const version of versions) {
-        await this.ensureProjectOfVersionExists(version)
+        this.ensureProjectOfVersionExists(version)
         this.event.emit('fileAdded', version, file)
       }
     }
   }
 
-  async onContentChanged(file: File) {
+  onContentChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
-      await this.ensureProjectOfVersionExists(version)
+      this.ensureProjectOfVersionExists(version)
       this.event.emit('fileChanged', version, file)
     }
   }
@@ -147,16 +147,16 @@ export class ProjectManager {
     this.event.emit('dependencyModsResponse', undefined, files)
   }
 
-  private async ensureProjectOfVersionExists(version: RimWorldVersion): Promise<void> {
-    await this.getProject(version)
+  private ensureProjectOfVersionExists(version: RimWorldVersion): void {
+    this.getProject(version)
   }
 
-  private async onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
+  private onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
     this.event.emit('requestDependencyMods', version, dependencies)
   }
 
-  private async onTypeInfoChanged(version: RimWorldVersion) {
-    const typeInfoMap = await this.typeInfoMapManager.getTypeInfoMap(version)
+  private onTypeInfoChanged(version: RimWorldVersion) {
+    const typeInfoMap = this.typeInfoMapManager.getTypeInfoMap(version)
     this.event.emit('typeInfoChanged', version, typeInfoMap)
   }
 }

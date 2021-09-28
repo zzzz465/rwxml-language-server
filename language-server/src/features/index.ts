@@ -39,7 +39,7 @@ export class LanguageFeature {
     const result: lsp.CompletionList = { isIncomplete: true, items: [] }
 
     for (const version of versions) {
-      const project = await this.projectManager.getProject(version)
+      const project = this.projectManager.getProject(version)
       const { isIncomplete, items } = this.codeCompletion.codeCompletion(project, uri, position)
       result.isIncomplete ||= isIncomplete
       result.items.push(...items)
@@ -54,7 +54,7 @@ export class LanguageFeature {
     const result: lsp.LocationLink[] = []
 
     for (const version of versions) {
-      const project = await this.projectManager.getProject(version)
+      const project = this.projectManager.getProject(version)
       const { definitionLinks, errors } = this.definition.onDefinition(project, uri, position)
 
       this.handleError(errors)
@@ -70,7 +70,7 @@ export class LanguageFeature {
     const result: XMLDocumentDecoItemResponse = { uri: uriStr, items: [] }
 
     for (const version of versions) {
-      const project = await this.projectManager.getProject(version)
+      const project = this.projectManager.getProject(version)
       const { decoItems, errors } = this.decorate.onDecorate(project, uri)
 
       this.handleError(errors)
@@ -86,7 +86,7 @@ export class LanguageFeature {
     const result: lsp.CodeLens[] = []
 
     for (const version of versions) {
-      const project = await this.projectManager.getProject(version)
+      const project = this.projectManager.getProject(version)
       const res = this.codeLens.onCodeLens(project, uri)
       result.push(...res)
     }
@@ -99,7 +99,7 @@ export class LanguageFeature {
     const result: lsp.Location[] = []
 
     for (const version of RimWorldVersionArray) {
-      const project = await this.projectManager.getProject(version)
+      const project = this.projectManager.getProject(version)
       const res = this.reference.onReference(project, uri, position)
       result.push(...res)
     }
@@ -113,7 +113,7 @@ export class LanguageFeature {
     const edit: lsp.WorkspaceEdit = { changes: {} }
 
     for (const version of RimWorldVersionArray) {
-      const project = await this.projectManager.getProject(version)
+      const project = this.projectManager.getProject(version)
       const res = this.rename.rename(project, uri, newName, position)
       edit.changes = _.merge(edit.changes, res)
     }
