@@ -6,6 +6,7 @@ import path from 'path'
 import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
+import { singleton } from 'tsyringe'
 
 export interface AboutEvents {
   dependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]): void
@@ -18,6 +19,7 @@ export interface Dependency {
   readonly downloadURL?: string
 }
 
+@singleton()
 export class About {
   eventEmitter: EventEmitter<AboutEvents> = new EventEmitter()
 

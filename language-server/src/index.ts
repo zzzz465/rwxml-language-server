@@ -1,5 +1,6 @@
+import 'reflect-metadata'
+
 import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver/node'
-import { TypeInfoMapManager } from './typeInfoMapManager'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { ProjectManager } from './projectManager'
@@ -10,24 +11,27 @@ import { ModManager } from './mod/modManager'
 import { DependencyRequester } from './dependencyRequester'
 import { initializeLogger } from './logging'
 import { File } from './fs'
-import { AsEnumerable } from 'linq-es2015'
 import { URI } from 'vscode-uri'
+import { container } from 'tsyringe'
+import { TypeInfoMapManager } from './typeInfoMapManager'
 
 initializeLogger()
 
 const connection = createConnection(ProposedFeatures.all)
-const about = new About()
-const loadFolder: LoadFolder = new LoadFolder()
-const textDocumentManager = new TextDocumentManager()
-const typeInfoMapManager = new TypeInfoMapManager()
-const notificationEventManager = new NotificationEventManager()
-const modManager = new ModManager()
-const projectManager = new ProjectManager(about, loadFolder, modManager, typeInfoMapManager, textDocumentManager)
-const languageFeature = new LanguageFeature(loadFolder, projectManager)
-const dependencyRequester = new DependencyRequester(connection)
 
 connection.onInitialize(async (params: InitializeParams) => {
   log.info('hello world! initializing @rwxml-language-server/language-server ...')
+
+  container.register('connection', { useValue: connection })
+  const about = container.resolve(About)
+  const loadFolder = container.resolve(LoadFolder)
+  const textDocumentManager = container.resolve(TextDocumentManager)
+  const notificationEventManager = container.resolve(NotificationEventManager)
+  const projectManager = container.resolve(ProjectManager)
+  const languageFeature = container.resolve(LanguageFeature)
+  const modManager = container.resolve(ModManager)
+  const dependencyRequester = container.resolve(DependencyRequester)
+  const typeInfoMapManager = container.resolve(TypeInfoMapManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(connection)

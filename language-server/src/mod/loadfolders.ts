@@ -10,8 +10,10 @@ import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import { AsEnumerable } from 'linq-es2015'
 import normalize_path from 'normalize-path'
+import { singleton } from 'tsyringe'
 
 // TODO: support on LoadFolder changes.
+@singleton()
 export class LoadFolder {
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/

@@ -8,6 +8,7 @@ import raw_default_core from '../../metadata/rawTypeInfos/default/core.json'
 //@ts-ignore
 import raw_1_3_core from '../../metadata/rawTypeInfos/1.3/core.json'
 import EventEmitter from 'events'
+import { singleton } from 'tsyringe'
 
 // TODO: add data for other versions
 const rawTypeInfoMap: Record<string, Record<string, any>> = {
@@ -36,6 +37,7 @@ interface Events {
   typeInfoChanged(version: RimWorldVersion): void
 }
 
+@singleton()
 export class TypeInfoMapManager {
   readonly event: EventEmitter<Events> = new EventEmitter()
 

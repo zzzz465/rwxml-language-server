@@ -1,4 +1,5 @@
 import EventEmitter from 'events'
+import { singleton } from 'tsyringe'
 import { Connection, TextDocumentChangeEvent } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -28,6 +29,7 @@ interface TextDocumentListeningEvent {
   onContentChange(e: TextDocumentChangeEvent<TextDocument>): void
 }
 
+@singleton()
 export class NotificationEventManager {
   // pre-event stage emit
   public readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()

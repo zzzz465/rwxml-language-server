@@ -1,5 +1,6 @@
 import { DefDatabase, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
 import EventEmitter from 'events'
+import { singleton } from 'tsyringe'
 import { DefManager } from './defManager'
 import { DependencyFile, File } from './fs'
 import { resourceManager } from './fs/resourceManager'
@@ -31,6 +32,7 @@ interface ListeningEvents {
   typeInfoChanged(): void
 }
 
+@singleton()
 export class ProjectManager {
   public readonly event: EventEmitter<ProjectManagerEvent> = new EventEmitter()
   private projects: Map<RimWorldVersion, Project> = new Map()

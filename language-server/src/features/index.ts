@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../events'
@@ -12,6 +13,7 @@ import { Definition } from './definition'
 import { Reference } from './reference'
 import { Rename } from './rename'
 
+@singleton()
 export class LanguageFeature {
   private readonly decorate = new Decorate()
   private readonly definition = new Definition()

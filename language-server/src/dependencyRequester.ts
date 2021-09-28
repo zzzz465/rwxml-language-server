@@ -6,6 +6,7 @@ import { DependencyRequest, DependencyResponse } from './events'
 import { Dependency } from './mod'
 import { File } from './fs'
 import { RimWorldVersion } from './typeInfoMapManager'
+import { inject, singleton } from 'tsyringe'
 
 interface ListeningEvents {
   requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
@@ -15,10 +16,11 @@ export interface DependencyRequesterEvents {
   dependencyModsResponse(response: DependencyResponse): void
 }
 
+@singleton()
 export class DependencyRequester {
   public readonly event: EventEmitter<DependencyRequesterEvents> = new EventEmitter()
 
-  constructor(private readonly connection: Connection) {}
+  constructor(@inject('connection') private readonly connection: Connection) {}
 
   listen(event: EventEmitter<ListeningEvents>) {
     event.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))

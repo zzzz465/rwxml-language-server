@@ -27,6 +27,7 @@ specifiers:
   lodash: ^4.17.21
   normalize-path: ^3.0.0
   prettier: ^2.3.2
+  reflect-metadata: ^0.1.13
   ts-jest: ^26.1.4
   ts-loader: ^8.0.3
   ts-node: ^10.1.0
@@ -53,6 +54,7 @@ dependencies:
   linq-es2015: 2.5.1
   lodash: 4.17.21
   normalize-path: 3.0.0
+  reflect-metadata: 0.1.13
   tsconfig-paths: 3.11.0
   tsyringe: 4.6.0
   typescript-collections: 1.3.3
@@ -4114,6 +4116,10 @@ packages:
     dependencies:
       resolve: 1.20.0
     dev: true
+
+  /reflect-metadata/0.1.13:
+    resolution: {integrity: sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==}
+    dev: false
 
   /regex-not/1.0.2:
     resolution: {integrity: sha512-J6SDjUgDxQj5NusnOtdFxDwN/+HWykR8GELwctJ7mdqhcyy1xEc4SRFHUXvxTp661YaVKAjfRLZ9cCqS6tn32A==}
