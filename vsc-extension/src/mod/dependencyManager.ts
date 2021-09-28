@@ -102,7 +102,7 @@ export class DependencyManager {
     })
   }
 
-  private async onDependencyRequest({ version, packageIds }: DependencyRequest) {
+  private async onDependencyRequest({ version, packageIds, dlls }: DependencyRequest) {
     console.log(`ver: ${version}: DependencyRequest, packageIds: ${packageIds}`)
     const response: DependencyResponse = {
       version,
@@ -111,7 +111,7 @@ export class DependencyManager {
     }
     const { helper, token } = await this.getProgressHelper(version)
 
-    const dllUrls: string[] = []
+    const dllUrls: string[] = [...dlls]
     const dependencyMods = this.modManager.getDependencies(packageIds)
     console.log(`ver: ${version}: loading ${Object.values(dependencyMods).length} dependencies...`)
     for (const [pkgId, mod] of Object.entries(dependencyMods)) {

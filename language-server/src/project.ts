@@ -11,7 +11,7 @@ import {
 } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
-import { XMLFile, File, DependencyFile } from './fs'
+import { XMLFile, File, DependencyFile, DLLFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { RangeConverter } from './utils/rangeConverter'
 import { About, Dependency } from './mod'
@@ -46,6 +46,7 @@ export class Project {
   private xmlDocumentMap: Map<string, Document> = new Map()
   // Map<uri, File>
   private files: Map<string, File> = new Map()
+  private DLLfiles: Map<string, DLLFile> = new Map()
   // Dict<packageId, Set<uri>>
   private dependencyFiles: DefaultDictionary<string, Set<DependencyFile>> = new DefaultDictionary(() => new Set())
   public readonly about!: About
@@ -123,6 +124,8 @@ export class Project {
 
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
+    } else if (file instanceof DLLFile) {
+      this.onDLLFileAdded(file)
     }
   }
 
@@ -139,6 +142,8 @@ export class Project {
 
     if (file instanceof XMLFile) {
       this.onXMLFileDeleted(file)
+    } else if (file instanceof DLLFile) {
+      this.onDLLFileDeleted(file)
     }
   }
 
@@ -186,6 +191,14 @@ export class Project {
 
     const dirty = this.defManager.update(document)
     this.projectEvent.emit('defChanged', dirty)
+  }
+
+  private onDLLFileAdded(file: DLLFile) {
+    this.DLLfiles.set(file.uri.toString(), file)
+  }
+
+  private onDLLFileDeleted(file: DLLFile) {
+    this.DLLfiles.delete(file.uri.toString())
   }
 
   reloadDependencyMods() {

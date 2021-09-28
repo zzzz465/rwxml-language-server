@@ -6,7 +6,8 @@ import { DependencyRequest, DependencyResponse } from './events'
 import { Dependency } from './mod'
 import { File } from './fs'
 import { RimWorldVersion } from './typeInfoMapManager'
-import { inject, singleton } from 'tsyringe'
+import { container, inject, singleton } from 'tsyringe'
+import { ProjectManager } from './projectManager'
 
 interface ListeningEvents {
   requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
@@ -40,5 +41,10 @@ export class DependencyRequester {
     }
 
     this.event.emit('dependencyModsResponse', response)
+  }
+
+  private getProjectDLLs(version: RimWorldVersion) {
+    const projectManager = container.resolve(ProjectManager)
+    const project = projectManager.getProject(version)
   }
 }
