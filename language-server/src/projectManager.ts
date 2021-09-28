@@ -3,7 +3,7 @@ import EventEmitter from 'events'
 import { singleton } from 'tsyringe'
 import { DefManager } from './defManager'
 import { DependencyFile, File } from './fs'
-import { resourceManager } from './fs/resourceManager'
+import { ResourceManager } from './fs/resourceManager'
 import { About, Dependency } from './mod'
 import { LoadFolder } from './mod/loadfolders'
 import { ModManager } from './mod/modManager'
@@ -70,7 +70,7 @@ export class ProjectManager {
 
   private newProject(version: RimWorldVersion): Project {
     // TODO: stop doing DI
-    const resourceManger = new resourceManager(version, this.loadFolder)
+    const resourceManger = new ResourceManager(version, this.loadFolder)
     const defDatabase = new DefDatabase()
     const nameDatabase = new NameDatabase()
     const typeInfoMap = this.typeInfoMapManager.getTypeInfoMap(version)
