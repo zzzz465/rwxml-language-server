@@ -16,7 +16,7 @@ import { LoadFolder } from './mod/loadfolders'
 
 // event that Project will emit
 export interface ProjectEvents {
-  requestDependencyMods(version: RimWorldVersion): void
+  requestDependencyMods(sender: Project): void
   defChanged(injectables: (Injectable | Def)[]): void
 }
 
@@ -55,17 +55,19 @@ export class Project {
   private readonly dependencyRequestTimeoutTime = 3000 // 3 second
 
   constructor(public readonly version: RimWorldVersion) {
+    // TODO: use in-line initialization
     this.about = container.resolve(About)
     this.modManager = container.resolve(ModManager)
     this.rangeConverter = container.resolve(RangeConverter)
     this.textDocumentManager = container.resolve(TextDocumentManager)
 
-    this.clear()
-
-    this.about.eventEmitter.on('dependencyModsChanged', this.onDependencyModsChanged.bind(this))
+    this.reload()
   }
 
-  private clear() {
+  /**
+   * resets all variables and parse files.
+   */
+  private reload() {
     const loadFolder = container.resolve(LoadFolder)
     const typeInfoMapManager = container.resolve(TypeInfoMapManager)
     const typeInfoMap = typeInfoMapManager.getTypeInfoMap(this.version)
@@ -74,6 +76,16 @@ export class Project {
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
 
     this.resourceManager.listen(this.projectEvent)
+
+    this.reloadAllXMLFiles()
+  }
+
+  private reloadAllXMLFiles() {
+    for (const file of this.files) {
+      if (file instanceof XMLFile) {
+        this.onXMLFileChanged(file)
+      }
+    }
   }
 
   isDependencyFile(uri: string | URI): boolean | undefined {
@@ -113,8 +125,6 @@ export class Project {
     eventEmitter.on('fileAdded', this.fileAdded.bind(this))
     eventEmitter.on('fileChanged', this.fileChanged.bind(this))
     eventEmitter.on('fileDeleted', this.fileDeleted.bind(this))
-    eventEmitter.on('dependencyModsResponse', this.dependencyModsResponse.bind(this))
-    eventEmitter.on('typeInfoChanged', this.onTypeInfoChanged.bind(this))
   }
 
   fileAdded(file: File) {
@@ -142,14 +152,6 @@ export class Project {
       this.onXMLFileDeleted(file)
     } else if (file instanceof DLLFile) {
       this.onDLLFileDeleted(file)
-    }
-  }
-
-  dependencyModsResponse(files: File[]) {
-    for (const file of files) {
-      if (DependencyFile.is(file) && file instanceof XMLFile) {
-        this.fileChanged(file)
-      }
     }
   }
 
@@ -197,46 +199,5 @@ export class Project {
 
   private onDLLFileDeleted(file: DLLFile) {
     this._DLLfiles.delete(file.uri.toString())
-  }
-
-  reloadDependencyMods() {
-    this.defManager
-    const removedFiles = AsEnumerable(this.dependencyFiles.values())
-      .SelectMany((files) => files)
-      .Select(({ uri }) => File.create({ uri }))
-
-    for (const file of removedFiles) {
-      this.fileDeleted(file)
-    }
-
-    this.projectEvent.emit('requestDependencyMods', this.version)
-  }
-
-  private onDependencyModsChanged() {
-    this.triggerRequestDependencyMods()
-  }
-
-  private onTypeInfoChanged(typeInfoMap: TypeInfoMap) {
-    const files = [...this.files]
-    for (const [uri, file] of files) {
-      this.fileDeleted(file)
-    }
-
-    this.clear()
-    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
-
-    for (const [uri, file] of files) {
-      this.fileAdded(file)
-    }
-  }
-
-  private triggerRequestDependencyMods() {
-    if (this.dependencyRequestTimeout) {
-      clearTimeout(this.dependencyRequestTimeout)
-      this.dependencyRequestTimeout = setTimeout(() => {
-        this.projectEvent.emit('requestDependencyMods', this.version)
-      }, this.dependencyRequestTimeoutTime)
-    } else {
-    }
   }
 }

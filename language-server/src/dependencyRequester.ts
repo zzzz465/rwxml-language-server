@@ -3,11 +3,11 @@ import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { DependencyRequest, DependencyResponse } from './events'
 import { RimWorldVersion } from './typeInfoMapManager'
-import { container, inject, singleton } from 'tsyringe'
-import { ProjectManager } from './projectManager'
+import { inject, singleton } from 'tsyringe'
+import { Project } from './project'
 
 interface ListeningEvents {
-  requestDependencyMods(version: RimWorldVersion): void
+  requestDependencyMods(sender: Project): void
 }
 
 export interface DependencyRequesterEvents {
@@ -24,12 +24,13 @@ export class DependencyRequester {
     event.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
   }
 
-  private async onRequestDependencyMods(version: RimWorldVersion) {
-    const dllUris = this.getProjectDLLUris(version)
+  private async onRequestDependencyMods(sender: Project) {
+    const dependencyPackageIds = sender.about.modDependencies.map((dep) => dep.packageId)
+    const dllUris = sender.dllFiles.map((uri) => uri.toString())
 
     const response = await this.connection.sendRequest(DependencyRequest, {
-      version,
-      packageIds: dependencies.map((d) => d.packageId),
+      version: sender.version,
+      packageIds: dependencyPackageIds,
       dlls: dllUris,
     })
 
@@ -41,12 +42,5 @@ export class DependencyRequester {
     }
 
     this.event.emit('dependencyModsResponse', response)
-  }
-
-  private getProjectDLLUris(version: RimWorldVersion) {
-    const projectManager = container.resolve(ProjectManager)
-    const project = projectManager.getProject(version)
-
-    return project.dllFiles.map((file) => file.uri.toString())
   }
 }

@@ -9,7 +9,7 @@ import { NotificationEvents } from '../notificationEventManager'
 import { singleton } from 'tsyringe'
 
 export interface AboutEvents {
-  dependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]): void
+  dependencyModsChanged(about: About): void
 }
 
 export interface Dependency {
@@ -74,8 +74,8 @@ export class About {
     log.debug(`new dependencies: ${newVal.modDependencies}`)
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
-      this.eventEmitter.emit('dependencyModsChanged', this._modDependencies, newVal.modDependencies)
       this._modDependencies = newVal.modDependencies
+      this.eventEmitter.emit('dependencyModsChanged', this)
     }
 
     this._name = newVal.name ?? ''
