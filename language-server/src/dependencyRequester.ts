@@ -28,9 +28,12 @@ export class DependencyRequester {
   }
 
   private async onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
+    const dllUris = this.getProjectDLLUris(version)
+
     const response = await this.connection.sendRequest(DependencyRequest, {
       version,
       packageIds: dependencies.map((d) => d.packageId),
+      dlls: dllUris,
     })
 
     // convert encoded string to Uri
@@ -43,8 +46,10 @@ export class DependencyRequester {
     this.event.emit('dependencyModsResponse', response)
   }
 
-  private getProjectDLLs(version: RimWorldVersion) {
+  private getProjectDLLUris(version: RimWorldVersion) {
     const projectManager = container.resolve(ProjectManager)
     const project = projectManager.getProject(version)
+
+    return project.dllFiles.map((file) => file.uri.toString())
   }
 }

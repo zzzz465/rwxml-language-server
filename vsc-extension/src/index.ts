@@ -12,6 +12,7 @@ import * as containerVars from './containerVars'
 import * as commands from './commands'
 import * as mods from './mod'
 import * as projectWatcher from './projectWatcher'
+import { isXML } from './utils/path'
 
 const disposables: Disposable[] = []
 
@@ -41,7 +42,7 @@ async function initialLoadFilesFromWorkspace() {
   const files = await Promise.all(
     uris.map(async (uri) => {
       const rawFile = await workspace.fs.readFile(uri)
-      const text = Buffer.from(rawFile).toString()
+      const text = isXML(uri) ? Buffer.from(rawFile).toString() : undefined
 
       return { uri: uri.toString(), text }
     })

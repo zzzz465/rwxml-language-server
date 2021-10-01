@@ -2,8 +2,9 @@ import { container, injectable } from 'tsyringe'
 import { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
+import { isXML } from './utils/path'
 
-const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
+const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
 export const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 export function initialize() {
@@ -22,12 +23,12 @@ export class ProjectWatcher {
   }
 
   private async onDidcreate(uri: Uri) {
-    const text = Buffer.from(await workspace.fs.readFile(uri)).toString()
+    const text = isXML(uri) ? Buffer.from(await workspace.fs.readFile(uri)).toString() : undefined
     this.client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
   }
 
   private async onDidChange(uri: Uri) {
-    const text = Buffer.from(await workspace.fs.readFile(uri)).toString()
+    const text = isXML(uri) ? Buffer.from(await workspace.fs.readFile(uri)).toString() : undefined
     this.client.sendNotification(ProjectFileChanged, { uri: uri.toString(), text })
   }
 

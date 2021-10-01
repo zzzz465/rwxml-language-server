@@ -46,7 +46,12 @@ export class Project {
   private xmlDocumentMap: Map<string, Document> = new Map()
   // Map<uri, File>
   private files: Map<string, File> = new Map()
-  private DLLfiles: Map<string, DLLFile> = new Map()
+  private _DLLfiles: Map<string, DLLFile> = new Map()
+
+  get dllFiles(): DLLFile[] {
+    return [...this._DLLfiles.values()]
+  }
+
   // Dict<packageId, Set<uri>>
   private dependencyFiles: DefaultDictionary<string, Set<DependencyFile>> = new DefaultDictionary(() => new Set())
   public readonly about!: About
@@ -194,11 +199,11 @@ export class Project {
   }
 
   private onDLLFileAdded(file: DLLFile) {
-    this.DLLfiles.set(file.uri.toString(), file)
+    this._DLLfiles.set(file.uri.toString(), file)
   }
 
   private onDLLFileDeleted(file: DLLFile) {
-    this.DLLfiles.delete(file.uri.toString())
+    this._DLLfiles.delete(file.uri.toString())
   }
 
   reloadDependencyMods() {
