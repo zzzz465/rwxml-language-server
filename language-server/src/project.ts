@@ -1,33 +1,22 @@
 import { EventEmitter } from 'events'
-import {
-  Def,
-  DefDatabase,
-  Document,
-  Injectable,
-  NameDatabase,
-  parse,
-  TypeInfoInjector,
-  TypeInfoMap,
-} from '@rwxml/analyzer'
+import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File, DependencyFile, DLLFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { RangeConverter } from './utils/rangeConverter'
-import { About, Dependency } from './mod'
-import _ from 'lodash'
-import path from 'path'
+import { About } from './mod'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
-import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
+import { DefaultDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 import { ModManager } from './mod/modManager'
 import { ResourceManager } from './fs/resourceManager'
-import { container, injectable, Lifecycle, registry } from 'tsyringe'
+import { container, injectable } from 'tsyringe'
 import { LoadFolder } from './mod/loadfolders'
 
 // event that Project will emit
 export interface ProjectEvents {
-  requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
+  requestDependencyMods(version: RimWorldVersion): void
   defChanged(injectables: (Injectable | Def)[]): void
 }
 
@@ -60,6 +49,10 @@ export class Project {
   private readonly textDocumentManager!: TextDocumentManager
   public resourceManager!: ResourceManager
   public defManager!: DefManager
+
+  // delay firing dependencyRequest in case of more changes happen after.
+  private dependencyRequestTimeout?: NodeJS.Timeout
+  private readonly dependencyRequestTimeoutTime = 3000 // 3 second
 
   constructor(public readonly version: RimWorldVersion) {
     this.about = container.resolve(About)
@@ -207,6 +200,7 @@ export class Project {
   }
 
   reloadDependencyMods() {
+    this.defManager
     const removedFiles = AsEnumerable(this.dependencyFiles.values())
       .SelectMany((files) => files)
       .Select(({ uri }) => File.create({ uri }))
@@ -215,23 +209,11 @@ export class Project {
       this.fileDeleted(file)
     }
 
-    this.projectEvent.emit('requestDependencyMods', this.version, this.about.modDependencies)
+    this.projectEvent.emit('requestDependencyMods', this.version)
   }
 
-  private onDependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]) {
-    const added = _.difference(newVal, oldVal)
-    const removed = _.difference(oldVal, newVal)
-
-    const removedFiles = AsEnumerable(removed)
-      .Select((dep) => this.dependencyFiles.getValue(dep.packageId))
-      .SelectMany((it) => it)
-      .Select(({ uri }) => File.create({ uri }))
-
-    for (const file of removedFiles) {
-      this.fileDeleted(file)
-    }
-
-    this.projectEvent.emit('requestDependencyMods', this.version, added)
+  private onDependencyModsChanged() {
+    this.triggerRequestDependencyMods()
   }
 
   private onTypeInfoChanged(typeInfoMap: TypeInfoMap) {
@@ -243,15 +225,18 @@ export class Project {
     this.clear()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
 
-    /*
-    const oldFiles = [...this.files]
-    this.xmlDocumentMap.clear()
-    this.files.clear()
-    this.dependencyFiles.clear()
-    */
-
     for (const [uri, file] of files) {
       this.fileAdded(file)
+    }
+  }
+
+  private triggerRequestDependencyMods() {
+    if (this.dependencyRequestTimeout) {
+      clearTimeout(this.dependencyRequestTimeout)
+      this.dependencyRequestTimeout = setTimeout(() => {
+        this.projectEvent.emit('requestDependencyMods', this.version)
+      }, this.dependencyRequestTimeoutTime)
+    } else {
     }
   }
 }

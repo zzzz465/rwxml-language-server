@@ -1,20 +1,14 @@
-import { DefDatabase, NameDatabase, TypeInfoInjector, TypeInfoMap } from '@rwxml/analyzer'
+import { TypeInfoMap } from '@rwxml/analyzer'
 import EventEmitter from 'events'
 import { container, singleton } from 'tsyringe'
-import { DefManager } from './defManager'
 import { DependencyFile, File } from './fs'
-import { ResourceManager } from './fs/resourceManager'
-import { About, Dependency } from './mod'
 import { LoadFolder } from './mod/loadfolders'
-import { ModManager } from './mod/modManager'
 import { Project } from './project'
-import { TextDocumentManager } from './textDocumentManager'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
-import { RangeConverter } from './utils/rangeConverter'
 
 // event that Projects will emit.
 interface ProjectManagerEvent {
-  requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
+  requestDependencyMods(version: RimWorldVersion): void
   dependencyModsResponse(_: unknown, files: File[]): void
   fileAdded(version: string, file: File): void
   fileChanged(version: string, file: File): void
@@ -133,8 +127,8 @@ export class ProjectManager {
     this.getProject(version)
   }
 
-  private onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
-    this.event.emit('requestDependencyMods', version, dependencies)
+  private onRequestDependencyMods(version: RimWorldVersion) {
+    this.event.emit('requestDependencyMods', version)
   }
 
   private onTypeInfoChanged(version: RimWorldVersion) {

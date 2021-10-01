@@ -1,16 +1,13 @@
 import { EventEmitter } from 'events'
-import { AsEnumerable } from 'linq-es2015'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { DependencyRequest, DependencyResponse } from './events'
-import { Dependency } from './mod'
-import { File } from './fs'
 import { RimWorldVersion } from './typeInfoMapManager'
 import { container, inject, singleton } from 'tsyringe'
 import { ProjectManager } from './projectManager'
 
 interface ListeningEvents {
-  requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
+  requestDependencyMods(version: RimWorldVersion): void
 }
 
 export interface DependencyRequesterEvents {
@@ -27,7 +24,7 @@ export class DependencyRequester {
     event.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
   }
 
-  private async onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
+  private async onRequestDependencyMods(version: RimWorldVersion) {
     const dllUris = this.getProjectDLLUris(version)
 
     const response = await this.connection.sendRequest(DependencyRequest, {
