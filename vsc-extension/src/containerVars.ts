@@ -64,5 +64,15 @@ function getRimWorldDLLDirectoryPath() {
 }
 
 function getDefaultRimWorldDLLDirectoryPath() {
-  return String.raw`C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed`
+  switch (process.platform) {
+    case 'win32':
+      return String.raw`C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed`
+
+    case 'darwin':
+    case 'linux':
+      return ''
+
+    default:
+      throw new Error(`platform: ${process.platform} is not supported.`)
+  }
 }

@@ -42,29 +42,19 @@ platform ${process.platform} cannot use Runtime TypeInfo Extraction, only RimWor
   }
 }
 
-function dotnetAvailable() {
-  const version = getDotnetVersion()
-  if (version) {
-    console.log(`dotnet version: ${version}`)
-    return true
-  } else {
-    return false
-  }
-}
-
-function getDotnetVersion(): semver.SemVer | undefined {
+function dotnetAvailable(): boolean {
   switch (process.platform) {
     case 'win32':
-      return getDotnetVersionWindows()
+      return !!getDotnetVersionWindows()
 
     case 'linux':
-      return getDotnetVersionLinux()
+      return !!getDotnetVersionLinux()
 
     case 'darwin':
-      return getDotnetVersionOSX()
+      return !!getDotnetVersionOSX()
 
     default:
-      return
+      return false
   }
 }
 
@@ -75,9 +65,11 @@ function getDotnetVersionWindows() {
 }
 
 function getDotnetVersionLinux() {
-  return undefined
+  const stdout = execSync('mono --version', { encoding: 'utf-8' }).trim()
+  return stdout ?? undefined
 }
 
 function getDotnetVersionOSX() {
-  return undefined
+  const stdout = execSync('mono --version', { encoding: 'utf-8' }).trim()
+  return stdout ?? undefined
 }

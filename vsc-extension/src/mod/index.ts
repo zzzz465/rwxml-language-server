@@ -1,5 +1,7 @@
 import { Uri } from 'vscode'
 import process from 'process'
+import os from 'os'
+import path from 'path'
 import { container } from 'tsyringe'
 import { ModManager } from './modManager'
 import { DependencyDirectoriesKey } from '../containerVars'
@@ -46,8 +48,13 @@ function getDefaultWorkshopModsDirectoryUri(): Uri {
     case 'win32':
       return Uri.file('C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\294100')
 
-    case 'darwin':
-      throw new Error('platform drawin is not supported YET. please make an issue.')
+    case 'darwin': {
+      const homeDir = os.homedir()
+      const darwinDefaultSteamPath = 'Library/Application Support/Steam/Steamapps/workshop/content/294100'
+      const localModDirectoryPath = path.join(homeDir, darwinDefaultSteamPath)
+
+      return Uri.file(localModDirectoryPath)
+    }
 
     case 'linux':
       throw new Error('platform linux is not supported YET. please make an issue.')
@@ -68,8 +75,13 @@ function getDefaultCoreDirectoryUri(): Uri {
     case 'win32':
       return Uri.file('C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Data')
 
-    case 'darwin':
-      throw new Error('platform drawin is not supported YET. please make an issue.')
+    case 'darwin': {
+      const homeDir = os.homedir()
+      const darwinDefaultSteamPath = 'Library/Application Support/Steam/Steamapps/common/RimWorld/RimWorldMac.app/Data'
+      const coreModDirectoryPath = path.join(homeDir, darwinDefaultSteamPath)
+
+      return Uri.file(coreModDirectoryPath)
+    }
 
     case 'linux':
       throw new Error('platform linux is not supported YET. please make an issue.')
@@ -90,8 +102,13 @@ function getDefaultLocalModDirectoryUri(): Uri {
     case 'win32':
       return Uri.file('C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods')
 
-    case 'darwin':
-      throw new Error('platform drawin is not supported YET. please make an issue.')
+    case 'darwin': {
+      const homeDir = os.homedir()
+      const darwinDefaultSteamPath = 'Library/Application Support/Steam/Steamapps/common/RimWorld/RimWorldMac.app/Mods'
+      const localModDirectoryPath = path.join(homeDir, darwinDefaultSteamPath)
+
+      return Uri.file(localModDirectoryPath)
+    }
 
     case 'linux':
       throw new Error('platform linux is not supported YET. please make an issue.')
@@ -111,6 +128,15 @@ function getDefaultRimWorldDLLDirectoryUri(): Uri {
   switch (process.platform) {
     case 'win32':
       return Uri.file(String.raw`C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed`)
+
+    case 'darwin': {
+      const homeDir = os.homedir()
+      const darwinDefaultDLLPath =
+        'Library/Application Support/Steam/Steamapps/common/RimWorld/RimWorldMac.app/contents/Resources/Data/managed'
+      const localModDirectoryPath = path.join(homeDir, darwinDefaultDLLPath)
+
+      return Uri.file(localModDirectoryPath)
+    }
 
     default:
       throw new Error(`platform ${process.platform} is not supported.`)
