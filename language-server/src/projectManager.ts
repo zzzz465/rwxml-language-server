@@ -24,13 +24,21 @@ interface ListeningEvents {
 @singleton()
 export class ProjectManager {
   public readonly event: EventEmitter<ProjectManagerEvent> = new EventEmitter()
-  private projects: Map<RimWorldVersion, Project> = new Map()
+  private projects: Record<RimWorldVersion, Project>
   private readonly loadFolder: LoadFolder
   private readonly typeInfoMapManager: TypeInfoMapManager
 
   constructor() {
     this.loadFolder = container.resolve(LoadFolder)
     this.typeInfoMapManager = container.resolve(TypeInfoMapManager)
+
+    this.projects = {
+      '1.0': this.newProject('1.0'),
+      '1.1': this.newProject('1.1'),
+      '1.2': this.newProject('1.2'),
+      '1.3': this.newProject('1.3'),
+      default: this.newProject('default'),
+    }
   }
 
   listen(notiEvent: EventEmitter<ListeningEvents>): void {
@@ -42,12 +50,7 @@ export class ProjectManager {
   }
 
   getProject(version: RimWorldVersion): Project {
-    let project = this.projects.get(version)
-
-    if (!project) {
-      project = this.newProject(version)
-      this.projects.set(version, project)
-    }
+    const project = this.projects[version]
 
     return project
   }
