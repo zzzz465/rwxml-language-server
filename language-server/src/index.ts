@@ -30,7 +30,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   const projectManager = container.resolve(ProjectManager)
   const languageFeature = container.resolve(LanguageFeature)
   const modManager = container.resolve(ModManager)
-  const dependencyRequester = container.resolve(DependencyRequester)
   const typeInfoMapManager = container.resolve(TypeInfoMapManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
@@ -40,31 +39,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   languageFeature.listen(connection)
   modManager.listen(connection)
   about.listen(notificationEventManager.preEvent)
-  dependencyRequester.listen(projectManager.event)
-
-  // bind
-  // TODO: improve this code
-  dependencyRequester.event.on('dependencyModsResponse', (response) => {
-    const files: File[] = []
-    for (const { defs, packageId, readonly } of response.items) {
-      for (const { uri, text } of defs) {
-        files.push(
-          File.create({
-            uri: URI.parse(uri),
-            ownerPackageId: packageId,
-            readonly,
-            text,
-          })
-        )
-      }
-    }
-
-    if (response.typeInfos.length > 0) {
-      typeInfoMapManager.typeInfoChanged(response.version, response.typeInfos)
-    }
-
-    projectManager.onDependencyModsResponse(files)
-  })
 
   const initializeResult: InitializeResult = {
     capabilities: {

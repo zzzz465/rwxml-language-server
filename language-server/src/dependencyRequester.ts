@@ -1,46 +1,30 @@
-import { EventEmitter } from 'events'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { DependencyRequest, DependencyResponse } from './events'
+import { DependencyRequest } from './events'
+import { injectable, container } from 'tsyringe'
 import { RimWorldVersion } from './typeInfoMapManager'
-import { inject, singleton } from 'tsyringe'
-import { Project } from './project'
+import { Dependency } from './mod'
 
-interface ListeningEvents {
-  requestDependencyMods(sender: Project): void
+export interface RequestDependencyParams {
+  version: RimWorldVersion
+  dependencies: Dependency[]
+  dlls: URI[]
 }
 
-export interface DependencyRequesterEvents {
-  dependencyModsResponse(response: DependencyResponse): void
-}
-
-@singleton()
+@injectable()
 export class DependencyRequester {
-  public readonly event: EventEmitter<DependencyRequesterEvents> = new EventEmitter()
+  private readonly connection = container.resolve<Connection>('connection')
 
-  constructor(@inject('connection') private readonly connection: Connection) {}
-
-  listen(event: EventEmitter<ListeningEvents>) {
-    event.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
-  }
-
-  private async onRequestDependencyMods(sender: Project) {
-    const dependencyPackageIds = sender.about.modDependencies.map((dep) => dep.packageId)
-    const dllUris = sender.dllFiles.map((uri) => uri.toString())
+  async requestDependencies({ dependencies, dlls, version }: RequestDependencyParams) {
+    const pkgIds = dependencies.map((dep) => dep.packageId)
+    const dllUris = dlls.map((uri) => uri.toString())
 
     const response = await this.connection.sendRequest(DependencyRequest, {
-      version: sender.version,
-      packageIds: dependencyPackageIds,
+      version: version,
+      packageIds: pkgIds,
       dlls: dllUris,
     })
 
-    // convert encoded string to Uri
-    for (const item of response.items) {
-      for (const def of item.defs) {
-        def.uri = URI.parse(def.uri) as any
-      }
-    }
-
-    this.event.emit('dependencyModsResponse', response)
+    return response
   }
 }

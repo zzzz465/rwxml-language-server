@@ -1,4 +1,3 @@
-import { TypeInfoMap } from '@rwxml/analyzer'
 import EventEmitter from 'events'
 import { container, singleton } from 'tsyringe'
 import { DependencyFile, File } from './fs'
@@ -8,12 +7,9 @@ import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 
 // event that Projects will emit.
 interface ProjectManagerEvent {
-  requestDependencyMods(version: RimWorldVersion): void
-  dependencyModsResponse(_: unknown, files: File[]): void
   fileAdded(version: string, file: File): void
   fileChanged(version: string, file: File): void
   fileDeleted(version: string, file: File): void
-  typeInfoChanged(version: string, typeInfoMap: TypeInfoMap): void
 }
 
 // events that ProjectManager will listen.
@@ -23,7 +19,6 @@ interface ListeningEvents {
   projectFileDeleted(file: File): void
   workspaceInitialized(files: File[]): void
   contentChanged(file: File): void
-  typeInfoChanged(): void
 }
 
 @singleton()
@@ -36,7 +31,6 @@ export class ProjectManager {
   constructor() {
     this.loadFolder = container.resolve(LoadFolder)
     this.typeInfoMapManager = container.resolve(TypeInfoMapManager)
-    this.typeInfoMapManager.event.on('typeInfoChanged', this.onTypeInfoChanged.bind(this))
   }
 
   listen(notiEvent: EventEmitter<ListeningEvents>): void {
@@ -53,8 +47,6 @@ export class ProjectManager {
     if (!project) {
       project = this.newProject(version)
       this.projects.set(version, project)
-      // if project is created, it must request dependencyMods first, otherwise dependency will not loaded.
-      project.reloadDependencyMods()
     }
 
     return project
@@ -66,7 +58,6 @@ export class ProjectManager {
 
     eventFilter.listen(this.event)
     project.listen(eventFilter.event)
-    project.projectEvent.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
 
     return project
   }
@@ -119,21 +110,8 @@ export class ProjectManager {
     }
   }
 
-  onDependencyModsResponse(files: File[]) {
-    this.event.emit('dependencyModsResponse', undefined, files)
-  }
-
   private ensureProjectOfVersionExists(version: RimWorldVersion): void {
     this.getProject(version)
-  }
-
-  private onRequestDependencyMods(version: RimWorldVersion) {
-    this.event.emit('requestDependencyMods', version)
-  }
-
-  private onTypeInfoChanged(version: RimWorldVersion) {
-    const typeInfoMap = this.typeInfoMapManager.getTypeInfoMap(version)
-    this.event.emit('typeInfoChanged', version, typeInfoMap)
   }
 }
 
@@ -154,8 +132,6 @@ class EventVersionFilter {
     event.on('fileAdded', this.onFileAdded.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))
-    event.on('dependencyModsResponse', (_, files) => this.event.emit('dependencyModsResponse', files))
-    event.on('typeInfoChanged', this.typeInfoChanged.bind(this))
   }
 
   private onFileAdded(version: RimWorldVersion, file: File) {
@@ -173,12 +149,6 @@ class EventVersionFilter {
   private onFileDeleted(version: RimWorldVersion, file: File) {
     if (this.ignoreFilter(file) || this.loadFolders.isBelongsTo(file.uri).includes(this.version)) {
       this.event.emit('fileDeleted', file)
-    }
-  }
-
-  private typeInfoChanged(version: RimWorldVersion, typeInfoMap: TypeInfoMap) {
-    if (this.version === version) {
-      this.event.emit('typeInfoChanged', typeInfoMap)
     }
   }
 

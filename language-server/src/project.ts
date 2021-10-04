@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
+import { Def, DefDatabase, Document, Injectable, NameDatabase, parse } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
 import { XMLFile, File, DependencyFile, DLLFile } from './fs'
@@ -8,15 +8,14 @@ import { RangeConverter } from './utils/rangeConverter'
 import { About } from './mod'
 import { RimWorldVersion, TypeInfoMapManager } from './typeInfoMapManager'
 import { DefaultDictionary } from 'typescript-collections'
-import { AsEnumerable } from 'linq-es2015'
 import { ModManager } from './mod/modManager'
 import { ResourceManager } from './fs/resourceManager'
 import { container, injectable } from 'tsyringe'
 import { LoadFolder } from './mod/loadfolders'
+import { DependencyRequester } from './dependencyRequester'
 
 // event that Project will emit
 export interface ProjectEvents {
-  requestDependencyMods(sender: Project): void
   defChanged(injectables: (Injectable | Def)[]): void
 }
 
@@ -25,8 +24,6 @@ interface ListeningEvents {
   fileAdded(file: File): void
   fileChanged(file: File): void
   fileDeleted(file: File): void
-  dependencyModsResponse(files: File[]): void
-  typeInfoChanged(typeInfoMap: TypeInfoMap): void
 }
 
 @injectable()
@@ -43,25 +40,75 @@ export class Project {
 
   // Dict<packageId, Set<uri>>
   private dependencyFiles: DefaultDictionary<string, Set<DependencyFile>> = new DefaultDictionary(() => new Set())
-  public readonly about!: About
-  public readonly modManager!: ModManager
-  public readonly rangeConverter!: RangeConverter
-  private readonly textDocumentManager!: TextDocumentManager
+  public readonly about: About = container.resolve(About)
+  public readonly modManager: ModManager = container.resolve(ModManager)
+  public readonly rangeConverter: RangeConverter = container.resolve(RangeConverter)
+  private readonly textDocumentManager: TextDocumentManager = container.resolve(TextDocumentManager)
   public resourceManager!: ResourceManager
   public defManager!: DefManager
 
   // delay firing dependencyRequest in case of more changes happen after.
-  private dependencyRequestTimeout?: NodeJS.Timeout
+  private dependencyRequestTimeout: NodeJS.Timeout | null = null
+  private requestLock = false
   private readonly dependencyRequestTimeoutTime = 3000 // 3 second
 
   constructor(public readonly version: RimWorldVersion) {
-    // TODO: use in-line initialization
-    this.about = container.resolve(About)
-    this.modManager = container.resolve(ModManager)
-    this.rangeConverter = container.resolve(RangeConverter)
-    this.textDocumentManager = container.resolve(TextDocumentManager)
-
     this.reload()
+    this.triggerRequestDependencies()
+  }
+
+  private triggerRequestDependencies() {
+    if (this.requestLock) {
+      return
+    }
+
+    if (this.dependencyRequestTimeout) {
+      this.dependencyRequestTimeout.refresh()
+    } else {
+      this.dependencyRequestTimeout = setTimeout(this.requestDependencies.bind(this), this.dependencyRequestTimeoutTime)
+    }
+  }
+
+  private async requestDependencies() {
+    this.requestLock = true
+    const requester = container.resolve(DependencyRequester)
+
+    try {
+      const res = await requester.requestDependencies({
+        dependencies: this.about.modDependencies,
+        dlls: this.dllFiles.map((file) => file.uri),
+        version: this.version,
+      })
+
+      // update typeInfos only if data is sent.
+      if (res.typeInfos.length > 0) {
+        const typeInfoMapManager = container.resolve(TypeInfoMapManager)
+        typeInfoMapManager.updateTypeInfo(this.version, res.typeInfos)
+      }
+
+      // add all requested files
+      for (const item of res.items) {
+        for (const def of item.defs) {
+          const file = File.create({
+            uri: URI.parse(def.uri),
+            text: def.text,
+            ownerPackageId: item.packageId,
+            readonly: item.readonly,
+          })
+
+          this.fileAdded(file)
+        }
+      }
+
+      // re-evaluate all files using new TypeInfo
+      this.reload()
+    } catch (err) {
+      log.error(err)
+      this.reload()
+    }
+
+    this.requestLock = false
+    this.dependencyRequestTimeout = null
   }
 
   /**
