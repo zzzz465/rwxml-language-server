@@ -1,5 +1,8 @@
 import 'reflect-metadata'
 
+import { initializeLogger } from './logging'
+initializeLogger()
+
 import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver/node'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
@@ -8,21 +11,16 @@ import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
 import { ModManager } from './mod/modManager'
-import { DependencyRequester } from './dependencyRequester'
-import { initializeLogger } from './logging'
-import { File } from './fs'
-import { URI } from 'vscode-uri'
 import { container } from 'tsyringe'
-import { TypeInfoMapManager } from './typeInfoMapManager'
-
-initializeLogger()
+import { ConnectionWrapper } from './connection'
 
 const connection = createConnection(ProposedFeatures.all)
+container.register('connection', { useValue: connection })
+const connectionWrapper = container.resolve(ConnectionWrapper)
 
 connection.onInitialize(async (params: InitializeParams) => {
   log.info('hello world! initializing @rwxml-language-server/language-server ...')
 
-  container.register('connection', { useValue: connection })
   const about = container.resolve(About)
   const loadFolder = container.resolve(LoadFolder)
   const textDocumentManager = container.resolve(TextDocumentManager)
@@ -30,7 +28,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   const projectManager = container.resolve(ProjectManager)
   const languageFeature = container.resolve(LanguageFeature)
   const modManager = container.resolve(ModManager)
-  const typeInfoMapManager = container.resolve(TypeInfoMapManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(connection)

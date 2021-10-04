@@ -13,6 +13,7 @@ import { ResourceManager } from './fs/resourceManager'
 import { container, injectable } from 'tsyringe'
 import { LoadFolder } from './mod/loadfolders'
 import { DependencyRequester } from './dependencyRequester'
+import * as winston from 'winston'
 
 // event that Project will emit
 export interface ProjectEvents {
@@ -33,6 +34,8 @@ export class Project {
   // Map<uri, File>
   private files: Map<string, File> = new Map()
   private _DLLfiles: Map<string, DLLFile> = new Map()
+  private format = winston.format.printf((info) => `[${this.version}] ${info.message}`)
+  private log = winston.createLogger({ transports: log, format: this.format })
 
   get dllFiles(): DLLFile[] {
     return [...this._DLLfiles.values()]
@@ -70,15 +73,23 @@ export class Project {
   }
 
   private async requestDependencies() {
+    if (this.requestLock) {
+      return
+    }
+
+    this.log.debug(`acquiring project lock, version: ${this.version}`)
     this.requestLock = true
     const requester = container.resolve(DependencyRequester)
 
     try {
+      this.log.debug('sending requests...')
       const res = await requester.requestDependencies({
         dependencies: this.about.modDependencies,
         dlls: this.dllFiles.map((file) => file.uri),
         version: this.version,
       })
+
+      this.log.debug(`received dependencyRequest, items: ${res.items.length}, dlls: ${res.typeInfos.length}`)
 
       // update typeInfos only if data is sent.
       if (res.typeInfos.length > 0) {
@@ -103,10 +114,11 @@ export class Project {
       // re-evaluate all files using new TypeInfo
       this.reload()
     } catch (err) {
-      log.error(err)
+      this.log.error(err)
       this.reload()
     }
 
+    this.log.debug(`releasing project lock, version: ${this.version}`)
     this.requestLock = false
     this.dependencyRequestTimeout = null
   }
@@ -211,7 +223,7 @@ export class Project {
   }
 
   private onDefFileChanged(file: XMLFile) {
-    log.debug(`def changed, version: ${this.version}, uri: ${file.toString()}`)
+    this.log.debug(`def changed, uri: ${file.toString()}`)
     const uri = file.uri.toString()
     const document = parse(file.text, uri)
 
@@ -227,7 +239,7 @@ export class Project {
   }
 
   private onDefFileDeleted(file: XMLFile) {
-    log.debug(`def deleted, version: ${this.version}, uri: ${file.toString()}`)
+    this.log.debug(`def deleted, version: ${this.version}, uri: ${file.toString()}`)
     const uri = file.uri.toString()
     const document = parse(file.text, uri)
 
@@ -242,9 +254,11 @@ export class Project {
 
   private onDLLFileAdded(file: DLLFile) {
     this._DLLfiles.set(file.uri.toString(), file)
+    this.triggerRequestDependencies()
   }
 
   private onDLLFileDeleted(file: DLLFile) {
     this._DLLfiles.delete(file.uri.toString())
+    this.triggerRequestDependencies()
   }
 }

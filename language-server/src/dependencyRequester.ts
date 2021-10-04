@@ -4,6 +4,7 @@ import { DependencyRequest } from './events'
 import { injectable, container } from 'tsyringe'
 import { RimWorldVersion } from './typeInfoMapManager'
 import { Dependency } from './mod'
+import { ConnectionWrapper } from './connection'
 
 export interface RequestDependencyParams {
   version: RimWorldVersion
@@ -31,8 +32,6 @@ export class DependencyRequester {
   }
 
   private async waitConnectionTobeReady() {
-    return new Promise((res) => {
-      this.connection.onInitialized((params) => res(undefined))
-    })
+    await container.resolve(ConnectionWrapper).waitInitialization()
   }
 }

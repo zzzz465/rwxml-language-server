@@ -1,8 +1,7 @@
-import { TransformableInfo } from '.pnpm/logform@2.2.0/node_modules/logform'
 import winston from 'winston'
 
 export function initializeLogger() {
-  winston.configure({
+  const log = winston.createLogger({
     transports: [
       new winston.transports.Console({
         level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
@@ -10,6 +9,6 @@ export function initializeLogger() {
       }),
     ],
   })
-}
 
-global.log = winston
+  global.log = log
+}
