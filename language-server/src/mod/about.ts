@@ -21,7 +21,7 @@ export interface Dependency {
 
 @singleton()
 export class About {
-  eventEmitter: EventEmitter<AboutEvents> = new EventEmitter()
+  event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _rawXML = ''
   private _name = ''
@@ -75,7 +75,7 @@ export class About {
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
       this._modDependencies = newVal.modDependencies
-      this.eventEmitter.emit('dependencyModsChanged', this)
+      this.event.emit('dependencyModsChanged', this)
     }
 
     this._name = newVal.name ?? ''

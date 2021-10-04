@@ -19,6 +19,8 @@ export class DependencyRequester {
     const pkgIds = dependencies.map((dep) => dep.packageId)
     const dllUris = dlls.map((uri) => uri.toString())
 
+    await this.waitConnectionTobeReady()
+
     const response = await this.connection.sendRequest(DependencyRequest, {
       version: version,
       packageIds: pkgIds,
@@ -26,5 +28,11 @@ export class DependencyRequester {
     })
 
     return response
+  }
+
+  private async waitConnectionTobeReady() {
+    return new Promise((res) => {
+      this.connection.onInitialized((params) => res(undefined))
+    })
   }
 }
