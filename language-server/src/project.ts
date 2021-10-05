@@ -58,6 +58,10 @@ export class Project {
   constructor(public readonly version: RimWorldVersion) {
     this.reload()
     this.triggerRequestDependencies()
+
+    this.about.event.on('dependencyModsChanged', (about) => {
+      this.triggerRequestDependencies()
+    })
   }
 
   private triggerRequestDependencies() {
