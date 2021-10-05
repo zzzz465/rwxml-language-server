@@ -25,6 +25,8 @@ const config = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.languageServerEntryPath': JSON.stringify('./dist/language-server/index.js'),
+      'process.env.EXTRACTOR_PATH_WIN32': JSON.stringify('./dist/extractor'),
+      'process.env.EXTRACTOR_PATH_LINUX': JSON.stringify('./dist/extractor'),
       'process.env.isWebpack': JSON.stringify(true),
     })
   ],

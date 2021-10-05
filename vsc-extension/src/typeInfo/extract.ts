@@ -1,15 +1,26 @@
-import { execFile } from 'child_process'
+import { execFile, ChildProcess } from 'child_process'
 import { createServer } from 'net'
 import { container } from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { RimWorldDLLDirectoryKey } from '../containerVars'
 
 function getExtractorDirectory() {
-  const path = process.env.EXTRACTOR_PATH
-  if (path) {
-    return path
+  let processPath: string | undefined = undefined
+  switch (process.platform) {
+    case 'win32':
+      processPath = process.env.EXTRACTOR_PATH_WIN32
+      break
+
+    case 'darwin':
+    case 'linux':
+      processPath = process.env.EXTRACTOR_PATH_LINUX
+      break
+  }
+
+  if (processPath) {
+    return processPath
   } else {
-    throw new Error(`file: ${path} is not a valid extractor.`)
+    throw new Error(`file: ${processPath} is not a valid extractor.`)
   }
 }
 
@@ -24,14 +35,20 @@ function initExtractorProcess(dllPaths: string[]) {
   const cwd = getCWD()
   const dllPath = container.resolve<string>(RimWorldDLLDirectoryKey)
 
-  const process = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
-  process.stdout?.setEncoding('utf-8')
-  process.stderr?.setEncoding('utf-8')
+  let p: ChildProcess
+  if (process.platform === 'win32') {
+    p = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
+  } else {
+    p = execFile('mono', ['extractor.exe', dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
+  }
 
-  process.stdout?.on('data', console.log)
-  process.stderr?.on('data', console.error)
+  p.stdout?.setEncoding('utf-8')
+  p.stderr?.setEncoding('utf-8')
 
-  return process
+  p.stdout?.on('data', console.log)
+  p.stderr?.on('data', console.error)
+
+  return p
 }
 
 const timeout = 30000 // 30 second

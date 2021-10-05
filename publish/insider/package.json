@@ -7,9 +7,10 @@
   "main": "dist/client/index.js",
   "scripts": {
     "vsc-extension:build": "pnpx webpack --config client.webpack.config.js --mode production",
+    "extractor:build": "pnpm build --dir ../../extractor -- /p:OutputPath=./../../publish/insider/dist/extractor",
     "language-server:build": "pnpx webpack --config server.webpack.config.js --mode production",
     "clear-build": "pnpx rimraf dist",
-    "build": "pnpm run clear-build && pnpm run vsc-extension:build && pnpm run language-server:build"
+    "build": "pnpm run clear-build && pnpm run vsc-extension:build && pnpm run extractor:build && pnpm run language-server:build"
   },
   "repository": "https://www.github.com/zzzz465/rwxml-language-server",
   "bugs": {

@@ -1,5 +1,7 @@
 import { container } from 'tsyringe'
 import { Disposable } from 'vscode'
+import * as os from 'os'
+import * as path from 'path'
 import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri } from './mod'
 
 export const coreDirectoryKey = Symbol('container key of core directory uri')
@@ -69,8 +71,13 @@ function getDefaultRimWorldDLLDirectoryPath() {
       return String.raw`C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed`
 
     case 'darwin':
-    case 'linux':
-      return ''
+    case 'linux': {
+      const homeDir = os.homedir()
+      const rimWorldDLLDirPath =
+        'Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed'
+
+      return path.join(homeDir, rimWorldDLLDirPath)
+    }
 
     default:
       throw new Error(`platform: ${process.platform} is not supported.`)

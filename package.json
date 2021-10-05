@@ -27,5 +27,8 @@
   },
   "dependencies": {
     "rimraf": "^3.0.2"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^9.0.1"
   }
 }
