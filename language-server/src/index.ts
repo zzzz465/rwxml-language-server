@@ -1,5 +1,9 @@
+import 'reflect-metadata'
+
+import { initializeLogger } from './logging'
+initializeLogger()
+
 import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver/node'
-import { TypeInfoMapManager } from './typeInfoMapManager'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { ProjectManager } from './projectManager'
@@ -7,24 +11,23 @@ import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
 import { ModManager } from './mod/modManager'
-import { DependencyRequester } from './dependencyRequester'
-import { initializeLogger } from './logging'
-
-initializeLogger()
+import { container } from 'tsyringe'
+import { ConnectionWrapper } from './connection'
 
 const connection = createConnection(ProposedFeatures.all)
-const about = new About()
-const loadFolder: LoadFolder = new LoadFolder()
-const textDocumentManager = new TextDocumentManager()
-const typeInfoMapManager = new TypeInfoMapManager()
-const notificationEventManager = new NotificationEventManager()
-const modManager = new ModManager()
-const projectManager = new ProjectManager(about, loadFolder, modManager, typeInfoMapManager, textDocumentManager)
-const languageFeature = new LanguageFeature(loadFolder, projectManager)
-const dependencyRequester = new DependencyRequester(connection)
+container.register('connection', { useValue: connection })
+const connectionWrapper = container.resolve(ConnectionWrapper)
 
 connection.onInitialize(async (params: InitializeParams) => {
   log.info('hello world! initializing @rwxml-language-server/language-server ...')
+
+  const about = container.resolve(About)
+  const loadFolder = container.resolve(LoadFolder)
+  const textDocumentManager = container.resolve(TextDocumentManager)
+  const notificationEventManager = container.resolve(NotificationEventManager)
+  const projectManager = container.resolve(ProjectManager)
+  const languageFeature = container.resolve(LanguageFeature)
+  const modManager = container.resolve(ModManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(connection)
@@ -33,10 +36,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   languageFeature.listen(connection)
   modManager.listen(connection)
   about.listen(notificationEventManager.preEvent)
-  dependencyRequester.listen(projectManager.event)
-
-  // bind
-  dependencyRequester.event.on('dependencyModsResponse', (files) => projectManager.onDependencyModsResponse(files))
 
   const initializeResult: InitializeResult = {
     capabilities: {

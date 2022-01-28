@@ -1,31 +1,27 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Disposable, env, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
+import 'reflect-metadata'
+import { Disposable, ExtensionContext, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
-import { printXMLDocumentObjectHandler } from './commands'
 import * as path from 'path'
-import vscode from 'vscode'
-import { registerFeatures, updateDecoration } from './features'
-import {
-  ModChangedNotificationParams,
-  ProjectFileAdded,
-  ProjectFileChanged,
-  ProjectFileDeleted,
-  WorkspaceInitialization,
-} from './events'
+import { container } from 'tsyringe'
+import * as features from './features'
+import { ModChangedNotificationParams, WorkspaceInitialization } from './events'
 import { ModManager } from './mod/modManager'
-import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri, SerializedAbout } from './mod'
-import { DependencyManager } from './dependencyManager'
+import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
+import * as containerVars from './containerVars'
+import * as commands from './commands'
+import * as mods from './mod'
+import * as projectWatcher from './projectWatcher'
+import { isXML } from './utils/path'
 
-let client: LanguageClient
-let disposed = false
-let fileSystemWatcher: FileSystemWatcher
-let modManager: ModManager
-let dependencyManager: DependencyManager
 const disposables: Disposable[] = []
 
-async function sendMods(client: LanguageClient, modManager: ModManager) {
+async function sendMods() {
+  const client = container.resolve(LanguageClient)
+  const modManager = container.resolve(ModManager)
+
   type simpleMod = {
-    about: SerializedAbout
+    about: mods.SerializedAbout
   }
 
   const mods: simpleMod[] = modManager.mods.map((mod) => ({
@@ -40,146 +36,92 @@ async function sendMods(client: LanguageClient, modManager: ModManager) {
   await client.sendNotification(ModChangedNotificationParams, { mods })
 }
 
-const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
-const globPattern = `**/*.{${watchedExts.join(',')}}`
+async function initialLoadFilesFromWorkspace() {
+  const uris = await workspace.findFiles(projectWatcher.globPattern)
 
-export async function activate(context: ExtensionContext): Promise<void> {
-  // initalize language server
-  console.log('initializing @rwxml-language-server/vsc-extension ...')
-  const languageServerEntryPath = process.env.languageServerEntryPath
-  if (!languageServerEntryPath) {
-    throw new Error('env.languageServerEntryPath is invalid.')
-  }
-  const languageServerModulePath = path.join(context.extensionPath, languageServerEntryPath)
-  console.log(`languageServerModulePath: ${languageServerModulePath}`)
-  client = await initServer(languageServerModulePath)
-
-  // register commands
-  console.log('register commands...')
-  context.subscriptions.push(...registerFeatures())
-
-  console.log('registering commands done.')
-
-  console.log('register client features...')
-  console.log('register updateDecoration on onDidChangeActiveTextEditor')
-  vscode.window.onDidChangeActiveTextEditor(
-    (e) => {
-      if (e?.document.uri) {
-        updateDecoration(client, e.document.uri.toString())
-      }
-    },
-    undefined,
-    disposables
-  )
-
-  console.log('register updateDecoration on onDidChangeTextDocument')
-  vscode.workspace.onDidChangeTextDocument(
-    (e) => {
-      if (e.document.uri) {
-        updateDecoration(client, e.document.uri.toString())
-      }
-    },
-    undefined,
-    disposables
-  )
-
-  console.log('initializing modManager...')
-  const coreDirectoryUri = getCoreDirectoryUri()
-  const workshopModDirectoryUri = getWorkshopModsDirectoryUri()
-  const localModDirectoryUri = getLocalModDirectoryUri()
-  console.log(`core directory: ${decodeURIComponent(coreDirectoryUri.toString())}`)
-  console.log(`workshop Directory: ${decodeURIComponent(workshopModDirectoryUri.toString())}`)
-  console.log(`local mod directory: ${decodeURIComponent(localModDirectoryUri.toString())}`)
-  modManager = new ModManager([coreDirectoryUri, workshopModDirectoryUri, localModDirectoryUri])
-  await modManager.init()
-  console.log('initializing modManager completed.')
-
-  console.log('initializing dependencyManager...')
-  dependencyManager = new DependencyManager(modManager)
-  dependencyManager.listen(client)
-  console.log('dependencyManager initialized.')
-
-  // wait server to be ready
-  console.log('waiting language-server to be ready...')
-  client.start()
-  await client.onReady()
-  console.log('language-server is ready.')
-
-  console.log('sending mod list to language server...')
-  await sendMods(client, modManager)
-
-  console.log('register decorate update hooks...')
-
-  function callUpdateDecoration(timeout_ms: number) {
-    return function () {
-      const uri = vscode.window.activeTextEditor?.document.uri
-      if (uri) {
-        updateDecoration(client, uri.toString(), timeout_ms)
-      }
-    }
-  }
-
-  // interval hook
-  setInterval(callUpdateDecoration(500), 500)
-  vscode.window.onDidChangeActiveTextEditor(callUpdateDecoration(50), undefined, disposables)
-  vscode.window.onDidChangeVisibleTextEditors(callUpdateDecoration(50), undefined, disposables)
-
-  console.log('registering decorate update interval callback done.')
-
-  console.log('initializing project Watcher...')
-  fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
-  fileSystemWatcher.onDidCreate(async (uri) => {
-    const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString()
-    client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
-  })
-  fileSystemWatcher.onDidChange(async (uri) => {
-    const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString()
-    client.sendNotification(ProjectFileChanged, { uri: uri.toString(), text })
-  })
-  fileSystemWatcher.onDidDelete(async (uri) => {
-    client.sendNotification(ProjectFileDeleted, { uri: uri.toString() })
-  })
-  disposables.push(fileSystemWatcher)
-  console.log('project Watcher initialized.')
-
-  console.log('loading all files from current workspace...')
-  const xmlFiles = await vscode.workspace.findFiles(globPattern)
-  console.log(`${xmlFiles.length} xml files found in current workspace. reading...`)
-  const loadedXMLFiles = await Promise.all(
-    xmlFiles.map(async (uri) => {
-      const rawFile = await vscode.workspace.fs.readFile(uri)
-      const text = Buffer.from(rawFile).toString()
+  const files = await Promise.all(
+    uris.map(async (uri) => {
+      const rawFile = await workspace.fs.readFile(uri)
+      const text = isXML(uri) ? Buffer.from(rawFile).toString() : undefined
 
       return { uri: uri.toString(), text }
     })
   )
-  console.log(`loaded ${loadedXMLFiles.length} files...`)
-  console.log('sending WorkspaceInitialization notification...')
-  await client.sendNotification(WorkspaceInitialization, {
-    files: loadedXMLFiles,
-  })
 
-  console.log('loading current workspace xml files completed.')
+  const client = container.resolve(LanguageClient)
+  client.sendNotification(WorkspaceInitialization, { files })
+}
+
+export async function activate(context: ExtensionContext): Promise<void> {
+  // 1. reset container && set extensionContext
+  console.log('initializing @rwxml/vsc-extension...')
+  container.reset()
+
+  container.register('ExtensionContext', { useValue: context })
+
+  // 2. initialize containers (set values)
+  console.log('initializing container variables...')
+  disposables.push(containerVars.initialize())
+
+  // 2-2. register commands
+  console.log('register commands...')
+  disposables.push(...commands.initialize())
+
+  // 3. initialize language server
+  console.log('initializing Language Server...')
+  const client = await createServer()
+
+  // 4. initialize modManager, dependencyManager
+  console.log('initialize modManager, dependencyManager...')
+  await mods.initialize()
+
+  // 5. start language server and wait
+  client.start()
+  await client.onReady()
+
+  // 6. initialize && wait Runtime TypeInfo Extractor
+  console.log('checking Runtime TypeInfo Extractor available...')
+  checkTypeInfoAnalyzeAvailable()
+
+  // 7. send mod list to language server
+  console.log('sending external mods...')
+  await sendMods()
+
+  // 8. add decorate update
+  console.log('register lsp features...')
+  disposables.push(...features.registerFeatures())
+
+  // 9. set project watcher
+  console.log('initialize Project Watcher...')
+  projectWatcher.initialize()
+
+  // 10. load all files from workspace, send files
+  console.log('load all files from current workspace...')
+  await initialLoadFilesFromWorkspace()
 
   console.log('initialization completed.')
 }
 
 export function deactivate() {
-  if (client) {
-    return client.stop()
+  const client = container.resolve(LanguageClient)
+  if (!client) {
+    throw new Error('trying to deactivate extension, but it was never initialized.')
   }
 
-  if (!disposed) {
-    disposables.map((d) => d.dispose())
-    disposed = true
-  }
+  client.stop()
+  disposables.map((disposable) => disposable.dispose())
 }
 
-async function initServer(modulePath: string) {
+async function createServer() {
+  const context = container.resolve('ExtensionContext') as ExtensionContext
+  const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
+  const module = path.join(context.extensionPath, serverModuleRelativePath)
+  console.log(`server module absolute path: ${module}`)
+
   const serverOptions: ServerOptions = {
-    run: { module: modulePath, transport: TransportKind.ipc },
+    run: { module, transport: TransportKind.ipc },
     debug: {
-      module: modulePath,
+      module,
       transport: TransportKind.ipc,
       options: {
         execArgv: ['--nolazy', '--inspect=6009'],
@@ -196,6 +138,7 @@ async function initServer(modulePath: string) {
   }
 
   const client = new LanguageClient('rwxml-language-server', 'RWXML Language Server', serverOptions, clientOptions)
+  container.register(LanguageClient, { useValue: client })
 
   return client
 }

@@ -1,0 +1,17 @@
+{
+  "name": "extractor",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "install": "nuget restore",
+    "build": "run-script-os",
+    "build:win32": "dotnet build",
+    "build:linux": "msbuild",
+    "build:darwin": "msbuild"
+  },
+  "author": "madeline",
+  "license": "",
+  "dependencies": {
+    "run-script-os": "^1.1.6"
+  }
+}

@@ -1,12 +1,36 @@
-import { Disposable } from 'vscode'
+import { Disposable, window } from 'vscode'
 import vscode from 'vscode'
 const { createTextEditorDecorationType } = vscode.window
 import { LanguageClient, Range } from 'vscode-languageclient'
 import { XMLDocumentDecoItemRequest } from '../events'
 import { DecoItem, DecoType } from '../types'
 import { DefaultDictionary } from 'typescript-collections'
+import { container } from 'tsyringe'
 
 let timeout: NodeJS.Timeout | undefined = undefined
+
+function triggerDecoration() {
+  const client = container.resolve(LanguageClient)
+  const uri = window.activeTextEditor?.document.uri.toString()
+  if (uri) {
+    updateDecoration(client, uri)
+  }
+}
+
+export function registerDecoHook(): Disposable[] {
+  const disposables: Disposable[] = [
+    new (class implements Disposable {
+      timer = setInterval(triggerDecoration, 500)
+      dispose() {
+        clearInterval(this.timer)
+      }
+    })(),
+    window.onDidChangeActiveTextEditor(triggerDecoration),
+    window.onDidChangeVisibleTextEditors(triggerDecoration),
+  ]
+
+  return disposables
+}
 
 export function updateDecoration(client: LanguageClient, uri: string, timeout_ms = 250) {
   if (timeout === undefined) {

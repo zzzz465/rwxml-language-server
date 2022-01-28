@@ -1,7 +1,9 @@
+import { singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { ModChangedNotification, ModChangedNotificationParams } from '../events'
 import { Mod } from './mod'
 
+@singleton()
 export class ModManager {
   private readonly _mods = new Map<string, Mod>()
   get packageIds(): string[] {

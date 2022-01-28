@@ -1,48 +1,37 @@
-import { EventEmitter } from 'events'
-import { AsEnumerable } from 'linq-es2015'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { XMLDocumentDependencyRequest } from './events'
-import { Dependency } from './mod'
-import { File } from './fs'
+import { DependencyRequest } from './events'
+import { injectable, container } from 'tsyringe'
 import { RimWorldVersion } from './typeInfoMapManager'
+import { Dependency } from './mod'
+import { ConnectionWrapper } from './connection'
 
-interface ListeningEvents {
-  requestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]): void
+export interface RequestDependencyParams {
+  version: RimWorldVersion
+  dependencies: Dependency[]
+  dlls: URI[]
 }
 
-export interface DependencyRequesterEvents {
-  dependencyModsResponse(files: File[]): void
-}
-
+@injectable()
 export class DependencyRequester {
-  public readonly event: EventEmitter<DependencyRequesterEvents> = new EventEmitter()
+  private readonly connection = container.resolve<Connection>('connection')
 
-  constructor(private readonly connection: Connection) {}
+  async requestDependencies({ dependencies, dlls, version }: RequestDependencyParams) {
+    const pkgIds = dependencies.map((dep) => dep.packageId)
+    const dllUris = dlls.map((uri) => uri.toString())
 
-  listen(event: EventEmitter<ListeningEvents>) {
-    event.on('requestDependencyMods', this.onRequestDependencyMods.bind(this))
-  }
+    await this.waitConnectionTobeReady()
 
-  private async onRequestDependencyMods(version: RimWorldVersion, dependencies: Dependency[]) {
-    const { items } = await this.connection.sendRequest(XMLDocumentDependencyRequest, {
-      version,
-      packageIds: dependencies.map((d) => d.packageId),
+    const response = await this.connection.sendRequest(DependencyRequest, {
+      version: version,
+      packageIds: pkgIds,
+      dlls: dllUris,
     })
 
-    const files = AsEnumerable(items)
-      .Select(
-        (item) =>
-          ({
-            uri: URI.parse(item.uri),
-            ownerPackageId: item.packageId,
-            readonly: item.readonly,
-            text: item.text,
-          } as File.FileCreateParameters)
-      )
-      .Select((item) => File.create(item))
-      .ToArray()
+    return response
+  }
 
-    this.event.emit('dependencyModsResponse', files)
+  private async waitConnectionTobeReady() {
+    await container.resolve(ConnectionWrapper).waitInitialization()
   }
 }

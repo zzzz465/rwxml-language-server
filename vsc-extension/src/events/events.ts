@@ -36,13 +36,20 @@ export interface XMLDocumentDecoItemResponse {
   items: DecoItem[]
 }
 
-export interface XMLDocumentDependencyRequest {
+export interface DependencyRequest {
   version: RimWorldVersion
   packageIds: string[]
+  dlls: string[]
 }
 
-export interface XMLDocumentDependencyResponse {
-  items: ({ readonly: true; packageId: string } & ProjectFileAddedNotificationParams)[]
+export interface DependencyResponse {
+  version: RimWorldVersion
+  typeInfos: unknown[]
+  items: {
+    readonly: true
+    packageId: string
+    defs: { uri: UrlEncodedString; text?: string }[]
+  }[]
 }
 
 export interface WorkspaceInitializationNotificationParams {
@@ -87,8 +94,6 @@ export const XMLDocumentDecoItemRequest = new RequestType<
   undefined
 >('rwxml-language-server:request:XMLDocumentDecoItem')
 
-export const XMLDocumentDependencyRequest = new RequestType<
-  XMLDocumentDependencyRequest,
-  XMLDocumentDependencyResponse,
-  undefined
->('rwxml-language-server:request:XMLDocumentDependency')
+export const DependencyRequest = new RequestType<DependencyRequest, DependencyResponse, undefined>(
+  'rwxml-language-server:request:DependencyData'
+)

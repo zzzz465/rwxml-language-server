@@ -35,7 +35,11 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
 }
 
 export function isPointingDefReferenceContent(node: Node, offset: number): node is Text {
-  if (node instanceof Text && node.parent instanceof Injectable && node.parent.parent instanceof Injectable) {
+  if (
+    node instanceof Text &&
+    node.parent instanceof Injectable &&
+    (node.parent.parent instanceof Injectable || node.parent.parent instanceof Def)
+  ) {
     if (node.parent.parent.typeInfo.isEnumerable() && node.parent.typeInfo.isDef()) {
       // if node is child of list node
       return true

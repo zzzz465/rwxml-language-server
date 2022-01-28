@@ -7,10 +7,10 @@ import { RimWorldVersion } from './version'
 import glob from 'fast-glob'
 import fs from 'fs/promises'
 import fsSync from 'fs'
-import { AsEnumerable } from 'linq-es2015'
 
 type retType = {
   defs: { uri: Uri; text: string }[]
+  dlls: string[]
 }
 
 export class Mod {
@@ -39,29 +39,43 @@ export class Mod {
     public readonly loadFolder?: LoadFolder
   ) {}
 
+  isDLCMod(): boolean {
+    return this.about.author === 'Ludeon Studios'
+  }
+
   async getDependencyFiles(version?: RimWorldVersion) {
     const ret: retType = {
       defs: [],
+      dlls: [],
     }
 
-    // TODO: refactor this ugly code
+    const dirs: string[] = []
+
     if (version && this.loadFolder) {
-      const dirs = this.loadFolder.getRequiredPaths(version) ?? ['/']
-      const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
-      ret.defs = AsEnumerable(dependencyFiles)
-        .Select((d) => d.defs)
-        .SelectMany((d) => d)
-        .ToArray()
-
-      return ret
+      dirs.push(...this.loadFolder.getRequiredPaths(version))
     } else {
-      return await this.getDependencyFilesFromDirectory('/')
+      // prior to version 1.2, RimWorld only supports Root-Level loading
+      if (!version || version === 'default' || version === '1.0' || version === '1.1') {
+        dirs.push('/')
+      } else {
+        dirs.push('/', version)
+      }
     }
+
+    const dependencyFiles = await Promise.all(dirs.map(this.getDependencyFilesFromDirectory.bind(this)))
+
+    for (const { defs, dlls } of dependencyFiles) {
+      ret.defs = ret.defs.concat(defs)
+      ret.dlls = ret.dlls.concat(dlls)
+    }
+
+    return ret
   }
 
   private async getDependencyFilesFromDirectory(relativeURL: string) {
     const ret: retType = {
       defs: [],
+      dlls: [],
     }
 
     const loadDirectoryRoot = path.join(this.rootDirectory.fsPath, relativeURL)
@@ -76,6 +90,13 @@ export class Mod {
     // check Texture
 
     // check Sound
+
+    // check Assemblies
+    const assembliesPath = path.resolve(loadDirectoryRoot, 'Assemblies')
+    if (!this.isDLCMod() && fsSync.existsSync(assembliesPath)) {
+      const dlls = await this.getDLLAbsUrls(Uri.file(assembliesPath))
+      ret.dlls = dlls
+    }
 
     // check etc...??
 
@@ -93,5 +114,11 @@ export class Mod {
     const files = await Promise.all(promises)
 
     return files
+  }
+
+  private async getDLLAbsUrls(dllDirectoryUri: Uri): Promise<string[]> {
+    const urls = await glob('**/*.dll', { cwd: dllDirectoryUri.fsPath, absolute: true })
+
+    return urls
   }
 }

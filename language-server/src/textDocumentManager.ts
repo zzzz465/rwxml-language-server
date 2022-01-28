@@ -1,4 +1,5 @@
 import EventEmitter from 'events'
+import { singleton } from 'tsyringe'
 import { Connection, TextDocumentChangeEvent, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 
@@ -6,6 +7,7 @@ interface TextDocumentManagerEvents {
   onContentChange(e: TextDocumentChangeEvent<TextDocument>): void
 }
 
+@singleton()
 export class TextDocumentManager {
   public readonly event: EventEmitter<TextDocumentManagerEvents> = new EventEmitter()
   private documents: Map<string, TextDocument> = new Map()

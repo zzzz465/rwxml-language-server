@@ -11,7 +11,7 @@ interface ListeningEvents {
   fileDeleted(file: File): void
 }
 
-export class resourceManager {
+export class ResourceManager {
   textures: Set<string> = new Set()
   audios: Set<string> = new Set()
   audioDirectories = new Counter<string>()

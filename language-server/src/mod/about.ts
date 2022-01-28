@@ -6,9 +6,10 @@ import path from 'path'
 import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
+import { singleton } from 'tsyringe'
 
 export interface AboutEvents {
-  dependencyModsChanged(oldVal: Dependency[], newVal: Dependency[]): void
+  dependencyModsChanged(about: About): void
 }
 
 export interface Dependency {
@@ -18,8 +19,9 @@ export interface Dependency {
   readonly downloadURL?: string
 }
 
+@singleton()
 export class About {
-  eventEmitter: EventEmitter<AboutEvents> = new EventEmitter()
+  event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _rawXML = ''
   private _name = ''
@@ -72,8 +74,8 @@ export class About {
     log.debug(`new dependencies: ${newVal.modDependencies}`)
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
-      this.eventEmitter.emit('dependencyModsChanged', this._modDependencies, newVal.modDependencies)
       this._modDependencies = newVal.modDependencies
+      this.event.emit('dependencyModsChanged', this)
     }
 
     this._name = newVal.name ?? ''
