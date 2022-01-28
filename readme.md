@@ -1,16 +1,24 @@
 # RWXML Language Server
 
-## Why you need it?
+provides various IDE functionalities, as VSCode Extension
 
-### demonstration
+## fetures
 
-## Installation
+- [x] Custom syntax highlighting
+- [x] Basic completion snippets.
+- [x] Real time code analysis.
+- [x] Code Completion.
+- [x] `Go to definition`, `Go to Reference` support.
+- [x] Find all symbol references.
+- [x] find parent / childrenss
+- [x] Symbol rename command.
+- [x] Inheritance Attribute suggestion
+- [x] AlienRace support
+- [x] incremental update & validation
+- [ ] Texture preview
+- [ ] Texture path suggestion
+- [ ] patch operation snippets
 
-## Architecture
-![architecture](./architecture/architecture.png)
+## Install
 
-RWXML Language Server `VSCode client`, `LSP server`, `analyzer` is written with TypeScript.  
-`TypeInfo Extractor` is written with C# that allows to do `Runtime TypeInfo Extraction`.  
-
-
-## Release Strategy
+[VSCode Marketplace (Click)](https://marketplace.visualstudio.com/items?itemName=madeline.rwxml-lang-serv)
