@@ -1,18 +1,51 @@
 on:
   push:
     tags:
+      - 'v*.*.*-master\+[a-zA-Z0-9]+'
       - 'v*.*.*-master'
 
 jobs:
   branch_release:
-    name: push release branch
+    name: Release master version to marketplace
     runs-on:
       - 'ubuntu-latest'
     steps:
+      - uses: actions/setup-node@v2
+      - name: setup libraries
+        shell: bash
+        run: |
+          npm i -g pnpm semver vsce
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: push to release branch
+      - name: get project variables
+        id: var
+        shell: bash
         run: |
-          git switch -c release
-          git push origin release -f
+          echo $(git describe --tags --abbrev=0)
+          current_tag=$(git describe --tags --abbrev=0)
+          echo "current_tag: $current_tag"
+
+          # get tag
+          echo "::set-output name=tag::$current_tag"
+
+          # get semver from tag
+          semver=$(semver "$current_tag" | tr -d '\-master')
+          echo "semver: $semver"
+          echo "::set-output name=semver::$semver"
+      - name: install project
+        shell: bash
+        run: |
+          pnpm install
+      - name: run build
+        working-directory: ./publish/master
+        run: |
+          pnpm install
+          pnpm build
+      - name: publish master version
+        working-directory: ./publish/master
+        if: contains(steps.var.outputs.tag, 'nopublish') == false
+        run: |
+          vsce publish ${{ steps.var.outputs.semver }} -p $VSCE_TOKEN
+        env:
+          VSCE_TOKEN: ${{ secrets.AZURE_VSCE_TOKEN }}
