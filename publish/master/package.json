@@ -2,6 +2,7 @@
   "name": "rwxml-lang-serv",
   "displayName": "RWXML Language Server",
   "version": "0.1.0",
+  "icon": "icon.png",
   "description": "IDE Support for rimworld mod.",
   "module": "node",
   "main": "dist/client/index.js",
