@@ -41,7 +41,7 @@ jobs:
         working-directory: ./publish/master
         run: |
           npm install
-          npm build
+          npm run build
       - name: publish master version
         working-directory: ./publish/master
         if: contains(steps.var.outputs.tag, 'nopublish') == false
