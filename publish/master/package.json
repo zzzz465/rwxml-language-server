@@ -1,5 +1,5 @@
 {
-  "name": "rwxml-language-serv",
+  "name": "rwxml-lang-serv",
   "displayName": "RWXML Language Server",
   "version": "0.1.0",
   "description": "IDE Support for rimworld mod.",
