@@ -1,4 +1,5 @@
 import { container, singleton } from 'tsyringe'
+import { ResourceRequest, ResourceRequestResponse } from './events'
 import { ModManager } from './mod/modManager'
 import { Resource } from './resourceProvider/resource'
 import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider/resourceProvider'
@@ -7,16 +8,11 @@ import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider/res
 export class ResourceRequestHandler {
   constructor(private readonly modManager: ModManager) {}
 
-  private async onResourceRequest(packageId: string, version: string, resourceUri?: string): Promise<void> {
-    // TODO: add return type
-    if (resourceUri) {
-      return this.resourceRequest(packageId, version, resourceUri)
-    } else {
-      return this.BulkResourceRequest(packageId, version)
-    }
-  }
-
-  private async resourceRequest(packageId: string, version: string, resourceUri: string) {
+  private async onResourceRequest({
+    packageId,
+    version,
+    resourceUri,
+  }: ResourceRequest): Promise<ResourceRequestResponse> {
     const mod = this.modManager.getMod(packageId)
     if (!mod) {
       throw new Error(`mod ${mod} not exists on table`)
@@ -26,15 +22,16 @@ export class ResourceRequestHandler {
     const resources: Resource[] = []
 
     for (const provider of resourceProviders) {
-      const resource = await provider.getResource(mod, version, resourceUri)
-      resources.push(...resource)
+      if (resourceUri) {
+        const res = await provider.getResource(mod, version, resourceUri)
+        resources.push(...res)
+      } else {
+        const res = await provider.getResources(mod, version)
+        resources.push(...res)
+      }
     }
 
-    return resources
-  }
-
-  private async BulkResourceRequest(packageId: string, version: string) {
-    throw new Error('not implemented')
+    return { packageId, version, resources }
   }
 
   private getResourceProviders() {

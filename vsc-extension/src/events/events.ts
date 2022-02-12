@@ -1,6 +1,7 @@
 import { NotificationType, RequestType } from 'vscode-languageclient'
 import { SerializedAbout } from '../mod'
 import { RimWorldVersion } from '../mod/version'
+import { Resource } from '../resourceProvider/resource'
 import { DecoItem, UrlEncodedString } from '../types'
 
 export interface ProjectFileAddedNotificationParams {
@@ -62,6 +63,18 @@ export interface ModChangedNotificationParams {
   }[]
 }
 
+export interface ResourceRequest {
+  packageId: string
+  version: string
+  resourceUri?: string
+}
+
+export interface ResourceRequestResponse {
+  packageId: string
+  version: string
+  resources: Resource[]
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -96,4 +109,8 @@ export const XMLDocumentDecoItemRequest = new RequestType<
 
 export const DependencyRequest = new RequestType<DependencyRequest, DependencyResponse, undefined>(
   'rwxml-language-server:request:DependencyData'
+)
+
+export const ResourceRequest = new RequestType<ResourceRequest, ResourceRequestResponse, undefined>(
+  'rwxml-language-server:request:ResourceRequest'
 )
