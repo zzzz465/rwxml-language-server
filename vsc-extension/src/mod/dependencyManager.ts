@@ -1,9 +1,10 @@
 import _ from 'lodash'
-import { CancellationTokenSource, Progress, ProgressLocation, Uri, window } from 'vscode'
+import { Uri } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { DependencyRequest, DependencyResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
 import { ModManager } from './modManager'
+import { ProgressHelper } from './progressHelper'
 import { RimWorldVersion } from './version'
 
 export interface DependencyMetadata {
@@ -13,76 +14,6 @@ export interface DependencyMetadata {
 interface ModDependency {
   defs: Uri[]
   packageId: string
-}
-
-type ProgressParams = Progress<{ message?: string; increment?: number }>
-
-class ProgressHelper {
-  public static async create(version: RimWorldVersion) {
-    const p = new ProgressHelper(version)
-    p.disposedPromise = new Promise((res) => {
-      const interval = setInterval(() => {
-        if (p.disposed) {
-          res(undefined)
-          clearInterval(interval)
-        }
-      }, 500)
-    })
-
-    window.withProgress(
-      {
-        location: ProgressLocation.Notification,
-        cancellable: false,
-        title: `RWXML: Runtime TypeInfo Extraction (RWVersion: ${version})`,
-      },
-      async (progress) => {
-        p.progress = progress
-        return p.disposedPromise
-      }
-    )
-
-    return p
-  }
-
-  public cancellationTokenSource?: CancellationTokenSource
-  public progress!: ProgressParams
-  private disposed = false
-  public disposedPromise!: Promise<void>
-
-  get token() {
-    if (this.disposed) {
-      throw new Error()
-    }
-
-    if (!this.cancellationTokenSource) {
-      this.cancellationTokenSource = new CancellationTokenSource()
-      return this.cancellationTokenSource.token
-    }
-
-    return this.cancellationTokenSource.token
-  }
-
-  constructor(public readonly version: RimWorldVersion) {}
-
-  report(message: string, increment?: number) {
-    this.progress.report({ message, increment })
-  }
-
-  cancel() {
-    if (this.cancellationTokenSource) {
-      this.cancellationTokenSource.cancel()
-      this.cancellationTokenSource.dispose()
-      this.cancellationTokenSource = undefined
-    }
-  }
-
-  dispose() {
-    if (!this.disposed) {
-      this.cancellationTokenSource?.dispose()
-      this.cancellationTokenSource = undefined
-      this.disposed = true
-    }
-  }
 }
 
 export class DependencyManager {
