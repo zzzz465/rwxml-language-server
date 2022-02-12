@@ -50,6 +50,10 @@ export class ModManager {
 
     return ret
   }
+
+  getMod(packageId: string): Mod | undefined {
+    return this._mods.get(packageId)
+  }
 }
 
 async function loadModFromDirectroy(directory: Uri) {
