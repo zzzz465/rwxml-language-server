@@ -1,7 +1,9 @@
-import { Mod } from "..";
-import { Resource } from "./resource";
+import { Mod } from '..'
+import { Resource } from './resource'
 
-export interface ResourceProvider<T extends Resource> {
-  getResource(mod: Mod, uri: string): Promise<T[]>
-  getResources(mod: Mod): Promise<T[]>
+export const ResourceProviderSymbol = Symbol('ResourceProviderSymbol')
+
+export interface ResourceProvider<T extends Resource = Resource> {
+  getResource(mod: Mod, version: string, uri: string): Promise<T[]>
+  getResources(mod: Mod, version: string): Promise<T[]>
 }

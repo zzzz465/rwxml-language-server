@@ -1,12 +1,19 @@
-import { Mod } from "../mod";
-import { XMLResource } from "./resource";
-import { ResourceProvider } from "./resourceProvider";
+import { injectable, registry } from 'tsyringe'
+import { Mod } from '../mod'
+import { XMLResource } from './resource'
+import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider'
 
-export class XMLResourceProvider implements ResourceProvider {
+@registry([
+  {
+    token: ResourceProviderSymbol,
+    useClass: XMLResourceProvider,
+  },
+])
+export class XMLResourceProvider implements ResourceProvider<XMLResource> {
   getResource(mod: Mod, uri: string): Promise<XMLResource[]> {
-    throw new Error("Method not implemented.")
+    throw new Error('Method not implemented.')
   }
   getResources(mod: Mod): Promise<XMLResource[]> {
-    throw new Error("Method not implemented.")
+    throw new Error('Method not implemented.')
   }
 }
