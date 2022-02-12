@@ -10,10 +10,10 @@ import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider'
   },
 ])
 export class XMLResourceProvider implements ResourceProvider<XMLResource> {
-  getResource(mod: Mod, uri: string): Promise<XMLResource[]> {
+  getResource(mod: Mod, version: string, uri: string): Promise<XMLResource[]> {
     throw new Error('Method not implemented.')
   }
-  getResources(mod: Mod): Promise<XMLResource[]> {
+  getResources(mod: Mod, version: string): Promise<XMLResource[]> {
     throw new Error('Method not implemented.')
   }
 }
