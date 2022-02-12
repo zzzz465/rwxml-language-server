@@ -11,11 +11,12 @@ import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
 import * as mods from './mod'
-import * as projectWatcher from './projectWatcher'
 import { isXML } from './utils/path'
+import { ProjectWatcher } from './projectWatcher'
 
 const disposables: Disposable[] = []
 
+// TODO: delete this code
 async function sendMods() {
   const client = container.resolve(LanguageClient)
   const modManager = container.resolve(ModManager)
@@ -34,22 +35,6 @@ async function sendMods() {
   }))
 
   await client.sendNotification(ModChangedNotificationParams, { mods })
-}
-
-async function initialLoadFilesFromWorkspace() {
-  const uris = await workspace.findFiles(projectWatcher.globPattern)
-
-  const files = await Promise.all(
-    uris.map(async (uri) => {
-      const rawFile = await workspace.fs.readFile(uri)
-      const text = isXML(uri) ? Buffer.from(rawFile).toString() : undefined
-
-      return { uri: uri.toString(), text }
-    })
-  )
-
-  const client = container.resolve(LanguageClient)
-  client.sendNotification(WorkspaceInitialization, { files })
 }
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -93,11 +78,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   // 9. set project watcher
   console.log('initialize Project Watcher...')
-  projectWatcher.initialize()
-
-  // 10. load all files from workspace, send files
-  console.log('load all files from current workspace...')
-  await initialLoadFilesFromWorkspace()
+  container.resolve(ProjectWatcher).start()
 
   console.log('initialization completed.')
 }

@@ -1,35 +1,54 @@
-import { container, injectable } from 'tsyringe'
-import { Uri, workspace } from 'vscode'
+import { injectable } from 'tsyringe'
+import vscode, { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
-import { isXML } from './utils/path'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
 export const globPattern = `**/*.{${watchedExts.join(',')}}`
-
-export function initialize() {
-  const projectWatcher = container.resolve(ProjectWatcher)
-  container.register(ProjectWatcher, { useValue: projectWatcher })
-}
 
 @injectable()
 export class ProjectWatcher {
   private readonly fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
 
-  constructor(private readonly client: LanguageClient) {
+  private watching = false
+
+  get isWatching() {
+    return this.watching
+  }
+
+  constructor(private readonly client: LanguageClient) {}
+
+  start(): void {
+    if (this.isWatching) {
+      return
+    }
+
     this.fileSystemWatcher.onDidCreate(this.onDidcreate.bind(this))
     this.fileSystemWatcher.onDidChange(this.onDidChange.bind(this))
     this.fileSystemWatcher.onDidDelete(this.onDidDelete.bind(this))
+
+    this.initLoading()
+
+    this.watching = true
+  }
+
+  /**
+   * scan all files on current workspace for initial loading
+   */
+  private async initLoading() {
+    const uris = await vscode.workspace.findFiles(globPattern)
+
+    for (const uri of uris) {
+      this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
+    }
   }
 
   private async onDidcreate(uri: Uri) {
-    const text = isXML(uri) ? Buffer.from(await workspace.fs.readFile(uri)).toString() : undefined
-    this.client.sendNotification(ProjectFileAdded, { uri: uri.toString(), text })
+    this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
   }
 
   private async onDidChange(uri: Uri) {
-    const text = isXML(uri) ? Buffer.from(await workspace.fs.readFile(uri)).toString() : undefined
-    this.client.sendNotification(ProjectFileChanged, { uri: uri.toString(), text })
+    this.client.sendNotification(ProjectFileChanged, { uri: uri.toString() })
   }
 
   private async onDidDelete(uri: Uri) {
