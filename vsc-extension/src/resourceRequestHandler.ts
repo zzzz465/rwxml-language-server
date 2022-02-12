@@ -1,4 +1,5 @@
 import { container, singleton } from 'tsyringe'
+import { LanguageClient } from 'vscode-languageclient'
 import { ResourceRequest, ResourceRequestResponse } from './events'
 import { ModManager } from './mod/modManager'
 import { Resource } from './resourceProvider/resource'
@@ -7,6 +8,12 @@ import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider/res
 @singleton()
 export class ResourceRequestHandler {
   constructor(private readonly modManager: ModManager) {}
+
+  listen(client: LanguageClient) {
+    client.onReady().then(() => {
+      client.onRequest(ResourceRequest, this.onResourceRequest.bind(this))
+    })
+  }
 
   private async onResourceRequest({
     packageId,
