@@ -1,4 +1,4 @@
-import { Mod } from '..'
+import { Mod } from '../mod'
 import { Resource } from './resource'
 
 export const ResourceProviderSymbol = Symbol('ResourceProviderSymbol')

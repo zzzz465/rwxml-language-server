@@ -6,7 +6,7 @@ import { DependencyRequest, DependencyResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
 import { ModManager } from './modManager'
 import { ProgressHelper } from './progressHelper'
-import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider/resourceProvider'
+import { ResourceProvider, ResourceProviderSymbol } from '../resourceProvider/resourceProvider'
 import { RimWorldVersion } from './version'
 
 export interface DependencyMetadata {

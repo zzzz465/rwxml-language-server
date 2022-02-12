@@ -1,5 +1,5 @@
 import { injectable, registry } from 'tsyringe'
-import { Mod } from '../mod'
+import { Mod } from '../mod/mod'
 import { XMLResource } from './resource'
 import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider'
 
