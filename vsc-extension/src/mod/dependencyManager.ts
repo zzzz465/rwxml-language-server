@@ -1,10 +1,12 @@
 import _ from 'lodash'
+import { container } from 'tsyringe'
 import { Uri } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { DependencyRequest, DependencyResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
 import { ModManager } from './modManager'
 import { ProgressHelper } from './progressHelper'
+import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider/resourceProvider'
 import { RimWorldVersion } from './version'
 
 export interface DependencyMetadata {
@@ -36,7 +38,6 @@ export class DependencyManager {
       items: [],
     }
 
-
     const dllUrls: string[] = [...dlls]
     const dependencyMods = this.modManager.getDependencies(packageIds)
     console.log(`ver: ${version}: loading ${Object.values(dependencyMods).length} dependencies...`)
@@ -51,13 +52,11 @@ export class DependencyManager {
 
       progressHelper.report(`loading defs from ${mod.about.name}`)
 
-      const data = await mod.getDependencyFiles(version)
-      response.items.push({
-        packageId: pkgId,
-        defs: data.defs.map((def) => ({ uri: def.uri.toString(), text: def.text })),
-        readonly: true,
-      })
-      dllUrls.push(...data.dlls)
+      const resourceProviders = container.resolveAll<ResourceProvider>(ResourceProviderSymbol)
+      for (const provider of resourceProviders) {
+        const resources = await provider.getResources(mod, version)
+        throw new Error('TODO')
+      }
     }
 
     progressHelper.report('extracting TypeInfo from dependencies...')
