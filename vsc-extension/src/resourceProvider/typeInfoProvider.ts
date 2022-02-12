@@ -1,11 +1,19 @@
-export const TypeInfoProviderSymbol = Symbol()
+import { registry } from 'tsyringe'
+import { Mod } from '../mod'
+import { XMLResource } from './resource'
+import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider'
 
-export interface TypeInfoProvider {
-  get(version: string): Promise<any[]>
-}
-
-export class StaticTypeInfoProvider implements TypeInfoProvider {
-  async get(version: string) {
-    return []
+@registry([
+  {
+    token: ResourceProviderSymbol,
+    useClass: TypeInfoProvider,
+  },
+])
+export class TypeInfoProvider implements ResourceProvider {
+  getResource(mod: Mod, version: string, uri: string): Promise<XMLResource[]> {
+    throw new Error('Method not implemented.')
+  }
+  getResources(mod: Mod, version: string): Promise<XMLResource[]> {
+    throw new Error('Method not implemented.')
   }
 }
