@@ -52,7 +52,7 @@ export class Project {
 
   // delay firing dependencyRequest in case of more changes happen after.
   private dependencyRequestTimeout: NodeJS.Timeout | null = null
-  private requestLock = false
+  private locked = false
   private readonly dependencyRequestTimeoutTime = 3000 // 3 second
 
   constructor(public readonly version: RimWorldVersion) {
@@ -65,7 +65,7 @@ export class Project {
   }
 
   private triggerRequestDependencies() {
-    if (this.requestLock) {
+    if (this.locked) {
       return
     }
 
@@ -77,12 +77,12 @@ export class Project {
   }
 
   private async requestDependencies() {
-    if (this.requestLock) {
+    if (this.locked) {
       return
     }
 
     this.log.debug(`acquiring project lock, version: ${this.version}`)
-    this.requestLock = true
+    this.locked = true
     const requester = container.resolve(DependencyRequester)
 
     try {
@@ -123,7 +123,7 @@ export class Project {
     }
 
     this.log.debug(`releasing project lock, version: ${this.version}`)
-    this.requestLock = false
+    this.locked = false
     this.dependencyRequestTimeout = null
   }
 
