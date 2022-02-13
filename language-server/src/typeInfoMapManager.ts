@@ -4,13 +4,10 @@ import { TypeInfoMap, TypeInfoLoader } from '@rwxml/analyzer'
 //@ts-ignore
 import fallbackTypeInfos from '../../metadata/rawTypeInfos/1.3/core.json'
 import { singleton } from 'tsyringe'
+import { RimWorldVersion } from './RimWorldVersion'
 
 // TODO: add data for other versions
 const rawTypeInfoMap: Record<string, Record<string, any> | undefined> = {}
-
-export type RimWorldVersion = typeof RimWorldVersionArray[number]
-
-export const RimWorldVersionArray = ['1.0', '1.1', '1.2', '1.3', 'default'] as const
 
 @singleton()
 export class TypeInfoMapManager {

@@ -2,9 +2,8 @@ import EventEmitter from 'events'
 import { container, DependencyContainer, singleton } from 'tsyringe'
 import { DependencyFile, File } from './fs'
 import { LoadFolder } from './mod/loadfolders'
-import { Project } from './project'
 import { ResourceStore } from './resourceStore'
-import { RimWorldVersion } from './typeInfoMapManager'
+import { RimWorldVersion } from './RimWorldVersion'
 
 // event that Projects will emit.
 interface ProjectManagerEvent {
@@ -22,6 +21,10 @@ interface ListeningEvents {
   contentChanged(file: File): void
 }
 
+/**
+ * ProjectManager manages DI container of specific rimworld version
+ * and dispatch various events to each container
+ */
 @singleton()
 export class ProjectManager {
   private readonly projectContainers: Map<string, DependencyContainer> = new Map()
