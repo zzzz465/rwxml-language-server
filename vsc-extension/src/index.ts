@@ -13,6 +13,7 @@ import * as commands from './commands'
 import * as mods from './mod'
 import { isXML } from './utils/path'
 import { ProjectWatcher } from './projectWatcher'
+import * as resources from './resources'
 
 const disposables: Disposable[] = []
 
@@ -55,6 +56,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   // 3. initialize language server
   console.log('initializing Language Server...')
   const client = await createServer()
+
+  // 4. init resourceProvider
+  const resourceProviders = container.resolveAll<resources.Provider>(resources.ProviderSymbol)
+  resourceProviders.forEach((resource) => resource.listen(client))
 
   // 4. initialize modManager, dependencyManager
   console.log('initialize modManager, dependencyManager...')
