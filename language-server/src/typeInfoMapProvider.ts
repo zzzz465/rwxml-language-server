@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TypeInfoMap, TypeInfoLoader, TypeInfo } from '@rwxml/analyzer'
-import { container, Lifecycle, scoped } from 'tsyringe'
+import { container, inject, Lifecycle, scoped } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
+import { ConnectionToken } from './connection'
 import { TypeInfoRequest } from './events'
 import { Project } from './project'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
-  constructor(private readonly connection: Connection) {}
+  constructor(@inject(ConnectionToken) private readonly connection: Connection) {}
 
   async get(): Promise<TypeInfoMap> {
     const dllUris = this.getTargetDLLUris()
