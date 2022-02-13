@@ -81,6 +81,7 @@ export class OtherFile extends File {
 
 export class XMLFile extends File {
   private data?: string = undefined
+  private readPromise?: Promise<string> = undefined
 
   constructor(uri: URI, public readonly readonly?: boolean) {
     super(uri)
@@ -88,8 +89,12 @@ export class XMLFile extends File {
 
   async read(): Promise<string> {
     if (!this.data) {
-      const xmlFileReader = container.resolve(TextReader)
-      this.data = await xmlFileReader.read(this)
+      if (!this.readPromise) {
+        const xmlFileReader = container.resolve(TextReader)
+        this.readPromise = xmlFileReader.read(this)
+      }
+
+      this.data = await this.readPromise
     }
 
     return this.data

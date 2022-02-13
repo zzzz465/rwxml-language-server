@@ -39,6 +39,7 @@ export class ProjectWatcher {
     const uris = await vscode.workspace.findFiles(globPattern)
 
     for (const uri of uris) {
+      console.log('init sending file: ', uri.toString())
       this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
     }
   }

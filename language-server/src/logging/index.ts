@@ -5,9 +5,9 @@ export function initializeLogger() {
     transports: [
       new winston.transports.Console({
         level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
-        format: winston.format.printf((info) => `[${info.level}]: ${info.message}`),
       }),
     ],
+    format: winston.format.printf((info) => `[${info.level}]: ${info.message}`),
   })
 
   global.log = log

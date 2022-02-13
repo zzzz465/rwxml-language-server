@@ -8,7 +8,7 @@ import { ConnectionToken } from '../connection'
 @injectable()
 export class TextReader {
   private logFormat = winston.format.printf((info) => `[${TextReader.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log, format: this.logFormat })
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
   constructor(@inject(ConnectionToken) private readonly connection: Connection) {}
 

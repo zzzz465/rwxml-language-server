@@ -26,7 +26,7 @@ export class ResourceStore {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log, format: this.logFormat })
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
   readonly files: Map<string, File> = new Map()
   readonly depFiles: DefaultDictionary<string, Map<string, DependencyFile>> = new DefaultDictionary(() => new Map())
@@ -64,6 +64,8 @@ export class ResourceStore {
   }
 
   fileAdded(file: File) {
+    this.log.debug(`file added: ${file}`)
+
     this.files.set(file.uri.toString(), file)
 
     if (DependencyFile.is(file)) {
@@ -82,6 +84,8 @@ export class ResourceStore {
   }
 
   fileChanged(file: File) {
+    this.log.debug(`file changed: ${file}`)
+
     this.files.set(file.uri.toString(), file)
 
     if (DependencyFile.is(file)) {
@@ -99,6 +103,8 @@ export class ResourceStore {
   }
 
   fileDeleted(uri: string) {
+    this.log.debug(`file deleted: ${uri}`)
+
     assert(typeof uri === 'string', 'fileDeleted must accept string type')
 
     const file = this.files.get(uri)
@@ -126,6 +132,8 @@ export class ResourceStore {
   }
 
   private async onXMLFileChanged(file: XMLFile) {
+    this.log.debug(`xml file changed: ${file}`)
+
     const uri = file.uri.toString()
     const data = await file.read()
     this.xmls.set(uri, data)
@@ -134,6 +142,8 @@ export class ResourceStore {
   }
 
   private onXMLFileDeleted(uri: string) {
+    this.log.debug(`xml file deleted: ${uri}`)
+
     if (!this.xmls.delete(uri)) {
       this.log.warn(`trying to delete xml ${uri} but not exists.`)
     }

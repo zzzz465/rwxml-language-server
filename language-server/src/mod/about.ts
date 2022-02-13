@@ -7,6 +7,7 @@ import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import { singleton } from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
+import * as winston from 'winston'
 
 export interface AboutEvents {
   dependencyModsChanged(about: About): void
@@ -21,6 +22,9 @@ export interface Dependency {
 
 @singleton()
 export class About {
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _rawXML = ''
@@ -125,14 +129,10 @@ export class About {
 
   private async onFileChanged(file: File) {
     if (isAboutFile(file)) {
+      this.log.info(`about file changed, uri: ${file.uri.toString()}`)
+
       const text = await file.read()
       this.updateAboutXML(text)
-    }
-  }
-
-  private onWorkspaceInitialized(files: File[]) {
-    for (const file of files) {
-      this.onFileChanged(file)
     }
   }
 }

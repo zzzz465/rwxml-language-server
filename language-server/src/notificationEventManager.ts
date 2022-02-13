@@ -12,6 +12,7 @@ import {
   ProjectFileDeletedNotificationParams,
 } from './events'
 import { File } from './fs'
+import * as winston from 'winston'
 
 // events that this manager will emit
 export interface NotificationEvents {
@@ -27,6 +28,11 @@ interface TextDocumentListeningEvent {
 
 @singleton()
 export class NotificationEventManager {
+  private logFormat = winston.format.printf(
+    (info) => `[${info.level}] [${NotificationEventManager.name}] ${info.message}`
+  )
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   // pre-event stage emit
   public readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()
   // event emit
@@ -41,23 +47,31 @@ export class NotificationEventManager {
   }
 
   private onProjectFileAdded({ uri }: ProjectFileAddedNotificationParams): void {
+    this.log.debug(`project file added: ${uri}`)
+
     const file = File.create({ uri: URI.parse(uri) })
     this.preEvent.emit('fileAdded', file)
     this.event.emit('fileAdded', file)
   }
 
   private onProjectFileChanged({ uri }: ProjectFileChangedNotificationParams): void {
+    this.log.debug(`project file changed: ${uri}`)
+
     const file = File.create({ uri: URI.parse(uri) })
     this.preEvent.emit('fileChanged', file)
     this.event.emit('fileChanged', file)
   }
 
   private onProjectFileDeleted({ uri }: ProjectFileDeletedNotificationParams): void {
+    this.log.debug(`project file deleted: ${uri}`)
+
     this.preEvent.emit('fileDeleted', uri)
     this.event.emit('fileDeleted', uri)
   }
 
   private onContentChanged({ document }: TextDocumentChangeEvent<TextDocument>): void {
+    this.log.debug(`project file content changed: ${document.uri.toString()}`)
+
     const file = File.create({ uri: URI.parse(document.uri) })
     this.preEvent.emit('contentChanged', file)
     this.event.emit('contentChanged', file)
