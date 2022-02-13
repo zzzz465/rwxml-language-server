@@ -56,7 +56,7 @@ export class ResourcePath {
 
     if (fieldTypeClassName === 'AudioGrain_Clip') {
       possibleValues.push(
-        ...AsEnumerable(project.resourceManager.audios.values())
+        ...AsEnumerable(project.resourceStore.audios.values())
           .Select((p) => {
             const parsed = path.parse(p)
             return [parsed.dir, parsed.name].join('/')
@@ -64,7 +64,7 @@ export class ResourcePath {
           .ToArray()
       )
     } else if (fieldTypeClassName === 'AudioGrain_Folder') {
-      possibleValues.push(...project.resourceManager.audioDirectories.values())
+      possibleValues.push(...project.resourceStore.audioDirectories.values())
     }
 
     const candidates = getMatchingText(possibleValues, text)
@@ -85,7 +85,7 @@ export class ResourcePath {
 
     switch (nodeType) {
       case TextureResourceType.SingleFile:
-        possibleValues.push(...project.resourceManager.textures.values())
+        possibleValues.push(...project.resourceStore.textures.values())
         break
       case TextureResourceType.FileWithCompass:
         break
