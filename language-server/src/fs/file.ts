@@ -3,13 +3,14 @@ import { container } from 'tsyringe'
 import { URI } from 'vscode-uri'
 import { XMLFileReader } from './reader'
 
-export namespace File {
-  export interface FileCreateParameters {
-    uri: URI
-    readonly?: boolean
-    ownerPackageId?: string
-  }
-  export function create(params: FileCreateParameters) {
+export interface FileCreateParameters {
+  uri: URI
+  readonly?: boolean
+  ownerPackageId?: string
+}
+
+export abstract class File {
+  static create(params: FileCreateParameters): File {
     const uri = params.uri
 
     let file: File
@@ -49,11 +50,12 @@ export namespace File {
 
     return file
   }
-}
 
-export interface File {
-  readonly uri: URI
-  toString(): string
+  readonly metadataCreated = Date.now()
+
+  constructor(public readonly uri: URI) {}
+
+  abstract toString(): string
 }
 
 export interface DependencyFile extends File {
@@ -67,18 +69,22 @@ export namespace DependencyFile {
   }
 }
 
-export class OtherFile implements File {
-  constructor(public readonly uri: URI) {}
+export class OtherFile extends File {
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   toString() {
     return `OtherFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class XMLFile implements File {
+export class XMLFile extends File {
   private data?: string = undefined
 
-  constructor(public readonly uri: URI, public readonly readonly?: boolean) {}
+  constructor(uri: URI, public readonly readonly?: boolean) {
+    super(uri)
+  }
 
   async read(): Promise<string> {
     if (!this.data) {
@@ -94,27 +100,33 @@ export class XMLFile implements File {
   }
 }
 
-export class TextureFile implements File {
+export class TextureFile extends File {
   readonly readonly = true
-  constructor(public readonly uri: URI) {}
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   toString() {
     return `TextureFile ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class AudioFile implements File {
+export class AudioFile extends File {
   readonly readonly = true
-  constructor(public readonly uri: URI) {}
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   toString() {
     return `Audiofile ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class DLLFile implements File {
+export class DLLFile extends File {
   readonly readonly = true
-  constructor(public readonly uri: URI) {}
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   get fsPath() {
     return this.uri.fsPath
