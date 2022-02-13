@@ -7,7 +7,7 @@ import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { RimWorldVersion } from './typeInfoMapManager'
 import { ResourceStore } from './resourceStore'
-import { container } from 'tsyringe'
+import { container, injectable, Lifecycle, scoped } from 'tsyringe'
 import * as winston from 'winston'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import _ from 'lodash'
@@ -20,21 +20,27 @@ interface Events {
   defChanged(defs: (Injectable | Def)[]): void
 }
 
+@scoped(Lifecycle.ContainerScoped)
 export class Project {
   private logFormat = winston.format.printf((info) => `[${this.version}] ${info.message}`)
   private log = winston.createLogger({ transports: log, format: this.logFormat })
 
   private xmls: Map<string, Document> = new Map()
-  public readonly about = container.resolve(About)
-  public defManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap())
+  public defManager: DefManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap())
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
   private reloadDebounceTimeout = 1000
 
-  constructor(public readonly version: RimWorldVersion, public readonly resourceStore: ResourceStore) {
+  constructor(
+    public readonly about: About,
+    public readonly version: RimWorldVersion,
+    public readonly resourceStore: ResourceStore
+  ) {
     resourceStore.event.on('dllChanged', () => this.reloadProject())
     resourceStore.event.on('dllDeleted', () => this.reloadProject())
+
+    this.reloadProject()
   }
 
   /**

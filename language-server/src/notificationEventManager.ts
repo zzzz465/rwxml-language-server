@@ -20,6 +20,9 @@ export interface NotificationEvents {
   projectFileAdded(file: File): void
   projectFileChanged(file: File): void
   projectFileDeleted(file: File): void
+  /**
+   * @deprecated will be merged to ProjectFileAdded/Changed/Deleted
+   */
   workspaceInitialized(files: File[]): void
   contentChanged(file: File): void
 }

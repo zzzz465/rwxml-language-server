@@ -4,7 +4,7 @@ import { RimWorldVersion } from './typeInfoMapManager'
 import { Counter } from './utils/counter'
 import path from 'path'
 import { DefaultDictionary } from 'typescript-collections'
-import { injectable } from 'tsyringe'
+import { inject, Lifecycle, scoped } from 'tsyringe'
 import EventEmitter from 'events'
 import assert from 'assert'
 import * as winston from 'winston'
@@ -21,7 +21,7 @@ interface Events {
  * ResourceStore stores all resource of the project
  * it always displays latest state of the project files
  */
-@injectable()
+@scoped(Lifecycle.ContainerScoped)
 export class ResourceStore {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
@@ -39,7 +39,10 @@ export class ResourceStore {
 
   readonly event: EventEmitter<Events> = new EventEmitter()
 
-  constructor(private readonly version: RimWorldVersion, private readonly loadFolder: LoadFolder) {}
+  constructor(
+    @inject('RimWorldVersion') private readonly version: RimWorldVersion,
+    private readonly loadFolder: LoadFolder
+  ) {}
 
   listen(events: EventEmitter) {
     events.on('fileAdded', this.fileAdded.bind(this))
