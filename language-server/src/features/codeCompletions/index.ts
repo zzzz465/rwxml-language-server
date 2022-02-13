@@ -1,4 +1,3 @@
-import { Injectable, Text } from '@rwxml/analyzer'
 import { injectable } from 'tsyringe'
 import { CompletionList } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'

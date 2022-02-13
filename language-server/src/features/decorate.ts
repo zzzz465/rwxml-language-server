@@ -1,4 +1,4 @@
-import { Def, Injectable } from '@rwxml/analyzer'
+import { Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { injectable } from 'tsyringe'
 import { URI } from 'vscode-uri'
