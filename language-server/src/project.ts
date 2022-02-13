@@ -10,6 +10,7 @@ import { ResourceStore } from './resourceStore'
 import { container } from 'tsyringe'
 import * as winston from 'winston'
 import { TextDocument } from 'vscode-languageserver-textdocument'
+import _ from 'lodash'
 
 interface TypeInfoMapProvider {
   get(version: string): Promise<TypeInfoMap>
@@ -29,7 +30,12 @@ export class Project {
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
-  constructor(public readonly version: RimWorldVersion, public readonly resourceStore: ResourceStore) {}
+  private reloadDebounceTimeout = 1000
+
+  constructor(public readonly version: RimWorldVersion, public readonly resourceStore: ResourceStore) {
+    resourceStore.event.on('dllChanged', () => this.reloadProject())
+    resourceStore.event.on('dllDeleted', () => this.reloadProject())
+  }
 
   /**
    * @deprecated use resourceStore directly
@@ -73,6 +79,17 @@ export class Project {
     return textDocumentManager.get(uri)
   }
 
+  /**
+   * reloadProject reset project and evaluate all xmls
+   */
+  private reloadProject = _.debounce(async () => {
+    await this.reset()
+    this.evaluteProject()
+  }, this.reloadDebounceTimeout)
+
+  /**
+   * reset project to initial state
+   */
   private async reset() {
     // TODO: implement TypeInfoMapProvider
     const typeInfoMapProvider = container.resolve<TypeInfoMapProvider>('TypeInfoMapProvider')
@@ -80,14 +97,12 @@ export class Project {
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
-
-    this.evaluateProject()
   }
 
   /**
    * evaluteProject performs parsing on all document on resourceStore
    */
-  private evaluateProject() {
+  private evaluteProject() {
     for (const [uri, raw] of this.resourceStore.xmls) {
       this.parseXML(uri, raw)
     }
