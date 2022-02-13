@@ -86,10 +86,8 @@ export class ProjectManager {
     let projectContainer = this.projectContainers.get(version)
     if (!projectContainer) {
       projectContainer = this.newContainer(version)
-      this.projectContainers.set(version, container)
+      this.projectContainers.set(version, projectContainer)
     }
-
-    console.log('container version: ', projectContainer.resolve(RimWorldVersionToken))
 
     return projectContainer
   }
