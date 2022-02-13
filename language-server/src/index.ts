@@ -11,12 +11,11 @@ import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
 import { container } from 'tsyringe'
-import { ConnectionWrapper } from './connection'
+import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
 
 const connection = createConnection(ProposedFeatures.all)
-container.register('connection', { useValue: connection })
-const connectionWrapper = container.resolve(ConnectionWrapper)
+container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: InitializeParams) => {
   log.info('hello world! initializing @rwxml-language-server/language-server ...')

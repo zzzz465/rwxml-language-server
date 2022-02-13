@@ -1,10 +1,11 @@
+import assert from 'assert'
 import EventEmitter from 'events'
 import { container, DependencyContainer, singleton } from 'tsyringe'
 import { DependencyFile, File } from './fs'
 import { LoadFolder } from './mod/loadfolders'
 import { Project } from './project'
 import { ResourceStore } from './resourceStore'
-import { RimWorldVersion } from './RimWorldVersion'
+import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 
 // event that Projects will emit.
 interface ProjectManagerEvent {
@@ -88,12 +89,14 @@ export class ProjectManager {
       this.projectContainers.set(version, container)
     }
 
+    console.log('container version: ', projectContainer.resolve(RimWorldVersionToken))
+
     return projectContainer
   }
 
   private newContainer(version: string): DependencyContainer {
     const childContainer = container.createChildContainer()
-    childContainer.register('RimWorldVersion', { useValue: version })
+    childContainer.register(RimWorldVersionToken, { useValue: version })
 
     return childContainer
   }

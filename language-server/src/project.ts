@@ -6,11 +6,11 @@ import { DependencyFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { ResourceStore } from './resourceStore'
-import { container, Lifecycle, scoped } from 'tsyringe'
+import { container, inject, Lifecycle, scoped } from 'tsyringe'
 import * as winston from 'winston'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import _ from 'lodash'
-import { RimWorldVersion } from './RimWorldVersion'
+import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
 
 interface Events {
@@ -31,7 +31,7 @@ export class Project {
 
   constructor(
     public readonly about: About,
-    public readonly version: RimWorldVersion,
+    @inject(RimWorldVersionToken) public readonly version: RimWorldVersion,
     public readonly resourceStore: ResourceStore
   ) {
     resourceStore.event.on('dllChanged', () => this.reloadProject())

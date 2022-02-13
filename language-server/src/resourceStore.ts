@@ -8,7 +8,7 @@ import EventEmitter from 'events'
 import assert from 'assert'
 import * as winston from 'winston'
 import { URI } from 'vscode-uri'
-import { RimWorldVersion } from './RimWorldVersion'
+import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 
 interface Events {
   dllChanged(uri: string): void
@@ -40,7 +40,7 @@ export class ResourceStore {
   readonly event: EventEmitter<Events> = new EventEmitter()
 
   constructor(
-    @inject('RimWorldVersion') private readonly version: RimWorldVersion,
+    @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     private readonly loadFolder: LoadFolder
   ) {}
 

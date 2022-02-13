@@ -1,15 +1,16 @@
-import { injectable } from 'tsyringe'
+import { inject, injectable } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { TextRequest } from '../events'
 import { File } from './file'
 import * as winston from 'winston'
+import { ConnectionToken } from '../connection'
 
 @injectable()
 export class TextReader {
   private logFormat = winston.format.printf((info) => `[${TextReader.name}] ${info.message}`)
   private readonly log = winston.createLogger({ transports: log, format: this.logFormat })
 
-  constructor(private readonly connection: Connection) {}
+  constructor(@inject(ConnectionToken) private readonly connection: Connection) {}
 
   async read(file: File): Promise<string> {
     this.log.debug(`read file: ${file.toString()}`)
