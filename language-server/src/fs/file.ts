@@ -36,6 +36,7 @@ export abstract class File {
 
       case '.dll':
         file = new DLLFile(uri)
+        break
 
       default:
         file = new OtherFile(uri)
