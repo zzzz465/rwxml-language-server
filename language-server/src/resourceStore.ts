@@ -91,6 +91,7 @@ export class ResourceStore {
     if (DependencyFile.is(file)) {
       this.depFiles.getValue(file.ownerPackageId).set(file.uri.toString(), file)
     }
+
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
     } else if (file instanceof TextureFile) {
@@ -188,12 +189,16 @@ export class ResourceStore {
   }
 
   private onDLLFileChanged(file: DLLFile) {
+    this.log.debug(`DLLFile changed: ${file.uri.toString()}`)
+
     // NOTE: should I pass File or uri string?
     this.dllFiles.add(file.uri.toString())
     this.event.emit('dllChanged', file.uri.toString())
   }
 
   private onDLLFileDeleted(uri: string) {
+    this.log.debug(`DLLFile deleted: ${uri}`)
+
     if (!this.dllFiles.has(uri)) {
       this.log.warn(`trying to delete dllFile, but ${uri} is not exists.`)
     } else {

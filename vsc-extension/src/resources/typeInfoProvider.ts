@@ -13,6 +13,8 @@ export class TypeInfoProvider implements Provider {
   }
 
   private async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
+    console.log('typeInfoRequest received request for: ', uris)
+
     try {
       const fsPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath)
 

@@ -44,6 +44,7 @@ export class ProjectManager {
     this.log.debug(`file added: ${file.uri}`)
 
     const versions = this.loadFolder.isBelongsTo(file.uri)
+    this.log.debug(`file's version is determined to: ${versions}`)
 
     for (const version of versions) {
       this.log.debug(`version: ${version}`)
@@ -54,7 +55,9 @@ export class ProjectManager {
 
   private onProjectFileChanged(file: File) {
     this.log.debug(`file changed: ${file.uri}`)
+
     const versions = this.loadFolder.isBelongsTo(file.uri)
+    this.log.debug(`file's version is determined to: ${versions}`)
 
     for (const version of versions) {
       this.log.debug(`version: ${version}`)
@@ -65,7 +68,9 @@ export class ProjectManager {
 
   private onProjectFileDeleted(uri: string) {
     this.log.debug(`file deleted: ${uri}`)
+
     const versions = this.loadFolder.isBelongsTo(URI.parse(uri))
+    this.log.debug(`file's version is determined to: ${versions}`)
 
     for (const version of versions) {
       this.log.debug(`version: ${version}`)
