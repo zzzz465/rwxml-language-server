@@ -125,9 +125,10 @@ export class ResourceStore {
     }
   }
 
-  private onXMLFileChanged(file: XMLFile) {
+  private async onXMLFileChanged(file: XMLFile) {
     const uri = file.uri.toString()
-    this.xmls.set(uri, file.text)
+    const data = await file.read()
+    this.xmls.set(uri, data)
 
     this.event.emit('xmlChanged', uri)
   }
