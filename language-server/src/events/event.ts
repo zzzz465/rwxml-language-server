@@ -75,3 +75,7 @@ export const XMLDocumentDecoItemRequest = new RequestType<
 export const TextRequest = new RequestType<TextRequest, TextRequestResponse, undefined>(
   'rwxml-language-server:request:TextRequest'
 )
+
+export const TypeInfoRequest = new RequestType<TypeInfoRequest, TypeInfoRequestResponse, undefined>(
+  'rwxml-language-server:request:TypeInfoRequest'
+)

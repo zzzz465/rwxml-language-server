@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TypeInfoMap, TypeInfoLoader, TypeInfo } from '@rwxml/analyzer'
-import { Lifecycle, scoped } from 'tsyringe'
+import { container, Lifecycle, scoped } from 'tsyringe'
+import { Connection } from 'vscode-languageserver'
+import { TypeInfoRequest } from './events'
+import { Project } from './project'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
+  constructor(private readonly connection: Connection) {}
+
   async get(): Promise<TypeInfoMap> {
     const dllUris = this.getTargetDLLUris()
 
@@ -15,31 +20,21 @@ export class TypeInfoMapProvider {
   }
 
   private getTargetDLLUris(): string[] {
-    throw new Error('not implemented')
+    const project = container.resolve(Project)
+
+    return [...project.resourceStore.dllFiles.values()]
   }
 
-  private async requestTypeInfos(dllUris: string[]): Promise<Partial<TypeInfo>[]> {
-    throw new Error('not implemented')
+  private async requestTypeInfos(uris: string[]): Promise<Partial<TypeInfo>[]> {
+    const { data, error } = await this.connection.sendRequest(TypeInfoRequest, {
+      uris,
+    })
+
+    if (error) {
+      throw new Error(error)
+    }
+
+    // NOTE: should I type check this result?
+    return data as Partial<TypeInfo>[]
   }
-
-  /**
-   * @deprecated
-   * @param version
-   * @returns
-   */
-  // getTypeInfoMap(version: RimWorldVersion): TypeInfoMap {
-  //   const data = rawTypeInfoMap[version] ?? fallbackTypeInfos
-  //   if (data) {
-  //     const rawTypeInfos = Object.values(data).flat(1)
-  //     const typeInfoMap = TypeInfoLoader.load(rawTypeInfos)
-
-  //     return typeInfoMap
-  //   } else {
-  //     throw new Error(`version ${version} is not supported. cannot find any TypeInfo...`)
-  //   }
-  // }
-
-  // updateTypeInfo(version: RimWorldVersion, typeInfos: unknown[]) {
-  //   rawTypeInfoMap[version] = typeInfos
-  // }
 }
