@@ -1,6 +1,5 @@
 import { registry } from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
-import { Mod } from '../mod'
 import { Provider, ProviderSymbol } from './type'
 
 @registry([

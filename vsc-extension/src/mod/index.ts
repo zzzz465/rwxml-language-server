@@ -5,17 +5,13 @@ import path from 'path'
 import { container } from 'tsyringe'
 import { ModManager } from './modManager'
 import { DependencyDirectoriesKey } from '../containerVars'
-import { DependencyManager } from './dependencyManager'
-import { LanguageClient } from 'vscode-languageclient'
 
 export * from './about'
 export * from './mod'
 export * from './loadFolders'
-export * from './dependencyManager'
 
 export async function initialize() {
   await initModManager()
-  initDependencyManager()
 }
 
 async function initModManager() {
@@ -25,17 +21,6 @@ async function initModManager() {
 
   container.register(ModManager, { useValue: modManager })
 }
-
-async function initDependencyManager() {
-  const client = container.resolve(LanguageClient)
-  const modManager = container.resolve(ModManager)
-
-  const dependencyManager = new DependencyManager(modManager)
-  dependencyManager.listen(client)
-
-  container.register(DependencyManager, { useValue: dependencyManager })
-}
-
 export function getWorkshopModsDirectoryUri(): Uri {
   // TODO: get from config or env or something else...
 

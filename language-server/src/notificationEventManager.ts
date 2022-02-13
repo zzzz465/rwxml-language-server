@@ -10,7 +10,6 @@ import {
   ProjectFileChangedNotificationParams,
   ProjectFileDeleted,
   ProjectFileDeletedNotificationParams,
-  WorkspaceInitialization,
 } from './events'
 import { File } from './fs'
 
@@ -42,7 +41,6 @@ export class NotificationEventManager {
     connection.onNotification(ProjectFileAdded, this.onProjectFileAdded.bind(this))
     connection.onNotification(ProjectFileChanged, this.onProjectFileChanged.bind(this))
     connection.onNotification(ProjectFileDeleted, this.onProjectFileDeleted.bind(this))
-    connection.onNotification(WorkspaceInitialization, this.onWorkspaceInitialized.bind(this))
     textDocumentEvent.on('onContentChange', this.onContentChanged.bind(this))
   }
 
@@ -75,7 +73,7 @@ export class NotificationEventManager {
   */
 
   private onContentChanged({ document }: TextDocumentChangeEvent<TextDocument>): void {
-    const file = File.create({ uri: URI.parse(document.uri), text: document.getText() })
+    const file = File.create({ uri: URI.parse(document.uri) })
     this.preEvent.emit('contentChanged', file)
     this.event.emit('contentChanged', file)
   }

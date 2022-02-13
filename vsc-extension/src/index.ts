@@ -1,42 +1,18 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import 'reflect-metadata'
-import { Disposable, ExtensionContext, workspace } from 'vscode'
+import { Disposable, ExtensionContext } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import * as path from 'path'
 import { container } from 'tsyringe'
 import * as features from './features'
-import { ModChangedNotificationParams, WorkspaceInitialization } from './events'
-import { ModManager } from './mod/modManager'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
 import * as mods from './mod'
-import { isXML } from './utils/path'
 import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
 
 const disposables: Disposable[] = []
-
-// TODO: delete this code
-async function sendMods() {
-  const client = container.resolve(LanguageClient)
-  const modManager = container.resolve(ModManager)
-
-  type simpleMod = {
-    about: mods.SerializedAbout
-  }
-
-  const mods: simpleMod[] = modManager.mods.map((mod) => ({
-    about: {
-      name: mod.about.name,
-      author: mod.about.author,
-      packageId: mod.about.packageId,
-      supportedVersions: mod.about.supportedVersions,
-    },
-  }))
-
-  await client.sendNotification(ModChangedNotificationParams, { mods })
-}
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // 1. reset container && set extensionContext
@@ -74,8 +50,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   checkTypeInfoAnalyzeAvailable()
 
   // 7. send mod list to language server
-  console.log('sending external mods...')
-  await sendMods()
+  // TODO: this feature is moved to projectWatcher
+  // it sends all watched file on init (before watching)
 
   // 8. add decorate update
   console.log('register lsp features...')

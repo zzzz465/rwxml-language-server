@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { container } from 'tsyringe'
 import { URI } from 'vscode-uri'
-import { XMLFileReader } from './reader'
+import { TextReader } from './reader'
 
 export interface FileCreateParameters {
   uri: URI
@@ -88,7 +88,7 @@ export class XMLFile extends File {
 
   async read(): Promise<string> {
     if (!this.data) {
-      const xmlFileReader = container.resolve(XMLFileReader)
+      const xmlFileReader = container.resolve(TextReader)
       this.data = await xmlFileReader.read(this)
     }
 

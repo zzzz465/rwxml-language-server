@@ -1,6 +1,5 @@
-import { injectable, registry } from 'tsyringe'
+import { registry } from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
-import { Mod } from '../mod/mod'
 import { Provider, ProviderSymbol } from './type'
 
 @registry([
