@@ -8,7 +8,9 @@ import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { makeTagNode } from '../utils/node'
 import { RangeConverter } from '../../utils/rangeConverter'
+import { injectable } from 'tsyringe'
 
+@injectable()
 export class OpenTagCompletion {
   private defs: MultiDictionary<string, string> = new MultiDictionary()
 
