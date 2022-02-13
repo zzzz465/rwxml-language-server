@@ -11,7 +11,6 @@ import {
   ProjectFileDeleted,
   ProjectFileDeletedNotificationParams,
   WorkspaceInitialization,
-  WorkspaceInitializationNotificationParams,
 } from './events'
 import { File } from './fs'
 
@@ -47,21 +46,25 @@ export class NotificationEventManager {
     textDocumentEvent.on('onContentChange', this.onContentChanged.bind(this))
   }
 
-  private onProjectFileAdded({ uri, readonly, text }: ProjectFileAddedNotificationParams): void {
-    const file = File.create({ uri: URI.parse(uri), readonly, text })
+  private onProjectFileAdded({ uri }: ProjectFileAddedNotificationParams): void {
+    const file = File.create({ uri: URI.parse(uri) })
     this.preEvent.emit('projectFileAdded', file)
     this.event.emit('projectFileAdded', file)
   }
-  private onProjectFileChanged({ uri, readonly, text }: ProjectFileChangedNotificationParams): void {
-    const file = File.create({ uri: URI.parse(uri), readonly, text })
+
+  private onProjectFileChanged({ uri }: ProjectFileChangedNotificationParams): void {
+    const file = File.create({ uri: URI.parse(uri) })
     this.preEvent.emit('projectFileChanged', file)
     this.event.emit('projectFileChanged', file)
   }
+
   private onProjectFileDeleted({ uri }: ProjectFileDeletedNotificationParams): void {
     const file = File.create({ uri: URI.parse(uri) })
     this.preEvent.emit('projectFileDeleted', file)
     this.event.emit('projectFileDeleted', file)
   }
+
+  /*
   private onWorkspaceInitialized({ files }: WorkspaceInitializationNotificationParams): void {
     const convertedFiles = files.map((file) =>
       File.create({ uri: URI.parse(file.uri), readonly: file.readonly, text: file.text })
@@ -69,6 +72,8 @@ export class NotificationEventManager {
     this.preEvent.emit('workspaceInitialized', convertedFiles)
     this.event.emit('workspaceInitialized', convertedFiles)
   }
+  */
+
   private onContentChanged({ document }: TextDocumentChangeEvent<TextDocument>): void {
     const file = File.create({ uri: URI.parse(document.uri), text: document.getText() })
     this.preEvent.emit('contentChanged', file)

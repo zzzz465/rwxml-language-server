@@ -1,9 +1,9 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
 import { SerializedAbout } from '../mod'
-import { RimWorldVersion } from '../typeInfoMapManager'
 import { DecoItem, UrlEncodedString } from '../types'
 
 import { Resource } from '../resource'
+import { RimWorldVersion } from '../RimWorldVersion'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
@@ -34,12 +34,21 @@ export interface XMLDocumentDecoItemResponse {
   items: DecoItem[]
 }
 
+/**
+ * @deprecated merge this to add/changed/delete event
+ */
 export interface DependencyRequest {
   version: RimWorldVersion
   packageIds: string[]
+  /**
+   * @todo should I specify dll uris in here?
+   */
   dlls: string[]
 }
 
+/**
+ * @deprecated merge this to add/changed/delete event
+ */
 export interface DependencyResponse {
   version: RimWorldVersion
   typeInfos: unknown[]
@@ -50,10 +59,16 @@ export interface DependencyResponse {
   }[]
 }
 
+/**
+ * @deprecated merge this to add/changed/delete event
+ */
 export interface WorkspaceInitializationNotificationParams {
   files: ProjectFileAddedNotificationParams[]
 }
 
+/**
+ * @deprecated merge this to add/changed/delete event
+ */
 export interface ModChangedNotificationParams {
   mods: {
     about: SerializedAbout
