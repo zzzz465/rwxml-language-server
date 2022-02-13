@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TypeInfoMap, TypeInfoLoader, TypeInfo } from '@rwxml/analyzer'
-import { container, inject, Lifecycle, scoped } from 'tsyringe'
+import { delay, inject, Lifecycle, scoped } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { TypeInfoRequest } from './events'
@@ -8,7 +8,10 @@ import { Project } from './project'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
-  constructor(@inject(ConnectionToken) private readonly connection: Connection) {}
+  constructor(
+    @inject(ConnectionToken) private readonly connection: Connection,
+    @inject(delay(() => Project)) private readonly project: Project
+  ) {}
 
   async get(): Promise<TypeInfoMap> {
     const dllUris = this.getTargetDLLUris()
@@ -21,9 +24,7 @@ export class TypeInfoMapProvider {
   }
 
   private getTargetDLLUris(): string[] {
-    const project = container.resolve(Project)
-
-    return [...project.resourceStore.dllFiles.values()]
+    return [...this.project.resourceStore.dllFiles.values()]
   }
 
   private async requestTypeInfos(uris: string[]): Promise<Partial<TypeInfo>[]> {
