@@ -1,6 +1,7 @@
 import { registry } from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
-import { TextProvider, TypeInfoProvider } from '.'
+import { TextProvider } from './textProvider'
+import { TypeInfoProvider } from './typeInfoProvider'
 
 @registry([
   { token: Provider.token, useClass: TextProvider },
