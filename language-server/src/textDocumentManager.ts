@@ -33,6 +33,7 @@ export class TextDocumentManager {
   }
 
   private onDidChangeContent(e: TextDocumentChangeEvent<TextDocument>) {
+    this.set(e.document.uri.toString(), e.document.getText(), e.document.languageId)
     this.event.emit('onContentChange', e)
   }
 }

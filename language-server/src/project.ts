@@ -23,7 +23,7 @@ export class Project {
   private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
   private xmls: Map<string, Document> = new Map()
-  public defManager: DefManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap())
+  public defManager: DefManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap(), this.version)
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
@@ -87,8 +87,13 @@ export class Project {
    * reloadProject reset project and evaluate all xmls
    */
   private reloadProject = _.debounce(async () => {
+    this.log.info('reloading project')
+
     await this.reset()
+    this.log.info('project state reset')
+
     this.evaluteProject()
+    this.log.info('project evaluated')
   }, this.reloadDebounceTimeout)
 
   /**
@@ -98,7 +103,7 @@ export class Project {
     const typeInfoMap = await this.typeInfoMapProvider.get()
 
     this.xmls = new Map()
-    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
+    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.version)
   }
 
   /**
