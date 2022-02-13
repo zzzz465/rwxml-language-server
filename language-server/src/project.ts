@@ -32,7 +32,8 @@ export class Project {
   constructor(
     public readonly about: About,
     @inject(RimWorldVersionToken) public readonly version: RimWorldVersion,
-    public readonly resourceStore: ResourceStore
+    public readonly resourceStore: ResourceStore,
+    private readonly typeInfoMapProvider: TypeInfoMapProvider
   ) {
     resourceStore.event.on('dllChanged', () => this.reloadProject())
     resourceStore.event.on('dllDeleted', () => this.reloadProject())
@@ -94,9 +95,7 @@ export class Project {
    * reset project to initial state
    */
   private async reset() {
-    // TODO: implement TypeInfoMapProvider
-    const typeInfoMapProvider = container.resolve(TypeInfoMapProvider)
-    const typeInfoMap = await typeInfoMapProvider.get()
+    const typeInfoMap = await this.typeInfoMapProvider.get()
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)
