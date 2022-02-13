@@ -5,16 +5,13 @@ import { DefManager } from './defManager'
 import { DependencyFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
-import { RimWorldVersion } from './typeInfoMapManager'
 import { ResourceStore } from './resourceStore'
-import { container, injectable, Lifecycle, scoped } from 'tsyringe'
+import { container, Lifecycle, scoped } from 'tsyringe'
 import * as winston from 'winston'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import _ from 'lodash'
-
-interface TypeInfoMapProvider {
-  get(version: string): Promise<TypeInfoMap>
-}
+import { RimWorldVersion } from './RimWorldVersion'
+import { TypeInfoMapProvider } from './typeInfoMapProvider'
 
 interface Events {
   defChanged(defs: (Injectable | Def)[]): void
@@ -98,8 +95,8 @@ export class Project {
    */
   private async reset() {
     // TODO: implement TypeInfoMapProvider
-    const typeInfoMapProvider = container.resolve<TypeInfoMapProvider>('TypeInfoMapProvider')
-    const typeInfoMap = await typeInfoMapProvider.get(this.version)
+    const typeInfoMapProvider = container.resolve(TypeInfoMapProvider)
+    const typeInfoMap = await typeInfoMapProvider.get()
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap)

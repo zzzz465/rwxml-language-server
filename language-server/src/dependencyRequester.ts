@@ -2,7 +2,7 @@ import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { DependencyRequest } from './events'
 import { injectable, container } from 'tsyringe'
-import { RimWorldVersion } from './typeInfoMapManager'
+import { RimWorldVersion } from './typeInfoMapProvider'
 import { Dependency } from './mod'
 import { ConnectionWrapper } from './connection'
 

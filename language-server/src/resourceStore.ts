@@ -1,6 +1,6 @@
 import { TextureFile, AudioFile, File, DependencyFile, DLLFile, XMLFile } from './fs'
 import { LoadFolder } from './mod/loadfolders'
-import { RimWorldVersion } from './typeInfoMapManager'
+import { RimWorldVersion } from './typeInfoMapProvider'
 import { Counter } from './utils/counter'
 import path from 'path'
 import { DefaultDictionary } from 'typescript-collections'

@@ -1,7 +1,7 @@
 import { Writable } from '../types'
 import { isSubFileOf, xml } from '../utils'
 import { CheerioAPI, Node } from 'cheerio'
-import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapManager'
+import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapProvider'
 import EventEmitter from 'events'
 import path from 'path'
 import { URI } from 'vscode-uri'

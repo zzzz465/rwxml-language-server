@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapManager'
+import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapProvider'
 import { Writable } from '../types'
 import deepEqual from 'fast-deep-equal'
 import path from 'path'
