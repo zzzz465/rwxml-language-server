@@ -1,19 +1,16 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
-import * as lsp from 'vscode-languageserver'
 import { SerializedAbout } from '../mod'
 import { RimWorldVersion } from '../typeInfoMapManager'
 import { DecoItem, UrlEncodedString } from '../types'
 
+import { Resource } from '../resource'
+
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
-  text?: string
-  readonly?: boolean
 }
 
 export interface ProjectFileChangedNotificationParams {
   uri: UrlEncodedString
-  text?: string
-  readonly?: boolean
 }
 
 export interface ProjectFileDeletedNotificationParams {
@@ -63,6 +60,18 @@ export interface ModChangedNotificationParams {
   }[]
 }
 
+export interface ResourceRequest {
+  packageId: string
+  version: string
+  resourceUri?: string
+}
+
+export interface ResourceRequestResponse {
+  packageId: string
+  version: string
+  resources: Resource[]
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -79,7 +88,7 @@ export const WorkspaceInitialization = new NotificationType<WorkspaceInitializat
   'rwxml-language-server:notification:WorkspaceInitialization'
 )
 
-export const ModChangedNotification = new NotificationType<ModChangedNotificationParams>(
+export const ModChangedNotificationParams = new NotificationType<ModChangedNotificationParams>(
   'rwxml-language-server:notification:ModChanged'
 )
 
@@ -97,4 +106,8 @@ export const XMLDocumentDecoItemRequest = new RequestType<
 
 export const DependencyRequest = new RequestType<DependencyRequest, DependencyResponse, undefined>(
   'rwxml-language-server:request:DependencyData'
+)
+
+export const ResourceRequest = new RequestType<ResourceRequest, ResourceRequestResponse, undefined>(
+  'rwxml-language-server:request:ResourceRequest'
 )
