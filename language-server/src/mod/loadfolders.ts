@@ -172,7 +172,6 @@ export class LoadFolder {
     event.on('fileAdded', this.onFileChanged.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))
-    event.on('contentChanged', this.onFileChanged.bind(this))
   }
 
   private async onFileChanged(file: File) {

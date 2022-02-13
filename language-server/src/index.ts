@@ -29,8 +29,8 @@ connection.onInitialize(async (params: InitializeParams) => {
   const modManager = container.resolve(ModManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
-  textDocumentManager.listen(connection)
-  notificationEventManager.listen(connection, textDocumentManager.event)
+  notificationEventManager.listen(connection)
+  textDocumentManager.listen(connection, notificationEventManager.preEvent)
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
   modManager.listen(connection)

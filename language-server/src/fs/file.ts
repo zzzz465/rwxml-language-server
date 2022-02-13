@@ -79,6 +79,9 @@ export class OtherFile extends File {
   }
 }
 
+/**
+ * @todo create TextFile and make XMLFile inherit it
+ */
 export class XMLFile extends File {
   private data?: string = undefined
   private readPromise?: Promise<string> = undefined

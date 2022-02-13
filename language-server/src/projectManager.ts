@@ -33,7 +33,6 @@ export class ProjectManager {
     notiEvent.on('fileAdded', this.onProjectFileAdded.bind(this))
     notiEvent.on('fileChanged', this.onProjectFileChanged.bind(this))
     notiEvent.on('fileDeleted', this.onProjectFileDeleted.bind(this))
-    notiEvent.on('contentChanged', this.onContentChanged.bind(this))
   }
 
   getProject(version: string): Project {
