@@ -34,7 +34,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const client = await createServer()
 
   // 4. init resourceProvider
-  const resourceProviders = container.resolveAll<resources.Provider>(resources.ProviderSymbol)
+  console.log('initializing resourceProviders...')
+  const resourceProviders = container.resolveAll<resources.Provider>(resources.Provider.token)
   resourceProviders.forEach((resource) => resource.listen(client))
 
   // 4. initialize modManager, dependencyManager

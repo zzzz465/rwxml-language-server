@@ -1,16 +1,11 @@
-import { registry } from 'tsyringe'
+import { injectable } from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
-import { Provider, ProviderSymbol } from './type'
+import { Provider } from './provider'
 import * as vscode from 'vscode'
 
-@registry([
-  {
-    token: ProviderSymbol,
-    useClass: TypeInfoProvider,
-  },
-])
+@injectable()
 export class TypeInfoProvider implements Provider {
   async listen(client: LanguageClient): Promise<void> {
     await client.onReady()
