@@ -15,13 +15,9 @@ import { File } from './fs'
 
 // events that this manager will emit
 export interface NotificationEvents {
-  projectFileAdded(file: File): void
-  projectFileChanged(file: File): void
-  projectFileDeleted(file: File): void
-  /**
-   * @deprecated will be merged to ProjectFileAdded/Changed/Deleted
-   */
-  workspaceInitialized(files: File[]): void
+  fileAdded(file: File): void
+  fileChanged(file: File): void
+  fileDeleted(uri: string): void
   contentChanged(file: File): void
 }
 
@@ -46,31 +42,20 @@ export class NotificationEventManager {
 
   private onProjectFileAdded({ uri }: ProjectFileAddedNotificationParams): void {
     const file = File.create({ uri: URI.parse(uri) })
-    this.preEvent.emit('projectFileAdded', file)
-    this.event.emit('projectFileAdded', file)
+    this.preEvent.emit('fileAdded', file)
+    this.event.emit('fileAdded', file)
   }
 
   private onProjectFileChanged({ uri }: ProjectFileChangedNotificationParams): void {
     const file = File.create({ uri: URI.parse(uri) })
-    this.preEvent.emit('projectFileChanged', file)
-    this.event.emit('projectFileChanged', file)
+    this.preEvent.emit('fileChanged', file)
+    this.event.emit('fileChanged', file)
   }
 
   private onProjectFileDeleted({ uri }: ProjectFileDeletedNotificationParams): void {
-    const file = File.create({ uri: URI.parse(uri) })
-    this.preEvent.emit('projectFileDeleted', file)
-    this.event.emit('projectFileDeleted', file)
+    this.preEvent.emit('fileDeleted', uri)
+    this.event.emit('fileDeleted', uri)
   }
-
-  /*
-  private onWorkspaceInitialized({ files }: WorkspaceInitializationNotificationParams): void {
-    const convertedFiles = files.map((file) =>
-      File.create({ uri: URI.parse(file.uri), readonly: file.readonly, text: file.text })
-    )
-    this.preEvent.emit('workspaceInitialized', convertedFiles)
-    this.event.emit('workspaceInitialized', convertedFiles)
-  }
-  */
 
   private onContentChanged({ document }: TextDocumentChangeEvent<TextDocument>): void {
     const file = File.create({ uri: URI.parse(document.uri) })

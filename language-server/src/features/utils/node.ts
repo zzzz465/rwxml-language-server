@@ -3,6 +3,7 @@ import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import * as lsp from 'vscode-languageserver'
+import { container } from 'tsyringe'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -61,7 +62,9 @@ export function toLocation(converter: RangeConverter, node: Element | Text) {
 }
 
 export function getNodeAndOffset(project: Project, uri: URI, position: lsp.Position) {
-  const offset = project.rangeConverter.toOffset(position, uri.toString())
+  const rangeConverter = container.resolve(RangeConverter)
+
+  const offset = rangeConverter.toOffset(position, uri.toString())
   const document = project.getXMLDocumentByUri(uri)
 
   if (!offset || !document) {

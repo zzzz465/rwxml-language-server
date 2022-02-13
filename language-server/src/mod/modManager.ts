@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
-import { ModChangedNotification, ModChangedNotificationParams } from '../events'
 import { Mod } from './mod'
 
+// FIXME: fix mod manager
 @singleton()
 export class ModManager {
   private readonly _mods = new Map<string, Mod>()
@@ -15,13 +15,13 @@ export class ModManager {
   }
 
   listen(connection: Connection) {
-    connection.onNotification(ModChangedNotification, this.onModChanged.bind(this))
+    // connection.onNotification(ModChangedNotification, this.onModChanged.bind(this))
   }
 
-  onModChanged({ mods }: ModChangedNotificationParams) {
-    this._mods.clear()
-    for (const mod of mods) {
-      this._mods.set(mod.about.packageId, new Mod(mod.about))
-    }
-  }
+  // onModChanged({ mods }: ModChangedNotificationParams) {
+  //   this._mods.clear()
+  //   for (const mod of mods) {
+  //     this._mods.set(mod.about.packageId, new Mod(mod.about))
+  //   }
+  // }
 }

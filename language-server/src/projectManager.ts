@@ -2,6 +2,7 @@ import EventEmitter from 'events'
 import { container, DependencyContainer, singleton } from 'tsyringe'
 import { DependencyFile, File } from './fs'
 import { LoadFolder } from './mod/loadfolders'
+import { Project } from './project'
 import { ResourceStore } from './resourceStore'
 import { RimWorldVersion } from './RimWorldVersion'
 
@@ -38,7 +39,12 @@ export class ProjectManager {
     notiEvent.on('contentChanged', this.onContentChanged.bind(this))
   }
 
-  onProjectFileAdded(file: File) {
+  getProject(version: string): Project {
+    const c = this.getContainer(version)
+    return c.resolve(Project)
+  }
+
+  private onProjectFileAdded(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -47,7 +53,7 @@ export class ProjectManager {
     }
   }
 
-  onProjectFileChanged(file: File) {
+  private onProjectFileChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -57,7 +63,7 @@ export class ProjectManager {
   }
 
   // TODO: change accepting uri string instead of file
-  onProjectFileDeleted(file: File) {
+  private onProjectFileDeleted(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
@@ -66,7 +72,7 @@ export class ProjectManager {
     }
   }
 
-  onContentChanged(file: File) {
+  private onContentChanged(file: File) {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {

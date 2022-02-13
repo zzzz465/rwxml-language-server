@@ -10,9 +10,9 @@ import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
-import { ModManager } from './mod/modManager'
 import { container } from 'tsyringe'
 import { ConnectionWrapper } from './connection'
+import { ModManager } from './mod/modManager'
 
 const connection = createConnection(ProposedFeatures.all)
 container.register('connection', { useValue: connection })

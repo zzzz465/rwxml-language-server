@@ -6,10 +6,10 @@ import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
-import { RimWorldVersion } from '../../typeInfoMapProvider'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { expandUntil, isAlpha } from '../../utils/strings'
 import { ModManager } from '../../mod/modManager'
+import { RimWorldVersion } from '../../RimWorldVersion'
 
 const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
 const ClassValueRegex = [

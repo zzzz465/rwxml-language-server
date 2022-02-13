@@ -1,7 +1,6 @@
 import { Writable } from '../types'
 import { isSubFileOf, xml } from '../utils'
 import { CheerioAPI, Node } from 'cheerio'
-import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapProvider'
 import EventEmitter from 'events'
 import path from 'path'
 import { URI } from 'vscode-uri'
@@ -10,6 +9,7 @@ import { NotificationEvents } from '../notificationEventManager'
 import { AsEnumerable } from 'linq-es2015'
 import normalize_path from 'normalize-path'
 import { singleton } from 'tsyringe'
+import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 
 // TODO: support on LoadFolder changes.
 @singleton()
@@ -169,26 +169,26 @@ export class LoadFolder {
   }
 
   listen(event: EventEmitter<NotificationEvents>) {
-    event.on('projectFileAdded', this.onFileChanged.bind(this))
-    event.on('projectFileChanged', this.onFileChanged.bind(this))
-    event.on('projectFileDeleted', this.onFileChanged.bind(this))
+    event.on('fileAdded', this.onFileChanged.bind(this))
+    event.on('fileChanged', this.onFileChanged.bind(this))
+    event.on('fileDeleted', this.onFileDeleted.bind(this))
     event.on('contentChanged', this.onFileChanged.bind(this))
-    event.on('workspaceInitialized', (files) => {
-      const aboutFile = files.find((file) => this.isLoadFolderFile(file.uri))
-      if (aboutFile) {
-        this.onFileChanged(aboutFile)
-      }
-    })
   }
 
-  private onFileChanged(file: File) {
+  private async onFileChanged(file: File) {
     const uri = file.uri
     if (file instanceof XMLFile && this.isLoadFolderFile(file.uri)) {
       const baseDir = path.dirname(uri.fsPath)
       const baseDirUri = URI.file(baseDir)
       this.rootDirectory = baseDirUri
-      this.updateLoadFolderXML(file.uri, file.text)
+      const xml = await file.read()
+      this.updateLoadFolderXML(file.uri, xml)
     }
+  }
+
+  private onFileDeleted() {
+    // TODO: implement this
+    throw new Error('onFileDeleted not implemented.')
   }
 
   private isLoadFolderFile(uri: URI) {
