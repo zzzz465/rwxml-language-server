@@ -1,11 +1,13 @@
-import assert from 'assert'
 import EventEmitter from 'events'
 import { container, DependencyContainer, singleton } from 'tsyringe'
+import { URI } from 'vscode-uri'
 import { DependencyFile, File } from './fs'
 import { LoadFolder } from './mod/loadfolders'
+import { NotificationEvents } from './notificationEventManager'
 import { Project } from './project'
 import { ResourceStore } from './resourceStore'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
+import * as winston from 'winston'
 
 // event that Projects will emit.
 interface ProjectManagerEvent {
@@ -14,29 +16,23 @@ interface ProjectManagerEvent {
   fileDeleted(version: string, file: File): void
 }
 
-// events that ProjectManager will listen.
-interface ListeningEvents {
-  projectFileAdded(file: File): void
-  projectFileChanged(file: File): void
-  projectFileDeleted(file: File): void
-  workspaceInitialized(files: File[]): void
-  contentChanged(file: File): void
-}
-
 /**
  * ProjectManager manages DI container of specific rimworld version
  * and dispatch various events to each container
  */
 @singleton()
 export class ProjectManager {
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${ProjectManager.name}] ${info.message}`)
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   private readonly projectContainers: Map<string, DependencyContainer> = new Map()
 
   constructor(private readonly loadFolder: LoadFolder) {}
 
-  listen(notiEvent: EventEmitter<ListeningEvents>): void {
-    notiEvent.on('projectFileAdded', this.onProjectFileAdded.bind(this))
-    notiEvent.on('projectFileChanged', this.onProjectFileChanged.bind(this))
-    notiEvent.on('projectFileDeleted', this.onProjectFileDeleted.bind(this))
+  listen(notiEvent: EventEmitter<NotificationEvents>): void {
+    notiEvent.on('fileAdded', this.onProjectFileAdded.bind(this))
+    notiEvent.on('fileChanged', this.onProjectFileChanged.bind(this))
+    notiEvent.on('fileDeleted', this.onProjectFileDeleted.bind(this))
     notiEvent.on('contentChanged', this.onContentChanged.bind(this))
   }
 
@@ -46,30 +42,36 @@ export class ProjectManager {
   }
 
   private onProjectFileAdded(file: File) {
+    this.log.debug(`file added: ${file.uri}`)
+
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
+      this.log.debug(`version: ${version}`)
       const c = this.getContainer(version)
       c.resolve(ResourceStore).fileAdded(file)
     }
   }
 
   private onProjectFileChanged(file: File) {
+    this.log.debug(`file changed: ${file.uri}`)
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
+      this.log.debug(`version: ${version}`)
       const c = this.getContainer(version)
       c.resolve(ResourceStore).fileChanged(file)
     }
   }
 
-  // TODO: change accepting uri string instead of file
-  private onProjectFileDeleted(file: File) {
-    const versions = this.loadFolder.isBelongsTo(file.uri)
+  private onProjectFileDeleted(uri: string) {
+    this.log.debug(`file deleted: ${uri}`)
+    const versions = this.loadFolder.isBelongsTo(URI.parse(uri))
 
     for (const version of versions) {
+      this.log.debug(`version: ${version}`)
       const c = this.getContainer(version)
-      c.resolve(ResourceStore).fileDeleted(file.uri.toString())
+      c.resolve(ResourceStore).fileDeleted(uri)
     }
   }
 
