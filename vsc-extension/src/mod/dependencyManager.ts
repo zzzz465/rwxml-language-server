@@ -6,7 +6,6 @@ import { DependencyRequest, DependencyResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
 import { ModManager } from './modManager'
 import { ProgressHelper } from './progressHelper'
-import { ResourceProvider, ResourceProviderSymbol } from '../resourceProvider/resourceProvider'
 import { RimWorldVersion } from './version'
 
 export interface DependencyMetadata {
@@ -18,6 +17,9 @@ interface ModDependency {
   packageId: string
 }
 
+/**
+ * @deprecated resource request is now handled in Provider of each resource, resolved by container.
+ */
 export class DependencyManager {
   constructor(private modManager: ModManager) {}
 

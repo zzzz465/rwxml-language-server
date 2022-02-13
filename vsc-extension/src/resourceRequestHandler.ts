@@ -1,25 +1,28 @@
 import { container, singleton } from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
-import { ResourceRequest, ResourceRequestResponse } from './events'
+import { TextRequest, TextRequestResponse } from './events'
 import { ModManager } from './mod/modManager'
-import { Resource } from './resourceProvider/resource'
-import { ResourceProvider, ResourceProviderSymbol } from './resourceProvider/resourceProvider'
 
+/**
+ * @deprecated
+ */
 @singleton()
 export class ResourceRequestHandler {
   constructor(private readonly modManager: ModManager) {}
 
   listen(client: LanguageClient) {
     client.onReady().then(() => {
-      client.onRequest(ResourceRequest, this.onResourceRequest.bind(this))
+      client.onRequest(TextRequest, this.onResourceRequest.bind(this))
     })
   }
 
-  private async onResourceRequest({
-    packageId,
-    version,
-    resourceUri,
-  }: ResourceRequest): Promise<ResourceRequestResponse> {
+  private async onTextRequest({ uri }: TextRequest): Promise<TextRequestResponse> {
+
+  }
+
+  private async onTypeInfoRequest({ uris }: )
+
+  private async onResourceRequest({ uri }: TextRequest): Promise<TextRequestResponse> {
     const mod = this.modManager.getMod(packageId)
     if (!mod) {
       throw new Error(`mod ${mod} not exists on table`)
