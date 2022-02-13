@@ -1,12 +1,11 @@
 import * as path from 'path'
+import { container } from 'tsyringe'
 import { URI } from 'vscode-uri'
-
-export type File = XMLFile | OtherFile
+import { XMLFileReader } from './reader'
 
 export namespace File {
   export interface FileCreateParameters {
     uri: URI
-    text?: string
     readonly?: boolean
     ownerPackageId?: string
   }
@@ -19,7 +18,7 @@ export namespace File {
 
     switch (extname) {
       case '.xml':
-        file = new XMLFile(uri, params.text ?? '', params.readonly)
+        file = new XMLFile(uri, params.readonly)
         break
 
       case '.wav':
@@ -43,30 +42,32 @@ export namespace File {
     }
 
     if (params.ownerPackageId) {
-      Object.assign(file, { ownerPackageId: params.ownerPackageId })
+      Object.assign<File, Pick<DependencyFile, 'ownerPackageId'>>(file, {
+        ownerPackageId: params.ownerPackageId,
+      })
     }
 
     return file
   }
 }
 
-export interface IFile {
+export interface File {
   readonly uri: URI
   toString(): string
 }
 
-export interface DependencyFile extends IFile {
+export interface DependencyFile extends File {
   // packageId of this File's owner.
   readonly ownerPackageId: string
 }
 
 export namespace DependencyFile {
-  export function is(file: File): file is File & DependencyFile {
-    return 'ownerPackageId' in file && typeof file['ownerPackageId'] === 'string'
+  export function is(file: File): file is DependencyFile {
+    return 'ownerPackageId' in file && typeof (file as any)['ownerPackageId'] === 'string'
   }
 }
 
-export class OtherFile implements IFile {
+export class OtherFile implements File {
   constructor(public readonly uri: URI) {}
 
   toString() {
@@ -74,15 +75,26 @@ export class OtherFile implements IFile {
   }
 }
 
-export class XMLFile implements IFile {
-  constructor(public readonly uri: URI, public readonly text: string, public readonly readonly?: boolean) {}
+export class XMLFile implements File {
+  private data?: string = undefined
+
+  constructor(public readonly uri: URI, public readonly readonly?: boolean) {}
+
+  async read(): Promise<string> {
+    if (!this.data) {
+      const xmlFileReader = container.resolve(XMLFileReader)
+      this.data = await xmlFileReader.read(this)
+    }
+
+    return this.data
+  }
 
   toString() {
     return `XMLFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class TextureFile implements IFile {
+export class TextureFile implements File {
   readonly readonly = true
   constructor(public readonly uri: URI) {}
 
@@ -91,7 +103,7 @@ export class TextureFile implements IFile {
   }
 }
 
-export class AudioFile implements IFile {
+export class AudioFile implements File {
   readonly readonly = true
   constructor(public readonly uri: URI) {}
 
@@ -100,7 +112,7 @@ export class AudioFile implements IFile {
   }
 }
 
-export class DLLFile implements IFile {
+export class DLLFile implements File {
   readonly readonly = true
   constructor(public readonly uri: URI) {}
 
