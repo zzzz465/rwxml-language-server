@@ -7,13 +7,20 @@ import { getNodeAndOffset, isPointingDefNameContent } from './utils/node'
 import { DefaultDictionary } from 'typescript-collections'
 import { AsEnumerable } from 'linq-es2015'
 import { Definition } from './definition'
+import { RangeConverter } from '../utils/rangeConverter'
+import { injectable } from 'tsyringe'
 
 type Result = {
   [url: string]: lsp.TextEdit[]
 }
 
+@injectable()
 export class Rename {
-  constructor(private readonly reference: Reference, private readonly definition: Definition) {}
+  constructor(
+    private readonly reference: Reference,
+    private readonly definition: Definition,
+    private readonly rangeConverter: RangeConverter
+  ) {}
 
   rename(project: Project, uri: URI, newName: string, pos: lsp.Position): Result {
     const result: Result = {}
@@ -33,7 +40,7 @@ export class Rename {
       return result
     }
 
-    const definitionEditRange = project.rangeConverter.toLanguageServerRange(definitionNode.dataRange, uri.toString())
+    const definitionEditRange = this.rangeConverter.toLanguageServerRange(definitionNode.dataRange, uri.toString())
     if (!definitionEditRange) {
       return result
     }
@@ -50,7 +57,7 @@ export class Rename {
 
     // add reference edits
     for (const ref of referenceNodes) {
-      if (!project.isDependencyFile(ref.uri)) {
+      if (!project.resourceStore.isDependencyFile(ref.uri)) {
         dict.getValue(ref.uri).push({ newText: newName, range: ref.range })
       }
     }

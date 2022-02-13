@@ -1,18 +1,19 @@
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import * as lsp from 'vscode-languageserver'
-import { Element, Injectable, Text } from '@rwxml/analyzer'
+import { Element, Text } from '@rwxml/analyzer'
 import { isPointingDefNameContent } from './utils/node'
+import { RangeConverter } from '../utils/rangeConverter'
+import { injectable } from 'tsyringe'
 
-interface DefReferenceTextNode extends Text {
-  parent: Injectable
-}
-
+@injectable()
 export class Reference {
+  constructor(private readonly rangeConverter: RangeConverter) {}
+
   // TODO: seperate this to two methods, event handler and actual reference finder
   onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
     const res: lsp.Location[] = []
-    const offset = project.rangeConverter.toOffset(position, uri.toString())
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
     if (!offset) {
       return res
     }
@@ -49,7 +50,7 @@ export class Reference {
         throw new Error(`node ${node.name} marked as defNameReference but contentRange is undefined.`)
       }
 
-      const range = project.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
+      const range = this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
 
       if (range) {
         res.push({ range, uri: node.document.uri })

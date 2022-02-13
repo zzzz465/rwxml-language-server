@@ -9,6 +9,7 @@ import { RimWorldVersion } from './typeInfoMapManager'
 import { ResourceStore } from './resourceStore'
 import { container } from 'tsyringe'
 import * as winston from 'winston'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 interface TypeInfoMapProvider {
   get(version: string): Promise<TypeInfoMap>
@@ -53,15 +54,15 @@ export class Project {
     return false
   }
 
-  getXMLDocumentByUri(uri: string | URI) {
+  getXMLDocumentByUri(uri: string | URI): Document | undefined {
     if (uri instanceof URI) {
       uri = uri.toString()
     }
 
-    this.xmls.get(uri)
+    return this.xmls.get(uri)
   }
 
-  getTextDocumentByUri(uri: string | URI) {
+  getTextDocumentByUri(uri: string | URI): TextDocument | undefined {
     if (uri instanceof URI) {
       uri = uri.toString()
     }

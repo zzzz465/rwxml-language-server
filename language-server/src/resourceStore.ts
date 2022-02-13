@@ -47,6 +47,19 @@ export class ResourceStore {
     events.on('fileDeleted', this.fileDeleted.bind(this))
   }
 
+  isDependencyFile(uri: string): boolean | null {
+    const file = this.files.get(uri)
+    if (!file) {
+      return null
+    }
+
+    if (DependencyFile.is(file)) {
+      return this.depFiles.getValue(file.ownerPackageId).has(uri)
+    }
+
+    return false
+  }
+
   fileAdded(file: File) {
     this.files.set(file.uri.toString(), file)
 

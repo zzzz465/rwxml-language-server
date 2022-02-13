@@ -1,22 +1,28 @@
 import { Injectable, Text } from '@rwxml/analyzer'
+import { injectable } from 'tsyringe'
 import { CompletionList } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
+import { RangeConverter } from '../../utils/rangeConverter'
 import { CompleteAttribute } from './attribute'
 import { DefNameCompletion } from './defName'
 import { OpenTagCompletion } from './opentag'
 import { ResourcePath } from './resourcePath'
 
+@injectable()
 export class CodeCompletion {
-  private readonly completeAttribute = new CompleteAttribute()
-  private readonly openTagCompletion = new OpenTagCompletion()
-  private readonly resourcePathCompletion = new ResourcePath()
-  private readonly defNameCompletion = new DefNameCompletion()
+  constructor(
+    private readonly rangeConverter: RangeConverter,
+    private readonly completeAttribute: CompleteAttribute,
+    private readonly openTagCompletion: OpenTagCompletion,
+    private readonly resourcePathCompletion: ResourcePath,
+    private readonly defNameCompletion: DefNameCompletion
+  ) {}
 
   codeCompletion(project: Project, uri: URI, position: Position): CompletionList {
     const xmlDocument = project.getXMLDocumentByUri(uri)
-    const offset = project.rangeConverter.toOffset(position, uri.toString())
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
     const ret: CompletionList = { isIncomplete: true, items: [] }
 
     if (!xmlDocument || !offset) {

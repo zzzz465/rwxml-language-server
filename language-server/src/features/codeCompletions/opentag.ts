@@ -6,18 +6,20 @@ import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit, Command } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
-import { getNodeAndOffset, isDefOrInjectable, makeTagNode } from '../utils/node'
+import { makeTagNode } from '../utils/node'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export class OpenTagCompletion {
   private defs: MultiDictionary<string, string> = new MultiDictionary()
+
+  constructor(private readonly rangeConverter: RangeConverter) {}
 
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
     if (!this.shouldSuggestTagNames(node, offset)) {
       return []
     }
 
-    const textEditRange = this.getTextEditRange(node, offset, project.rangeConverter)
+    const textEditRange = this.getTextEditRange(node, offset, this.rangeConverter)
     if (!textEditRange) {
       return []
     }
@@ -35,10 +37,10 @@ export class OpenTagCompletion {
       const tags = this.getDefNames(project)
       const completions = getMatchingText(tags, nodeName)
 
-      return this.toCompletionItems(node, offset, project.rangeConverter, node.document, completions)
+      return this.toCompletionItems(node, offset, this.rangeConverter, node.document, completions)
     } else if (parent instanceof Def || parent instanceof Injectable) {
       if (parent.typeInfo.isEnumerable()) {
-        return this.toCompletionItems(node, offset, project.rangeConverter, node.document, ['li'])
+        return this.toCompletionItems(node, offset, this.rangeConverter, node.document, ['li'])
       } else {
         const childNodes = AsEnumerable(parent.ChildElementNodes)
           .Where((e) => e instanceof Injectable)
@@ -48,7 +50,7 @@ export class OpenTagCompletion {
         const candidates = _.difference(Object.keys(parent.typeInfo.fields), childNodes)
         const completions = getMatchingText(candidates, nodeName)
 
-        return this.toCompletionItems(node, offset, project.rangeConverter, node.document, completions)
+        return this.toCompletionItems(node, offset, this.rangeConverter, node.document, completions)
       }
     }
 
@@ -121,6 +123,7 @@ export class OpenTagCompletion {
     const editRange = this.getTextEditRange(node, offset, converter)
 
     const additionalTextEdits: TextEdit[] = []
+    // TODO: implement this
     const cursorCommand: Command = {
       command: 'cursorMove',
       title: '',

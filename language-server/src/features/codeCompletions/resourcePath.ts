@@ -8,9 +8,16 @@ import { Project } from '../../project'
 import path from 'path'
 import { getTextureResourceNodeType, TextureResourceType } from '../utils'
 import { isPointingContentOfNode } from '../utils/node'
+import { injectable } from 'tsyringe'
+import { RangeConverter } from '../../utils/rangeConverter'
 
-// completes value
+/**
+ * ResourcePath suggests resource path completion
+ */
+@injectable()
 export class ResourcePath {
+  constructor(private readonly rangeConverter: RangeConverter) {}
+
   complete(project: Project, node: Node, offset: number): CompletionItem[] {
     let tagNode: Injectable
     let editRange: Range | undefined
@@ -23,11 +30,11 @@ export class ResourcePath {
     if (node instanceof Text && node.parent instanceof Injectable) {
       tagNode = node.parent
       text = node.nodeValue
-      editRange = project.rangeConverter.toLanguageServerRange(node.dataRange, node.document.uri)
+      editRange = this.rangeConverter.toLanguageServerRange(node.dataRange, node.document.uri)
     } else if (node instanceof Injectable) {
       tagNode = node
       text = ''
-      editRange = project.rangeConverter.toLanguageServerRange(new rwxml.Range(offset, offset), node.document.uri)
+      editRange = this.rangeConverter.toLanguageServerRange(new rwxml.Range(offset, offset), node.document.uri)
     } else {
       return []
     }
