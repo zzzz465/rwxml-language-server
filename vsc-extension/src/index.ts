@@ -17,7 +17,7 @@ const disposables: Disposable[] = []
 export async function activate(context: ExtensionContext): Promise<void> {
   // 1. reset container && set extensionContext
   console.log('initializing @rwxml/vsc-extension...')
-  container.reset()
+  container.clearInstances()
 
   container.register('ExtensionContext', { useValue: context })
 
