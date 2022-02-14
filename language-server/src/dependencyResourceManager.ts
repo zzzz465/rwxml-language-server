@@ -66,7 +66,7 @@ export class DependencyResourceManager {
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
     assert(!res.error)
-    log.debug(`processing add response, packageId: ${res.packageId}, files: ${JSON.stringify(res.uris)}`)
+    log.debug(`processing add response, packageId: ${res.packageId}, files: ${(JSON.stringify(res.uris), null, 2)}`)
 
     const files = res.uris.map((uri) =>
       File.create({ uri: URI.parse(uri), ownerPackageId: res.packageId, readonly: true })

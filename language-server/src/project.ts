@@ -20,7 +20,9 @@ interface Events {
 
 @scoped(Lifecycle.ContainerScoped)
 export class Project {
-  private logFormat = winston.format.printf((info) => `[${this.version}] ${info.message}`)
+  private logFormat = winston.format.printf(
+    (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
+  )
   private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
   private xmls: Map<string, Document> = new Map()
