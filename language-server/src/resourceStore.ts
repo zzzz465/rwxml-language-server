@@ -9,6 +9,8 @@ import assert from 'assert'
 import * as winston from 'winston'
 import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
+import { FileStore } from './fileStore'
+import { About } from './mod'
 
 interface Events {
   dllChanged(uri: string): void
@@ -41,7 +43,9 @@ export class ResourceStore {
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
-    private readonly loadFolder: LoadFolder
+    private readonly about: About,
+    private readonly loadFolder: LoadFolder,
+    private readonly fileStore: FileStore
   ) {}
 
   listen(events: EventEmitter) {
@@ -130,6 +134,10 @@ export class ResourceStore {
     if (!this.files.delete(uri)) {
       this.log.warn(`trying to delete file ${uri} but not exists.`)
     }
+  }
+
+  reload() {
+    throw new Error('not implemented')
   }
 
   private async onXMLFileChanged(file: XMLFile) {
