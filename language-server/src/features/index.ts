@@ -72,6 +72,10 @@ export class LanguageFeature {
 
   private async onDecorate({ uri: uriStr }: XMLDocumentDecoItemRequest) {
     const uri = URI.parse(uriStr)
+    if (uri.scheme !== 'file') {
+      return
+    }
+
     const versions = this.loadFolder.isBelongsTo(uri)
     const result: XMLDocumentDecoItemResponse = { uri: uriStr, items: [] }
 
