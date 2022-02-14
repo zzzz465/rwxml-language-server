@@ -9,6 +9,8 @@ import assert from 'assert'
 import * as winston from 'winston'
 import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
+import { FileStore } from './fileStore'
+import { About } from './mod'
 
 interface Events {
   dllChanged(uri: string): void
@@ -41,7 +43,8 @@ export class ResourceStore {
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
-    private readonly loadFolder: LoadFolder
+    private readonly loadFolder: LoadFolder,
+    private readonly fileStore: FileStore
   ) {}
 
   listen(events: EventEmitter) {
@@ -129,6 +132,29 @@ export class ResourceStore {
 
     if (!this.files.delete(uri)) {
       this.log.warn(`trying to delete file ${uri} but not exists.`)
+    }
+  }
+
+  /**
+   * compare project files against fileStore, and add/delete files
+   * NOTE: this might cause performance issue.
+   */
+  reload() {
+    for (const [uri, file] of this.fileStore) {
+      const versions = this.loadFolder.isBelongsTo(URI.parse(uri))
+      if (versions.find((version) => version === this.version)) {
+        if (!this.files.has(uri)) {
+          // when file is not registered but it should
+          this.log.debug(`file added via reload: ${uri}`)
+          this.fileAdded(file)
+        }
+      } else {
+        if (this.files.has(uri)) {
+          // when file is registered but should be removed
+          this.log.debug(`file deleted via reload: ${uri}`)
+          this.fileDeleted(uri)
+        }
+      }
     }
   }
 
