@@ -91,6 +91,7 @@ export class XMLFile extends File {
     super(uri)
   }
 
+  // TODO: add error handling
   async read(): Promise<string> {
     if (!this.data) {
       if (!this.readPromise) {

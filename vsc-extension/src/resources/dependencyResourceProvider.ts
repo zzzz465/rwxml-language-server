@@ -36,7 +36,7 @@ export class DependencyResourceProvider implements Provider {
 
     console.log(`found ${paths.length} dependency files in packageId: ${packageId}, files: `, paths)
 
-    const uris = paths.map((path) => vscode.Uri.parse(path).toString())
+    const uris = paths.map((path) => vscode.Uri.file(path).toString())
 
     return { packageId, uris }
   }
