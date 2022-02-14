@@ -30,7 +30,7 @@ export class DependencyResourceProvider implements Provider {
       caseSensitiveMatch: false,
       cwd: root,
       absolute: true,
-      ignore: ['about.xml', 'loadfolder.xml'],
+      ignore: ['**/about.xml', '**/loadfolder.xml'],
       onlyFiles: true,
     })
 
