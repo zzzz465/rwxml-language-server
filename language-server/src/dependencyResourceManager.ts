@@ -41,7 +41,7 @@ export class DependencyResourceManager {
   }
 
   private async handleAddedMods(deps: Dependency[]) {
-    this.log.debug(`request dependencies: ${deps}`)
+    this.log.debug(`request dependencies (added): ${deps}`)
 
     const requests = deps.map((dep) =>
       this.connection.sendRequest(DependencyRequest, { packageId: dep.packageId }, undefined)
@@ -79,6 +79,8 @@ export class DependencyResourceManager {
   }
 
   private handleDeletedMods(deps: Dependency[]) {
+    this.log.debug(`deleted dependencies: ${deps}`)
+
     for (const dep of deps) {
       const files = this.resourcesMap.get(dep.packageId)
       if (!files) {
