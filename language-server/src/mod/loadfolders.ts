@@ -185,9 +185,11 @@ export class LoadFolder {
     }
   }
 
-  private onFileDeleted() {
-    // TODO: implement this
-    throw new Error('onFileDeleted not implemented.')
+  private onFileDeleted(uri: string) {
+    if (this.isLoadFolderFile(URI.parse(uri))) {
+      // TODO: implement this
+      throw new Error('onFileDeleted not implemented.')
+    }
   }
 
   private isLoadFolderFile(uri: URI) {
