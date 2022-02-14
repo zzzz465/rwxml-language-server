@@ -3,7 +3,10 @@ import { Mod } from './mod'
 import vscode from 'vscode'
 import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
+import { injectAll, singleton } from 'tsyringe'
+import { DependencyDirectoriesKey as DependencyDirectoriesToken } from '../containerVars'
 
+@singleton()
 export class ModManager {
   private readonly _mods: Map<string, Mod> = new Map()
   get mods() {
@@ -15,7 +18,7 @@ export class ModManager {
     return this._initialized
   }
 
-  constructor(public readonly directoryUris: Uri[]) {
+  constructor(@injectAll(DependencyDirectoriesToken) public readonly directoryUris: Uri[]) {
     console.log(`ModManager watching directories: ${directoryUris}`)
   }
 
@@ -41,6 +44,11 @@ export class ModManager {
     this._initialized = true
   }
 
+  /**
+   * @deprecated
+   * @param packageIds
+   * @returns
+   */
   getDependencies(packageIds: string[]): { [packageId: string]: Mod | undefined } {
     const ret: { [packageId: string]: Mod | undefined } = {}
 

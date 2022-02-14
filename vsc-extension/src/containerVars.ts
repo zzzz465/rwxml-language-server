@@ -20,6 +20,7 @@ export function initialize(): Disposable {
   initRimWorldDLLDirectoryPath()
 
   // TODO: mock disposable, fill this later
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   return { dispose: () => {} }
 }
 
