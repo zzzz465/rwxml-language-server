@@ -1,5 +1,7 @@
 # RWXML Language Server
 
+(this is rollback version 0.10.0 due to a critical bug on v0.11.0)
+
 provides various IDE functionalities, as VSCode Extension
 
 ## fetures
@@ -8,6 +10,7 @@ provides various IDE functionalities, as VSCode Extension
 - [x] Basic completion snippets.
 - [x] Real time code analysis.
 - [x] Code Completion.
+
 - [x] `Go to definition`, `Go to Reference` support.
 - [x] Find all symbol references.
 - [x] find parent / childrenss
