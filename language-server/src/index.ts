@@ -14,6 +14,7 @@ import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
 import { DependencyResourceManager } from './dependencyResourceManager'
+import { FileStore } from './fileStore'
 
 const connection = createConnection(ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
@@ -31,6 +32,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   const languageFeature = container.resolve(LanguageFeature)
   const modManager = container.resolve(ModManager)
   const dependencyResourceManager = container.resolve(DependencyResourceManager)
+  const fileStore = container.resolve(FileStore)
 
   notificationEventManager.listen(dependencyResourceManager.event)
   loadFolder.listen(notificationEventManager.preEvent)
