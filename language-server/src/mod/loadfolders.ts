@@ -10,10 +10,14 @@ import { AsEnumerable } from 'linq-es2015'
 import normalize_path from 'normalize-path'
 import { singleton } from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
+import * as winston from 'winston'
 
 // TODO: support on LoadFolder changes.
 @singleton()
 export class LoadFolder {
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${LoadFolder.name}] ${info.message}`)
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
   private readonly resourceDirs = ['Defs', 'Textures', 'Languages', 'Sounds']
@@ -47,6 +51,8 @@ export class LoadFolder {
     const $ = xml.parse(this._rawXML)
 
     const newVal = this.parseNewXML($)
+
+    this.log.debug(`LoadFolder.xml parsed as: ${JSON.stringify(newVal, null, 2)}`)
 
     this['_1.0'] = newVal['1.0']
     this['_1.1'] = newVal['1.1']
@@ -89,20 +95,25 @@ export class LoadFolder {
 
   // determine the file belongs to specific rimworld version.
   private isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
+    log.silly(`check uri ${uri.fsPath} is belongs to ${version}`)
+
     const root = this.rootDirectory.fsPath
     const child = uri.fsPath
 
     // check file is under project root directory
     if (!isSubFileOf(root, child)) {
+      this.log.silly(`child ${child} is not subfile of ${root}`)
       return false
     }
 
     // check file is under loadDirectory according to LoadFolders.xml
-    if (this.isUnderResourceDirectory(uri, version)) {
-      return true
+    if (!this.isUnderResourceDirectory(uri, version)) {
+      this.log.silly('uri is not under resource directory')
+      return false
     }
 
-    return false
+    this.log.silly(`uri ${uri.fsPath} is under version ${version}`)
+    return true
   }
 
   isUnderResourceDirectory(uri: URI, version: RimWorldVersion) {
@@ -181,6 +192,17 @@ export class LoadFolder {
       const baseDirUri = URI.file(baseDir)
       this.rootDirectory = baseDirUri
       const xml = await file.read()
+
+      this.log.info(
+        `receive loadFolder.xml changes: ${JSON.stringify(
+          {
+            baseDir,
+            baseDirUri,
+          },
+          null,
+          2
+        )}`
+      )
       this.updateLoadFolderXML(file.uri, xml)
     }
   }
