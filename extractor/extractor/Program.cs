@@ -46,6 +46,8 @@ namespace extractor
     {
         static int Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
             var commandline = Parser.Default.ParseArguments<ProgramOptions>(args);
             int exitCode = 1;
             commandline.WithParsed(option =>

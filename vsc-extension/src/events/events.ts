@@ -48,6 +48,16 @@ export interface TypeInfoRequestResponse {
   error?: string
 }
 
+export interface DependencyRequest {
+  packageId: string
+}
+
+export interface DependencyRequestResponse {
+  packageId: string
+  uris: string[]
+  error?: string
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -78,4 +88,8 @@ export const TextRequest = new RequestType<TextRequest, TextRequestResponse, und
 
 export const TypeInfoRequest = new RequestType<TypeInfoRequest, TypeInfoRequestResponse, undefined>(
   'rwxml-language-server:request:TypeInfoRequest'
+)
+
+export const DependencyRequest = new RequestType<DependencyRequest, DependencyRequestResponse, undefined>(
+  'rwxml-language-server:request:DependencyRequest'
 )

@@ -2,14 +2,7 @@ import EventEmitter from 'events'
 import { singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import {
-  ProjectFileAdded,
-  ProjectFileAddedNotificationParams,
-  ProjectFileChanged,
-  ProjectFileChangedNotificationParams,
-  ProjectFileDeleted,
-  ProjectFileDeletedNotificationParams,
-} from './events'
+import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import { File } from './fs'
 import * as winston from 'winston'
 
@@ -33,31 +26,33 @@ export class NotificationEventManager {
   public readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
   // post-event emit?
 
-  listen(connection: Connection): void {
-    connection.onNotification(ProjectFileAdded, this.onProjectFileAdded.bind(this))
-    connection.onNotification(ProjectFileChanged, this.onProjectFileChanged.bind(this))
-    connection.onNotification(ProjectFileDeleted, this.onProjectFileDeleted.bind(this))
+  listenConnection(connection: Connection): void {
+    connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(this.toFile(uri)))
+    connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(this.toFile(uri)))
+    connection.onNotification(ProjectFileDeleted, ({ uri }) => this.onFileDeleted(uri))
   }
 
-  private onProjectFileAdded({ uri }: ProjectFileAddedNotificationParams): void {
-    this.log.debug(`project file added: ${uri}`)
+  listen(event: EventEmitter<NotificationEvents>): void {
+    event.on('fileAdded', this.onFileAdded.bind(this))
+    event.on('fileChanged', this.onFileChanged.bind(this))
+    event.on('fileDeleted', this.onFileDeleted.bind(this))
+  }
 
-    const file = File.create({ uri: URI.parse(uri) })
+  private toFile(uri: string): File {
+    return File.create({ uri: URI.parse(uri) })
+  }
+
+  private onFileAdded(file: File): void {
     this.preEvent.emit('fileAdded', file)
     this.event.emit('fileAdded', file)
   }
 
-  private onProjectFileChanged({ uri }: ProjectFileChangedNotificationParams): void {
-    this.log.debug(`project file changed: ${uri}`)
-
-    const file = File.create({ uri: URI.parse(uri) })
+  private onFileChanged(file: File): void {
     this.preEvent.emit('fileChanged', file)
     this.event.emit('fileChanged', file)
   }
 
-  private onProjectFileDeleted({ uri }: ProjectFileDeletedNotificationParams): void {
-    this.log.debug(`project file deleted: ${uri}`)
-
+  private onFileDeleted(uri: string): void {
     this.preEvent.emit('fileDeleted', uri)
     this.event.emit('fileDeleted', uri)
   }

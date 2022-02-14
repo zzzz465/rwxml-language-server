@@ -100,6 +100,13 @@ export class Project {
    * reset project to initial state
    */
   private async reset() {
+    this.log.debug(
+      `current project file dlls: ${JSON.stringify(
+        [...this.resourceStore.dllFiles.values()].map((uri) => decodeURIComponent(uri)),
+        null,
+        2
+      )}`
+    )
     const typeInfoMap = await this.typeInfoMapProvider.get()
 
     this.xmls = new Map()

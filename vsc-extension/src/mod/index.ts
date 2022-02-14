@@ -2,25 +2,11 @@ import { Uri } from 'vscode'
 import process from 'process'
 import os from 'os'
 import path from 'path'
-import { container } from 'tsyringe'
-import { ModManager } from './modManager'
-import { DependencyDirectoriesKey } from '../containerVars'
 
 export * from './about'
 export * from './mod'
 export * from './loadFolders'
 
-export async function initialize() {
-  await initModManager()
-}
-
-async function initModManager() {
-  const uris = container.resolveAll(DependencyDirectoriesKey) as Uri[]
-  const modManager = new ModManager(uris)
-  await modManager.init()
-
-  container.register(ModManager, { useValue: modManager })
-}
 export function getWorkshopModsDirectoryUri(): Uri {
   // TODO: get from config or env or something else...
 

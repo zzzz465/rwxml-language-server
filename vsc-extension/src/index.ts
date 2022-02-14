@@ -8,9 +8,9 @@ import * as features from './features'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
-import * as mods from './mod'
 import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
+import { ModManager } from './mod/modManager'
 
 const disposables: Disposable[] = []
 
@@ -39,8 +39,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   resourceProviders.forEach((resource) => resource.listen(client))
 
   // 4. initialize modManager, dependencyManager
-  console.log('initialize modManager, dependencyManager...')
-  await mods.initialize()
+  const modManager = container.resolve(ModManager)
+  await modManager.init()
 
   // 5. start language server and wait
   client.start()

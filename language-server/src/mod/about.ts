@@ -124,7 +124,10 @@ export class About {
   }
 
   listen(event: EventEmitter<NotificationEvents>) {
+    event.on('fileAdded', this.onFileChanged.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
+    // TODO: implement handler for 'fileDeleted'
+    // event.on('fileDeleted')
   }
 
   private async onFileChanged(file: File) {
