@@ -12,6 +12,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import _ from 'lodash'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
+import { CancellationToken, CancellationTokenSource } from 'vscode-languageserver'
 
 interface Events {
   defChanged(defs: (Injectable | Def)[]): void
@@ -28,6 +29,7 @@ export class Project {
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
   private reloadDebounceTimeout = 1000
+  private cancelTokenSource = new CancellationTokenSource()
 
   constructor(
     public readonly about: About,
@@ -88,14 +90,24 @@ export class Project {
    * uses debounce to limit reloading too often
    */
   private reloadProject = _.debounce(async () => {
+    this.cancelTokenSource.cancel()
+    const cancelTokenSource = new CancellationTokenSource()
+    this.cancelTokenSource = cancelTokenSource
+    const token = this.cancelTokenSource.token
+
     this.log.info('reloading project')
     this.resourceStore.reload()
 
     await this.reset()
     this.log.info('project state reset')
 
-    this.evaluteProject()
-    this.log.info('project evaluated')
+    if (!token.isCancellationRequested) {
+      this.evaluteProject()
+    } else {
+      this.log.info('project evluation canceled')
+    }
+
+    cancelTokenSource.dispose()
   }, this.reloadDebounceTimeout)
 
   /**
