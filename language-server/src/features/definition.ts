@@ -1,8 +1,10 @@
-import { Def, Injectable, Text } from '@rwxml/analyzer'
+import { Injectable, Text } from '@rwxml/analyzer'
+import { injectable } from 'tsyringe'
 import { DefinitionLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
+import { RangeConverter } from '../utils/rangeConverter'
 import { getNodeAndOffset, isPointingDefNameContent, isPointingDefReferenceContent } from './utils/node'
 
 type Result = {
@@ -14,7 +16,10 @@ interface DefReferenceText extends Text {
   parent: Injectable
 }
 
+@injectable()
 export class Definition {
+  constructor(private readonly rangeConverter: RangeConverter) {}
+
   onDefinition(project: Project, uri: URI, position: Position): Result {
     return {
       definitionLinks: this.findDefinition(project, uri, position),
@@ -61,13 +66,13 @@ export class Definition {
 
     for (const def of defs) {
       const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-      const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+      const targetRange = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 
       if (!(defNameNode && targetRange)) {
         continue
       }
 
-      const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
+      const targetSelectionRange = this.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
       if (!targetSelectionRange) {
         continue
       }
@@ -88,13 +93,13 @@ export class Definition {
 
     for (const def of defs) {
       const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-      const targetRange = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+      const targetRange = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 
       if (!(defNameNode && targetRange)) {
         continue
       }
 
-      const targetSelectionRange = project.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
+      const targetSelectionRange = this.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
       if (!targetSelectionRange) {
         continue
       }

@@ -1,12 +1,15 @@
 /* eslint-disable prettier/prettier */
 import { Attribute, Element, Node, TypeInfo } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
+import { injectable } from 'tsyringe'
 import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
-import { RimWorldVersion } from '../../typeInfoMapManager'
+import { RangeConverter } from '../../utils/rangeConverter'
 import { expandUntil, isAlpha } from '../../utils/strings'
+import { ModManager } from '../../mod/modManager'
+import { RimWorldVersion } from '../../RimWorldVersion'
 
 const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
 const ClassValueRegex = [
@@ -23,8 +26,11 @@ const ClassValueRegex = [
   /PerceptComp_[\w]+/, // PerceptComp_XXX
 ]
 
+@injectable()
 export class CompleteAttribute {
   private readonly classValue: MultiDictionary<RimWorldVersion, string> = new MultiDictionary()
+
+  constructor(private readonly rangeConverter: RangeConverter, private readonly modManager: ModManager) {}
 
   completeAttribute(project: Project, node: Node, offset: number): CompletionItem[] {
     if (!(node instanceof Element) || !node.openTagRange.include(offset)) {
@@ -35,7 +41,7 @@ export class CompleteAttribute {
     const items: CompletionItem[] = []
     const currentAttribute = findCurrentAttribute(node, offset)
     const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAlpha(c), (c) => isAlpha(c))
-    const textRange = project.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
+    const textRange = this.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
 
     if (!textRange) {
       return []
@@ -84,7 +90,7 @@ export class CompleteAttribute {
         } break
 
         case 'MayRequire': {
-          const packageIds = project.modManager.packageIds
+          const packageIds = this.modManager.packageIds
           const completions = getMatchingText(packageIds, currentPointingText.text)
 
           items.push(...completions.map((label) => ({

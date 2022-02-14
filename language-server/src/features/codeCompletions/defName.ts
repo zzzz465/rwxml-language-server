@@ -1,10 +1,10 @@
-import { Element, Injectable, Node, NodeWithChildren, Range, Text } from '@rwxml/analyzer'
+import { Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
-import { allowedNodeEnvironmentFlags } from 'process'
-import { CompletionItem, CompletionItemKind, InsertTextFormat, TextEdit } from 'vscode-languageserver'
-import { CodeCompletion } from '.'
+import { injectable } from 'tsyringe'
+import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
+import { RangeConverter } from '../../utils/rangeConverter'
 
 /*
 1. trie 알고리즘을 기반으로 함?
@@ -17,7 +17,10 @@ import { Project } from '../../project'
 그러면, skip 할 수 있게 pointer 를 줘야하나?
 */
 
+@injectable()
 export class DefNameCompletion {
+  constructor(private readonly rangeConverter: RangeConverter) {}
+
   complete(project: Project, selection: Node, offset: number): CompletionItem[] {
     if (!this.shouldSuggestDefNames(selection, offset)) {
       return []
@@ -31,7 +34,7 @@ export class DefNameCompletion {
     const fieldType = node.fieldInfo?.fieldType
     const defType = fieldType?.getDefType()
     const range = node.contentRange ?? new Range(offset, offset)
-    const editRange = project.rangeConverter.toLanguageServerRange(range, node.document.uri)
+    const editRange = this.rangeConverter.toLanguageServerRange(range, node.document.uri)
 
     if (!(fieldType && defType && editRange)) {
       return []

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "language-server"
+		},
+		{
+			"path": "analyzer"
+		},
+		{
+			"path": "vsc-extension"
+		}
+	]
+}

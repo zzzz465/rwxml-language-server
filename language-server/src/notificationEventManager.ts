@@ -1,7 +1,6 @@
 import EventEmitter from 'events'
 import { singleton } from 'tsyringe'
-import { Connection, TextDocumentChangeEvent } from 'vscode-languageserver'
-import { TextDocument } from 'vscode-languageserver-textdocument'
+import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import {
   ProjectFileAdded,
@@ -10,65 +9,56 @@ import {
   ProjectFileChangedNotificationParams,
   ProjectFileDeleted,
   ProjectFileDeletedNotificationParams,
-  WorkspaceInitialization,
-  WorkspaceInitializationNotificationParams,
 } from './events'
 import { File } from './fs'
+import * as winston from 'winston'
 
 // events that this manager will emit
 export interface NotificationEvents {
-  projectFileAdded(file: File): void
-  projectFileChanged(file: File): void
-  projectFileDeleted(file: File): void
-  workspaceInitialized(files: File[]): void
-  contentChanged(file: File): void
-}
-
-interface TextDocumentListeningEvent {
-  onContentChange(e: TextDocumentChangeEvent<TextDocument>): void
+  fileAdded(file: File): void
+  fileChanged(file: File): void
+  fileDeleted(uri: string): void
 }
 
 @singleton()
 export class NotificationEventManager {
+  private logFormat = winston.format.printf(
+    (info) => `[${info.level}] [${NotificationEventManager.name}] ${info.message}`
+  )
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   // pre-event stage emit
   public readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()
   // event emit
   public readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
   // post-event emit?
 
-  listen(connection: Connection, textDocumentEvent: EventEmitter<TextDocumentListeningEvent>): void {
+  listen(connection: Connection): void {
     connection.onNotification(ProjectFileAdded, this.onProjectFileAdded.bind(this))
     connection.onNotification(ProjectFileChanged, this.onProjectFileChanged.bind(this))
     connection.onNotification(ProjectFileDeleted, this.onProjectFileDeleted.bind(this))
-    connection.onNotification(WorkspaceInitialization, this.onWorkspaceInitialized.bind(this))
-    textDocumentEvent.on('onContentChange', this.onContentChanged.bind(this))
   }
 
-  private onProjectFileAdded({ uri, readonly, text }: ProjectFileAddedNotificationParams): void {
-    const file = File.create({ uri: URI.parse(uri), readonly, text })
-    this.preEvent.emit('projectFileAdded', file)
-    this.event.emit('projectFileAdded', file)
-  }
-  private onProjectFileChanged({ uri, readonly, text }: ProjectFileChangedNotificationParams): void {
-    const file = File.create({ uri: URI.parse(uri), readonly, text })
-    this.preEvent.emit('projectFileChanged', file)
-    this.event.emit('projectFileChanged', file)
-  }
-  private onProjectFileDeleted({ uri }: ProjectFileDeletedNotificationParams): void {
+  private onProjectFileAdded({ uri }: ProjectFileAddedNotificationParams): void {
+    this.log.debug(`project file added: ${uri}`)
+
     const file = File.create({ uri: URI.parse(uri) })
-    this.preEvent.emit('projectFileDeleted', file)
-    this.event.emit('projectFileDeleted', file)
+    this.preEvent.emit('fileAdded', file)
+    this.event.emit('fileAdded', file)
   }
-  private onWorkspaceInitialized({ files }: WorkspaceInitializationNotificationParams): void {
-    const convertedFiles = files.map((file) =>
-      File.create({ uri: URI.parse(file.uri), readonly: file.readonly, text: file.text })
-    )
-    this.preEvent.emit('workspaceInitialized', convertedFiles)
-    this.event.emit('workspaceInitialized', convertedFiles)
+
+  private onProjectFileChanged({ uri }: ProjectFileChangedNotificationParams): void {
+    this.log.debug(`project file changed: ${uri}`)
+
+    const file = File.create({ uri: URI.parse(uri) })
+    this.preEvent.emit('fileChanged', file)
+    this.event.emit('fileChanged', file)
   }
-  private onContentChanged({ document }: TextDocumentChangeEvent<TextDocument>): void {
-    const file = File.create({ uri: URI.parse(document.uri), text: document.getText() })
-    this.preEvent.emit('contentChanged', file)
-    this.event.emit('contentChanged', file)
+
+  private onProjectFileDeleted({ uri }: ProjectFileDeletedNotificationParams): void {
+    this.log.debug(`project file deleted: ${uri}`)
+
+    this.preEvent.emit('fileDeleted', uri)
+    this.event.emit('fileDeleted', uri)
   }
 }

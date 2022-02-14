@@ -1,13 +1,16 @@
 import { Def, Element, Injectable, Range } from '@rwxml/analyzer'
+import { container, injectable } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { toLocation } from './utils/node'
 
+@injectable()
 export class CodeLens {
   onCodeLens(project: Project, uri: URI): lsp.CodeLens[] {
     const document = project.getXMLDocumentByUri(uri)
+    const rangeConverter = container.resolve(RangeConverter)
     const root = document?.children.find((node) => node instanceof Element) as Element | undefined
 
     if (!root || !(root.name === 'Defs')) {
@@ -21,7 +24,7 @@ export class CodeLens {
         continue
       }
 
-      const range = project.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+      const range = rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 
       if (!range) {
         continue
@@ -30,7 +33,7 @@ export class CodeLens {
       const defName = def.getDefName()
       const defNameContentRange =
         def.ChildElementNodes.find((node) => node.name === 'defName')?.contentRange ?? new Range()
-      const position = project.rangeConverter.toLanguageServerRange(defNameContentRange, uri.toString())?.start
+      const position = rangeConverter.toLanguageServerRange(defNameContentRange, uri.toString())?.start
       if (defName && defNameContentRange && position) {
         const injectables = project.defManager.getReferenceResolveWanters(defName)
 

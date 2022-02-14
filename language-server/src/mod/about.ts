@@ -1,5 +1,4 @@
 import EventEmitter from 'events'
-import { RimWorldVersion, RimWorldVersionArray } from '../typeInfoMapManager'
 import { Writable } from '../types'
 import deepEqual from 'fast-deep-equal'
 import path from 'path'
@@ -7,6 +6,8 @@ import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import { singleton } from 'tsyringe'
+import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
+import * as winston from 'winston'
 
 export interface AboutEvents {
   dependencyModsChanged(about: About): void
@@ -21,6 +22,9 @@ export interface Dependency {
 
 @singleton()
 export class About {
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _rawXML = ''
@@ -120,19 +124,15 @@ export class About {
   }
 
   listen(event: EventEmitter<NotificationEvents>) {
-    event.on('workspaceInitialized', this.onWorkspaceInitialized.bind(this))
-    event.on('projectFileChanged', this.onProjectFileChanged.bind(this))
+    event.on('fileChanged', this.onFileChanged.bind(this))
   }
 
-  private onProjectFileChanged(file: File) {
+  private async onFileChanged(file: File) {
     if (isAboutFile(file)) {
-      this.updateAboutXML(file.text)
-    }
-  }
+      this.log.info(`about file changed, uri: ${file.uri.toString()}`)
 
-  private onWorkspaceInitialized(files: File[]) {
-    for (const file of files) {
-      this.onProjectFileChanged(file)
+      const text = await file.read()
+      this.updateAboutXML(text)
     }
   }
 }

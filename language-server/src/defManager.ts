@@ -2,8 +2,15 @@ import Deque from 'double-ended-queue'
 import _ from 'lodash'
 import { DefDatabase, TypeInfoInjector, Def, NameDatabase, Injectable, TypeInfoMap, Document } from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
+import * as winston from 'winston'
+import { RimWorldVersion } from './RimWorldVersion'
 
 export class DefManager {
+  private logFormat = winston.format.printf(
+    (info) => `[${info.level}] [${DefManager.name}] [${this.version}] ${info.message}`
+  )
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
   private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
   private readonly typeInfoInjector: TypeInfoInjector
@@ -11,11 +18,14 @@ export class DefManager {
   constructor(
     public readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
-    public readonly typeInfoMap: TypeInfoMap
+    public readonly typeInfoMap: TypeInfoMap,
+    public readonly version?: RimWorldVersion
   ) {
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {
-      throw new Error('cannot find def Type in typeInfoMap')
+      // eslint-disable-next-line quotes
+      this.log.warn("cannot find type Def in typeInfoMap. something isn't right.")
+      // throw new Error('cannot find def Type in typeInfoMap')
     }
 
     this.typeInfoInjector = new TypeInfoInjector(typeInfoMap)

@@ -5,7 +5,7 @@ import { URI } from 'vscode-uri'
 import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../events'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
-import { RimWorldVersionArray } from '../typeInfoMapManager'
+import { RimWorldVersionArray } from '../RimWorldVersion'
 import { CodeCompletion } from './codeCompletions'
 import { CodeLens } from './codeLens'
 import { Decorate } from './decorate'
@@ -13,16 +13,22 @@ import { Definition } from './definition'
 import { Reference } from './reference'
 import { Rename } from './rename'
 
+/**
+ * LanguageFeature receives all lsp request and dispatch to each features
+ * @todo try replacing projectManager to tsyringe container
+ */
 @singleton()
 export class LanguageFeature {
-  private readonly decorate = new Decorate()
-  private readonly definition = new Definition()
-  private readonly codeCompletion = new CodeCompletion()
-  private readonly codeLens = new CodeLens()
-  private readonly reference = new Reference()
-  private readonly rename = new Rename(this.reference, this.definition)
-
-  constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
+  constructor(
+    private readonly loadFolder: LoadFolder,
+    private readonly projectManager: ProjectManager,
+    private readonly decorate: Decorate,
+    private readonly definition: Definition,
+    private readonly codeCompletion: CodeCompletion,
+    private readonly codeLens: CodeLens,
+    private readonly reference: Reference,
+    private readonly rename: Rename
+  ) {}
 
   listen(connection: lsp.Connection) {
     connection.onRequest(XMLDocumentDecoItemRequest, this.wrapExceptionStackTraces(this.onDecorate.bind(this)))

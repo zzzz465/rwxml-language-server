@@ -1,16 +1,16 @@
 import * as path from 'path'
+import { container } from 'tsyringe'
 import { URI } from 'vscode-uri'
+import { TextReader } from './reader'
 
-export type File = XMLFile | OtherFile
+export interface FileCreateParameters {
+  uri: URI
+  readonly?: boolean
+  ownerPackageId?: string
+}
 
-export namespace File {
-  export interface FileCreateParameters {
-    uri: URI
-    text?: string
-    readonly?: boolean
-    ownerPackageId?: string
-  }
-  export function create(params: FileCreateParameters) {
+export abstract class File {
+  static create(params: FileCreateParameters): File {
     const uri = params.uri
 
     let file: File
@@ -19,7 +19,7 @@ export namespace File {
 
     switch (extname) {
       case '.xml':
-        file = new XMLFile(uri, params.text ?? '', params.readonly)
+        file = new XMLFile(uri, params.readonly)
         break
 
       case '.wav':
@@ -36,6 +36,7 @@ export namespace File {
 
       case '.dll':
         file = new DLLFile(uri)
+        break
 
       default:
         file = new OtherFile(uri)
@@ -43,66 +44,98 @@ export namespace File {
     }
 
     if (params.ownerPackageId) {
-      Object.assign(file, { ownerPackageId: params.ownerPackageId })
+      Object.assign<File, Pick<DependencyFile, 'ownerPackageId'>>(file, {
+        ownerPackageId: params.ownerPackageId,
+      })
     }
 
     return file
   }
+
+  readonly metadataCreated = Date.now()
+
+  constructor(public readonly uri: URI) {}
+
+  abstract toString(): string
 }
 
-export interface IFile {
-  readonly uri: URI
-  toString(): string
-}
-
-export interface DependencyFile extends IFile {
+export interface DependencyFile extends File {
   // packageId of this File's owner.
   readonly ownerPackageId: string
 }
 
 export namespace DependencyFile {
-  export function is(file: File): file is File & DependencyFile {
-    return 'ownerPackageId' in file && typeof file['ownerPackageId'] === 'string'
+  export function is(file: File): file is DependencyFile {
+    return 'ownerPackageId' in file && typeof (file as any)['ownerPackageId'] === 'string'
   }
 }
 
-export class OtherFile implements IFile {
-  constructor(public readonly uri: URI) {}
+export class OtherFile extends File {
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   toString() {
     return `OtherFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class XMLFile implements IFile {
-  constructor(public readonly uri: URI, public readonly text: string, public readonly readonly?: boolean) {}
+/**
+ * @todo create TextFile and make XMLFile inherit it
+ */
+export class XMLFile extends File {
+  private data?: string = undefined
+  private readPromise?: Promise<string> = undefined
+
+  constructor(uri: URI, public readonly readonly?: boolean) {
+    super(uri)
+  }
+
+  async read(): Promise<string> {
+    if (!this.data) {
+      if (!this.readPromise) {
+        const xmlFileReader = container.resolve(TextReader)
+        this.readPromise = xmlFileReader.read(this)
+      }
+
+      this.data = await this.readPromise
+    }
+
+    return this.data
+  }
 
   toString() {
     return `XMLFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class TextureFile implements IFile {
+export class TextureFile extends File {
   readonly readonly = true
-  constructor(public readonly uri: URI) {}
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   toString() {
     return `TextureFile ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class AudioFile implements IFile {
+export class AudioFile extends File {
   readonly readonly = true
-  constructor(public readonly uri: URI) {}
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   toString() {
     return `Audiofile ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
-export class DLLFile implements IFile {
+export class DLLFile extends File {
   readonly readonly = true
-  constructor(public readonly uri: URI) {}
+  constructor(uri: URI) {
+    super(uri)
+  }
 
   get fsPath() {
     return this.uri.fsPath

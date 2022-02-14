@@ -1,18 +1,12 @@
 import { NotificationType, RequestType } from 'vscode-languageclient'
-import { SerializedAbout } from '../mod'
-import { RimWorldVersion } from '../mod/version'
 import { DecoItem, UrlEncodedString } from '../types'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
-  text?: string
-  readonly?: boolean
 }
 
 export interface ProjectFileChangedNotificationParams {
   uri: UrlEncodedString
-  text?: string
-  readonly?: boolean
 }
 
 export interface ProjectFileDeletedNotificationParams {
@@ -36,30 +30,22 @@ export interface XMLDocumentDecoItemResponse {
   items: DecoItem[]
 }
 
-export interface DependencyRequest {
-  version: RimWorldVersion
-  packageIds: string[]
-  dlls: string[]
+export interface TextRequest {
+  uri: string
 }
 
-export interface DependencyResponse {
-  version: RimWorldVersion
-  typeInfos: unknown[]
-  items: {
-    readonly: true
-    packageId: string
-    defs: { uri: UrlEncodedString; text?: string }[]
-  }[]
+export interface TextRequestResponse {
+  data: string
+  error?: string
 }
 
-export interface WorkspaceInitializationNotificationParams {
-  files: ProjectFileAddedNotificationParams[]
+export interface TypeInfoRequest {
+  uris: string[]
 }
 
-export interface ModChangedNotificationParams {
-  mods: {
-    about: SerializedAbout
-  }[]
+export interface TypeInfoRequestResponse {
+  data?: unknown[]
+  error?: string
 }
 
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
@@ -74,14 +60,6 @@ export const ProjectFileDeleted = new NotificationType<ProjectFileDeletedNotific
   'rwxml-language-server:notification:ProjectFileChanged'
 )
 
-export const WorkspaceInitialization = new NotificationType<WorkspaceInitializationNotificationParams>(
-  'rwxml-language-server:notification:WorkspaceInitialization'
-)
-
-export const ModChangedNotificationParams = new NotificationType<ModChangedNotificationParams>(
-  'rwxml-language-server:notification:ModChanged'
-)
-
 export const SerializedXMLDocumentRequest = new RequestType<
   SerializedXMLDocumentRequest,
   SerializedXMLDocumentResponse,
@@ -94,6 +72,10 @@ export const XMLDocumentDecoItemRequest = new RequestType<
   undefined
 >('rwxml-language-server:request:XMLDocumentDecoItem')
 
-export const DependencyRequest = new RequestType<DependencyRequest, DependencyResponse, undefined>(
-  'rwxml-language-server:request:DependencyData'
+export const TextRequest = new RequestType<TextRequest, TextRequestResponse, undefined>(
+  'rwxml-language-server:request:TextRequest'
+)
+
+export const TypeInfoRequest = new RequestType<TypeInfoRequest, TypeInfoRequestResponse, undefined>(
+  'rwxml-language-server:request:TypeInfoRequest'
 )

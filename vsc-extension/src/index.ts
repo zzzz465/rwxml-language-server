@@ -1,61 +1,23 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import 'reflect-metadata'
-import { Disposable, ExtensionContext, workspace } from 'vscode'
+import { Disposable, ExtensionContext } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import * as path from 'path'
 import { container } from 'tsyringe'
 import * as features from './features'
-import { ModChangedNotificationParams, WorkspaceInitialization } from './events'
-import { ModManager } from './mod/modManager'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
 import * as containerVars from './containerVars'
 import * as commands from './commands'
 import * as mods from './mod'
-import * as projectWatcher from './projectWatcher'
-import { isXML } from './utils/path'
+import { ProjectWatcher } from './projectWatcher'
+import * as resources from './resources'
 
 const disposables: Disposable[] = []
-
-async function sendMods() {
-  const client = container.resolve(LanguageClient)
-  const modManager = container.resolve(ModManager)
-
-  type simpleMod = {
-    about: mods.SerializedAbout
-  }
-
-  const mods: simpleMod[] = modManager.mods.map((mod) => ({
-    about: {
-      name: mod.about.name,
-      author: mod.about.author,
-      packageId: mod.about.packageId,
-      supportedVersions: mod.about.supportedVersions,
-    },
-  }))
-
-  await client.sendNotification(ModChangedNotificationParams, { mods })
-}
-
-async function initialLoadFilesFromWorkspace() {
-  const uris = await workspace.findFiles(projectWatcher.globPattern)
-
-  const files = await Promise.all(
-    uris.map(async (uri) => {
-      const rawFile = await workspace.fs.readFile(uri)
-      const text = isXML(uri) ? Buffer.from(rawFile).toString() : undefined
-
-      return { uri: uri.toString(), text }
-    })
-  )
-
-  const client = container.resolve(LanguageClient)
-  client.sendNotification(WorkspaceInitialization, { files })
-}
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // 1. reset container && set extensionContext
   console.log('initializing @rwxml/vsc-extension...')
-  container.reset()
+  container.clearInstances()
 
   container.register('ExtensionContext', { useValue: context })
 
@@ -71,6 +33,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('initializing Language Server...')
   const client = await createServer()
 
+  // 4. init resourceProvider
+  console.log('initializing resourceProviders...')
+  const resourceProviders = container.resolveAll<resources.Provider>(resources.Provider.token)
+  resourceProviders.forEach((resource) => resource.listen(client))
+
   // 4. initialize modManager, dependencyManager
   console.log('initialize modManager, dependencyManager...')
   await mods.initialize()
@@ -84,8 +51,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   checkTypeInfoAnalyzeAvailable()
 
   // 7. send mod list to language server
-  console.log('sending external mods...')
-  await sendMods()
+  // TODO: this feature is moved to projectWatcher
+  // it sends all watched file on init (before watching)
 
   // 8. add decorate update
   console.log('register lsp features...')
@@ -93,11 +60,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   // 9. set project watcher
   console.log('initialize Project Watcher...')
-  projectWatcher.initialize()
-
-  // 10. load all files from workspace, send files
-  console.log('load all files from current workspace...')
-  await initialLoadFilesFromWorkspace()
+  container.resolve(ProjectWatcher).start()
 
   console.log('initialization completed.')
 }

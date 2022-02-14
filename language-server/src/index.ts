@@ -10,13 +10,12 @@ import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
 import { LanguageFeature } from './features'
-import { ModManager } from './mod/modManager'
 import { container } from 'tsyringe'
-import { ConnectionWrapper } from './connection'
+import { ConnectionToken } from './connection'
+import { ModManager } from './mod/modManager'
 
 const connection = createConnection(ProposedFeatures.all)
-container.register('connection', { useValue: connection })
-const connectionWrapper = container.resolve(ConnectionWrapper)
+container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: InitializeParams) => {
   log.info('hello world! initializing @rwxml-language-server/language-server ...')
@@ -30,8 +29,8 @@ connection.onInitialize(async (params: InitializeParams) => {
   const modManager = container.resolve(ModManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
-  textDocumentManager.listen(connection)
-  notificationEventManager.listen(connection, textDocumentManager.event)
+  notificationEventManager.listen(connection)
+  textDocumentManager.listen(connection, notificationEventManager.preEvent)
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
   modManager.listen(connection)
