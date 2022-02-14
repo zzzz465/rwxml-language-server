@@ -85,9 +85,11 @@ export class Project {
 
   /**
    * reloadProject reset project and evaluate all xmls
+   * uses debounce to limit reloading too often
    */
   private reloadProject = _.debounce(async () => {
     this.log.info('reloading project')
+    this.resourceStore.reload()
 
     await this.reset()
     this.log.info('project state reset')
