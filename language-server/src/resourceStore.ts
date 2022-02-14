@@ -43,7 +43,6 @@ export class ResourceStore {
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
-    private readonly about: About,
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore
   ) {}
@@ -136,8 +135,27 @@ export class ResourceStore {
     }
   }
 
+  /**
+   * compare project files against fileStore, and add/delete files
+   * NOTE: this might cause performance issue.
+   */
   reload() {
-    throw new Error('not implemented')
+    for (const [uri, file] of this.fileStore) {
+      const versions = this.loadFolder.isBelongsTo(URI.parse(uri))
+      if (versions.find((version) => version === this.version)) {
+        if (!this.files.has(uri)) {
+          // when file is not registered but it should
+          this.log.debug(`file added via reload: ${uri}`)
+          this.fileAdded(file)
+        }
+      } else {
+        if (this.files.has(uri)) {
+          // when file is registered but should be removed
+          this.log.debug(`file deleted via reload: ${uri}`)
+          this.fileDeleted(uri)
+        }
+      }
+    }
   }
 
   private async onXMLFileChanged(file: XMLFile) {
