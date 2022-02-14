@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { inject, injectable } from 'tsyringe'
+import { inject, injectable, singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { File } from './fs'
@@ -12,7 +12,7 @@ import { URI } from 'vscode-uri'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
-@injectable()
+@singleton()
 export class DependencyResourceManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${DependencyResourceManager.name}] ${info.message}`
@@ -29,6 +29,7 @@ export class DependencyResourceManager {
   }
 
   private onAboutChanged(about: About) {
+    this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies)}`)
     const added = about.modDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
     // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
@@ -41,7 +42,7 @@ export class DependencyResourceManager {
   }
 
   private async handleAddedMods(deps: Dependency[]) {
-    this.log.debug(`request dependencies (added): ${deps}`)
+    this.log.debug(`request dependencies (added): ${JSON.stringify(deps)}`)
 
     const requests = deps.map((dep) =>
       this.connection.sendRequest(DependencyRequest, { packageId: dep.packageId }, undefined)
@@ -65,7 +66,7 @@ export class DependencyResourceManager {
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
     assert(!res.error)
-    log.debug(`processing add response, packageId: ${res.packageId}`)
+    log.debug(`processing add response, packageId: ${res.packageId}, files: ${JSON.stringify(res.uris)}`)
 
     const files = res.uris.map((uri) =>
       File.create({ uri: URI.parse(uri), ownerPackageId: res.packageId, readonly: true })
@@ -79,7 +80,7 @@ export class DependencyResourceManager {
   }
 
   private handleDeletedMods(deps: Dependency[]) {
-    this.log.debug(`deleted dependencies: ${deps}`)
+    this.log.debug(`deleted dependencies: ${JSON.stringify(deps)}`)
 
     for (const dep of deps) {
       const files = this.resourcesMap.get(dep.packageId)

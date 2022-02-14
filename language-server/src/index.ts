@@ -13,12 +13,15 @@ import { LanguageFeature } from './features'
 import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
+import { DependencyResourceManager } from './dependencyResourceManager'
 
 const connection = createConnection(ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: InitializeParams) => {
   log.info('hello world! initializing @rwxml-language-server/language-server ...')
+
+  // TODO: replace this initalize codes to use token registry
 
   const about = container.resolve(About)
   const loadFolder = container.resolve(LoadFolder)
@@ -27,6 +30,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   const projectManager = container.resolve(ProjectManager)
   const languageFeature = container.resolve(LanguageFeature)
   const modManager = container.resolve(ModManager)
+  const dependencyResourceManager = container.resolve(DependencyResourceManager)
 
   loadFolder.listen(notificationEventManager.preEvent)
   notificationEventManager.listen(connection)
