@@ -18,8 +18,9 @@ export class TypeInfoProvider implements Provider {
 
   private async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
     const res: TypeInfoRequestResponse = {}
+    const fsPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath)
 
-    console.log('typeInfoRequest received request for: ', uris)
+    console.log('typeInfoRequest received request for: ', fsPaths)
 
     if (!this.clearProgress) {
       const { resolve } = await createProgress({
@@ -32,13 +33,13 @@ export class TypeInfoProvider implements Provider {
     this.requestCounter += 1
 
     try {
-      const fsPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath)
-
       const typeInfos = await extractTypeInfos(...fsPaths)
 
       res.data = typeInfos
     } catch (err) {
-      res.error = JSON.stringify(err, null, 2)
+      // https://stackoverflow.com/questions/18391212/is-it-not-possible-to-stringify-an-error-using-json-stringify
+      res.error = JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
+      console.error(JSON.stringify(res, null, 2))
     }
 
     this.requestCounter -= 1
