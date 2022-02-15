@@ -11,7 +11,7 @@ export async function createProgress(options: Omit<vscode.ProgressOptions, 'canc
 
   let progress: vscode.Progress<{ message?: string; increment?: number }> = null as any
 
-  await vscode.window.withProgress({ ...options, cancellable: false }, async (p) => {
+  vscode.window.withProgress({ ...options, cancellable: false }, (p) => {
     progress = p
     return promise
   })
