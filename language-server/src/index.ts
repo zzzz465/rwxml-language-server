@@ -15,6 +15,7 @@ import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
 import { DependencyResourceManager } from './dependencyResourceManager'
 import { FileStore } from './fileStore'
+import { TextDocumentsAdapter } from './textDocumentsAdapter'
 
 const connection = createConnection(ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
@@ -33,11 +34,13 @@ connection.onInitialize(async (params: InitializeParams) => {
   const modManager = container.resolve(ModManager)
   const dependencyResourceManager = container.resolve(DependencyResourceManager)
   const fileStore = container.resolve(FileStore)
+  const textDocumentsAdapter = container.resolve(TextDocumentsAdapter)
 
+  notificationEventManager.listen(textDocumentsAdapter.event)
   notificationEventManager.listen(dependencyResourceManager.event)
   loadFolder.listen(notificationEventManager.preEvent)
   notificationEventManager.listenConnection(connection)
-  textDocumentManager.listen(connection, notificationEventManager.preEvent)
+  textDocumentManager.listen(notificationEventManager.preEvent)
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
   modManager.listen(connection)

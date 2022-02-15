@@ -1,6 +1,5 @@
 import EventEmitter from 'events'
 import { singleton } from 'tsyringe'
-import { Connection, TextDocumentChangeEvent, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { File, XMLFile } from './fs'
 import { NotificationEvents } from './notificationEventManager'
@@ -19,14 +18,11 @@ export class TextDocumentManager {
   private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
   private documents: Map<string, TextDocument> = new Map()
-  private textDocuments = new TextDocuments(TextDocument)
 
-  listen(connection: Connection, events: EventEmitter<NotificationEvents>) {
-    this.textDocuments.listen(connection)
-
+  listen(events: EventEmitter<NotificationEvents>) {
     events.on('fileAdded', this.onFileAdded.bind(this))
     events.on('fileChanged', this.onFileChanged.bind(this))
-    this.textDocuments.onDidChangeContent(this.onDidChangeContent.bind(this))
+    // TODO: add fileDeleted event handler
   }
 
   get(uri: string) {
@@ -54,10 +50,5 @@ export class TextDocumentManager {
       const data = await file.read()
       this.set(file.uri.toString(), data)
     }
-  }
-
-  private onDidChangeContent(e: TextDocumentChangeEvent<TextDocument>) {
-    this.log.debug(`textDocument content changed, uri: ${e.document.uri.toString()}`)
-    this.set(e.document.uri.toString(), e.document.getText(), e.document.languageId)
   }
 }

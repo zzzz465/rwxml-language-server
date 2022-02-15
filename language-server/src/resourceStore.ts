@@ -10,7 +10,6 @@ import * as winston from 'winston'
 import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
-import { About } from './mod'
 
 interface Events {
   dllChanged(uri: string): void
