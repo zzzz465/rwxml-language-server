@@ -141,13 +141,17 @@ export class Project {
   }
 
   private async onXMLChanged(uri: string): Promise<void> {
-    // TODO: implement this
-    this.log.warn('onXMLDeleted not implemented.')
+    const xml = this.resourceStore.xmls.get(uri)
+    if (!xml) {
+      this.log.warn(`file ${uri} is changed but xml not exists on resourceStore`)
+      return
+    }
+
+    this.parseXML(uri, xml)
   }
 
   private async onXMLDeleted(uri: string): Promise<void> {
-    // TODO: implement this
-    this.log.warn('onXMLDeleted not implemented.')
+    this.parseXML(uri, '')
   }
 
   /**
