@@ -96,7 +96,7 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
 
     server.close()
 
-    throw new Error(`failed to extract TypeInfos on runtime, files: ${JSON.stringify(dllPaths, null, 2)}`)
+    throw new Error(`exit code: ${exitCode}`)
   }
 
   const result = await connectionPromise

@@ -36,10 +36,11 @@ export class TypeInfoProvider implements Provider {
       const typeInfos = await extractTypeInfos(...fsPaths)
 
       res.data = typeInfos
-    } catch (err) {
+    } catch (err: unknown) {
       // https://stackoverflow.com/questions/18391212/is-it-not-possible-to-stringify-an-error-using-json-stringify
-      res.error = JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
-      console.error(JSON.stringify(res, null, 2))
+      const err2 = err as Error
+      res.error = JSON.stringify({ name: err2.name, message: err2.message, stack: err2.stack }, null, 2)
+      console.error(res.error)
     }
 
     this.requestCounter -= 1
