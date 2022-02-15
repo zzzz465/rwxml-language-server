@@ -4,7 +4,7 @@ import { FileStore } from '../fileStore'
 import { TextFile } from '../fs'
 
 @singleton()
-export class Writable {
+export class WritableChecker {
   constructor(private readonly fileStore: FileStore, private readonly depManager: DependencyResourceManager) {}
 
   canWrite(uri: string): boolean {

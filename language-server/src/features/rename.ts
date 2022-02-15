@@ -7,6 +7,7 @@ import { DefaultDictionary } from 'typescript-collections'
 import { Definition } from './definition'
 import { RangeConverter } from '../utils/rangeConverter'
 import { injectable } from 'tsyringe'
+import { WritableChecker } from './writableChecker'
 
 type Result = {
   [url: string]: lsp.TextEdit[]
@@ -17,14 +18,14 @@ export class Rename {
   constructor(
     private readonly reference: Reference,
     private readonly definition: Definition,
-    private readonly rangeConverter: RangeConverter
+    private readonly rangeConverter: RangeConverter,
+    private readonly writableChecker: WritableChecker
   ) {}
 
   rename(project: Project, uri: URI, newName: string, pos: lsp.Position): Result {
     const result: Result = {}
 
-    // if file is not from workspace, then ignore.
-    if (project.isDependencyFile(uri)) {
+    if (!this.writableChecker.canWrite(uri.toString())) {
       return result
     }
 
