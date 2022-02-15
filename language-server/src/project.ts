@@ -12,7 +12,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import _ from 'lodash'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
-import { CancellationToken, CancellationTokenSource } from 'vscode-languageserver'
+import { CancellationTokenSource } from 'vscode-languageserver'
 
 interface Events {
   defChanged(defs: (Injectable | Def)[]): void
@@ -39,6 +39,8 @@ export class Project {
     public readonly resourceStore: ResourceStore,
     private readonly typeInfoMapProvider: TypeInfoMapProvider
   ) {
+    resourceStore.event.on('xmlChanged', this.onXMLChanged.bind(this))
+    resourceStore.event.on('xmlDeleted', this.onXMLDeleted.bind(this))
     resourceStore.event.on('dllChanged', () => this.reloadProject())
     resourceStore.event.on('dllDeleted', () => this.reloadProject())
 
@@ -136,6 +138,16 @@ export class Project {
     for (const [uri, raw] of this.resourceStore.xmls) {
       this.parseXML(uri, raw)
     }
+  }
+
+  private async onXMLChanged(uri: string): Promise<void> {
+    // TODO: implement this
+    this.log.warn('onXMLDeleted not implemented.')
+  }
+
+  private async onXMLDeleted(uri: string): Promise<void> {
+    // TODO: implement this
+    this.log.warn('onXMLDeleted not implemented.')
   }
 
   /**
