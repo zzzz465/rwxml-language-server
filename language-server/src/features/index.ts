@@ -70,14 +70,15 @@ export class LanguageFeature {
     return result
   }
 
-  private async onDecorate({ uri: uriStr }: XMLDocumentDecoItemRequest) {
+  private async onDecorate({ uri: uriStr }: XMLDocumentDecoItemRequest): Promise<XMLDocumentDecoItemResponse> {
+    const result: XMLDocumentDecoItemResponse = { uri: uriStr, items: [] }
+
     const uri = URI.parse(uriStr)
     if (uri.scheme !== 'file') {
-      return
+      return result
     }
 
     const versions = this.loadFolder.isBelongsTo(uri)
-    const result: XMLDocumentDecoItemResponse = { uri: uriStr, items: [] }
 
     for (const version of versions) {
       const project = this.projectManager.getProject(version)
