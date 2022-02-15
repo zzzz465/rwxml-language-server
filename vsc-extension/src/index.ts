@@ -12,6 +12,7 @@ import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
 import { ModManager } from './mod/modManager'
 import { ExtensionVersionToken } from './version'
+import { ExtensionContext } from './extension'
 
 const disposables: vscode.Disposable[] = []
 
@@ -22,7 +23,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
 
-  container.register('ExtensionContext', { useValue: context })
+  container.register(ExtensionContext, { useValue: context })
 
   // 2. initialize containers (set values)
   console.log('initializing container variables...')
@@ -79,7 +80,7 @@ export function deactivate() {
 }
 
 async function createServer() {
-  const context = container.resolve('ExtensionContext') as vscode.ExtensionContext
+  const context = container.resolve<vscode.ExtensionContext>(ExtensionContext)
   const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
   const module = path.join(context.extensionPath, serverModuleRelativePath)
   console.log(`server module absolute path: ${module}`)
