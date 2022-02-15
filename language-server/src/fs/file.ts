@@ -83,7 +83,7 @@ export class OtherFile extends File {
 /**
  * @todo create TextFile and make XMLFile inherit it
  */
-export class XMLFile extends File {
+export class TextFile extends File {
   private data?: string = undefined
   private readPromise?: Promise<string> = undefined
 
@@ -105,6 +105,12 @@ export class XMLFile extends File {
     return this.data
   }
 
+  toString() {
+    return `TextFile: ${decodeURIComponent(this.uri.toString())}`
+  }
+}
+
+export class XMLFile extends TextFile {
   toString() {
     return `XMLFile: ${decodeURIComponent(this.uri.toString())}`
   }
