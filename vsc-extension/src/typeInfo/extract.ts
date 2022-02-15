@@ -3,6 +3,7 @@ import { createServer } from 'net'
 import { container } from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { RimWorldDLLDirectoryKey } from '../containerVars'
+import { ExtensionContextToken } from '../extension'
 
 function getExtractorDirectory() {
   let processPath: string | undefined = undefined
@@ -25,7 +26,7 @@ function getExtractorDirectory() {
 }
 
 function getCWD() {
-  const extensionContext = container.resolve<ExtensionContext>('ExtensionContext')
+  const extensionContext = container.resolve<ExtensionContext>(ExtensionContextToken)
   const cwd = extensionContext.asAbsolutePath(getExtractorDirectory())
 
   return cwd

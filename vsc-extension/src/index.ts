@@ -12,7 +12,7 @@ import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
 import { ModManager } from './mod/modManager'
 import { ExtensionVersionToken } from './version'
-import { ExtensionContext } from './extension'
+import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 
 const disposables: vscode.Disposable[] = []
@@ -24,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
 
-  container.register(ExtensionContext, { useValue: context })
+  container.register(ExtensionContextToken, { useValue: context })
 
   // check version is updated.
   const updateNotification = container.resolve(UpdateNotification)
@@ -85,7 +85,7 @@ export function deactivate() {
 }
 
 async function createServer() {
-  const context = container.resolve<vscode.ExtensionContext>(ExtensionContext)
+  const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
   const module = path.join(context.extensionPath, serverModuleRelativePath)
   console.log(`server module absolute path: ${module}`)

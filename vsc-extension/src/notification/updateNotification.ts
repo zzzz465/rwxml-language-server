@@ -1,6 +1,6 @@
 import { inject, injectable, singleton } from 'tsyringe'
 import * as vscode from 'vscode'
-import { ExtensionContext } from '../extension'
+import { ExtensionContextToken } from '../extension'
 import { ExtensionVersionToken } from '../version'
 import * as semver from 'semver'
 
@@ -9,7 +9,7 @@ export class UpdateNotification {
   static firstRunStoreKey = 'first-run'
 
   constructor(
-    @inject(ExtensionContext) private readonly extensionContext: vscode.ExtensionContext,
+    @inject(ExtensionContextToken) private readonly extensionContext: vscode.ExtensionContext,
     @inject(ExtensionVersionToken) private readonly version: string
   ) {}
 

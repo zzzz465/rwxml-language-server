@@ -1,1 +1,1 @@
-export const ExtensionContext = Symbol('ExtensionContext')
+export const ExtensionContextToken = Symbol('ExtensionContext')
