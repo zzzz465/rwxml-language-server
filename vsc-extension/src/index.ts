@@ -20,6 +20,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   console.log('initializing @rwxml/vsc-extension...')
   container.clearInstances()
 
+  container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
+
   container.register('ExtensionContext', { useValue: context })
 
   // 2. initialize containers (set values)
