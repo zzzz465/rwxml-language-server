@@ -1,6 +1,5 @@
 import EventEmitter from 'events'
 import { singleton } from 'tsyringe'
-import { Connection, TextDocumentChangeEvent, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { File, XMLFile } from './fs'
 import { NotificationEvents } from './notificationEventManager'
