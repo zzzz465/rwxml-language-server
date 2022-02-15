@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { inject, injectable, singleton } from 'tsyringe'
+import { inject, singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { File } from './fs'
@@ -9,6 +9,7 @@ import * as winston from 'winston'
 import { DependencyRequest, DependencyRequestResponse } from './events'
 import assert from 'assert'
 import { URI } from 'vscode-uri'
+import { DefaultDictionary } from 'typescript-collections'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -24,8 +25,24 @@ export class DependencyResourceManager {
   // Map<packageId, File[]>
   private readonly resourcesMap: Map<string, File[]> = new Map()
 
+  private readonly resources: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
+
   constructor(about: About, @inject(ConnectionToken) private readonly connection: Connection) {
     about.event.on('dependencyModsChanged', this.onAboutChanged.bind(this))
+  }
+
+  isDependencyFile(uri: string): boolean {
+    return this.resources.getValue(uri) > 0
+  }
+
+  private markFile(uri: string): void {
+    const next = this.resources.getValue(uri) + 1
+    this.resources.setValue(uri, next)
+  }
+
+  private unmarkFile(uri: string): void {
+    const next = this.resources.getValue(uri) - 1
+    this.resources.setValue(uri, next >= 0 ? next : 0) // it must be greater than zero
   }
 
   private onAboutChanged(about: About) {
@@ -75,6 +92,7 @@ export class DependencyResourceManager {
     this.resourcesMap.set(res.packageId, files)
 
     for (const file of files) {
+      this.markFile(file.uri.toString())
       this.event.emit('fileAdded', file)
     }
   }
@@ -90,6 +108,7 @@ export class DependencyResourceManager {
       }
 
       for (const file of files) {
+        this.unmarkFile(file.uri.toString())
         this.event.emit('fileDeleted', file.uri.toString())
       }
     }
