@@ -13,6 +13,7 @@ import * as resources from './resources'
 import { ModManager } from './mod/modManager'
 import { ExtensionVersionToken } from './version'
 import { ExtensionContext } from './extension'
+import { UpdateNotification } from './notification/updateNotification'
 
 const disposables: vscode.Disposable[] = []
 
@@ -24,6 +25,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
 
   container.register(ExtensionContext, { useValue: context })
+
+  // check version is updated.
+  const updateNotification = container.resolve(UpdateNotification)
+  updateNotification.checkFirstRunThisVersion()
 
   // 2. initialize containers (set values)
   console.log('initializing container variables...')
