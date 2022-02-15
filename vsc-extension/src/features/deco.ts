@@ -20,7 +20,7 @@ function triggerDecoration() {
 export function registerDecoHook(): Disposable[] {
   const disposables: Disposable[] = [
     new (class implements Disposable {
-      timer = setInterval(triggerDecoration, 500)
+      timer = setInterval(triggerDecoration, 300)
       dispose() {
         clearInterval(this.timer)
       }
@@ -42,11 +42,15 @@ export function updateDecoration(client: LanguageClient, uri: string, timeout_ms
 }
 
 async function _updateDecoration(client: LanguageClient, uri: string) {
-  const response = await client.sendRequest(XMLDocumentDecoItemRequest, { uri })
+  try {
+    const response = await client.sendRequest(XMLDocumentDecoItemRequest, { uri })
 
-  // still watching same response
-  if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
-    applyDecos(response.items)
+    // still watching same response
+    if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
+      applyDecos(response.items)
+    }
+  } catch (err) {
+    console.warn('warn: deco request throw error: ', err)
   }
 }
 
