@@ -59,6 +59,6 @@ export class UpdateNotification {
       return
     }
 
-    this.extensionContext.globalState.update(UpdateNotification.firstRunStoreKey, value)
+    this.extensionContext.globalState.update(UpdateNotification.firstRunStoreKey, value.format())
   }
 }
