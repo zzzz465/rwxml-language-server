@@ -1,13 +1,16 @@
 import EventEmitter from 'events'
 import { inject, singleton } from 'tsyringe'
-import { Connection, TextDocuments } from 'vscode-languageserver'
+import { Connection, TextDocumentChangeEvent, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
+import { URI } from 'vscode-uri'
 import { ConnectionToken } from './connection'
-import { XMLFile } from './fs'
+import { ResourceExistsRequest } from './events'
+import { File, TextFile } from './fs'
+import * as winston from 'winston'
 
 interface Events {
-  fileAdded(file: XMLFile): void
-  fileChanged(file: XMLFile): void
+  fileAdded(file: TextFile): void
+  fileChanged(file: TextFile): void
   fileDeleted(uri: string): void
 }
 
@@ -19,6 +22,9 @@ interface Events {
  */
 @singleton()
 export class TextDocumentsAdapter {
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentsAdapter.name}] ${info.message}`)
+  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+
   readonly event: EventEmitter<Events> = new EventEmitter()
   readonly textDocuments = new TextDocuments(TextDocument)
 
@@ -30,15 +36,37 @@ export class TextDocumentsAdapter {
     this.textDocuments.onDidClose(this.onDidClose.bind(this))
   }
 
-  private onOpen() {
-    throw new Error('onOpen not implemented')
+  private onOpen(e: TextDocumentChangeEvent<TextDocument>) {
+    const file = File.create({ uri: URI.parse(e.document.uri) })
+    if (file instanceof TextFile) {
+      Object.assign(file, { data: e.document.getText() })
+      this.event.emit('fileAdded', file)
+    }
   }
 
-  private onContentChanged() {
-    throw new Error('onContentChanged not implemented')
+  private onContentChanged(e: TextDocumentChangeEvent<TextDocument>) {
+    const file = File.create({ uri: URI.parse(e.document.uri) })
+    if (file instanceof TextFile) {
+      Object.assign(file, { data: e.document.getText() })
+      this.event.emit('fileChanged', file)
+    }
   }
 
-  private onDidClose() {
-    throw new Error('onDidClose not implemented')
+  private async onDidClose(e: TextDocumentChangeEvent<TextDocument>) {
+    const res = await this.connection.sendRequest(ResourceExistsRequest, { uri: e.document.uri }, undefined)
+    if (res.error) {
+      this.log.error(`failed to check resource exists, resource: ${JSON.stringify(res, null, 2)}`)
+      return
+    }
+
+    if (res.exists) {
+      const file = File.create({ uri: URI.parse(e.document.uri) })
+      if (file instanceof TextFile) {
+        Object.assign(file, { data: e.document.getText() })
+        this.event.emit('fileChanged', file)
+      }
+    } else {
+      this.event.emit('fileDeleted', e.document.uri)
+    }
   }
 }
