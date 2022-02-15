@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import 'reflect-metadata'
-import { Disposable, ExtensionContext } from 'vscode'
+import * as vscode from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import * as path from 'path'
 import { container } from 'tsyringe'
@@ -11,10 +11,11 @@ import * as commands from './commands'
 import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
 import { ModManager } from './mod/modManager'
+import { ExtensionVersionToken } from './version'
 
-const disposables: Disposable[] = []
+const disposables: vscode.Disposable[] = []
 
-export async function activate(context: ExtensionContext): Promise<void> {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // 1. reset container && set extensionContext
   console.log('initializing @rwxml/vsc-extension...')
   container.clearInstances()
@@ -76,7 +77,7 @@ export function deactivate() {
 }
 
 async function createServer() {
-  const context = container.resolve('ExtensionContext') as ExtensionContext
+  const context = container.resolve('ExtensionContext') as vscode.ExtensionContext
   const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
   const module = path.join(context.extensionPath, serverModuleRelativePath)
   console.log(`server module absolute path: ${module}`)
