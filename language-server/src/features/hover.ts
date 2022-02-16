@@ -1,8 +1,10 @@
-import { Hover } from 'vscode-languageserver'
-import { URI } from 'vscode-uri'
-import { Project } from '../project'
+import { injectable } from 'tsyringe'
+import { Connection } from 'vscode-languageserver'
+import { Provider } from './provider'
 
-// TODO: implement this
-export function onHover(project: Project, uri: URI): Hover[] {
-  return []
+@injectable()
+export class HoverProvider implements Provider {
+  listen(connection: Connection): void {
+    throw new Error('Method not implemented.')
+  }
 }
