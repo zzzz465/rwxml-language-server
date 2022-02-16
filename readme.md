@@ -2,7 +2,7 @@
 
 provides various IDE functionalities, as VSCode Extension
 
-## fetures
+## features
 
 - [x] Custom syntax highlighting
 - [x] Basic completion snippets.
@@ -22,6 +22,33 @@ provides various IDE functionalities, as VSCode Extension
 ## Install
 
 [VSCode Marketplace (Click)](https://marketplace.visualstudio.com/items?itemName=madeline.rwxml-lang-serv)
+
+## Setup Locally
+
+1. clone repository locally
+
+```bash
+#!/bin/bash
+git clone https://github.com/zzzz465/rwxml-language-server
+```
+
+2. install project
+
+```bash
+#!/bin/bash
+# cwd: repository root
+pnpm install
+```
+
+3. build project
+
+```bash
+#!/bin/bash
+# cwd: repository root
+pnpm run watch # this will build project and watch project changes
+```
+
+4. open `/vsc-extension` with VSCode, and launch `Launch Client`
 
 ## default resource path
 
