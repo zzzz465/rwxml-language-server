@@ -9,7 +9,7 @@ import { About } from './mod'
 import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
-import { LanguageFeature } from './features'
+import * as features from './features'
 import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
@@ -30,7 +30,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   const textDocumentManager = container.resolve(TextDocumentManager)
   const notificationEventManager = container.resolve(NotificationEventManager)
   const projectManager = container.resolve(ProjectManager)
-  const languageFeature = container.resolve(LanguageFeature)
+  const languageFeature = container.resolve(features.LanguageFeature)
   const modManager = container.resolve(ModManager)
   const dependencyResourceManager = container.resolve(DependencyResourceManager)
   const fileStore = container.resolve(FileStore)
@@ -45,6 +45,8 @@ connection.onInitialize(async (params: InitializeParams) => {
   languageFeature.listen(connection)
   modManager.listen(connection)
   about.listen(notificationEventManager.preEvent)
+
+  features.Provider.listenAll(connection)
 
   const initializeResult: InitializeResult = {
     capabilities: {
