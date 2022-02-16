@@ -1,3 +1,4 @@
+
 {
   "name": "rwxml-language-server",
   "version": "1.0.0",
@@ -12,18 +13,23 @@
   ],
   "scripts": {
     "install/analyzer": "pnpm --dir analyzer install",
+    "install/extractor": "pnpm --dir extractor install",
     "install/language-server": "pnpm --dir language-server install",
     "install/vsc-extension": "pnpm --dir vsc-extension install",
     "build/analyzer": "pnpm --dir analyzer build",
+    "build/extractor": "pnpm --dir extractor build",
     "build/language-server": "pnpm --dir language-server build",
     "build": "pnpm run build/analyzer && pnpm run build/language-server",
     "clear": "pnpx rimraf ./*/dist",
     "purge": "pnpx rimraf ./*/node_modules",
     "reinstall": "pnpm run clear && pnpm run purge && pnpm install",
-    "postinstall": "pnpm run install/analyzer && pnpm run install/language-server && pnpm run install/vsc-extension && pnpm run build/analyzer",
+    "postinstall": "pnpm run install/analyzer && pnpm run install/extractor && pnpm run install/language-server && pnpm run install/vsc-extension && pnpm run build/analyzer && pnpm run build/extractor",
     "watch": "pnpm run watch -r --parallel"
   },
   "dependencies": {
     "rimraf": "^3.0.2"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^9.0.1"
   }
 }
