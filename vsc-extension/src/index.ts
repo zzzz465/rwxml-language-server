@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { Disposable, env, ExtensionContext, FileSystemWatcher, Uri, workspace } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
@@ -43,7 +44,51 @@ async function sendMods(client: LanguageClient, modManager: ModManager) {
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png']
 const globPattern = `**/*.{${watchedExts.join(',')}}`
 
+async function suggestMainBuild(context: ExtensionContext) {
+  const suggestionKey = 'suggestion'
+  const ignored = context.globalState.get(suggestionKey)
+  if (ignored) {
+    return
+  }
+
+  const search = 'rwxml'
+  const insiderId = 'madeline.rwxml-language-server-insider'
+  const id = 'madeline.rwxml-lang-serv'
+
+  const response = await vscode.window.showInformationMessage(
+    'RWXML: insider version is deprecated.',
+    {
+      detail: [
+        'RWXML insider version is now merged to main branch. (>= 0.13.0)',
+        'insider users are suggested to move to the main version.',
+      ].join('\n'),
+      modal: true,
+    },
+    'Open Extension Page',
+    'Install',
+    "Don't show it again"
+  )
+
+  if (response === 'Open Extension Page') {
+    await vscode.commands.executeCommand('workbench.extensions.search', search)
+    await vscode.commands.executeCommand('extension.open', id)
+  } else if (response === 'Install') {
+    await vscode.commands.executeCommand('workbench.extensions.search', search)
+    await vscode.commands.executeCommand('extension.open', id)
+    await vscode.commands.executeCommand('workbench.extensions.uninstallExtension', insiderId)
+    await vscode.commands.executeCommand('workbench.extensions.installExtension', id)
+    console.log('current extension id: ', context.extension.id)
+    // await vscode.commands.executeCommand('')
+  } else if (response === "Don't show it again") {
+    context.globalState.update(suggestionKey, true)
+  } else {
+    // user canceled(X) info notification.
+  }
+}
+
 export async function activate(context: ExtensionContext): Promise<void> {
+  suggestMainBuild(context)
+
   // initalize language server
   console.log('initializing @rwxml-language-server/vsc-extension ...')
   const languageServerEntryPath = process.env.languageServerEntryPath
