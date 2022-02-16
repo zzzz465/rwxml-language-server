@@ -14,6 +14,7 @@ import { ModManager } from './mod/modManager'
 import { ExtensionVersionToken } from './version'
 import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
+import checkInsider from './insiderCheck'
 
 const disposables: vscode.Disposable[] = []
 
@@ -25,6 +26,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
 
   container.register(ExtensionContextToken, { useValue: context })
+
+  // check insider version exists (main / insider cannot co-exists)
+  await checkInsider()
 
   // check version is updated.
   const updateNotification = container.resolve(UpdateNotification)
