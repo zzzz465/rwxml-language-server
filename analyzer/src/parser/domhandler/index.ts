@@ -87,6 +87,10 @@ export class DomHandler {
 
     const elem = this.tagStack.pop() as Element
     elem.nodeRange.end = this.parser.endIndex
+    elem.closeTagNameRange.start = this.parser.tagNameStartIndex
+    elem.closeTagNameRange.end = this.parser.tagNameEndIndex
+    elem.closeTagRange.start = this.parser.startIndex
+    elem.closeTagRange.end = this.parser.endIndex
 
     if (this.elementCB) this.elementCB(elem)
   }
