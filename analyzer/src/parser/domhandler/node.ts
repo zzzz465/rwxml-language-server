@@ -87,6 +87,10 @@ export class Node {
   cloneNode<T extends Node>(this: T, recursive = false): T {
     return cloneNode(this, recursive)
   }
+
+  toString(): string {
+    throw new Error('toString not implemented')
+  }
 }
 
 /**
@@ -129,6 +133,10 @@ export class DataNode extends Node {
   findNodeAt(offset: number): RangedNode | undefined {
     return findNodeAt(this, offset)
   }
+
+  toString(): string {
+    return this.data
+  }
 }
 
 /**
@@ -146,6 +154,11 @@ export class Text extends DataNode {
 export class Comment extends DataNode {
   constructor(data: string) {
     super(ElementType.Comment, data)
+  }
+
+  toString(): string {
+    // TODO: should I return this with <!-- data --> ??
+    return this.data
   }
 }
 
@@ -193,6 +206,10 @@ export class NodeWithChildren extends Node {
   set childNodes(children: Node[]) {
     this.children = children
   }
+
+  toString(): string {
+    return this.childNodes.map((node) => node.toString()).join('')
+  }
 }
 
 /**
@@ -227,6 +244,10 @@ export class Document extends NodeWithChildren {
   }
 
   'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
+
+  toString(): string {
+    return this.rawText
+  }
 }
 
 /**
@@ -335,6 +356,12 @@ export class Element extends NodeWithChildren {
 
   'x-attribsNamespace'?: Record<string, string>
   'x-attribsPrefix'?: Record<string, string>
+
+  toString(): string {
+    const openTagString = this.document.rawText.slice(this.openTagRange.start, this.openTagRange.end)
+    const closeTagString = this.document.rawText.slice(this.closeTagRange.start, this.closeTagRange.end)
+    return `${openTagString}${super.toString()}${closeTagString}`
+  }
 }
 
 /**
@@ -412,6 +439,12 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
     const clone = new Element(node.name, { ...node.attribs }, children)
     children.forEach((child) => (child.parent = clone))
 
+    Object.assign(clone.nodeRange, node.nodeRange)
+    Object.assign(clone.openTagRange, node.openTagRange)
+    Object.assign(clone.openTagNameRange, node.openTagNameRange)
+    Object.assign(clone.closeTagRange, node.closeTagRange)
+    Object.assign(clone.closeTagNameRange, node.closeTagNameRange)
+
     if (node['x-attribsNamespace']) {
       clone['x-attribsNamespace'] = { ...node['x-attribsNamespace'] }
     }
@@ -449,6 +482,9 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
     throw new Error(`Not implemented yet: ${node.type}`)
   }
 
+  result.parent = node.parent
+  result.prev = node.prev
+  result.next = node.next
   result.startIndex = node.startIndex
   result.endIndex = node.endIndex
   return result as T

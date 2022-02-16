@@ -52,8 +52,7 @@ describe('XML toString() test', () => {
     node.children = [defNameNode, ...otherNodesToAdd]
 
     const result = node.toString()
-    const prettified = prettydiff(result)
 
-    console.log(prettified)
+    console.log(result)
   })
 })
