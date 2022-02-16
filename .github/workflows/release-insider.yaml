@@ -25,10 +25,8 @@ jobs:
           echo $(git describe --tags --abbrev=0)
           current_tag=$(git describe --tags --abbrev=0)
           echo "current_tag: $current_tag"
-
           # get tag
           echo "::set-output name=tag::$current_tag"
-
           # get semver from tag
           semver=$(semver "$current_tag" | tr -d '\-insider')
           echo "semver: $semver"
@@ -36,12 +34,12 @@ jobs:
       - name: install project
         shell: bash
         run: |
-          pnpm install
+          npm install
       - name: run build
         working-directory: ./publish/insider
         run: |
-          pnpm install
-          pnpm build
+          npm install
+          npm run build
       - name: publish insider version
         working-directory: ./publish/insider
         if: contains(steps.var.outputs.tag, 'nopublish') == false
