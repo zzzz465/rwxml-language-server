@@ -32,7 +32,10 @@ import { Project } from '../project'
  * source: `C:/Program files (x86)/Steam/steamapps/common/RimWorld/Data/Core/Defs/NeedDefs/Needs.xml`
  * @example
  * // onHover property example
- * TODO
+ * property "defName" type "string" inherited from <ThingDef>
+ *
+ * packageId: `Ludeon.RimWorld`
+ * source: `C:/Program files (x86)/Steam/steamapps/common/RimWorld/Data/Core/Defs/NeedDefs/Needs.xml`
  * @example
  * // onHover content (string)
  * don't display anything
