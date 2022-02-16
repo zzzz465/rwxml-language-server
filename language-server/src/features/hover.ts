@@ -9,6 +9,29 @@ import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { Project } from '../project'
 
+/**
+ * HoverProvider provide feature for onHover() request
+ * @example
+ * // onHover DefReference example
+ * <NeedDef>
+ *  <defName>DrugDesire</defName>
+ *  <needClass>Need_Chemical_Any</needClass>
+ *  <label>chemical</label>
+ *  ...
+ * </NeedDef>
+ *
+ * packageId: `Ludeon.RimWorld`
+ * source: `C:/Program files (x86)/Steam/steamapps/common/RimWorld/Data/Core/Defs/NeedDefs/Needs.xml`
+ * @example
+ * // onHover def Node Tag example
+ * TODO
+ * @example
+ * // onHover property example
+ * TODO
+ * @example
+ * // onHover content (string)
+ * don't display anything
+ */
 @injectable()
 export class HoverProvider extends Provider {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${HoverProvider.name}] ${info.message}`)
