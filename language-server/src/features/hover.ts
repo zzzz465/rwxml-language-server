@@ -23,8 +23,13 @@ import { Project } from '../project'
  * packageId: `Ludeon.RimWorld`
  * source: `C:/Program files (x86)/Steam/steamapps/common/RimWorld/Data/Core/Defs/NeedDefs/Needs.xml`
  * @example
- * // onHover def Node Tag example
- * TODO
+ * // onHover def Node Tag example (shows def hierarchy tree)
+ * definition NeedDef extends
+ * - NeedDefBase
+ * - ThingDef
+ *
+ * packageId: `Ludeon.RimWorld`
+ * source: `C:/Program files (x86)/Steam/steamapps/common/RimWorld/Data/Core/Defs/NeedDefs/Needs.xml`
  * @example
  * // onHover property example
  * TODO
