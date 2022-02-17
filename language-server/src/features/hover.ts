@@ -66,4 +66,53 @@ export class HoverProvider extends Provider {
   private onHover(projects: Project[], uri: URI, position: ls.Position): ls.Hover | null | undefined {
     throw new Error('method not implemented')
   }
+
+  /**
+   * getTargetXMLString returns minified version of the target xml def
+   */
+  private getTargetXMLString(def: Def): string {
+    // find defName node
+    const defNameNodeIndex = def.ChildElementNodes.findIndex((el) => el.tagName === 'defName')
+    if (!defNameNodeIndex) {
+      // if no defName node exists?
+      return 'GET_TARGET_XML_STRING_UNDEFINED'
+    }
+
+    // pick other nodes to show.
+    // does it returns null if take is over array length?
+    const total = 3
+    const childNodes = AsEnumerable(def.ChildElementNodes).Skip(defNameNodeIndex).Take(total).ToArray()
+
+    if (childNodes.length < total) {
+      const take = defNameNodeIndex - 1
+      const nodes2 = AsEnumerable(def.ChildElementNodes)
+        .Take(take >= 0 ? take : 0)
+        .Reverse()
+        .Take(total - childNodes.length)
+        .ToArray()
+
+      childNodes.push(...nodes2)
+    }
+
+    // stringify nodes and minify
+    const clonedDef = def.cloneNode()
+    clonedDef.children = childNodes // does it breaks capsulation?
+    const raw = clonedDef.toString()
+
+    // format using prettydiff
+    let formatted = prettydiff(raw)
+
+    const lines = formatted.split('\n')
+    const i = 7
+    if (lines.length > i) {
+      formatted = lines.slice(0, i).join('\n')
+      const indent = lines[i - 1].match(/\A( )+/)?.[0] as string
+      formatted += '\n' + indent + '...'
+      formatted += '\n' + lines[lines.length - 1]
+    } else {
+      formatted = lines.join('\n')
+    }
+
+    return formatted
+  }
 }
