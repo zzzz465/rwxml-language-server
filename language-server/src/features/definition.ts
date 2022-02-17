@@ -1,9 +1,8 @@
-import { Def, Element, Injectable, Text } from '@rwxml/analyzer'
+import { Def, Injectable, Text } from '@rwxml/analyzer'
 import { injectable } from 'tsyringe'
 import { DefinitionLink, LocationLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
-import { DefManager } from '../defManager'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getNodeAndOffset, isPointingDefNameContent, isPointingDefReferenceContent } from './utils/node'
@@ -44,6 +43,13 @@ export class Definition {
     return []
   }
 
+  /**
+   * find all Def from given position. only works when position is Text node
+   * @param project
+   * @param uri
+   * @param position
+   * @returns
+   */
   findDefs(project: Project, uri: URI, position: Position): Def[] {
     const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
     if (!definitionTextNode) {
