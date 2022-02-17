@@ -57,7 +57,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       definitionProvider: true, // 정의로 바로가기
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
-      hoverProvider: false,
+      hoverProvider: true,
       referencesProvider: true,
       typeDefinitionProvider: false,
       workspace: {
