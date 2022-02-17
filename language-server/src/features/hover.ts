@@ -12,6 +12,9 @@ import { Element } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { TextDocumentManager } from '../textDocumentManager'
 import { Definition } from './definition'
+import { DependencyResourceManager } from '../dependencyResourceManager'
+import { FileStore } from '../fileStore'
+import { DependencyFile } from '../fs'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -61,7 +64,8 @@ export class HoverProvider extends Provider {
     projectManager: ProjectManager,
     private readonly rangeConverter: RangeConverter,
     private readonly textDocumentManager: TextDocumentManager,
-    private readonly definitionProvider: Definition
+    private readonly definitionProvider: Definition,
+    private readonly fileStore: FileStore
   ) {
     super(loadFolder, projectManager)
   }
@@ -99,11 +103,19 @@ export class HoverProvider extends Provider {
     }
 
     const formattedXML = this.getTargetXMLString(def)
+    const file = this.fileStore.get(uri.toString())
+    let packageId = 'local'
+    if (file && DependencyFile.is(file)) {
+      packageId = file.ownerPackageId
+    }
 
     contents.value += `\
 \`\`\`xml
 ${formattedXML}
+-------
 \`\`\`
+packageId: \`${packageId}\`  
+source: \`${uri.fsPath}\`
 `
 
     // NOTE: property range 는 뭐하는거지?
@@ -145,11 +157,9 @@ ${formattedXML}
     // format using prettydiff
     let formatted = ''
     try {
-      console.log(prettydiff)
       // https://github.com/prettydiff/prettydiff/blob/master/index.d.ts
       // https://stackoverflow.com/questions/19822460/pretty-diff-usage/30648547
       // https://github.com/prettydiff/prettydiff/tree/101.0.0#nodejs
-
       prettydiff.options.source = raw
       formatted = prettydiff()
     } catch (err) {
