@@ -60,6 +60,7 @@
     "linq-es2015": "^2.5.1",
     "lodash": "^4.17.21",
     "normalize-path": "^3.0.0",
+    "prettydiff": "^101.2.6",
     "reflect-metadata": "^0.1.13",
     "tsconfig-paths": "^3.9.0",
     "tsyringe": "^4.6.0",

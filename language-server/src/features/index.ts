@@ -1,3 +1,5 @@
+export * from './providerRegistry'
+
 import _ from 'lodash'
 import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
@@ -15,7 +17,7 @@ import { Rename } from './rename'
 
 /**
  * LanguageFeature receives all lsp request and dispatch to each features
- * @todo try replacing projectManager to tsyringe container
+ * @todo replace this to di container
  */
 @singleton()
 export class LanguageFeature {

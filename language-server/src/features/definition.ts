@@ -1,6 +1,6 @@
-import { Injectable, Text } from '@rwxml/analyzer'
+import { Def, Injectable, Text } from '@rwxml/analyzer'
 import { injectable } from 'tsyringe'
-import { DefinitionLink } from 'vscode-languageserver'
+import { DefinitionLink, LocationLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
@@ -22,29 +22,61 @@ export class Definition {
 
   onDefinition(project: Project, uri: URI, position: Position): Result {
     return {
-      definitionLinks: this.findDefinition(project, uri, position),
+      definitionLinks: this.findDefinitionLinks(project, uri, position),
       errors: [],
     }
   }
 
-  findDefinition(project: Project, uri: URI, position: Position): DefinitionLink[] {
+  findDefinitionLinks(project: Project, uri: URI, position: Position): LocationLink[] {
     const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
     // is cursor is pointing definition?
     if (definitionTextNode) {
-      let defType: string
       const defName = definitionTextNode.data
-      if (definitionTextNode.parent.parent.typeInfo.isEnumerable() && definitionTextNode.parent.typeInfo.isDef()) {
-        defType = definitionTextNode.parent.typeInfo.getDefType() ?? ''
-
-        return this.getDefinitionLinksInsideListNode(project, defType, defName)
-      } else if (definitionTextNode.parent.fieldInfo?.fieldType.isDef()) {
-        defType = definitionTextNode.parent.fieldInfo.fieldType.getDefType() ?? ''
-
-        return this.getDefinitionLinks(project, defType, defName)
+      const defType = this.findDefType(definitionTextNode)
+      if (!defType) {
+        return []
       }
+
+      return this.getDefinitionLinks(project, defType.value, defName)
     }
 
     return []
+  }
+
+  /**
+   * find all Def from given position. only works when position is Text node
+   * @param project
+   * @param uri
+   * @param position
+   * @returns
+   */
+  findDefs(project: Project, uri: URI, position: Position): Def[] {
+    const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
+    if (!definitionTextNode) {
+      return []
+    }
+
+    const defName = definitionTextNode.data
+    const defType = this.findDefType(definitionTextNode)
+    if (!defType) {
+      return []
+    }
+
+    return project.defManager.getDef(defType.value, defName)
+  }
+
+  findDefType(node: DefReferenceText): { value: string; li?: boolean } | null {
+    if (node.parent.parent.typeInfo.isEnumerable() && node.parent.typeInfo.isDef()) {
+      const defType = node.parent.typeInfo.getDefType() ?? null
+
+      return !!defType ? { value: defType, li: true } : null
+    } else if (node.parent.fieldInfo?.fieldType.isDef()) {
+      const defType = node.parent.typeInfo.getDefType() ?? null
+
+      return !!defType ? { value: defType } : null
+    }
+
+    return null
   }
 
   findDefinitionTextNode(project: Project, uri: URI, position: Position): DefReferenceText | undefined {
@@ -61,33 +93,6 @@ export class Definition {
   }
 
   private getDefinitionLinks(project: Project, defType: string, defName: string): DefinitionLink[] {
-    const links: DefinitionLink[] = []
-    const defs = project.defManager.getDef(defType, defName)
-
-    for (const def of defs) {
-      const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-      const targetRange = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
-
-      if (!(defNameNode && targetRange)) {
-        continue
-      }
-
-      const targetSelectionRange = this.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
-      if (!targetSelectionRange) {
-        continue
-      }
-
-      links.push({
-        targetRange,
-        targetSelectionRange,
-        targetUri: def.document.uri,
-      })
-    }
-
-    return links
-  }
-
-  private getDefinitionLinksInsideListNode(project: Project, defType: string, defName: string): DefinitionLink[] {
     const links: DefinitionLink[] = []
     const defs = project.defManager.getDef(defType, defName)
 

@@ -27,6 +27,7 @@ specifiers:
   lodash: ^4.17.21
   normalize-path: ^3.0.0
   prettier: ^2.3.2
+  prettydiff: ^101.2.6
   reflect-metadata: ^0.1.13
   ts-jest: ^26.1.4
   ts-loader: ^8.0.3
@@ -54,6 +55,7 @@ dependencies:
   linq-es2015: 2.5.1
   lodash: 4.17.21
   normalize-path: 3.0.0
+  prettydiff: 101.2.6
   reflect-metadata: 0.1.13
   tsconfig-paths: 3.11.0
   tsyringe: 4.6.0
@@ -846,7 +848,6 @@ packages:
 
   /@types/node/12.20.25:
     resolution: {integrity: sha512-hcTWqk7DR/HrN9Xe7AlJwuCaL13Vcd9/g/T54YrJz4Q3ESM5mr33YCzW2bOfzSIc3aZMeGBvbLGvgN6mIJ0I5Q==}
-    dev: true
 
   /@types/node/16.9.1:
     resolution: {integrity: sha512-QpLcX9ZSsq3YYUUnD3nFDY8H7wctAhQj/TFKL8Ya8v5fMm3CFXxo8zStsLAl780ltoYoo1WvKUVGBQK+1ifr7g==}
@@ -2363,6 +2364,10 @@ packages:
     dependencies:
       flat-cache: 3.0.4
     dev: true
+
+  /file-saver/2.0.5:
+    resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
+    dev: false
 
   /fill-range/4.0.0:
     resolution: {integrity: sha1-1USBHUKPmOsGpj3EAtJAPDKMOPc=}
@@ -4021,6 +4026,15 @@ packages:
       react-is: 17.0.2
     dev: true
 
+  /prettydiff/101.2.6:
+    resolution: {integrity: sha512-/fJ33pQ8MPI7+IB8fo/lOMR58CE/4GYNZRtjcQiPYmGNMo1HS9KmaybYdtEnfmx5EOSe/ch3Sg2fJ8YkNKb/XQ==}
+    hasBin: true
+    dependencies:
+      '@types/node': 12.20.25
+      file-saver: 2.0.5
+      sparser: 1.4.12
+    dev: false
+
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
 
@@ -4436,6 +4450,12 @@ packages:
     resolution: {integrity: sha512-CkCj6giN3S+n9qrYiBTX5gystlENnRW5jZeNLHpe6aue+SrHcG5VYwujhW9s4dY31mEGsxBDrHR6oI69fTXsaQ==}
     engines: {node: '>= 8'}
     dev: true
+
+  /sparser/1.4.12:
+    resolution: {integrity: sha512-qxDcacCuwHbvsf803PpZuETRI1pU8NAmLbyzZqFHPW7QjPK9pnCoX9ZPPbOMyiti6EOocfYzqzDPWj4fICXNzw==}
+    dependencies:
+      '@types/node': 12.20.25
+    dev: false
 
   /spdx-correct/3.1.1:
     resolution: {integrity: sha512-cOYcUWwhCuHCXi49RhFRCyJEK3iPj1Ziz9DpViV3tbZOwXD49QzIN3MpOLJNxh2qwq2lJJZaKMVw9qNi4jTC0w==}

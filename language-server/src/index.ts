@@ -9,7 +9,7 @@ import { About } from './mod'
 import { ProjectManager } from './projectManager'
 import { LoadFolder } from './mod/loadfolders'
 import { NotificationEventManager } from './notificationEventManager'
-import { LanguageFeature } from './features'
+import * as features from './features'
 import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
@@ -30,7 +30,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   const textDocumentManager = container.resolve(TextDocumentManager)
   const notificationEventManager = container.resolve(NotificationEventManager)
   const projectManager = container.resolve(ProjectManager)
-  const languageFeature = container.resolve(LanguageFeature)
+  const languageFeature = container.resolve(features.LanguageFeature)
   const modManager = container.resolve(ModManager)
   const dependencyResourceManager = container.resolve(DependencyResourceManager)
   const fileStore = container.resolve(FileStore)
@@ -46,6 +46,8 @@ connection.onInitialize(async (params: InitializeParams) => {
   modManager.listen(connection)
   about.listen(notificationEventManager.preEvent)
 
+  features.ProviderRegistry.listenAll(connection)
+
   const initializeResult: InitializeResult = {
     capabilities: {
       codeLensProvider: {},
@@ -55,7 +57,7 @@ connection.onInitialize(async (params: InitializeParams) => {
       definitionProvider: true, // 정의로 바로가기
       documentHighlightProvider: false,
       documentLinkProvider: undefined,
-      hoverProvider: false,
+      hoverProvider: true,
       referencesProvider: true,
       typeDefinitionProvider: false,
       workspace: {
