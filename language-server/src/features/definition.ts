@@ -22,12 +22,12 @@ export class Definition {
 
   onDefinition(project: Project, uri: URI, position: Position): Result {
     return {
-      definitionLinks: this.findDefinition(project, uri, position),
+      definitionLinks: this.findDefinitionLinks(project, uri, position),
       errors: [],
     }
   }
 
-  findDefinition(project: Project, uri: URI, position: Position): DefinitionLink[] {
+  findDefinitionLinks(project: Project, uri: URI, position: Position): LocationLink[] {
     const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
     // is cursor is pointing definition?
     if (definitionTextNode) {
