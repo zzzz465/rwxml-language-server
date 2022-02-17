@@ -8,10 +8,17 @@ import { URI } from 'vscode-uri'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { Project } from '../project'
-import { Element, parse } from '@rwxml/analyzer'
+import { Element } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { TextDocumentManager } from '../textDocumentManager'
-import 'prettydiff'
+import { Definition } from './definition'
+// how to use 'prettydiff' (it is quite different to use than other standard libs)
+// https://github.com/prettydiff/prettydiff/issues/176
+// https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const prettydiff = require('prettydiff')
+prettydiff.options.mode = 'beautify'
+prettydiff.options.indent_char = ' '
 
 /**
  * HoverProvider provide feature for onHover() request
@@ -53,7 +60,8 @@ export class HoverProvider extends Provider {
     loadFolder: LoadFolder,
     projectManager: ProjectManager,
     private readonly rangeConverter: RangeConverter,
-    private readonly textDocumentManager: TextDocumentManager
+    private readonly textDocumentManager: TextDocumentManager,
+    private readonly definitionProvider: Definition
   ) {
     super(loadFolder, projectManager)
   }
@@ -78,26 +86,22 @@ export class HoverProvider extends Provider {
       return
     }
 
-    const doc = parse(text)
-    const offset = this.rangeConverter.toOffset(position, uri.toString())
-    if (!offset) {
+    const defs = projects.map((proj) => this.definitionProvider.findDefs(proj, uri, position)).flat()
+    if (defs.length === 0) {
       return
     }
 
-    const node = doc.findNodeAt(offset)
-    if (!(node instanceof Element)) {
-      return
-    }
+    const def = defs[0]
 
     const contents: MarkupContent = {
       kind: 'markdown',
       value: '',
     }
 
-    const formattedXML = this.getTargetXMLString(node)
+    const formattedXML = this.getTargetXMLString(def)
 
     contents.value += `\
-\`\`\`yaml
+\`\`\`xml
 ${formattedXML}
 \`\`\`
 `
@@ -112,7 +116,7 @@ ${formattedXML}
   private getTargetXMLString(elem: Element): string {
     // find defName node
     const defNameNodeIndex = elem.ChildElementNodes.findIndex((el) => el.tagName === 'defName')
-    if (!defNameNodeIndex) {
+    if (defNameNodeIndex >= elem.ChildElementNodes.length) {
       // if no defName node exists?
       return 'GET_TARGET_XML_STRING_UNDEFINED'
     }
@@ -139,13 +143,24 @@ ${formattedXML}
     const raw = clonedDef.toString()
 
     // format using prettydiff
-    let formatted = prettydiff(raw)
+    let formatted = ''
+    try {
+      console.log(prettydiff)
+      // https://github.com/prettydiff/prettydiff/blob/master/index.d.ts
+      // https://stackoverflow.com/questions/19822460/pretty-diff-usage/30648547
+      // https://github.com/prettydiff/prettydiff/tree/101.0.0#nodejs
+
+      prettydiff.options.source = raw
+      formatted = prettydiff()
+    } catch (err) {
+      console.error((err as Error).message)
+    }
 
     const lines = formatted.split('\n')
     const i = 7
     if (lines.length > i) {
       formatted = lines.slice(0, i).join('\n')
-      const indent = lines[i - 1].match(/\A( )+/)?.[0] as string
+      const indent = lines[i - 1].match(/\B( )+/)?.[0] as string
       formatted += '\n' + indent + '...'
       formatted += '\n' + lines[lines.length - 1]
     } else {
