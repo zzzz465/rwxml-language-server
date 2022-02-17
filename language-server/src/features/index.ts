@@ -1,3 +1,5 @@
+export * from './providerRegistry'
+
 import _ from 'lodash'
 import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
@@ -12,7 +14,6 @@ import { Decorate } from './decorate'
 import { Definition } from './definition'
 import { Reference } from './reference'
 import { Rename } from './rename'
-export * from './provider'
 
 /**
  * LanguageFeature receives all lsp request and dispatch to each features

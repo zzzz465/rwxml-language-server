@@ -4,18 +4,8 @@ import { URI } from 'vscode-uri'
 import winston from 'winston'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
-import { HoverProvider } from './hover'
 
-@tsyringe.registry([
-  {
-    token: Provider.token,
-    useClass: HoverProvider,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-])
 export abstract class Provider {
-  static readonly token = Symbol('LanguageFeatureProviderToken')
-
   constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
 
   abstract listen(connection: ls.Connection): void
@@ -44,13 +34,6 @@ export abstract class Provider {
       } catch (e: unknown) {
         this.getLogger().error(JSON.stringify(e, null, 2))
       }
-    }
-  }
-
-  static listenAll(connection: ls.Connection): void {
-    const providers = tsyringe.container.resolveAll<Provider>(Provider.token)
-    for (const provider of providers) {
-      provider.listen(connection)
     }
   }
 }

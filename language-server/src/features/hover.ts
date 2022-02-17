@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe'
-import { Connection } from 'vscode-languageserver'
+import { Connection, MarkupContent } from 'vscode-languageserver'
 import { Provider } from './provider'
 import * as winston from 'winston'
 import * as ls from 'vscode-languageserver'
@@ -8,6 +8,10 @@ import { URI } from 'vscode-uri'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { Project } from '../project'
+import { Element, parse } from '@rwxml/analyzer'
+import { AsEnumerable } from 'linq-es2015'
+import { TextDocumentManager } from '../textDocumentManager'
+import 'prettydiff'
 
 /**
  * HoverProvider provide feature for onHover() request
@@ -45,7 +49,12 @@ export class HoverProvider extends Provider {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${HoverProvider.name}] ${info.message}`)
   private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
-  constructor(loadFolder: LoadFolder, projectManager: ProjectManager, private readonly rangeConverter: RangeConverter) {
+  constructor(
+    loadFolder: LoadFolder,
+    projectManager: ProjectManager,
+    private readonly rangeConverter: RangeConverter,
+    private readonly textDocumentManager: TextDocumentManager
+  ) {
     super(loadFolder, projectManager)
   }
 
@@ -64,15 +73,45 @@ export class HoverProvider extends Provider {
   }
 
   private onHover(projects: Project[], uri: URI, position: ls.Position): ls.Hover | null | undefined {
-    throw new Error('method not implemented')
+    const text = this.textDocumentManager.get(uri.toString())?.getText()
+    if (!text) {
+      return
+    }
+
+    const doc = parse(text)
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
+    if (!offset) {
+      return
+    }
+
+    const node = doc.findNodeAt(offset)
+    if (!(node instanceof Element)) {
+      return
+    }
+
+    const contents: MarkupContent = {
+      kind: 'markdown',
+      value: '',
+    }
+
+    const formattedXML = this.getTargetXMLString(node)
+
+    contents.value += `\
+\`\`\`yaml
+${formattedXML}
+\`\`\`
+`
+
+    // NOTE: property range 는 뭐하는거지?
+    return { contents }
   }
 
   /**
    * getTargetXMLString returns minified version of the target xml def
    */
-  private getTargetXMLString(def: Def): string {
+  private getTargetXMLString(elem: Element): string {
     // find defName node
-    const defNameNodeIndex = def.ChildElementNodes.findIndex((el) => el.tagName === 'defName')
+    const defNameNodeIndex = elem.ChildElementNodes.findIndex((el) => el.tagName === 'defName')
     if (!defNameNodeIndex) {
       // if no defName node exists?
       return 'GET_TARGET_XML_STRING_UNDEFINED'
@@ -81,11 +120,11 @@ export class HoverProvider extends Provider {
     // pick other nodes to show.
     // does it returns null if take is over array length?
     const total = 3
-    const childNodes = AsEnumerable(def.ChildElementNodes).Skip(defNameNodeIndex).Take(total).ToArray()
+    const childNodes = AsEnumerable(elem.ChildElementNodes).Skip(defNameNodeIndex).Take(total).ToArray()
 
     if (childNodes.length < total) {
       const take = defNameNodeIndex - 1
-      const nodes2 = AsEnumerable(def.ChildElementNodes)
+      const nodes2 = AsEnumerable(elem.ChildElementNodes)
         .Take(take >= 0 ? take : 0)
         .Reverse()
         .Take(total - childNodes.length)
@@ -95,7 +134,7 @@ export class HoverProvider extends Provider {
     }
 
     // stringify nodes and minify
-    const clonedDef = def.cloneNode()
+    const clonedDef = elem.cloneNode()
     clonedDef.children = childNodes // does it breaks capsulation?
     const raw = clonedDef.toString()
 

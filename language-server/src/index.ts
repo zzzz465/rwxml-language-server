@@ -46,7 +46,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   modManager.listen(connection)
   about.listen(notificationEventManager.preEvent)
 
-  features.Provider.listenAll(connection)
+  features.ProviderRegistry.listenAll(connection)
 
   const initializeResult: InitializeResult = {
     capabilities: {
