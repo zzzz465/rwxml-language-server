@@ -35,8 +35,24 @@ export class ProjectManager {
     notiEvent.on('fileDeleted', this.onProjectFileDeleted.bind(this))
   }
 
+  setSupportedVersions(versions: string[]): void {
+    const added: string[] = versions.filter((ver) => !this.projectContainers.has(ver))
+    const deleted: string[] = [...this.projectContainers.keys()].filter((ver) => !versions.includes(ver))
+
+    for (const ver of deleted) {
+      const c = this.projectContainers.get(ver)
+      c?.clearInstances()
+
+      this.projectContainers.delete(ver)
+    }
+
+    for (const ver of added) {
+      this.getOrCreateContainer(ver)
+    }
+  }
+
   getProject(version: string): Project {
-    const c = this.getContainer(version)
+    const c = this.getOrCreateContainer(version)
     return c.resolve(Project)
   }
 
@@ -48,7 +64,7 @@ export class ProjectManager {
 
     for (const version of versions) {
       this.log.debug(`version: ${version}`)
-      const c = this.getContainer(version)
+      const c = this.getOrCreateContainer(version)
       c.resolve(ResourceStore).fileAdded(file)
     }
   }
@@ -61,7 +77,7 @@ export class ProjectManager {
 
     for (const version of versions) {
       this.log.debug(`version: ${version}`)
-      const c = this.getContainer(version)
+      const c = this.getOrCreateContainer(version)
       c.resolve(ResourceStore).fileChanged(file)
     }
   }
@@ -74,7 +90,7 @@ export class ProjectManager {
 
     for (const version of versions) {
       this.log.debug(`version: ${version}`)
-      const c = this.getContainer(version)
+      const c = this.getOrCreateContainer(version)
       c.resolve(ResourceStore).fileDeleted(uri)
     }
   }
@@ -83,12 +99,12 @@ export class ProjectManager {
     const versions = this.loadFolder.isBelongsTo(file.uri)
 
     for (const version of versions) {
-      const c = this.getContainer(version)
+      const c = this.getOrCreateContainer(version)
       c.resolve(ResourceStore).fileChanged(file)
     }
   }
 
-  private getContainer(version: string): DependencyContainer {
+  private getOrCreateContainer(version: string): DependencyContainer {
     let projectContainer = this.projectContainers.get(version)
     if (!projectContainer) {
       projectContainer = this.newContainer(version)
