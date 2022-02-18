@@ -65,9 +65,10 @@ export class CompleteAttribute {
         case 'ParentName': {
           const defs = project.defManager.nameDatabase.getDef(node.name)
           const candidates = AsEnumerable(defs)
-            .Where((def) => !!def.getNameAttributeValue())
-            .Select((def) => def.getNameAttributeValue() as string)
-            .ToArray()
+            .Select((def) => def.getNameAttributeValue())
+            .Where((value) => !!value)
+            .Distinct() // why this is even needed? need investigation
+            .ToArray() as string[]
         
           const completions = getMatchingText(candidates, currentPointingText.text)
 

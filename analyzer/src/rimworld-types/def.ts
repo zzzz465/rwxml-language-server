@@ -51,13 +51,13 @@ export class Def extends Element {
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getNameAttributeValue(): string | undefined {
     const inheritName = this.attribs['Name']
-    return inheritName?.name ?? undefined
+    return inheritName?.value ?? undefined
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getParentNameAttributeValue(): string | undefined {
     const parentName = this.attribs['ParentName']
-    return parentName?.name ?? undefined
+    return parentName?.value ?? undefined
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
