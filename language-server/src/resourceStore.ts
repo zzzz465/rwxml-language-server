@@ -66,6 +66,10 @@ export class ResourceStore {
   }
 
   fileAdded(file: File) {
+    if (!this.isProjectResource(file)) {
+      return
+    }
+
     this.log.debug(`file added: ${file}`)
 
     this.files.set(file.uri.toString(), file)
@@ -86,6 +90,10 @@ export class ResourceStore {
   }
 
   fileChanged(file: File) {
+    if (!this.isProjectResource(file)) {
+      return
+    }
+
     this.log.debug(`file changed: ${file}`)
 
     this.files.set(file.uri.toString(), file)
@@ -106,6 +114,10 @@ export class ResourceStore {
   }
 
   fileDeleted(uri: string) {
+    if (!this.isProjectResource(uri)) {
+      return
+    }
+
     this.log.debug(`file deleted: ${uri}`)
 
     assert(typeof uri === 'string', 'fileDeleted must accept string type')
@@ -140,8 +152,7 @@ export class ResourceStore {
    */
   reload() {
     for (const [uri, file] of this.fileStore) {
-      const versions = this.loadFolder.isBelongsTo(URI.parse(uri))
-      if (versions.find((version) => version === this.version)) {
+      if (this.isProjectResource(uri)) {
         if (!this.files.has(uri)) {
           // when file is not registered but it should
           this.log.debug(`file added via reload: ${uri}`)
@@ -231,5 +242,20 @@ export class ResourceStore {
     }
 
     this.event.emit('dllDeleted', uri)
+  }
+
+  private isProjectResource(fileOrUri: File | string): boolean {
+    const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
+
+    const file = this.fileStore.get(uri)
+    if (!file) {
+      return false
+    }
+
+    if (DependencyFile.is(file) && file.ownerPackageId === 'Ludeon.RimWorld') {
+      return true
+    }
+
+    return this.loadFolder.isBelongsTo(URI.parse(uri)).includes(this.version)
   }
 }

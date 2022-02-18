@@ -7,6 +7,7 @@ import { TypeInfoRequest } from './events'
 import { Project } from './project'
 import * as winston from 'winston'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
+import { v4 as uuid } from 'uuid'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
@@ -21,19 +22,20 @@ export class TypeInfoMapProvider {
     @inject(delay(() => Project)) private readonly project: Project
   ) {}
 
-  async get(): Promise<TypeInfoMap> {
+  async get(requestId: string = uuid()): Promise<TypeInfoMap> {
     const dllUris = this.getTargetDLLUris()
 
     try {
-      this.log.debug(`requesting typeInfo, uris: ${JSON.stringify(dllUris, null, 2)}`)
+      // TODO: put uuid as log format
+      this.log.debug(`[${requestId}] requesting typeInfo, uris: ${JSON.stringify(dllUris, null, 2)}`)
       const typeInfos = await this.requestTypeInfos(dllUris)
-      this.log.debug(`received typeInfo from client, length: ${typeInfos.length}`)
+      this.log.debug(`[${requestId}] received typeInfo from client, length: ${typeInfos.length}`)
 
       const typeInfoMap = TypeInfoLoader.load(typeInfos)
 
       return typeInfoMap
     } catch (err) {
-      this.log.error(err)
+      this.log.error(`[${requestId}] ${(err as Error).message}`)
 
       return new TypeInfoMap()
     }

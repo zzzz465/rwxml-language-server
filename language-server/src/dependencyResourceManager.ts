@@ -46,7 +46,7 @@ export class DependencyResourceManager {
   }
 
   private onAboutChanged(about: About) {
-    this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies)}`)
+    this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies, null, 4)}`)
     const added = about.modDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
     // quite bad algorithm but expected list size is <= 10 so I'll ignore it.

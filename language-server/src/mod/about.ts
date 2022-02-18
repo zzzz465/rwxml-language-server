@@ -8,8 +8,10 @@ import { NotificationEvents } from '../notificationEventManager'
 import { singleton } from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
+import _ from 'lodash'
 
 export interface AboutEvents {
+  supportedVersionsChanged(): void
   dependencyModsChanged(about: About): void
 }
 
@@ -25,13 +27,13 @@ export class About {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
   private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
-  event: EventEmitter<AboutEvents> = new EventEmitter()
+  readonly event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _rawXML = ''
   private _name = ''
   private _author = ''
   private _packageId = ''
-  private _supportedVersions: RimWorldVersion[] = []
+  private _supportedVersions: string[] = [] // default , 1.0, 1.1, 1.2, ... (default always exists for fallback)
   private _description = ''
   private _modDependencies: Dependency[] = []
   private _loadAfter: string[] = [] // contains packageId of other mods
@@ -62,7 +64,7 @@ export class About {
   }
 
   updateAboutXML(text: string) {
-    log.debug('About.xml changed.')
+    this.log.debug('About.xml changed.')
 
     this._rawXML = text
     const newVal = this.parseNewXML()
@@ -74,34 +76,43 @@ export class About {
       })
     }
 
-    log.debug(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
-    log.debug(`new dependencies: ${newVal.modDependencies}`)
+    this.log.debug(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
+    this.log.debug(`new dependencies: ${newVal.modDependencies}`)
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
       this._modDependencies = newVal.modDependencies
       this.event.emit('dependencyModsChanged', this)
     }
 
+    const versionsDiff = _.xor(this.supportedVersions, newVal.supportedVersions)
+    this.log.debug(
+      `versions diff: ${JSON.stringify(_.difference(this.supportedVersions, newVal.supportedVersions ?? []), null, 4)}`
+    )
+
+    if (versionsDiff.length > 0) {
+      this._supportedVersions = newVal.supportedVersions
+      this.event.emit('supportedVersionsChanged')
+    }
+
     this._name = newVal.name ?? ''
     this._author = newVal.author ?? ''
     this._packageId = newVal.packageId ?? ''
     this._description = newVal.description ?? ''
+    this._loadAfter = newVal.loadAfter ?? []
   }
 
   private parseNewXML() {
-    const data: Partial<Writable<Omit<About, 'eventEmitter' | 'updateAboutXML'>>> = {}
-
     const $ = xml.parse(this.rawXML)
 
-    data.name = $('ModMetaData > name').text()
-    data.author = $('ModMetaData > author').text()
-    data.packageId = $('ModMetaData > packageId').text()
-    data.description = $('ModMetaData > description').text()
-    data.supportedVersions = $('ModMetaData > supportedVersions > li') // TODO: refactor this
+    const name = $('ModMetaData > name').text()
+    const author = $('ModMetaData > author').text()
+    const packageId = $('ModMetaData > packageId').text()
+    const description = $('ModMetaData > description').text()
+    let supportedVersions = $('ModMetaData > supportedVersions > li') // TODO: refactor this
       .map((_, node) => $(node).text())
       .filter((_, str) => RimWorldVersionArray.includes(str as any))
-      .toArray() as RimWorldVersion[]
-    data.modDependencies = $('ModMetaData > modDependencies > li')
+      .toArray() as string[]
+    const modDependencies = $('ModMetaData > modDependencies > li')
       .map((_, li) => {
         const pkgId = $('packageId', li).text()
         const displayName = $('displayName', li).text()
@@ -116,11 +127,22 @@ export class About {
         } as Dependency
       })
       .toArray()
-    data.loadAfter = $('ModMetaData > loadAfter > li')
+    const loadAfter = $('ModMetaData > loadAfter > li')
       .map((_, node) => $(node).text())
       .toArray()
 
-    return data
+    // edge case handling
+    supportedVersions = _.uniq(['default', ...supportedVersions])
+
+    return {
+      name,
+      author,
+      packageId,
+      description,
+      loadAfter,
+      supportedVersions,
+      modDependencies,
+    }
   }
 
   listen(event: EventEmitter<NotificationEvents>) {

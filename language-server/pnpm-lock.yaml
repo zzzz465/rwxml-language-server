@@ -8,6 +8,7 @@ specifiers:
   '@types/lodash': ^4.14.159
   '@types/node': ^12.12.0
   '@types/normalize-path': ^3.0.0
+  '@types/uuid': ^8.3.4
   '@typescript-eslint/eslint-plugin': ^4.31.1
   '@typescript-eslint/parser': ^4.31.1
   axios: ^0.21.1
@@ -36,6 +37,7 @@ specifiers:
   tsyringe: ^4.6.0
   typescript: ^4.3.5
   typescript-collections: ^1.3.3
+  uuid: ^8.3.2
   vscode-languageserver: ^7.0.0
   vscode-languageserver-textdocument: ^1.0.1
   vscode-uri: ^3.0.2
@@ -60,6 +62,7 @@ dependencies:
   tsconfig-paths: 3.11.0
   tsyringe: 4.6.0
   typescript-collections: 1.3.3
+  uuid: 8.3.2
   vscode-languageserver: 7.0.0
   vscode-languageserver-textdocument: 1.0.1
   vscode-uri: 3.0.2
@@ -72,6 +75,7 @@ devDependencies:
   '@types/lodash': 4.14.172
   '@types/node': 12.20.25
   '@types/normalize-path': 3.0.0
+  '@types/uuid': 8.3.4
   '@typescript-eslint/eslint-plugin': 4.31.1_e2d3c88d378335c4183365c112128ce9
   '@typescript-eslint/parser': 4.31.1_eslint@7.32.0+typescript@4.4.3
   eslint: 7.32.0
@@ -867,6 +871,10 @@ packages:
 
   /@types/stack-utils/2.0.1:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
+    dev: true
+
+  /@types/uuid/8.3.4:
+    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
     dev: true
 
   /@types/yargs-parser/20.2.1:
@@ -4946,8 +4954,6 @@ packages:
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
-    dev: true
-    optional: true
 
   /v8-compile-cache/2.3.0:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}

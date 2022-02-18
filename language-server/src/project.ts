@@ -13,6 +13,7 @@ import _ from 'lodash'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
 import { CancellationTokenSource } from 'vscode-languageserver'
+import { v4 as uuid } from 'uuid'
 
 interface Events {
   defChanged(defs: (Injectable | Def)[]): void
@@ -94,21 +95,23 @@ export class Project {
    * uses debounce to limit reloading too often
    */
   private reloadProject = _.debounce(async () => {
+    const requestId = uuid()
+
     this.cancelTokenSource.cancel()
     const cancelTokenSource = new CancellationTokenSource()
     this.cancelTokenSource = cancelTokenSource
     const token = this.cancelTokenSource.token
 
-    this.log.info('reloading project')
+    this.log.info(`[${requestId}] reloading project`)
     this.resourceStore.reload()
 
-    await this.reset()
-    this.log.info('project state reset')
+    await this.reset(requestId)
+    this.log.info(`[${requestId}] project state reset`)
 
     if (!token.isCancellationRequested) {
       this.evaluteProject()
     } else {
-      this.log.info('project evluation canceled')
+      this.log.info(`[${requestId}] project evluation canceled`)
     }
 
     cancelTokenSource.dispose()
@@ -117,15 +120,16 @@ export class Project {
   /**
    * reset project to initial state
    */
-  private async reset() {
+  private async reset(requestId: string = uuid()) {
     this.log.debug(
-      `current project file dlls: ${JSON.stringify(
+      // TODO: put uuid as log format
+      `[${requestId}] current project file dlls: ${JSON.stringify(
         [...this.resourceStore.dllFiles.values()].map((uri) => decodeURIComponent(uri)),
         null,
         2
       )}`
     )
-    const typeInfoMap = await this.typeInfoMapProvider.get()
+    const typeInfoMap = await this.typeInfoMapProvider.get(requestId)
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.version)
