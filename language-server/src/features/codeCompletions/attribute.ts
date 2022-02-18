@@ -67,6 +67,7 @@ export class CompleteAttribute {
           const candidates = AsEnumerable(defs)
             .Select((def) => def.getNameAttributeValue())
             .Where((value) => !!value)
+            .Distinct() // why this is even needed? need investigation
             .ToArray() as string[]
         
           const completions = getMatchingText(candidates, currentPointingText.text)
