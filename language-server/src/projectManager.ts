@@ -8,6 +8,7 @@ import { Project } from './project'
 import { ResourceStore } from './resourceStore'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import * as winston from 'winston'
+import { About } from './mod'
 
 // event that Projects will emit.
 interface ProjectManagerEvent {
@@ -27,7 +28,9 @@ export class ProjectManager {
 
   private readonly projectContainers: Map<string, DependencyContainer> = new Map()
 
-  constructor(private readonly loadFolder: LoadFolder) {}
+  constructor(private readonly about: About, private readonly loadFolder: LoadFolder) {
+    about.event.on('supportedVersionsChanged', this.onSupportedVersionsChanged.bind(this))
+  }
 
   listen(notiEvent: EventEmitter<NotificationEvents>): void {
     notiEvent.on('fileAdded', this.onProjectFileAdded.bind(this))
@@ -49,11 +52,18 @@ export class ProjectManager {
     for (const ver of added) {
       this.getOrCreateContainer(ver)
     }
+
+    this.log.info(`supportedVersions added: ${JSON.stringify(added, null, 2)}`)
+    this.log.info(`supportedVersions deleted: ${JSON.stringify(deleted, null, 2)}`)
   }
 
   getProject(version: string): Project {
     const c = this.getOrCreateContainer(version)
     return c.resolve(Project)
+  }
+
+  private onSupportedVersionsChanged() {
+    this.setSupportedVersions(this.about.supportedVersions)
   }
 
   private onProjectFileAdded(file: File) {
