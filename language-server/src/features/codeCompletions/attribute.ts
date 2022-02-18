@@ -7,7 +7,7 @@ import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageser
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { expandUntil, isAlpha } from '../../utils/strings'
+import { expandUntil, isAllowedCharForClass, isAlpha } from '../../utils/strings'
 import { ModManager } from '../../mod/modManager'
 import { RimWorldVersion } from '../../RimWorldVersion'
 
@@ -40,7 +40,7 @@ export class CompleteAttribute {
     const attribs = node.attribs
     const items: CompletionItem[] = []
     const currentAttribute = findCurrentAttribute(node, offset)
-    const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAlpha(c), (c) => isAlpha(c))
+    const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAllowedCharForClass(c), (c) => isAllowedCharForClass(c))
     const textRange = this.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
 
     if (!textRange) {

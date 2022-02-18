@@ -39,3 +39,16 @@ export function isAlpha(c: string | number): boolean {
 
   return ('a'.charCodeAt(0) <= c && c <= 'z'.charCodeAt(0)) || ('A'.charCodeAt(0) <= c && c <= 'Z'.charCodeAt(0))
 }
+
+// https://stackoverflow.com/a/950651
+// https://www.ecma-international.org/publications-and-standards/standards/ecma-334/
+export function isAllowedCharForClass(c: string): boolean {
+  switch (c) {
+    case '.':
+    case '_':
+      return true
+
+    default:
+      return isAlpha(c)
+  }
+}
