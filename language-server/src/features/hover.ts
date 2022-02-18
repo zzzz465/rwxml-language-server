@@ -112,8 +112,8 @@ export class HoverProvider extends Provider {
     contents.value += `\
 \`\`\`xml
 ${formattedXML}
--------
 \`\`\`
+-------
 packageId: \`${packageId}\`  
 source: \`${uri.fsPath}\`
 `
