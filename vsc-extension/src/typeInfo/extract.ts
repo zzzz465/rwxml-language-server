@@ -1,4 +1,5 @@
 import { execFile, ChildProcess } from 'child_process'
+import _ from 'lodash'
 import { createServer } from 'net'
 import { container } from 'tsyringe'
 import { ExtensionContext } from 'vscode'
@@ -32,15 +33,16 @@ function getCWD() {
   return cwd
 }
 
-function initExtractorProcess(dllPaths: string[]) {
+function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const cwd = getCWD()
   const dllPath = container.resolve<string>(RimWorldDLLDirectoryKey)
+  const port = options?.port ?? 9870
 
   let p: ChildProcess
   if (process.platform === 'win32') {
-    p = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
+    p = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
   } else {
-    p = execFile('mono', ['extractor.exe', dllPath, ...dllPaths, '--output-mode=TCP'], { cwd })
+    p = execFile('mono', ['extractor.exe', dllPath, ...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
   }
 
   p.stdout?.setEncoding('utf-8')
@@ -55,9 +57,11 @@ function initExtractorProcess(dllPaths: string[]) {
 const timeout = 30000 // 30 second
 export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
   const server = createServer()
-  server.listen(9870, '127.0.0.1')
+  const port = _.random(10000, 20000)
+  console.log(`server listening on 127.0.0.1:${port}`)
+  server.listen(port, '127.0.0.1')
 
-  const process = initExtractorProcess(dllPaths)
+  const process = initExtractorProcess(dllPaths, { port })
 
   const connectionPromise = new Promise<Buffer>((res) => {
     server.on('connection', async (socket) => {

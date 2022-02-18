@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Net.Sockets;
 using System.Net;
+using System.Reflection;
 
 namespace extractor
 {
@@ -38,12 +39,16 @@ namespace extractor
         // [Option("log", Required = false, Default = false, HelpText = "Set log output path")]
         // public string logOutputPath { get; set; }
 
+        [Option("port", Required = false, Default = 9870, HelpText = "connection port on trasnporting via TCP")]
+        public int port { get; set; }
+
         [Value(0, Required = true, HelpText = "dll file/directory to extract data")]
         public IEnumerable<string> targetFiles { get; set; }
     }
 
     class Program
     {
+        static int port = 9870;
         static int Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -60,6 +65,8 @@ namespace extractor
                 // {
                 // 	Log.SetOutput(option.logOutputPath);
                 // }
+
+                port = option.port;
 
                 Log.Info("Extracting data from");
                 foreach (var file in option.targetFiles)
@@ -113,8 +120,8 @@ namespace extractor
         static void SendSerializedDataUsingTCP(string data)
         {
             var client = new TcpClient();
-            Console.WriteLine("Connecting to localhost server, port: 9870");
-            client.Connect("127.0.0.1", 9870);            
+            Console.WriteLine($"Connecting to localhost server, port: {port}");
+            client.Connect("127.0.0.1", port);            
 
             var stream = client.GetStream();
 
