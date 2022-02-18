@@ -103,11 +103,15 @@ export class HoverProvider extends Provider {
     }
 
     const formattedXML = this.getTargetXMLString(def)
-    const file = this.fileStore.get(uri.toString())
+    const sourceUri = URI.parse(def.document.uri)
+    const sourceFile = this.fileStore.get(def.document.uri)
     let packageId = 'local'
-    if (file && DependencyFile.is(file)) {
-      packageId = file.ownerPackageId
+    if (sourceFile && DependencyFile.is(sourceFile)) {
+      packageId = sourceFile.ownerPackageId
     }
+
+    // https://code.visualstudio.com/api/extension-guides/command#command-uris
+    // https://code.visualstudio.com/api/references/commands
 
     contents.value += `\
 \`\`\`xml
@@ -115,7 +119,7 @@ ${formattedXML}
 \`\`\`
 -------
 packageId: \`${packageId}\`  
-source: \`${uri.fsPath}\`
+source: [${sourceUri.fsPath}](${sourceUri.toString()})
 `
 
     // NOTE: property range 는 뭐하는거지?
