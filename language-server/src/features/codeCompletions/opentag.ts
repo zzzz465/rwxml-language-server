@@ -125,19 +125,14 @@ export class OpenTagCompletion {
     const editRange = this.getTextEditRange(node, offset, converter)
 
     const additionalTextEdits: TextEdit[] = []
-    // TODO: implement this
-    const cursorCommand: Command = {
-      command: 'cursorMove',
-      title: '',
-      arguments: [
-        {
-          to: '',
-          by: '',
-          value: '',
-          select: false,
-        },
-      ],
-    }
+
+    // 텍스트가 삽입되면, <foo>...</foo>| <- 이부분에 커서가 위치한다.
+    const tagNode = makeTagNode(label)
+    const cursorCommand = Command.create('cursorMove', 'cursorMove', {
+      to: 'left',
+      value: label.length + 3, // < + / + (label.length) + >
+      by: 'character',
+    })
 
     // textEdit will be ignored if range starts before cursor position
     if (node instanceof Element) {
@@ -164,8 +159,9 @@ export class OpenTagCompletion {
         label,
         // command: cursorCommand,
         kind: CompletionItemKind.Field,
-        textEdit: TextEdit.replace(editRange, makeTagNode(label)),
+        textEdit: TextEdit.replace(editRange, tagNode),
         additionalTextEdits,
+        command: cursorCommand,
       }
     } else {
       return null
