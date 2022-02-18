@@ -8,8 +8,10 @@ import { NotificationEvents } from '../notificationEventManager'
 import { singleton } from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
+import _ from 'lodash'
 
 export interface AboutEvents {
+  supportedVersionsChanged(): void
   dependencyModsChanged(about: About): void
 }
 
@@ -25,13 +27,13 @@ export class About {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
   private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
 
-  event: EventEmitter<AboutEvents> = new EventEmitter()
+  readonly event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _rawXML = ''
   private _name = ''
   private _author = ''
   private _packageId = ''
-  private _supportedVersions: RimWorldVersion[] = []
+  private _supportedVersions: string[] = [] // default , 1.0, 1.1, 1.2, ... (default always exists for fallback)
   private _description = ''
   private _modDependencies: Dependency[] = []
   private _loadAfter: string[] = [] // contains packageId of other mods
@@ -82,10 +84,16 @@ export class About {
       this.event.emit('dependencyModsChanged', this)
     }
 
+    if (newVal.supportedVersions && _.difference(this.supportedVersions, newVal.supportedVersions).length) {
+      this._supportedVersions = newVal.supportedVersions
+      this.event.emit('supportedVersionsChanged')
+    }
+
     this._name = newVal.name ?? ''
     this._author = newVal.author ?? ''
     this._packageId = newVal.packageId ?? ''
     this._description = newVal.description ?? ''
+    this._loadAfter = newVal.loadAfter ?? []
   }
 
   private parseNewXML() {
