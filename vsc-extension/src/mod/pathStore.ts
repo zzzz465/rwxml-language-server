@@ -95,23 +95,27 @@ export class Win32PathStore extends PathStore {
 export class DarwinPathStore extends PathStore {
   readonly type = 'darwin'
 
-  protected defaultRimWorldDatadirectory(): string {
-    throw new Error('Method not implemented.')
+  protected defaultRimWorldDirectory(): string {
+    return 'Library/Application Support/Steam/Steamapps/common/RimWorld/RimWorldMac.app'
   }
 
-  protected defaultRimWorldDirectory(): string {
-    throw new Error('Method not implemented.')
+  protected defaultRimWorldDatadirectory(): string {
+    return path.join(this.RimWorldDirectory, 'Data')
   }
+
   protected defaultLocalModDirectory(): string {
-    throw new Error('Method not implemented.')
+    return path.join(this.RimWorldDirectory, 'Mods')
   }
+
   protected defaultWorkshopModDirectory(): string {
-    throw new Error('Method not implemented.')
+    return 'Library/Application Support/Steam/Steamapps/workshop/content/294100'
   }
+
   protected defaultRimWorldManagedDirectory(): string {
-    throw new Error('Method not implemented.')
+    return path.join(this.RimWorldDirectory, 'contents', 'Resources', 'Data', 'managed')
   }
+
   protected defaultLanguageServerModulePath(): string {
-    throw new Error('Method not implemented.')
+    return process.env.LANGUAGE_SERVER_MODULE_PATH_RELATIVE as string
   }
 }
