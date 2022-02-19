@@ -7,7 +7,7 @@ import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageser
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { expandUntil, isAllowedCharForClass, isAlpha } from '../../utils/strings'
+import { expandUntil, isAllowedCharForClass } from '../../utils/strings'
 import { ModManager } from '../../mod/modManager'
 import { RimWorldVersion } from '../../RimWorldVersion'
 

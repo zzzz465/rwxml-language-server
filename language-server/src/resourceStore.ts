@@ -10,6 +10,7 @@ import * as winston from 'winston'
 import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
+import { LogToken } from './log'
 
 interface Events {
   dllChanged(uri: string): void
@@ -27,7 +28,7 @@ export class ResourceStore {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   readonly files: Map<string, File> = new Map()
   readonly depFiles: DefaultDictionary<string, Map<string, DependencyFile>> = new DefaultDictionary(() => new Map())
@@ -43,8 +44,11 @@ export class ResourceStore {
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     private readonly loadFolder: LoadFolder,
-    private readonly fileStore: FileStore
-  ) {}
+    private readonly fileStore: FileStore,
+    @inject(LogToken) baseLogger: winston.Logger
+  ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+  }
 
   listen(events: EventEmitter) {
     events.on('fileAdded', this.fileAdded.bind(this))
@@ -189,7 +193,7 @@ export class ResourceStore {
   private onTextureFileChanged(file: TextureFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
-      log.debug(`texture added, version: ${this.version}, uri: ${file.toString()}`)
+      this.log.debug(`texture added, version: ${this.version}, uri: ${file.toString()}`)
       this.textures.add(resourcePath)
     }
   }
@@ -197,7 +201,7 @@ export class ResourceStore {
   private onTextureFileDeleted(uri: string) {
     const resourcePath = this.loadFolder.getResourcePath(URI.parse(uri), this.version)
     if (resourcePath) {
-      log.debug(`texture deleted, version: ${this.version}, uri: ${uri}`)
+      this.log.debug(`texture deleted, version: ${this.version}, uri: ${uri}`)
       this.textures.delete(resourcePath)
     }
   }
@@ -207,7 +211,7 @@ export class ResourceStore {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
-      log.debug(`audio changed, version: ${this.version}, uri: ${file.toString()}`)
+      this.log.debug(`audio changed, version: ${this.version}, uri: ${file.toString()}`)
       this.audios.add(resourcePath)
       this.audioDirectories.add(resourceDir)
     }
@@ -218,7 +222,7 @@ export class ResourceStore {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
-      log.debug(`audio deleted, version: ${this.version}, uri: ${uri}`)
+      this.log.debug(`audio deleted, version: ${this.version}, uri: ${uri}`)
       this.audios.delete(resourcePath)
       this.audioDirectories.remove(resourceDir)
     }
