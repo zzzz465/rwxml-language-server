@@ -6,7 +6,6 @@ import * as path from 'path'
 import { container } from 'tsyringe'
 import * as features from './features'
 import { checkTypeInfoAnalyzeAvailable } from './typeInfo'
-import * as containerVars from './containerVars'
 import * as commands from './commands'
 import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
@@ -90,8 +89,7 @@ export function deactivate() {
 async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
-  const serverModuleRelativePath = pathStore.defaultLanguageServerModulePath()
-  const module = path.join(context.extensionPath, serverModuleRelativePath)
+  const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
   console.log(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {

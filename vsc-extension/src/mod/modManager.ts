@@ -19,7 +19,7 @@ export class ModManager {
   }
 
   get directoryUris(): vscode.Uri[] {
-    return this.pathStore.dependencyDirectories().map((fsPath) => vscode.Uri.file(fsPath))
+    return this.pathStore.dependencyDirectories.map((fsPath) => vscode.Uri.file(fsPath))
   }
 
   constructor(@inject(PathStore.token) private readonly pathStore: PathStore) {
