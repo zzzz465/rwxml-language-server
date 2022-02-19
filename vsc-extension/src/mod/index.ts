@@ -5,7 +5,9 @@ import path from 'path'
 
 export * from './about'
 export * from './mod'
+export * from './modManager'
 export * from './loadFolders'
+export * from './pathStore'
 
 export function getWorkshopModsDirectoryUri(): Uri {
   // TODO: get from config or env or something else...

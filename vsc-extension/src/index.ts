@@ -10,7 +10,7 @@ import * as containerVars from './containerVars'
 import * as commands from './commands'
 import { ProjectWatcher } from './projectWatcher'
 import * as resources from './resources'
-import { ModManager } from './mod/modManager'
+import { ModManager, PathStore } from './mod'
 import { ExtensionVersionToken } from './version'
 import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
@@ -35,8 +35,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   updateNotification.checkFirstRunThisVersion()
 
   // 2. initialize containers (set values)
-  console.log('initializing container variables...')
-  disposables.push(containerVars.initialize())
+  // automatically moved to pathStore
 
   // 2-2. register commands
   console.log('register commands...')
@@ -90,7 +89,8 @@ export function deactivate() {
 
 async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
-  const serverModuleRelativePath = container.resolve(containerVars.languageServerModuleRelativePathKey) as string
+  const pathStore = container.resolve<PathStore>(PathStore.token)
+  const serverModuleRelativePath = pathStore.languageServerModulePath()
   const module = path.join(context.extensionPath, serverModuleRelativePath)
   console.log(`server module absolute path: ${module}`)
 

@@ -3,8 +3,8 @@ import { Mod } from './mod'
 import vscode from 'vscode'
 import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
-import { injectAll, singleton } from 'tsyringe'
-import { DependencyDirectoriesKey as DependencyDirectoriesToken } from '../containerVars'
+import { inject, singleton } from 'tsyringe'
+import { PathStore } from '.'
 
 @singleton()
 export class ModManager {
@@ -18,8 +18,12 @@ export class ModManager {
     return this._initialized
   }
 
-  constructor(@injectAll(DependencyDirectoriesToken) public readonly directoryUris: Uri[]) {
-    console.log(`ModManager watching directories: ${directoryUris}`)
+  get directoryUris(): vscode.Uri[] {
+    return this.pathStore.dependencyDirectories().map((fsPath) => vscode.Uri.file(fsPath))
+  }
+
+  constructor(@inject(PathStore.token) private readonly pathStore: PathStore) {
+    console.log(`ModManager watching directories: ${this.directoryUris}`)
   }
 
   async init() {
