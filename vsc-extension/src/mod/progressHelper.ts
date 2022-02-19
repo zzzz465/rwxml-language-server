@@ -1,7 +1,7 @@
-import { CancellationTokenSource, Progress, ProgressLocation, window } from "vscode"
-import { RimWorldVersion } from "./version"
+import * as vscode from 'vscode'
+import { RimWorldVersion } from './version'
 
-export type ProgressParams = Progress<{ message?: string; increment?: number }>
+export type ProgressParams = vscode.Progress<{ message?: string; increment?: number }>
 
 export class ProgressHelper {
   public static async create(version: RimWorldVersion) {
@@ -15,9 +15,9 @@ export class ProgressHelper {
       }, 500)
     })
 
-    window.withProgress(
+    vscode.window.withProgress(
       {
-        location: ProgressLocation.Notification,
+        location: vscode.ProgressLocation.Notification,
         cancellable: false,
         title: `RWXML: Runtime TypeInfo Extraction (RWVersion: ${version})`,
       },
@@ -30,7 +30,7 @@ export class ProgressHelper {
     return p
   }
 
-  public cancellationTokenSource?: CancellationTokenSource
+  public cancellationTokenSource?: vscode.CancellationTokenSource
   public progress!: ProgressParams
   private disposed = false
   public disposedPromise!: Promise<void>
@@ -41,7 +41,7 @@ export class ProgressHelper {
     }
 
     if (!this.cancellationTokenSource) {
-      this.cancellationTokenSource = new CancellationTokenSource()
+      this.cancellationTokenSource = new vscode.CancellationTokenSource()
       return this.cancellationTokenSource.token
     }
 

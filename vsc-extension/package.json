@@ -13,6 +13,49 @@
         "command": "rwxml:debug:printXMLDocumentObject",
         "title": "RWXML: (debug) print current document's XMLDocument"
       }
+    ],
+    "configuration": [
+      {
+        "title": "RWXML Language Server",
+        "properties": {
+          "rwxml.paths.rimWorld": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "",
+            "markdownDescription": "path of `RimWorld/` directory."
+          },
+          "rwxml.paths.rimWorldData": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "",
+            "markdownDescription": "path of `RimWorld/Data/` directory, which includes `Core/`, `Ideology/`, etc.\noverrides `rwxml.paths.rimWorld`"
+          },
+          "rwxml.paths.rimWorldManaged": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "",
+            "markdownDescription": "directory path of `RimWorld/RimWorldXXX64_Data/Managed/`\noverrides `rwxml.paths.rimWorld`"
+          },
+          "rwxml.paths.localMods": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "",
+            "markdownDescription": "path of `RimWorld/Mods/` directory\noverrides `rwxml.paths.rimWorld`"
+          },
+          "rwxml.paths.workshopMods": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "",
+            "markdownDescription": "path of `workshop/contents/294100/`"
+          },
+          "rwxml.paths.externalMods": {
+            "type": "array",
+            "scope": "machine-overridable",
+            "default": [],
+            "markdownDescription": "additional paths to check mods."
+          }
+        }
+      }
     ]
   },
   "scripts": {
