@@ -18,6 +18,27 @@
       {
         "title": "RWXML Language Server",
         "properties": {
+          "rwxml.logs.level": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "info",
+            "description": "set extension log level.",
+            "enum": [
+              "info",
+              "warn",
+              "error",
+              "debug",
+              "silly"
+            ],
+            "enumDescriptions": [
+              "set log level.",
+              "set log level.",
+              "set log level.",
+              "set log level. warning: this might affect performance.",
+              "set log level. warning: this might affect performance."
+            ]
+          },
+
           "rwxml.paths.rimWorld": {
             "type": "string",
             "scope": "machine-overridable",
