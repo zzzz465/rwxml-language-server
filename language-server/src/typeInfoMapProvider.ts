@@ -8,19 +8,23 @@ import { Project } from './project'
 import * as winston from 'winston'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { v4 as uuid } from 'uuid'
+import { LogToken } from './log'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${TypeInfoMapProvider.name}] [${this.version}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     @inject(ConnectionToken) private readonly connection: Connection,
-    @inject(delay(() => Project)) private readonly project: Project
-  ) {}
+    @inject(delay(() => Project)) private readonly project: Project,
+    @inject(LogToken) baseLogger: winston.Logger
+  ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+  }
 
   async get(requestId: string = uuid()): Promise<TypeInfoMap> {
     const dllUris = this.getTargetDLLUris()

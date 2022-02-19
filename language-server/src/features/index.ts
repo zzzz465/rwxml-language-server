@@ -151,7 +151,7 @@ export class LanguageFeature {
       try {
         return await func(arg)
       } catch (e: unknown) {
-        log.error(e)
+        console.error(e)
         throw e
       }
     }

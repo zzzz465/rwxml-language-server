@@ -14,6 +14,7 @@ import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
 import { CancellationTokenSource } from 'vscode-languageserver'
 import { v4 as uuid } from 'uuid'
+import { LogToken } from './log'
 
 interface Events {
   defChanged(defs: (Injectable | Def)[]): void
@@ -24,10 +25,10 @@ export class Project {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   private xmls: Map<string, Document> = new Map()
-  public defManager: DefManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap(), this.version)
+  public defManager: DefManager
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
@@ -38,8 +39,13 @@ export class Project {
     public readonly about: About,
     @inject(RimWorldVersionToken) public readonly version: RimWorldVersion,
     public readonly resourceStore: ResourceStore,
-    private readonly typeInfoMapProvider: TypeInfoMapProvider
+    private readonly typeInfoMapProvider: TypeInfoMapProvider,
+    @inject(LogToken) baseLogger: winston.Logger
   ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
+    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap(), this.log, this.version)
+
     resourceStore.event.on('xmlChanged', this.onXMLChanged.bind(this))
     resourceStore.event.on('xmlDeleted', this.onXMLDeleted.bind(this))
     resourceStore.event.on('dllChanged', () => this.reloadProject())
@@ -132,7 +138,7 @@ export class Project {
     const typeInfoMap = await this.typeInfoMapProvider.get(requestId)
 
     this.xmls = new Map()
-    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.version)
+    this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.log, this.version)
   }
 
   /**

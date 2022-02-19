@@ -7,6 +7,8 @@ import { Project } from './project'
 import { RimWorldVersionToken } from './RimWorldVersion'
 import * as winston from 'winston'
 import { About } from './mod'
+import { inject } from 'tsyringe'
+import { LogToken } from './log'
 /**
  * ProjectManager manages DI container of specific rimworld version
  * and dispatch various events to each container
@@ -14,7 +16,7 @@ import { About } from './mod'
 @tsyringe.singleton()
 export class ProjectManager {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${ProjectManager.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   private readonly projectContainers: Map<string, tsyringe.DependencyContainer> = new Map()
 
@@ -22,7 +24,12 @@ export class ProjectManager {
     return [...this.projectContainers.values()].map((c) => c.resolve(Project))
   }
 
-  constructor(private readonly about: About, private readonly loadFolder: LoadFolder) {
+  constructor(
+    private readonly about: About,
+    private readonly loadFolder: LoadFolder,
+    @inject(LogToken) baseLogger: winston.Logger
+  ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     about.event.on('supportedVersionsChanged', this.onSupportedVersionsChanged.bind(this))
   }
 

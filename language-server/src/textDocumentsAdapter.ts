@@ -7,6 +7,7 @@ import { ConnectionToken } from './connection'
 import { ResourceExistsRequest } from './events'
 import { File, TextFile } from './fs'
 import * as winston from 'winston'
+import { LogToken } from './log'
 
 interface Events {
   fileAdded(file: TextFile): void
@@ -23,12 +24,17 @@ interface Events {
 @singleton()
 export class TextDocumentsAdapter {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentsAdapter.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   readonly event: EventEmitter<Events> = new EventEmitter()
   readonly textDocuments = new TextDocuments(TextDocument)
 
-  constructor(@inject(ConnectionToken) private readonly connection: Connection) {
+  constructor(
+    @inject(ConnectionToken) private readonly connection: Connection,
+    @inject(LogToken) baseLogger: winston.Logger
+  ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
     this.textDocuments.listen(connection)
 
     this.textDocuments.onDidOpen(this.onOpen.bind(this))

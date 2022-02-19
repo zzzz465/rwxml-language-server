@@ -21,6 +21,8 @@ container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
+  console.log(`current log level: ${logLevel}`)
+
   logs.initializeLogger(logLevel)
 
   const log = container.resolve<winston.Logger>(logs.LogToken)
