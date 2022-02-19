@@ -5,10 +5,11 @@ import path from 'path'
 import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
-import { singleton } from 'tsyringe'
+import { inject, singleton } from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import _ from 'lodash'
+import { LogToken } from '../log'
 
 export interface AboutEvents {
   supportedVersionsChanged(): void
@@ -25,7 +26,7 @@ export interface Dependency {
 @singleton()
 export class About {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   readonly event: EventEmitter<AboutEvents> = new EventEmitter()
 
@@ -61,6 +62,10 @@ export class About {
   }
   get rawXML() {
     return this._rawXML
+  }
+
+  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
   updateAboutXML(text: string) {

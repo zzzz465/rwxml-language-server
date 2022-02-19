@@ -1,10 +1,11 @@
 import EventEmitter from 'events'
-import { singleton } from 'tsyringe'
+import { inject, singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import { File } from './fs'
 import * as winston from 'winston'
+import { LogToken } from './log'
 
 // events that this manager will emit
 export interface NotificationEvents {
@@ -18,13 +19,17 @@ export class NotificationEventManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${NotificationEventManager.name}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   // pre-event stage emit
   public readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()
   // event emit
   public readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
   // post-event emit?
+
+  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+  }
 
   listenConnection(connection: Connection): void {
     connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(this.toFile(uri)))

@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe'
+import { inject, injectable } from 'tsyringe'
 import { Connection, MarkupContent } from 'vscode-languageserver'
 import { Provider } from './provider'
 import * as winston from 'winston'
@@ -12,9 +12,9 @@ import { Element } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { TextDocumentManager } from '../textDocumentManager'
 import { Definition } from './definition'
-import { DependencyResourceManager } from '../dependencyResourceManager'
 import { FileStore } from '../fileStore'
 import { DependencyFile } from '../fs'
+import { LogToken } from '../log'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -57,7 +57,7 @@ prettydiff.options.indent_char = ' '
 @injectable()
 export class HoverProvider extends Provider {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${HoverProvider.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   constructor(
     loadFolder: LoadFolder,
@@ -65,9 +65,11 @@ export class HoverProvider extends Provider {
     private readonly rangeConverter: RangeConverter,
     private readonly textDocumentManager: TextDocumentManager,
     private readonly definitionProvider: Definition,
-    private readonly fileStore: FileStore
+    private readonly fileStore: FileStore,
+    @inject(LogToken) baseLogger: winston.Logger
   ) {
     super(loadFolder, projectManager)
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
   protected getLogger(): winston.Logger {

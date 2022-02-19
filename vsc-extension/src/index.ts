@@ -14,16 +14,22 @@ import { ExtensionVersionToken } from './version'
 import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
+import { LogLevelToken } from './log'
 
 const disposables: vscode.Disposable[] = []
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  let logLevel = vscode.workspace.getConfiguration('rwxml.logs').get<string>('level')
+  if (!logLevel) {
+    logLevel = 'info'
+  }
+
   // 1. reset container && set extensionContext
   console.log('initializing @rwxml/vsc-extension...')
   container.clearInstances()
 
+  container.register(LogLevelToken, { useValue: logLevel })
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
-
   container.register(ExtensionContextToken, { useValue: context })
 
   // check insider version exists (main / insider cannot co-exists)
@@ -90,6 +96,7 @@ async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
   const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
+  const logLevel = container.resolve<string>(LogLevelToken)
   console.log(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {
@@ -109,6 +116,11 @@ async function createServer() {
         language: 'xml',
       },
     ],
+    initializationOptions: {
+      logs: {
+        level: logLevel,
+      },
+    },
   }
 
   const client = new LanguageClient('rwxml-language-server', 'RWXML Language Server', serverOptions, clientOptions)

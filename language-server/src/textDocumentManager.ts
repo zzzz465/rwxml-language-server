@@ -1,9 +1,10 @@
 import EventEmitter from 'events'
-import { singleton } from 'tsyringe'
+import { inject, singleton } from 'tsyringe'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { File, XMLFile } from './fs'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
+import { LogToken } from './log'
 
 /**
  * TextDocumentManager manages all textDocuments
@@ -15,9 +16,13 @@ import * as winston from 'winston'
 @singleton()
 export class TextDocumentManager {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentManager.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   private documents: Map<string, TextDocument> = new Map()
+
+  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+  }
 
   listen(events: EventEmitter<NotificationEvents>) {
     events.on('fileAdded', this.onFileAdded.bind(this))

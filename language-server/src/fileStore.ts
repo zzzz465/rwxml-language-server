@@ -1,21 +1,24 @@
 import EventEmitter from 'events'
-import { singleton } from 'tsyringe'
+import { inject, singleton } from 'tsyringe'
 import { File } from './fs'
 import { NotificationEventManager, NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
+import { LogToken } from './log'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
 @singleton()
 export class FileStore {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${FileStore.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
   private readonly files: Map<string, File> = new Map()
 
-  constructor(notiEventManager: NotificationEventManager) {
+  constructor(notiEventManager: NotificationEventManager, @inject(LogToken) baseLogger: winston.Logger) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
     notiEventManager.event.on('fileAdded', this.onFileAdded.bind(this))
     notiEventManager.event.on('fileChanged', this.onFileChanged.bind(this))
     notiEventManager.event.on('fileDeleted', this.onFileDeleted.bind(this))

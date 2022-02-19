@@ -8,15 +8,16 @@ import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import { AsEnumerable } from 'linq-es2015'
 import normalize_path from 'normalize-path'
-import { singleton } from 'tsyringe'
+import { inject, singleton } from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
+import { LogToken } from '../log'
 
 // TODO: support on LoadFolder changes.
 @singleton()
 export class LoadFolder {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${LoadFolder.name}] ${info.message}`)
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
@@ -43,6 +44,10 @@ export class LoadFolder {
   }
   get default(): URI[] {
     return [this.rootDirectory]
+  }
+
+  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
   updateLoadFolderXML(uri: URI, text: string) {
@@ -95,7 +100,7 @@ export class LoadFolder {
 
   // determine the file belongs to specific rimworld version.
   private isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
-    log.silly(`check uri ${uri.fsPath} is belongs to ${version}`)
+    this.log.silly(`check uri ${uri.fsPath} is belongs to ${version}`)
 
     const root = this.rootDirectory.fsPath
     const child = uri.fsPath

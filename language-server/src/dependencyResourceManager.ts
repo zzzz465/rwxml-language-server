@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 import { inject, singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
-import { DependencyFile, File } from './fs'
+import { File } from './fs'
 import { About, Dependency } from './mod'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
@@ -10,6 +10,7 @@ import { DependencyRequest, DependencyRequestResponse } from './events'
 import assert from 'assert'
 import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
+import { LogToken } from './log'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -18,7 +19,7 @@ export class DependencyResourceManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${DependencyResourceManager.name}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
@@ -27,7 +28,12 @@ export class DependencyResourceManager {
 
   private readonly resources: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
-  constructor(about: About, @inject(ConnectionToken) private readonly connection: Connection) {
+  constructor(
+    about: About,
+    @inject(ConnectionToken) private readonly connection: Connection,
+    @inject(LogToken) baseLogger: winston.Logger
+  ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     about.event.on('dependencyModsChanged', this.onAboutChanged.bind(this))
   }
 
@@ -83,7 +89,9 @@ export class DependencyResourceManager {
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
     assert(!res.error)
-    log.debug(`processing add response, packageId: ${res.packageId}, files: ${(JSON.stringify(res.uris), null, 2)}`)
+    this.log.debug(
+      `processing add response, packageId: ${res.packageId}, files: ${(JSON.stringify(res.uris), null, 2)}`
+    )
 
     const files = res.uris.map((uri) =>
       File.create({ uri: URI.parse(uri), ownerPackageId: res.packageId, readonly: true })

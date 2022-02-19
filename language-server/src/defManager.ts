@@ -9,7 +9,7 @@ export class DefManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${DefManager.name}] [${this.version}] ${info.message}`
   )
-  private readonly log = winston.createLogger({ transports: log.transports, format: this.logFormat })
+  private readonly log: winston.Logger
 
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
   private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
@@ -19,8 +19,11 @@ export class DefManager {
     public readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
     public readonly typeInfoMap: TypeInfoMap,
+    baseLogger: winston.Logger,
     public readonly version?: RimWorldVersion
   ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {
       // eslint-disable-next-line quotes
