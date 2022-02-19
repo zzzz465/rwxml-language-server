@@ -36,6 +36,27 @@ export abstract class PathStore {
   protected abstract defaultRimWorldManagedDirectory(): string
   protected abstract defaultLanguageServerModulePath(): string
 
+  constructor() {
+    console.log('PathStore initialized')
+    vscode.workspace.onDidChangeConfiguration(this.onConfigurationChanges.bind(this))
+  }
+
+  private async onConfigurationChanges(e: vscode.ConfigurationChangeEvent): Promise<void> {
+    if (!e.affectsConfiguration('rwxml.paths')) {
+      return
+    }
+
+    const response = await vscode.window.showInformationMessage(
+      'RWXML: rwxml.paths changed, Please reload VSCode to apply changes.',
+      'Reload',
+      'Later'
+    )
+
+    if (response === 'Reload') {
+      await vscode.commands.executeCommand('workbench.action.reloadWindow')
+    }
+  }
+
   get RimWorldDirectory(): string {
     return this.getOrDefault(
       vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorld'),
