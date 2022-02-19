@@ -1,6 +1,3 @@
-import { container } from 'tsyringe'
-import { ExtensionContext } from 'vscode'
-import { ExtensionContextToken } from './extension'
 import * as vscode from 'vscode'
 
 export default async function checkInsider() {
