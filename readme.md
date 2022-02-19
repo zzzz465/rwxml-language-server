@@ -23,34 +23,28 @@ provides various IDE functionalities, as VSCode Extension
 
 [VSCode Marketplace (Click)](https://marketplace.visualstudio.com/items?itemName=madeline.rwxml-lang-serv)
 
-## Setup Locally
+## Configuration
 
-1. clone repository locally
+configures RWXML Language Server.
 
-```bash
-#!/bin/bash
-git clone https://github.com/zzzz465/rwxml-language-server
+```jsonc
+{
+  "rwxml.paths.rimWorld": "C:\\...\\common\\RimWorld", // RimWorld/ Directory path.
+
+  // overrides default path / assumed path from rimWorld
+  "rwxml.paths.rimWorldData": "C:\\...\\RimWorld\\Data",
+  "rwxml.paths.rimWorldManaged": "C:\\...\\RimWorld\\RimWorldWin64_Data\\Managed",
+  "rwxml.paths.localMods": "C:\\...\\RimWorld\\Mods",
+  "rwxml.paths.workshopMods": "C:\\...\\workshop\\contents\\294100",
+  "rwxml.paths.externalMods": [
+    "<other-mods-directory-1>",
+    "<other-mods-directory-2>",
+    // and so on...
+  ]
+}
 ```
 
-2. install project
-
-```bash
-#!/bin/bash
-# cwd: repository root
-pnpm install
-```
-
-3. build project
-
-```bash
-#!/bin/bash
-# cwd: repository root
-pnpm run watch # this will build project and watch project changes
-```
-
-4. open `/vsc-extension` with VSCode, and launch `Launch Client`
-
-## default resource path
+### Default Paths
 
 this extension requires `RimWorld DLL`, `RimWorld Core` to operate.
 it scans Workshop/Local Mod Directory to support external mods.
@@ -77,5 +71,29 @@ Workshop Directory
 - windows: `C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\294100`
 - darwin(macos): `Library/Application Support/Steam/Steamapps/workshop/content/294100`
 
-unfortunately, using a different path is not possible (not implemented yet).
-you have to copy the required resources to those paths.
+## Setup devlopment environment
+
+1. clone repository locally
+
+```bash
+#!/bin/bash
+git clone https://github.com/zzzz465/rwxml-language-server
+```
+
+2. install project
+
+```bash
+#!/bin/bash
+# cwd: repository root
+pnpm install
+```
+
+3. build project
+
+```bash
+#!/bin/bash
+# cwd: repository root
+pnpm run watch # this will build project and watch project changes
+```
+
+4. open `/vsc-extension` with VSCode, and launch `Launch Client`
