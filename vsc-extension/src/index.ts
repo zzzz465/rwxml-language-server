@@ -96,6 +96,7 @@ async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
   const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
+  const logLevel = container.resolve<string>(LogLevelToken)
   console.log(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {
@@ -115,6 +116,11 @@ async function createServer() {
         language: 'xml',
       },
     ],
+    initializationOptions: {
+      logs: {
+        level: logLevel,
+      },
+    },
   }
 
   const client = new LanguageClient('rwxml-language-server', 'RWXML Language Server', serverOptions, clientOptions)
