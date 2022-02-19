@@ -109,6 +109,7 @@ export abstract class PathStore {
     ])
   }
 
+  // TODO: remove this function
   private getOrDefault(value: string | undefined, defaultValue: string): string {
     if (!value) {
       return defaultValue
