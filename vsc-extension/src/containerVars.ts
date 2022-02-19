@@ -4,13 +4,7 @@ import * as os from 'os'
 import * as path from 'path'
 import { getCoreDirectoryUri, getLocalModDirectoryUri, getWorkshopModsDirectoryUri } from './mod'
 
-export const coreDirectoryKey = Symbol('container key of core directory uri')
-export const localDirectoryKey = Symbol('container key of local directory uri')
-export const workshopDirectoryKey = Symbol('container key of workshop directory uri')
-export const DependencyDirectoriesKey = Symbol('container key of all dependnecy directories uri')
-export const languageServerModuleRelativePathKey = Symbol('continer key of language server path (relative to entry)')
-export const RimWorldDLLDirectoryKey = Symbol('container key of Directory URL containing RimWorld DLLs')
-
+/*
 // initialize container for global variables
 export function initialize(): Disposable {
   initCoreDirectoryUri()
@@ -84,3 +78,4 @@ function getDefaultRimWorldDLLDirectoryPath() {
       throw new Error(`platform: ${process.platform} is not supported.`)
   }
 }
+*/

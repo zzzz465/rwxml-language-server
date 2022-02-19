@@ -90,7 +90,7 @@ export function deactivate() {
 async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
-  const serverModuleRelativePath = pathStore.languageServerModulePath()
+  const serverModuleRelativePath = pathStore.defaultLanguageServerModulePath()
   const module = path.join(context.extensionPath, serverModuleRelativePath)
   console.log(`server module absolute path: ${module}`)
 

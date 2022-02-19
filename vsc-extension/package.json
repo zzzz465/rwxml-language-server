@@ -24,17 +24,17 @@
             "default": "",
             "markdownDescription": "path of `RimWorld/` directory."
           },
-          "rwxml.paths.rimWorldManaged": {
-            "type": "string",
-            "scope": "machine-overridable",
-            "default": "",
-            "markdownDescription": "directory path of `RimWorld/RimWorldXXX64_Data/Managed/`\noverrides `rwxml.paths.rimWorld`"
-          },
           "rwxml.paths.rimWorldData": {
             "type": "string",
             "scope": "machine-overridable",
             "default": "",
             "markdownDescription": "path of `RimWorld/Data/` directory, which includes `Core/`, `Ideology/`, etc.\noverrides `rwxml.paths.rimWorld`"
+          },
+          "rwxml.paths.rimWorldManaged": {
+            "type": "string",
+            "scope": "machine-overridable",
+            "default": "",
+            "markdownDescription": "directory path of `RimWorld/RimWorldXXX64_Data/Managed/`\noverrides `rwxml.paths.rimWorld`"
           },
           "rwxml.paths.localMods": {
             "type": "string",

@@ -1,63 +1,117 @@
-import { injectable, registry } from 'tsyringe'
+import _ from 'lodash'
+import * as tsyringe from 'tsyringe'
+import * as vscode from 'vscode'
+import * as path from 'path'
 
 /**
  * PathStore manages various paths used by program.
  * there's two implementation. win32 / darwin
  */
-@registry([])
+@tsyringe.registry([])
 export abstract class PathStore {
   static readonly token = Symbol(PathStore.name)
 
   readonly type: 'win32' | 'darwin' | 'unknown' = 'unknown'
 
-  abstract coreDirectory(): string
-  abstract localModDirectory(): string
-  abstract workshopModDirectory(): string
-  abstract rimWorldManagedDirectory(): string
-  abstract languageServerModulePath(): string
-  dependencyDirectories(): string[] {
-    return [this.coreDirectory(), this.localModDirectory(), this.workshopModDirectory()]
+  protected abstract defaultRimWorldDirectory(): string
+  protected abstract defaultRimWorldDatadirectory(): string
+  protected abstract defaultLocalModDirectory(): string
+  protected abstract defaultWorkshopModDirectory(): string
+  protected abstract defaultRimWorldManagedDirectory(): string
+  protected abstract defaultLanguageServerModulePath(): string
+
+  get RimWorldDirectory(): string {
+    return vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorld', this.defaultRimWorldDirectory())
+  }
+
+  get RimWorldDatadirectory(): string {
+    return vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorldData', this.defaultRimWorldDirectory())
+  }
+
+  get LocalModDirectory(): string {
+    return vscode.workspace.getConfiguration('rwxml.paths').get<string>('localMods', this.defaultLocalModDirectory())
+  }
+
+  get RimWorldManagedDirectory(): string {
+    return vscode.workspace
+      .getConfiguration('rwxml.paths')
+      .get<string>('rimWorldManaged', this.defaultRimWorldManagedDirectory())
+  }
+
+  get WorkshopModDirectory(): string {
+    return vscode.workspace
+      .getConfiguration('rwxml.paths')
+      .get<string>('workshopMods', this.defaultWorkshopModDirectory())
+  }
+
+  get externalModsDirectory(): string[] {
+    return vscode.workspace.getConfiguration('rwxml.paths').get<string[]>('externalMods', [])
+  }
+
+  get LanguageServerModulePath(): string {
+    return this.defaultRimWorldManagedDirectory()
+  }
+
+  get dependencyDirectories(): string[] {
+    return _.uniq([
+      this.defaultRimWorldDirectory(),
+      this.defaultLocalModDirectory(),
+      this.defaultWorkshopModDirectory(),
+      ...this.externalModsDirectory,
+    ])
   }
 }
 
-@injectable()
+@tsyringe.injectable()
 export class Win32PathStore extends PathStore {
   readonly type = 'win32'
 
-  coreDirectory(): string {
-    throw new Error('Method not implemented.')
+  protected defaultRimWorldDirectory(): string {
+    return 'C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld'
   }
-  localModDirectory(): string {
-    throw new Error('Method not implemented.')
+
+  protected defaultRimWorldDatadirectory(): string {
+    return path.join(this.RimWorldDirectory, 'Data')
   }
-  workshopModDirectory(): string {
-    throw new Error('Method not implemented.')
+
+  protected defaultLocalModDirectory(): string {
+    return path.join(this.RimWorldDirectory, 'Mods')
   }
-  rimWorldManagedDirectory(): string {
-    throw new Error('Method not implemented.')
+
+  protected defaultWorkshopModDirectory(): string {
+    return 'C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\294100'
   }
-  languageServerModulePath(): string {
-    throw new Error('Method not implemented.')
+
+  protected defaultRimWorldManagedDirectory(): string {
+    return path.join(this.RimWorldDirectory, 'RimWorldWin64_Data', 'Managed')
+  }
+
+  protected defaultLanguageServerModulePath(): string {
+    return process.env.LANGUAGE_SERVER_MODULE_PATH_RELATIVE as string
   }
 }
 
-@injectable()
+@tsyringe.injectable()
 export class DarwinPathStore extends PathStore {
   readonly type = 'darwin'
 
-  coreDirectory(): string {
+  protected defaultRimWorldDatadirectory(): string {
     throw new Error('Method not implemented.')
   }
-  localModDirectory(): string {
+
+  protected defaultRimWorldDirectory(): string {
     throw new Error('Method not implemented.')
   }
-  workshopModDirectory(): string {
+  protected defaultLocalModDirectory(): string {
     throw new Error('Method not implemented.')
   }
-  rimWorldManagedDirectory(): string {
+  protected defaultWorkshopModDirectory(): string {
     throw new Error('Method not implemented.')
   }
-  languageServerModulePath(): string {
+  protected defaultRimWorldManagedDirectory(): string {
+    throw new Error('Method not implemented.')
+  }
+  protected defaultLanguageServerModulePath(): string {
     throw new Error('Method not implemented.')
   }
 }
