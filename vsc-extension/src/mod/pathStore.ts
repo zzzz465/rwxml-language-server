@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import _, { values } from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import * as path from 'path'
@@ -7,7 +7,23 @@ import * as path from 'path'
  * PathStore manages various paths used by program.
  * there's two implementation. win32 / darwin
  */
-@tsyringe.registry([])
+@tsyringe.registry([
+  {
+    token: PathStore.token,
+    useFactory: (c) => {
+      switch (process.platform) {
+        case 'win32':
+          return c.resolve(Win32PathStore)
+
+        case 'darwin':
+          return c.resolve(DarwinPathStore)
+
+        default:
+          throw new Error(`platform ${process.platform} is not supported. please make an issue on github.`)
+      }
+    },
+  },
+])
 export abstract class PathStore {
   static readonly token = Symbol(PathStore.name)
 
@@ -21,27 +37,38 @@ export abstract class PathStore {
   protected abstract defaultLanguageServerModulePath(): string
 
   get RimWorldDirectory(): string {
-    return vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorld', this.defaultRimWorldDirectory())
+    return this.getOrDefault(
+      vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorld'),
+      this.defaultRimWorldDirectory()
+    )
   }
 
   get RimWorldDatadirectory(): string {
-    return vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorldData', this.defaultRimWorldDirectory())
+    return this.getOrDefault(
+      vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorldData'),
+      this.defaultRimWorldDirectory()
+    )
   }
 
   get LocalModDirectory(): string {
-    return vscode.workspace.getConfiguration('rwxml.paths').get<string>('localMods', this.defaultLocalModDirectory())
+    return this.getOrDefault(
+      vscode.workspace.getConfiguration('rwxml.paths').get<string>('localMods'),
+      this.defaultLocalModDirectory()
+    )
   }
 
   get RimWorldManagedDirectory(): string {
-    return vscode.workspace
-      .getConfiguration('rwxml.paths')
-      .get<string>('rimWorldManaged', this.defaultRimWorldManagedDirectory())
+    return this.getOrDefault(
+      vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorldManaged'),
+      this.defaultRimWorldManagedDirectory()
+    )
   }
 
   get WorkshopModDirectory(): string {
-    return vscode.workspace
-      .getConfiguration('rwxml.paths')
-      .get<string>('workshopMods', this.defaultWorkshopModDirectory())
+    return this.getOrDefault(
+      vscode.workspace.getConfiguration('rwxml.paths').get<string>('workshopMods'),
+      this.defaultWorkshopModDirectory()
+    )
   }
 
   get externalModsDirectory(): string[] {
@@ -49,20 +76,28 @@ export abstract class PathStore {
   }
 
   get LanguageServerModulePath(): string {
-    return this.defaultRimWorldManagedDirectory()
+    return this.defaultLanguageServerModulePath()
   }
 
   get dependencyDirectories(): string[] {
     return _.uniq([
-      this.defaultRimWorldDirectory(),
+      this.defaultRimWorldDatadirectory(),
       this.defaultLocalModDirectory(),
       this.defaultWorkshopModDirectory(),
       ...this.externalModsDirectory,
     ])
   }
+
+  private getOrDefault(value: string | undefined, defaultValue: string): string {
+    if (!value) {
+      return defaultValue
+    }
+
+    return value
+  }
 }
 
-@tsyringe.injectable()
+@tsyringe.singleton()
 export class Win32PathStore extends PathStore {
   readonly type = 'win32'
 
@@ -91,7 +126,7 @@ export class Win32PathStore extends PathStore {
   }
 }
 
-@tsyringe.injectable()
+@tsyringe.singleton()
 export class DarwinPathStore extends PathStore {
   readonly type = 'darwin'
 

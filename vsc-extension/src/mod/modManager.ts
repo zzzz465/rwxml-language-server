@@ -23,7 +23,7 @@ export class ModManager {
   }
 
   constructor(@inject(PathStore.token) private readonly pathStore: PathStore) {
-    console.log(`ModManager watching directories: ${this.directoryUris}`)
+    console.log(`ModManager watching directories: ${JSON.stringify(this.directoryUris, null, 4)}`)
   }
 
   async init() {
