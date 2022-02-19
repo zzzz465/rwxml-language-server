@@ -4,7 +4,7 @@ import vscode from 'vscode'
 import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
 import { inject, singleton } from 'tsyringe'
-import { PathStore } from '.'
+import { PathStore } from './pathStore'
 
 @singleton()
 export class ModManager {

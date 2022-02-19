@@ -3,8 +3,8 @@ import _ from 'lodash'
 import { createServer } from 'net'
 import { container } from 'tsyringe'
 import { ExtensionContext } from 'vscode'
-import { RimWorldDLLDirectoryKey } from '../containerVars'
 import { ExtensionContextToken } from '../extension'
+import { PathStore } from '../mod'
 
 function getExtractorDirectory() {
   let processPath: string | undefined = undefined
@@ -35,14 +35,16 @@ function getCWD() {
 
 function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const cwd = getCWD()
-  const dllPath = container.resolve<string>(RimWorldDLLDirectoryKey)
+  const managedDirectory = container.resolve<PathStore>(PathStore.token).RimWorldManagedDirectory
   const port = options?.port ?? 9870
 
   let p: ChildProcess
   if (process.platform === 'win32') {
-    p = execFile('extractor.exe', [dllPath, ...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
+    p = execFile('extractor.exe', [managedDirectory, ...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
   } else {
-    p = execFile('mono', ['extractor.exe', dllPath, ...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
+    p = execFile('mono', ['extractor.exe', managedDirectory, ...dllPaths, '--output-mode=TCP', `--port=${port}`], {
+      cwd,
+    })
   }
 
   p.stdout?.setEncoding('utf-8')
