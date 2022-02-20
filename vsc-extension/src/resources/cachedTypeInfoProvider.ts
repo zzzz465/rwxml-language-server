@@ -6,6 +6,7 @@ import { Provider } from './provider'
 import { PathStore } from './pathStore'
 import * as crypto from 'crypto'
 import * as fs from 'fs/promises'
+import { mkdirSync } from 'fs'
 import * as path from 'path'
 import { md5sum } from '../utils/hash'
 import _ from 'lodash'
@@ -25,10 +26,16 @@ interface Cache {
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
+  get dllCacheDirectory(): string {
+    return path.join(this.pathStore.cacheDirectory, 'dlls')
+  }
+
   constructor(
     private readonly typeInfoProvider: TypeInfoProvider,
     @inject(PathStore.token) private readonly pathStore: PathStore
-  ) {}
+  ) {
+    mkdirSync(this.dllCacheDirectory, { recursive: true })
+  }
 
   async listen(client: LanguageClient): Promise<void> {
     await client.onReady()

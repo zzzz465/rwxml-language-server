@@ -2,6 +2,7 @@ import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import * as os from 'os'
 import * as path from 'path'
+import * as fs from 'fs'
 import { singleton } from 'tsyringe'
 
 @tsyringe.registry([
@@ -25,6 +26,10 @@ export abstract class PathStore {
   static readonly token = Symbol(PathStore.name)
 
   protected abstract defaultCacheDirectory(): string
+
+  constructor() {
+    fs.mkdirSync(this.cacheDirectory, { recursive: true })
+  }
 
   get cacheDirectory(): string {
     return vscode.workspace.getConfiguration('rwxml.extractor.cache').get<string>('paths', this.defaultCacheDirectory())
