@@ -16,7 +16,7 @@ import { singleton } from 'tsyringe'
           return c.resolve(DarwinPathStore)
 
         default:
-          throw new Error(`platform ${os.platform()} is not supported.`)
+          throw new Error(`platform ${os.platform()} is not supported.  please make an issue on github.`)
       }
     },
   },
@@ -34,7 +34,7 @@ export abstract class PathStore {
 @singleton()
 class Win32PathStore extends PathStore {
   protected defaultCacheDirectory(): string {
-    const p = 'Library\\Application Support\\rwxml-language-server\\cache'
+    const p = 'Appdata\\Roaming\\rwxml-language-server\\cache'
     return path.join(os.homedir(), p)
   }
 }
