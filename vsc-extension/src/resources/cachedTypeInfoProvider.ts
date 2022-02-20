@@ -35,6 +35,16 @@ export class CachedTypeInfoProvider implements Provider {
     @inject(PathStore.token) private readonly pathStore: PathStore
   ) {
     mkdirSync(this.dllCacheDirectory, { recursive: true })
+
+    vscode.commands.registerCommand('rwxml:cache:clear', this.clearCache.bind(this))
+  }
+
+  private async clearCache() {
+    const caches = await fs.readdir(this.dllCacheDirectory)
+    console.log(`deleting ${caches.length} caches: ${JSON.stringify(caches, null, 4)}`)
+    await Promise.all(caches.map((c) => fs.rm(path.join(this.dllCacheDirectory, c))))
+
+    vscode.window.showInformationMessage(`RWXML: Cleared ${caches.length} caches.`, 'OK')
   }
 
   async listen(client: LanguageClient): Promise<void> {
