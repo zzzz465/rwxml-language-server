@@ -48,6 +48,8 @@ export class CachedTypeInfoProvider implements Provider {
   private async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
     const requestId = uuid()
 
+    uris.sort()
+
     // get cache name based on checksum name of given uris
     // and make a short hash
     const cacheName = this.getCacheName(uris).slice(0, 12)
