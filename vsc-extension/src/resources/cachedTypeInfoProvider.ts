@@ -1,16 +1,17 @@
-import { injectable } from 'tsyringe'
+import { inject, injectable } from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
 import { TypeInfoProvider } from './typeInfoProvider'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
 import { Provider } from './provider'
 import { PathStore } from './pathStore'
 import * as crypto from 'crypto'
-import * as vscode from 'vscode'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { md5sum } from '../utils/hash'
 import _ from 'lodash'
 import dayjs from 'dayjs'
+import { v4 as uuid } from 'uuid'
+import * as vscode from 'vscode'
 
 interface Cache {
   createdBy: string
@@ -24,7 +25,10 @@ interface Cache {
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
-  constructor(private readonly typeInfoProvider: TypeInfoProvider, private readonly pathStore: PathStore) {}
+  constructor(
+    private readonly typeInfoProvider: TypeInfoProvider,
+    @inject(PathStore.token) private readonly pathStore: PathStore
+  ) {}
 
   async listen(client: LanguageClient): Promise<void> {
     await client.onReady()
@@ -35,17 +39,22 @@ export class CachedTypeInfoProvider implements Provider {
    * @todo check cache confliction on write
    */
   private async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
+    const requestId = uuid()
+
     // get cache name based on checksum name of given uris
     // and make a short hash
     const cacheName = this.getCacheName(uris).slice(0, 12)
-    const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', cacheName)
+    const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', `${cacheName}.json`)
+
+    console.log(`[${requestId}] requested uris: ${JSON.stringify(uris, null, 4)}`)
+    console.log(`[${requestId}] cache path: ${uris}`)
 
     const checkCacheValid = async () => {
       // https://nodejs.org/api/fs.html#file-system-flags
       let file: fs.FileHandle | null = null
 
       try {
-        file = await fs.open(cachePath, '644', 'a+')
+        file = await fs.open(cachePath, 'a+', '644')
 
         const cache = await this.getCache(file)
         return {
@@ -53,7 +62,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        console.error(e)
+        console.error(`[${requestId}] failed opening cache file: `, e)
       } finally {
         await file?.close()
       }
@@ -74,7 +83,7 @@ export class CachedTypeInfoProvider implements Provider {
 
       data = res.data
 
-      await this.updateCache(cachePath, uris, data)
+      await this.updateCache(cachePath, uris, data, requestId)
     }
 
     return data
@@ -84,10 +93,10 @@ export class CachedTypeInfoProvider implements Provider {
     const hash = crypto.createHash('md5')
 
     for (const file of files) {
-      hash.update(file)
+      hash.update(file, 'utf-8')
     }
 
-    return hash.digest().toString('utf-8')
+    return hash.digest('hex')
   }
 
   private async getCache(file: fs.FileHandle): Promise<Cache> {
@@ -102,27 +111,27 @@ export class CachedTypeInfoProvider implements Provider {
   }
 
   private async getChecksums(files: string[]): Promise<string[]> {
-    return [
-      ...files
-        .sort()
-        .map(md5sum)
-        .map((buff) => buff.toString('utf-8')),
-    ]
+    return [...files.sort().map(md5sum)]
   }
 
-  private async updateCache(cachePath: string, files: string[], data: any) {
-    const checksums = await this.getChecksums(files)
+  private async updateCache(cachePath: string, files: string[], data: any, requestId: string) {
+    try {
+      const checksums = await this.getChecksums(files.map((uri) => vscode.Uri.parse(uri).fsPath))
 
-    const cache: Cache = {
-      checksums,
-      createdAt: dayjs().format(),
-      createdBy: CachedTypeInfoProvider.name,
-      data,
-      requestedFileUris: files,
+      const cache: Cache = {
+        checksums,
+        createdAt: dayjs().format(),
+        createdBy: CachedTypeInfoProvider.name,
+        data,
+        requestedFileUris: files,
+      }
+
+      const raw = JSON.stringify(cache, null, 4)
+
+      await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
+      console.log(`[${requestId}] write cache to file: `, cachePath)
+    } catch (err) {
+      console.error(`[${requestId}] failed to write cache to file: ${cachePath}, err: `, err)
     }
-
-    const raw = JSON.stringify(cache, null, 4)
-
-    await fs.writeFile(cachePath, raw, { encoding: 'utf-8', mode: 'w+' })
   }
 }
