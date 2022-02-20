@@ -38,7 +38,6 @@
               "set log level. warning: this might affect performance."
             ]
           },
-
           "rwxml.paths.rimWorld": {
             "type": "string",
             "scope": "machine-overridable",
@@ -128,6 +127,7 @@
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
     "cheerio": "^1.0.0-rc.10",
+    "dayjs": "^1.10.7",
     "double-ended-queue": "^2.1.0-0",
     "fast-glob": "^3.2.7",
     "htmlparser2": "^7.0.0",
