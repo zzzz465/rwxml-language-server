@@ -85,6 +85,8 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheData = await checkCacheValid()
     let data = cacheData.data
     if (!cacheData.valid) {
+      console.log(`[${requestId}] checksum invalid, updating cache.`)
+
       const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
       if (res.error) {
         return res
