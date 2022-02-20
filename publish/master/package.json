@@ -56,6 +56,10 @@
       {
         "command": "rwxml:debug:printXMLDocumentObject",
         "title": "RWXML: (debug) print current document's XMLDocument"
+      },
+      {
+        "command": "rwxml:cache:clear",
+        "title": "RWXML: Clear DLL Cache"
       }
     ],
     "configuration": [
