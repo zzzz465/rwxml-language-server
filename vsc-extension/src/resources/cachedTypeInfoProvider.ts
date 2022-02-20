@@ -118,12 +118,12 @@ export class CachedTypeInfoProvider implements Provider {
   }
 
   private async getChecksums(files: string[]): Promise<string[]> {
-    return [...files.sort().map(md5sum)]
+    return [...files.map((uri) => vscode.Uri.parse(uri).fsPath).map(md5sum)]
   }
 
   private async updateCache(cachePath: string, files: string[], data: any, requestId: string) {
     try {
-      const checksums = await this.getChecksums(files.map((uri) => vscode.Uri.parse(uri).fsPath))
+      const checksums = await this.getChecksums(files)
 
       const cache: Cache = {
         checksums,
