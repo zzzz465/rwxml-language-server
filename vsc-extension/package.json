@@ -12,6 +12,14 @@
       {
         "command": "rwxml:debug:printXMLDocumentObject",
         "title": "RWXML: (debug) print current document's XMLDocument"
+      },
+      {
+        "command": "rwxml:cache:clear",
+        "title": "RWXML: Clear DLL Cache"
+      },
+      {
+        "command": "rwxml:cache:openDir",
+        "title": "RWXML: Open Cache Directory"
       }
     ],
     "configuration": [
@@ -38,7 +46,6 @@
               "set log level. warning: this might affect performance."
             ]
           },
-
           "rwxml.paths.rimWorld": {
             "type": "string",
             "scope": "machine-overridable",
@@ -106,6 +113,7 @@
     "@types/lodash": "^4.14.159",
     "@types/normalize-path": "^3.0.0",
     "@types/semver": "^7.3.8",
+    "@types/uuid": "^8.3.4",
     "@types/vscode": "^1.59.0",
     "@typescript-eslint/eslint-plugin": "^4.31.1",
     "@typescript-eslint/parser": "^4.31.1",
@@ -128,6 +136,7 @@
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
     "cheerio": "^1.0.0-rc.10",
+    "dayjs": "^1.10.7",
     "double-ended-queue": "^2.1.0-0",
     "fast-glob": "^3.2.7",
     "htmlparser2": "^7.0.0",
@@ -140,6 +149,7 @@
     "tsconfig-paths": "^3.9.0",
     "tsyringe": "^4.6.0",
     "typescript-collections": "^1.3.3",
+    "uuid": "^8.3.2",
     "vscode-languageclient": "^6.1.3",
     "xpath": "^0.0.32"
   }

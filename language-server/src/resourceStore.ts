@@ -251,7 +251,9 @@ export class ResourceStore {
   private isProjectResource(fileOrUri: File | string): boolean {
     const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
 
-    const file = this.fileStore.get(uri)
+    // 1. (add/change) does this exists?
+    // 2. (deleted file) does this already registered as project resource?
+    const file = this.fileStore.get(uri) ?? this.files.get(uri)
     if (!file) {
       return false
     }
