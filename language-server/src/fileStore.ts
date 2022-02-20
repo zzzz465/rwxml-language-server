@@ -19,9 +19,9 @@ export class FileStore {
   constructor(notiEventManager: NotificationEventManager, @inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
 
-    notiEventManager.event.on('fileAdded', this.onFileAdded.bind(this))
-    notiEventManager.event.on('fileChanged', this.onFileChanged.bind(this))
-    notiEventManager.event.on('fileDeleted', this.onFileDeleted.bind(this))
+    notiEventManager.preEvent.on('fileAdded', this.onFileAdded.bind(this))
+    notiEventManager.preEvent.on('fileChanged', this.onFileChanged.bind(this))
+    notiEventManager.preEvent.on('fileDeleted', this.onFileDeleted.bind(this))
   }
 
   get(uri: string) {
