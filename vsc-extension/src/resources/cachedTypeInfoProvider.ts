@@ -71,7 +71,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        console.error(`[${requestId}] failed opening cache file: `, e)
+        console.error(`[${requestId}] failed opening cache. file: ${cachePath}, err: `, e)
       } finally {
         await file?.close()
       }
@@ -93,9 +93,11 @@ export class CachedTypeInfoProvider implements Provider {
       data = res.data
 
       await this.updateCache(cachePath, uris, data, requestId)
+    } else {
+      console.log(`cache hit! uris: ${JSON.stringify(uris, null, 4)}`)
     }
 
-    return data
+    return { data }
   }
 
   private getCacheName(files: string[]): string {
