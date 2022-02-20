@@ -18,6 +18,17 @@ provides various IDE functionalities, as VSCode Extension
 - [ ] Texture preview
 - [ ] Texture path suggestion
 - [ ] patch operation snippets
+- [x] Cache DLL extracted data
+
+## Commands
+
+### `RWXML: Clear DLL Cache`
+
+deletes all DLL extracted cache.
+
+### `RWXML: Open Cache Directory`
+
+opens your cache directory.
 
 ## Install
 
