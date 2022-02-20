@@ -13,6 +13,8 @@ import _ from 'lodash'
 import dayjs from 'dayjs'
 import { v4 as uuid } from 'uuid'
 import * as vscode from 'vscode'
+import * as os from 'os'
+import * as cp from 'child_process'
 
 interface Cache {
   createdBy: string
@@ -37,6 +39,23 @@ export class CachedTypeInfoProvider implements Provider {
     mkdirSync(this.dllCacheDirectory, { recursive: true })
 
     vscode.commands.registerCommand('rwxml:cache:clear', this.clearCache.bind(this))
+    vscode.commands.registerCommand('rwxml:cache:openDir', this.openCacheDir.bind(this))
+  }
+
+  private openCacheDir() {
+    const platform = os.platform()
+    switch (platform) {
+      case 'win32':
+        cp.execSync(`start ${this.dllCacheDirectory}`, { shell: 'cmd.exe' })
+        return
+
+      case 'darwin':
+        cp.execSync(`open ${this.dllCacheDirectory}`)
+        return
+
+      default:
+        throw new Error(`platform ${platform} not supported. Please make an issue on github.`)
+    }
   }
 
   private async clearCache() {

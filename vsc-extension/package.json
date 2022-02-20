@@ -16,6 +16,10 @@
       {
         "command": "rwxml:cache:clear",
         "title": "RWXML: Clear DLL Cache"
+      },
+      {
+        "command": "rwxml:cache:openDir",
+        "title": "RWXML: Open Cache Directory"
       }
     ],
     "configuration": [
