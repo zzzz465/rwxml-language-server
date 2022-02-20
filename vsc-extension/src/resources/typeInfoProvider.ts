@@ -16,7 +16,7 @@ export class TypeInfoProvider implements Provider {
   private requestCounter = 0
   private clearProgress: (() => void) | null = null
 
-  private async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
+  async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
     const res: TypeInfoRequestResponse = {}
     const fsPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath)
 
