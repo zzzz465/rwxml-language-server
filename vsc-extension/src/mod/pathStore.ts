@@ -1,4 +1,4 @@
-import _, { values } from 'lodash'
+import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import * as path from 'path'
