@@ -50,8 +50,8 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
 
-  p.stdout?.on('data', console.log)
-  p.stderr?.on('data', console.error)
+  // p.stdout?.on('data', console.log)
+  // p.stderr?.on('data', console.error)
 
   return p
 }
