@@ -17,6 +17,8 @@ const prettydiff = require('prettydiff')
 prettydiff.options.mode = 'beautify'
 prettydiff.options.indent_char = ' '
 
+type HoverType = 'reference' | 'tag' | 'content' | 'None'
+
 /**
  * HoverProvider provide feature for onHover() request
  * @example
@@ -77,14 +79,29 @@ export class HoverProvider extends Provider {
     return this.onHover(projects, uri, p.position)
   }
 
-  private onHover(projects: Project[], uri: URI, position: ls.Position): ls.Hover | null | undefined {
+  private onHover(projects: Project[], uri: URI, pos: ls.Position): ls.Hover | null | undefined {
     for (const proj of projects) {
-      const res = this.refHover.onReferenceHover(proj, uri, position)
+      const hoverType = this.getHoverType(proj, uri, pos)
+
+      const res = (() => {
+        switch (hoverType) {
+          case 'reference':
+            return this.refHover.onReferenceHover(proj, uri, pos)
+
+          case 'None':
+            return null
+        }
+      })()
+
       if (res) {
         return res
       }
     }
 
     return null
+  }
+
+  private getHoverType(project: Project, uri: URI, pos: ls.Position): HoverType {
+    return 'reference'
   }
 }
