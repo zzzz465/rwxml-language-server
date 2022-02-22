@@ -9,6 +9,13 @@ import { ProjectManager } from '../../projectManager'
 import { Project } from '../../project'
 import { LogToken } from '../../log'
 import { ReferenceHover } from './reference'
+import { Injectable, Node, Text } from '@rwxml/analyzer'
+import { RangeConverter } from '../../utils/rangeConverter'
+import {
+  isPointingDefReferenceContent,
+  isPointingInjectableTag,
+  isPointingParentNameAttributeValue,
+} from '../utils/node'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -17,7 +24,7 @@ const prettydiff = require('prettydiff')
 prettydiff.options.mode = 'beautify'
 prettydiff.options.indent_char = ' '
 
-type HoverType = 'reference' | 'tag' | 'content' | 'None'
+type HoverType = 'parentNameValue' | 'defReference' | 'tag' | 'content' | 'None'
 
 /**
  * HoverProvider provide feature for onHover() request
@@ -58,6 +65,7 @@ export class HoverProvider extends Provider {
   constructor(
     loadFolder: LoadFolder,
     projectManager: ProjectManager,
+    private readonly rangeConverter: RangeConverter,
     private readonly refHover: ReferenceHover,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -80,12 +88,36 @@ export class HoverProvider extends Provider {
   }
 
   private onHover(projects: Project[], uri: URI, pos: ls.Position): ls.Hover | null | undefined {
+    const offset = this.rangeConverter.toOffset(pos, uri.toString())
+    if (!offset) {
+      return null
+    }
+
+    const getHoverType: (proj: Project, node: Node) => HoverType = (proj: Project, node: Node) => {
+      if (isPointingDefReferenceContent(node, offset)) {
+        return 'defReference'
+      } else if (isPointingParentNameAttributeValue(node, offset)) {
+        return 'parentNameValue'
+      } else if (isPointingInjectableTag(node, offset)) {
+        return 'tag'
+      } else if (node instanceof Text && node.parent instanceof Injectable) {
+        return 'content'
+      }
+
+      return 'None'
+    }
+
     for (const proj of projects) {
-      const hoverType = this.getHoverType(proj, uri, pos)
+      const doc = proj.getXMLDocumentByUri(uri)
+      const node = doc?.findNodeAt(offset)
+      if (!node) {
+        continue
+      }
+      const hoverType = getHoverType(proj, node)
 
       const res = (() => {
         switch (hoverType) {
-          case 'reference':
+          case 'defReference':
             return this.refHover.onReferenceHover(proj, uri, pos)
 
           case 'None':
@@ -99,9 +131,5 @@ export class HoverProvider extends Provider {
     }
 
     return null
-  }
-
-  private getHoverType(project: Project, uri: URI, pos: ls.Position): HoverType {
-    return 'reference'
   }
 }
