@@ -17,7 +17,7 @@ prettydiff.options.mode = 'beautify'
 prettydiff.options.indent_char = ' '
 
 @tsyringe.injectable()
-export class ReferenceHover {
+export class DefReferenceHover {
   constructor(private readonly defProvider: Definition, private readonly fileStore: FileStore) {}
 
   onReferenceHover(project: Project, uri: URI, position: ls.Position): ls.Hover | null {

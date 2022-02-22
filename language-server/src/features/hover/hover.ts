@@ -8,7 +8,7 @@ import { LoadFolder } from '../../mod/loadfolders'
 import { ProjectManager } from '../../projectManager'
 import { Project } from '../../project'
 import { LogToken } from '../../log'
-import { ReferenceHover } from './reference'
+import { DefReferenceHover } from './defReference'
 import { Injectable, Node, Text } from '@rwxml/analyzer'
 import { RangeConverter } from '../../utils/rangeConverter'
 import {
@@ -66,7 +66,7 @@ export class HoverProvider extends Provider {
     loadFolder: LoadFolder,
     projectManager: ProjectManager,
     private readonly rangeConverter: RangeConverter,
-    private readonly refHover: ReferenceHover,
+    private readonly refHover: DefReferenceHover,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     super(loadFolder, projectManager)
