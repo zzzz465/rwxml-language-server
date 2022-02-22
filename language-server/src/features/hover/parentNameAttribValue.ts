@@ -46,7 +46,7 @@ export class ParentNameAttribValueHover {
       '```xml',
       referenceXMLString,
       '```',
-      '--------',
+      '********',
       `packageId: \`${packageId}\``,
       `source: [${sourceUri.fsPath}](${sourceUri.toString()})`,
     ].join('  \n')
