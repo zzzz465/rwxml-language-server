@@ -53,7 +53,7 @@ export function isPointingDefReferenceContent(node: Node, offset: number): node 
 }
 
 export function isPointingParentNameAttributeValue(node: Node, offset: number): boolean {
-  if (!(node instanceof Injectable)) {
+  if (!(node instanceof Def || node instanceof Injectable)) {
     return false
   }
 

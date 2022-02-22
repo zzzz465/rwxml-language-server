@@ -16,6 +16,7 @@ import {
   isPointingInjectableTag,
   isPointingParentNameAttributeValue,
 } from '../utils/node'
+import { ParentNameAttribValueHover } from './parentNameAttribValue'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -67,6 +68,7 @@ export class HoverProvider extends Provider {
     projectManager: ProjectManager,
     private readonly rangeConverter: RangeConverter,
     private readonly refHover: DefReferenceHover,
+    private readonly parentNameAttribValueHover: ParentNameAttribValueHover,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     super(loadFolder, projectManager)
@@ -119,6 +121,9 @@ export class HoverProvider extends Provider {
         switch (hoverType) {
           case 'defReference':
             return this.refHover.onReferenceHover(proj, uri, pos)
+
+          case 'parentNameValue':
+            return this.parentNameAttribValueHover.onReferenceHover(proj, node)
 
           case 'None':
             return null
