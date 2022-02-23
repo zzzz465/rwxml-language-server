@@ -4,7 +4,7 @@ import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { LogToken } from '../../log'
-import { genericClassNameToString, csharpFieldCodeBlock, classNameCodeBlock } from '../utils/markdown'
+import { getGenericClassNameToString, getCsharpFieldCodeBlock, getClassNameCodeBlock } from '../utils/markdown'
 
 @tsyringe.injectable()
 export class TagHoverProvider {
@@ -25,7 +25,7 @@ export class TagHoverProvider {
     if (node.fieldInfo) {
       value = this.getFieldHoverText(node, node.fieldInfo)
     } else {
-      value = classNameCodeBlock(node)
+      value = getClassNameCodeBlock(node)
     }
 
     return { contents: { kind: MarkupKind.Markdown, value } }
@@ -38,9 +38,9 @@ export class TagHoverProvider {
   private getFieldHoverText(node: Injectable, fieldInfo: FieldInfo): string {
     const accessor = fieldInfo.isPublic ? 'public' : 'private'
     const type = fieldInfo.fieldType.isGeneric
-      ? genericClassNameToString(fieldInfo.fieldType)
+      ? getGenericClassNameToString(fieldInfo.fieldType)
       : fieldInfo.fieldType.className
 
-    return [csharpFieldCodeBlock(node.tagName, accessor, type)].join('  \n')
+    return [getCsharpFieldCodeBlock(node.tagName, accessor, type)].join('  \n')
   }
 }

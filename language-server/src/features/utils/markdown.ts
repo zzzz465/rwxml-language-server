@@ -1,20 +1,33 @@
 import { Injectable, TypeInfo } from '@rwxml/analyzer'
 
-export function csharpFieldCodeBlock(name: string, accessor: string, type: string) {
+export function getCsharpFieldCodeBlock(name: string, accessor: string, type: string) {
   return ['```csharp', `${accessor} ${type} ${name};`, '```'].join('\n')
 }
 
-export function classNameCodeBlock(node: Injectable): string {
-  const className = node.typeInfo.isGeneric ? genericClassNameToString(node.typeInfo) : node.typeInfo.className
-  return ['```csharp', `class ${className}`, '```'].join('\n')
+export function getClassNameCodeBlock(node: Injectable, showInherits = true): string {
+  const className = getClassName(node.typeInfo)
+  const texts = ['```csharp', `class ${className}`]
+
+  if (showInherits && node.typeInfo.baseClass) {
+    const baseClassName = getClassName(node.typeInfo.baseClass)
+    texts.push((texts.pop() as string) + ` : ${baseClassName}`)
+  }
+
+  texts.push('```')
+
+  return texts.join('\n')
 }
 
-export function genericClassNameToString(typeInfo: TypeInfo): string {
+export function getClassName(typeInfo: TypeInfo): string {
+  return typeInfo.isGeneric ? getGenericClassNameToString(typeInfo) : typeInfo.className
+}
+
+export function getGenericClassNameToString(typeInfo: TypeInfo): string {
   const [name] = typeInfo.className.split('`')
 
   const genArgs = typeInfo.genericArguments
     .map((t) => {
-      return t.isGeneric ? genericClassNameToString(t) : t.className
+      return t.isGeneric ? getGenericClassNameToString(t) : t.className
     })
     .join(', ')
 

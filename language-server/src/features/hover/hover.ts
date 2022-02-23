@@ -9,7 +9,7 @@ import { ProjectManager } from '../../projectManager'
 import { Project } from '../../project'
 import { LogToken } from '../../log'
 import { DefReferenceHover } from './defReference'
-import { Injectable, Node, Text } from '@rwxml/analyzer'
+import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
 import { RangeConverter } from '../../utils/rangeConverter'
 import {
   isPointingDefReferenceContent,
@@ -128,7 +128,8 @@ export class HoverProvider extends Provider {
             return this.parentNameAttribValueHover.onReferenceHover(proj, node)
 
           case 'tag':
-            return this.tagHoverProvider.onTagHover(node, offset)
+            return this.tagHoverProvider.onTagHover(node as Injectable, offset)
+
 
           case 'None':
             return null
