@@ -4,6 +4,7 @@ import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { LogToken } from '../../log'
+import { genericClassNameToString, getCsharpText } from '../utils/markdown'
 
 @tsyringe.injectable()
 export class TagHoverProvider {
@@ -52,19 +53,11 @@ export class TagHoverProvider {
     return [this.getCsharpText(node.tagName, accessor, type)].join('  \n')
   }
 
-  private getCsharpText(name: string, accessor: string, type: string) {
-    return ['```csharp', `${accessor} ${type} ${name};`, '```'].join('\n')
+  private getCsharpText(name: string, accessor: string, type: string): string {
+    return getCsharpText(name, accessor, type)
   }
 
   private genericClassNameToString(typeInfo: TypeInfo): string {
-    const [name] = typeInfo.className.split('`')
-
-    const genArgs = typeInfo.genericArguments
-      .map((t) => {
-        return t.isGeneric ? this.genericClassNameToString(t) : t.className
-      })
-      .join(', ')
-
-    return `${name}\<${genArgs}\>`
+    return genericClassNameToString(typeInfo)
   }
 }
