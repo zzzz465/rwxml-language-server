@@ -85,6 +85,11 @@ Paniel the Automata
     expect(ModMetaData.openTagNameRange.end).toEqual(52)
     expect(ModMetaData.openTagNameRange.length).toEqual(11)
 
+    expect(ModMetaData.closeTagRange.start).toEqual(341)
+    expect(ModMetaData.closeTagRange.end).toEqual(355)
+    expect(ModMetaData.closeTagNameRange.start).toEqual(343)
+    expect(ModMetaData.closeTagNameRange.end).toEqual(354)
+
     const someAttrib = ModMetaData.attribs['SomeAttribute']
     expect(someAttrib).not.toBeNull()
     expect(someAttrib.name).toBe('SomeAttribute')

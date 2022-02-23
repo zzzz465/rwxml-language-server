@@ -52,6 +52,32 @@ export function isPointingDefReferenceContent(node: Node, offset: number): node 
   return false
 }
 
+export function isPointingParentNameAttributeValue(node: Node, offset: number): boolean {
+  if (!(node instanceof Def || node instanceof Injectable)) {
+    return false
+  }
+
+  for (const attrib of node.attributes) {
+    if (attrib.name !== 'ParentName') {
+      continue
+    }
+
+    if (attrib.valueRange.include(offset)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+export function isPointingInjectableTag(node: Node, offset: number): boolean {
+  if (!(node instanceof Injectable)) {
+    return false
+  }
+
+  return node.openTagNameRange.include(offset) || node.closeTagNameRange.include(offset)
+}
+
 export function makeTagNode(tag: string): string {
   return `<${tag}></${tag}>`
 }

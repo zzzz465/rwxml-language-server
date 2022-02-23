@@ -152,6 +152,8 @@ export class Parser {
    */
   onclosetag(name: string): void {
     this.updatePosition(2)
+    this.tagNameStartIndex = this.tokenizer.getAbsoluteSectionStart()
+    this.tagNameEndIndex = this.tokenizer.getAbsoluteIndex()
     this.endIndex += 1 // doesn't include >, so add +1
     if (this.stack.length) {
       let pos = this.stack.lastIndexOf(name)

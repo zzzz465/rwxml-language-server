@@ -1,5 +1,5 @@
 import * as tsyringe from 'tsyringe'
-import { HoverProvider } from './hover'
+import { HoverProvider } from './hover/hover'
 import { Provider } from './provider'
 import * as ls from 'vscode-languageserver'
 
