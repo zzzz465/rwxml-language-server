@@ -1,7 +1,12 @@
-import { TypeInfo } from '@rwxml/analyzer'
+import { Injectable, TypeInfo } from '@rwxml/analyzer'
 
-export function getCsharpText(name: string, accessor: string, type: string) {
+export function csharpFieldCodeBlock(name: string, accessor: string, type: string) {
   return ['```csharp', `${accessor} ${type} ${name};`, '```'].join('\n')
+}
+
+export function classNameCodeBlock(node: Injectable): string {
+  const className = node.typeInfo.isGeneric ? genericClassNameToString(node.typeInfo) : node.typeInfo.className
+  return ['```csharp', `class ${className}`, '```'].join('\n')
 }
 
 export function genericClassNameToString(typeInfo: TypeInfo): string {
