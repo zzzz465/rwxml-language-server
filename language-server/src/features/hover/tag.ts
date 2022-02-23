@@ -1,9 +1,7 @@
 import { Injectable, Node, TypeInfo } from '@rwxml/analyzer'
-import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import * as winston from 'winston'
-import { MarkupContent } from 'vscode-languageserver'
 import { LogToken } from '../../log'
 
 @tsyringe.injectable()
@@ -16,34 +14,51 @@ export class TagHoverProvider {
   }
 
   onTagHover(node: Node, offset: number): ls.Hover | null {
-    if (!(node instanceof Injectable && node.openTagRange.include(offset))) {
+    if (!this.isPointingInjectableTagName(node, offset)) {
       return null
     }
 
-    const tagName = node.tagName
-    const contents: MarkupContent = { kind: 'markdown', value: '' }
+    let value = ''
 
     if (node.typeInfo.isGeneric) {
-      const className = this.genericClassNameToString(node.typeInfo)
-      const fullName = `${node.typeInfo.namespaceName}.${className}`
-
-      contents.value = [`**${tagName}**: \`${className}\``, '********', `fullName: \`${fullName}\``].join('  \n')
+      value = this.getGenericTypeHoverText(node)
     } else if (node.fieldInfo || (node.parent instanceof Injectable && node.parent.typeInfo.isGeneric)) {
-      // NOTE: can genericArguments.length be 0 when isGeneric? (List<> can do though.)
-      const fieldType = node.fieldInfo?.fieldType ?? node.parent.typeInfo.genericArguments[0]
-      const extendString = !!fieldType.baseClass ? `extends \`${fieldType.baseClass.className}\`` : ''
-
-      contents.value = [
-        `**${tagName}**: \`${fieldType.className}\` ${extendString}`,
-        '********',
-        `fullName: \`${fieldType.fullName}\``,
-      ].join('  \n')
+      const typeInfo = node.fieldInfo?.fieldType ?? node.parent.typeInfo.genericArguments[0]
+      value = this.getHoverText(node, typeInfo)
     } else {
-      this.log.error(`unexpected state occured. file: ${node.document.uri}, offset: ${offset}`)
       // WHAT?
+      this.log.error(`unexpected state occured. file: ${node.document.uri}, offset: ${offset}`)
     }
 
-    return { contents }
+    return { contents: { kind: 'markdown', value } }
+  }
+
+  private isPointingInjectableTagName(node: Node, offset: number): node is Injectable & boolean {
+    if (!(node instanceof Injectable)) {
+      return false
+    }
+
+    return node.openTagNameRange.include(offset) || node.closeTagNameRange.include(offset)
+  }
+
+  private getGenericTypeHoverText(node: Injectable): string {
+    const tagName = node.tagName
+    const className = this.genericClassNameToString(node.typeInfo)
+    const fullName = `${node.typeInfo.namespaceName}.${className}`
+
+    return [`**${tagName}**: \`${className}\``, '********', `fullName: \`${fullName}\``].join('  \n')
+  }
+
+  private getHoverText(node: Injectable, typeInfo: TypeInfo): string {
+    // NOTE: can genericArguments.length be 0 when isGeneric? (List<> can do though.)
+    const tagName = node.tagName
+    const extendString = !!typeInfo.baseClass ? `extends \`${typeInfo.baseClass.className}\`` : ''
+
+    return [
+      `**${tagName}**: \`${typeInfo.className}\` ${extendString}`,
+      '********',
+      `fullName: \`${typeInfo.fullName}\``,
+    ].join('  \n')
   }
 
   private genericClassNameToString(typeInfo: TypeInfo): string {
