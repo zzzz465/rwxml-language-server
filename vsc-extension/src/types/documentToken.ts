@@ -21,8 +21,10 @@ type InjectableTokenBaseType =
   | 'open.classAttributeValue'
   | 'open.nameAttribute'
   | 'open.nameAttributeValue'
+  | 'open.nameAttributeValue.linked'
   | 'open.parentNameAttribute'
   | 'open.parentNameAttributeValue'
+  | 'open.parentNameAttributeValue.linked'
   | 'open.AbstractAttribute'
   | 'open.AbstractAttributeValue'
 
