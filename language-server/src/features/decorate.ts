@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Attribute, Def, Document, Element, Injectable, Node, NodeWithChildren, Range } from '@rwxml/analyzer'
+import { Attribute, Def, Document, Element, Injectable, Node, NodeWithChildren, Range, Text } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { Logger } from 'winston'
 import { LoadFolder } from '../mod/loadfolders'
-import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
@@ -13,6 +12,9 @@ import { LogToken } from '../log'
 import { DocumentTokenRequest, DocumentTokenRequestResponse } from '../events'
 import { Queue } from 'typescript-collections'
 import { DocumentToken } from '../types/documentToken'
+import { Definition } from './definition'
+import { Project } from '../project'
+import { URI } from 'vscode-uri'
 
 @tsyringe.injectable()
 export class DecoProvider extends Provider {
@@ -23,6 +25,7 @@ export class DecoProvider extends Provider {
     loadFolder: LoadFolder,
     projectManager: ProjectManager,
     private readonly rangeConverter: RangeConverter,
+    private readonly defProvider: Definition,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     super(loadFolder, projectManager)
@@ -40,19 +43,26 @@ export class DecoProvider extends Provider {
   private onTokenRequest(p: DocumentTokenRequest): DocumentTokenRequestResponse | null | undefined {
     const projects = this.getProjects(p.uri)
 
-    const docs = projects.map((proj) => proj.getXMLDocumentByUri(p.uri)).filter((doc) => !!doc) as Document[]
+    const tokens: DocumentToken[] = []
 
-    const tokens = docs.map((doc) => this.getTokenFromDoc(doc)).flat()
+    for (const proj of projects) {
+      const doc = proj.getXMLDocumentByUri(p.uri)
+      if (!doc) {
+        continue
+      }
+
+      tokens.push(...this.getTokenFromDoc(proj, doc))
+    }
 
     return { uri: p.uri, tokens }
   }
 
-  private getTokenFromDoc(doc: Document) {
+  private getTokenFromDoc(project: Project, doc: Document) {
     // traverse nodes and get nodes
 
     const nodes: Node[] = this.getNodesBFS(doc)
 
-    return nodes.map((node) => this.getTokens(node)).flat()
+    return nodes.map((node) => this.getTokens(project, node)).flat()
   }
 
   private getNodesBFS(doc: Document) {
@@ -75,37 +85,39 @@ export class DecoProvider extends Provider {
     return nodes
   }
 
-  private getTokens(node: Node): DocumentToken[] {
+  private getTokens(project: Project, node: Node): DocumentToken[] {
     if (node instanceof Def) {
-      return this.getTokenOfDef(node)
+      return this.getTokenOfDef(project, node)
     } else if (node instanceof Injectable) {
-      return this.getTokenOfInjectable(node)
+      return this.getTokenOfInjectable(project, node)
     } else if (node instanceof Element) {
-      return this.getTokenOfElement(node)
+      return this.getTokenOfElement(project, node)
+    } else if (node instanceof Text) {
+      return this.getTokenOfText(project, node)
     } else {
       return []
     }
   }
 
-  private getTokenOfDef(def: Def): DocumentToken[] {
+  private getTokenOfDef(project: Project, def: Def): DocumentToken[] {
     const res: DocumentToken[] = []
 
     res.push(...this.getNodeOpenCloseTokens(def))
-    res.push(...this.getAttributeValueTokens(def))
+    res.push(...this.getAttributeValueTokens(project, def))
 
     return res
   }
 
-  private getTokenOfInjectable(node: Injectable): DocumentToken[] {
+  private getTokenOfInjectable(project: Project, node: Injectable): DocumentToken[] {
     const res: DocumentToken[] = []
 
     res.push(...this.getNodeOpenCloseTokens(node))
-    res.push(...this.getAttributeValueTokens(node))
+    res.push(...this.getAttributeValueTokens(project, node))
 
     return res
   }
 
-  private getTokenOfElement(node: Element): DocumentToken[] {
+  private getTokenOfElement(project: Project, node: Element): DocumentToken[] {
     // NOTE: this element is not injectable
     const res: DocumentToken[] = []
 
@@ -116,6 +128,33 @@ export class DecoProvider extends Provider {
         range: this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)!,
         type: 'tag.content',
       })
+    }
+
+    return res
+  }
+
+  private getTokenOfText(project: Project, node: Text): DocumentToken[] {
+    const res: DocumentToken[] = []
+    const uri = node.document.uri
+    const offset = node.dataRange.start
+    if (!(node.parent instanceof Injectable)) {
+      return []
+    }
+
+    const textNode = node as Text & { parent: Injectable }
+
+    if (textNode.parent.typeInfo.isDef()) {
+      if (this.defProvider.findDefType(textNode)) {
+        res.push({
+          range: this.rangeConverter.toLanguageServerRange(textNode.dataRange, uri)!,
+          type: 'injectable.content.defReference.linked',
+        })
+      } else {
+        res.push({
+          range: this.rangeConverter.toLanguageServerRange(textNode.dataRange, uri)!,
+          type: 'injectable.content.defReference',
+        })
+      }
     }
 
     return res
@@ -166,7 +205,7 @@ export class DecoProvider extends Provider {
     return res
   }
 
-  private getAttributeValueTokens(node: Injectable | Def): DocumentToken[] {
+  private getAttributeValueTokens(project: Project, node: Injectable | Def): DocumentToken[] {
     const res: DocumentToken[] = []
     const uri = node.document.uri
     const prefix = node instanceof Def ? 'def' : 'injectable'
@@ -189,10 +228,18 @@ export class DecoProvider extends Provider {
         range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.nameRange, uri)!,
         type: `${prefix}.open.parentNameAttribute`,
       })
-      res.push({
-        range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.valueRange, uri)!,
-        type: `${prefix}.open.parentNameAttributeValue`,
-      })
+
+      if (this.defProvider.findDefs(project, URI.parse(uri), parentNameAttrib.valueRange.start).length > 0) {
+        res.push({
+          range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.valueRange, uri)!,
+          type: `${prefix}.open.parentNameAttributeValue.linked`,
+        })
+      } else {
+        res.push({
+          range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.valueRange, uri)!,
+          type: `${prefix}.open.parentNameAttributeValue`,
+        })
+      }
     }
 
     const classAttrib: Attribute | undefined = node.attribs['Class']
@@ -201,6 +248,7 @@ export class DecoProvider extends Provider {
         range: this.rangeConverter.toLanguageServerRange(classAttrib.nameRange, uri)!,
         type: `${prefix}.open.classAttribute`,
       })
+      // TODO: check class attribute value is valid or not.
       res.push({
         range: this.rangeConverter.toLanguageServerRange(classAttrib.valueRange, uri)!,
         type: `${prefix}.open.classAttributeValue`,

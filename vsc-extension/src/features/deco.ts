@@ -1,11 +1,11 @@
 import { Disposable, window } from 'vscode'
 import vscode from 'vscode'
-const { createTextEditorDecorationType } = vscode.window
 import { LanguageClient, Range } from 'vscode-languageclient'
-import { XMLDocumentDecoItemRequest } from '../events'
-import { DecoItem, DecoType } from '../types'
 import { DefaultDictionary } from 'typescript-collections'
 import { container } from 'tsyringe'
+import { DocumentTokenRequest } from '../events'
+import { DocumentToken, TokenType } from '../types/documentToken'
+import { AsEnumerable } from 'linq-es2015'
 
 let timeout: NodeJS.Timeout | undefined = undefined
 
@@ -43,38 +43,42 @@ export function updateDecoration(client: LanguageClient, uri: string, timeout_ms
 
 async function _updateDecoration(client: LanguageClient, uri: string) {
   try {
-    const response = await client.sendRequest(XMLDocumentDecoItemRequest, { uri })
+    const response = await client.sendRequest(DocumentTokenRequest, { uri })
 
     // still watching same response
     if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
-      applyDecos(response.items)
+      applyDecos(response.tokens)
     }
   } catch (err) {
     console.warn('warn: deco request throw error: ', err)
   }
 }
 
-function applyDecos(decoItems: DecoItem[]): void {
+const decos: Partial<Record<TokenType, vscode.TextEditorDecorationType>> = {
+  'injectable.content.defReference.linked': vscode.window.createTextEditorDecorationType({
+    cursor: 'pointing',
+    textDecoration: 'underline',
+  }),
+}
+
+function applyDecos(tokens: DocumentToken[]): void {
   const activeEditor = vscode.window.activeTextEditor
 
   if (!activeEditor) {
     return
   }
 
-  const dict = new DefaultDictionary<DecoType, vscode.Range[]>(() => [])
+  const items = AsEnumerable(tokens)
+    .GroupBy((token) => token.type)
+    .ToMap(
+      (group) => group.key,
+      (group) => [...group.values()]
+    )
 
-  for (const deco of decoItems) {
-    const array = dict.getValue(deco.decoType)
-
-    switch (deco.decoType) {
-      case 'content_defName': {
-        array.push(rangeJSONToRange(deco.range))
-        break
-      }
-    }
+  for (const [key, deco] of Object.entries(decos)) {
+    const ranges = (items.get(key as TokenType) ?? []).map((token) => rangeJSONToRange(token.range))
+    activeEditor.setDecorations(deco, ranges)
   }
-
-  activeEditor.setDecorations(decos.content.defName, dict.getValue('content_defName'))
 }
 
 function rangeJSONToRange(range: Range): vscode.Range {
@@ -82,13 +86,4 @@ function rangeJSONToRange(range: Range): vscode.Range {
     new vscode.Position(range.start.line, range.start.character),
     new vscode.Position(range.end.line, range.end.character)
   )
-}
-
-const decos = {
-  content: {
-    defName: createTextEditorDecorationType({
-      cursor: 'pointing',
-      textDecoration: 'underline',
-    }),
-  },
 }
