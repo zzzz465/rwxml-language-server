@@ -91,11 +91,13 @@ export class DecoProvider extends Provider {
     } else if (node instanceof Injectable) {
       return this.getTokenOfInjectable(project, node)
     } else if (node instanceof Element) {
-      return this.getTokenOfElement(project, node)
+      if (node.tagName === 'Defs') {
+        return this.getTokenOfRootDefs(project, node)
+      } else {
+        return this.getTokenOfElement(project, node)
+      }
     } else if (node instanceof Text) {
       return this.getTokenOfText(project, node)
-    } else if (node instanceof Element && node.tagName === 'Defs') {
-      return this.getTokenOfRootDefs(project, node)
     } else {
       return []
     }
