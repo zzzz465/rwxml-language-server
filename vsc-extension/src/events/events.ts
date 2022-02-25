@@ -1,5 +1,6 @@
 import * as ls from 'vscode-languageclient'
 import { UrlEncodedString } from '../types'
+import { TokenType } from '../types/documentToken'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
@@ -65,7 +66,7 @@ export interface DocumentTokenRequest {
 
 interface DocumentToken {
   range: ls.Range
-  type: string
+  type: TokenType
 }
 
 export interface DocumentTokenRequestResponse {
