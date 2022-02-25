@@ -28,11 +28,11 @@ type InjectableTokenBaseType =
   | 'open.AbstractAttribute'
   | 'open.AbstractAttributeValue'
 
-type ContentBaseType = 'defReference' | 'int' | 'float'
+type ContentBaseType = 'defReference' | 'defReference.linked' | 'int' | 'float'
 
 type InjectableTokenType = `injectable.${InjectableTokenBaseType}` | `injectable.content.${ContentBaseType}`
 
-type DefTokenType = `def.${InjectableTokenBaseType}` | `def.content.${ContentBaseType}`
+type DefTokenType = `def.${InjectableTokenBaseType}`
 
 export type TokenType = ElementTokenType | InjectableTokenType | DefTokenType
 
