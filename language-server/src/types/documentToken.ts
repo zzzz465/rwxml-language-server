@@ -13,7 +13,9 @@ type TokenBaseType =
   | 'close.</'
   | 'close.>'
 
-type ElementTokenType = `tag.${TokenBaseType}`
+type ElementTokenType =
+  | 'tag' // tag startIndex 부터, endIndex 까지
+  | `tag.${TokenBaseType}`
 
 type InjectableTokenBaseType =
   | TokenBaseType
