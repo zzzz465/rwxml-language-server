@@ -55,6 +55,9 @@ async function _updateDecoration(client: LanguageClient, uri: string) {
 }
 
 const decos: Partial<Record<TokenType, vscode.TextEditorDecorationType>> = {
+  tag: vscode.window.createTextEditorDecorationType({
+    color: 'gray',
+  }),
   'injectable.content.defReference.linked': vscode.window.createTextEditorDecorationType({
     cursor: 'pointing',
     textDecoration: 'underline',
