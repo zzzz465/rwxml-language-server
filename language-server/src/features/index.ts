@@ -4,13 +4,11 @@ import _ from 'lodash'
 import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { XMLDocumentDecoItemRequest, XMLDocumentDecoItemResponse } from '../events'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
 import { CodeCompletion } from './codeCompletions'
 import { CodeLens } from './codeLens'
-import { Decorate } from './decorate'
 import { Definition } from './definition'
 import { Reference } from './reference'
 import { Rename } from './rename'
@@ -24,7 +22,6 @@ export class LanguageFeature {
   constructor(
     private readonly loadFolder: LoadFolder,
     private readonly projectManager: ProjectManager,
-    private readonly decorate: Decorate,
     private readonly definition: Definition,
     private readonly codeCompletion: CodeCompletion,
     private readonly codeLens: CodeLens,
@@ -33,7 +30,6 @@ export class LanguageFeature {
   ) {}
 
   listen(connection: lsp.Connection) {
-    connection.onRequest(XMLDocumentDecoItemRequest, this.wrapExceptionStackTraces(this.onDecorate.bind(this)))
     connection.onDefinition(this.wrapExceptionStackTraces(this.onDefinition.bind(this)))
     connection.onCompletion(this.wrapExceptionStackTraces(this.onCompletion.bind(this)))
     connection.onCodeLens(this.wrapExceptionStackTraces(this.onCodeLens.bind(this)))
@@ -67,27 +63,6 @@ export class LanguageFeature {
 
       this.handleError(errors)
       result.push(...definitionLinks)
-    }
-
-    return result
-  }
-
-  private async onDecorate({ uri: uriStr }: XMLDocumentDecoItemRequest): Promise<XMLDocumentDecoItemResponse> {
-    const result: XMLDocumentDecoItemResponse = { uri: uriStr, items: [] }
-
-    const uri = URI.parse(uriStr)
-    if (uri.scheme !== 'file') {
-      return result
-    }
-
-    const versions = this.loadFolder.isBelongsTo(uri)
-
-    for (const version of versions) {
-      const project = this.projectManager.getProject(version)
-      const { decoItems, errors } = this.decorate.onDecorate(project, uri)
-
-      this.handleError(errors)
-      result.items.push(...decoItems)
     }
 
     return result
