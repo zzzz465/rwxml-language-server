@@ -94,9 +94,19 @@ export class DecoProvider extends Provider {
       return this.getTokenOfElement(project, node)
     } else if (node instanceof Text) {
       return this.getTokenOfText(project, node)
+    } else if (node instanceof Element && node.tagName === 'Defs') {
+      return this.getTokenOfRootDefs(project, node)
     } else {
       return []
     }
+  }
+
+  private getTokenOfRootDefs(project: Project, node: Element): DocumentToken[] {
+    const res: DocumentToken[] = []
+
+    res.push(...this.getNodeOpenCloseTokens(node))
+
+    return res
   }
 
   private getTokenOfDef(project: Project, def: Def): DocumentToken[] {
@@ -122,6 +132,10 @@ export class DecoProvider extends Provider {
     const res: DocumentToken[] = []
 
     res.push(...this.getNodeOpenCloseTokens(node))
+    res.push({
+      range: this.rangeConverter.toLanguageServerRange(node.nodeRange, node.document.uri)!,
+      type: 'tag',
+    })
 
     if (node.contentRange) {
       res.push({
@@ -275,6 +289,8 @@ export class DecoProvider extends Provider {
       return 'def'
     } else if (node instanceof Injectable) {
       return 'injectable'
+    } else if (node.tagName === 'Defs') {
+      return 'defs'
     } else {
       return 'tag'
     }
