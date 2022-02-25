@@ -1,4 +1,4 @@
-import { Def, Injectable, Text } from '@rwxml/analyzer'
+import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
 import { injectable } from 'tsyringe'
 import { DefinitionLink, LocationLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
@@ -50,8 +50,10 @@ export class Definition {
    * @param position
    * @returns
    */
-  findDefs(project: Project, uri: URI, position: Position): Def[] {
-    const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
+  findDefs(project: Project, uri: URI, offset: number): Def[]
+  findDefs(project: Project, uri: URI, position: Position): Def[]
+  findDefs(project: Project, uri: URI, positionOrOffset: any): Def[] {
+    const definitionTextNode = this.findDefinitionTextNode(project, uri, positionOrOffset)
     if (!definitionTextNode) {
       return []
     }
@@ -79,13 +81,33 @@ export class Definition {
     return null
   }
 
-  findDefinitionTextNode(project: Project, uri: URI, position: Position): DefReferenceText | undefined {
-    const data = getNodeAndOffset(project, uri, position)
-    if (!data) {
-      return
+  findDefinitionTextNode(project: Project, uri: URI, offset: number): DefReferenceText | undefined
+  findDefinitionTextNode(project: Project, uri: URI, position: Position): DefReferenceText | undefined
+  findDefinitionTextNode(
+    project: Project,
+    uri: URI,
+    positionOrOffset: Position | number
+  ): DefReferenceText | undefined {
+    let node: Node
+    let offset: number
+    if (typeof positionOrOffset === 'object') {
+      const temp = getNodeAndOffset(project, uri, positionOrOffset)
+      if (!temp) {
+        return
+      }
+
+      node = temp.node
+      offset = temp.offset
+    } else {
+      const temp = project.getXMLDocumentByUri(uri)?.findNodeAt(positionOrOffset)
+      if (!temp) {
+        return
+      }
+
+      node = temp
+      offset = positionOrOffset
     }
 
-    const { node, offset } = data
     if (isPointingDefReferenceContent(node, offset) || isPointingDefNameContent(node, offset)) {
       // is it refernced defName text? or defName text itself?
       return node as DefReferenceText
