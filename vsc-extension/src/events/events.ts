@@ -68,6 +68,14 @@ export interface ResourceExistsRequestResponse {
   error?: any
 }
 
+export interface DocumentTokenRequest {
+  uri: string
+}
+
+export interface DocumentTokenRequestResponse {
+  uri: string
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -106,4 +114,8 @@ export const DependencyRequest = new RequestType<DependencyRequest, DependencyRe
 
 export const ResourceExistsRequest = new RequestType<ResourceExistsRequest, ResourceExistsRequestResponse, undefined>(
   'rwxml-language-server:request:ResourceExistsRequest'
+)
+
+export const DocumentTokenRequest = new RequestType<DocumentTokenRequest, DocumentTokenRequestResponse, undefined>(
+  'rwxml-language-server:request:DocumentTokenRequest'
 )

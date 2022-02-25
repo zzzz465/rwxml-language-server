@@ -1,5 +1,5 @@
 import { NotificationType, RequestType } from 'vscode-languageserver'
-import { DecoItem, UrlEncodedString } from '../types'
+import { UrlEncodedString } from '../types'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
@@ -19,15 +19,6 @@ export interface SerializedXMLDocumentRequest {
 
 export interface SerializedXMLDocumentResponse {
   document?: Record<string, unknown>
-}
-
-export interface XMLDocumentDecoItemRequest {
-  uri: string
-}
-
-export interface XMLDocumentDecoItemResponse {
-  uri: string
-  items: DecoItem[]
 }
 
 export interface TextRequest {
@@ -68,6 +59,14 @@ export interface ResourceExistsRequestResponse {
   error?: any
 }
 
+export interface DocumentTokenRequest {
+  uri: string
+}
+
+export interface DocumentTokenRequestResponse {
+  uri: string
+}
+
 export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -86,12 +85,6 @@ export const SerializedXMLDocumentRequest = new RequestType<
   undefined
 >('rwxml-language-server:request:SerializedXMLDocument')
 
-export const XMLDocumentDecoItemRequest = new RequestType<
-  XMLDocumentDecoItemRequest,
-  XMLDocumentDecoItemResponse,
-  undefined
->('rwxml-language-server:request:XMLDocumentDecoItem')
-
 export const TextRequest = new RequestType<TextRequest, TextRequestResponse, undefined>(
   'rwxml-language-server:request:TextRequest'
 )
@@ -106,4 +99,8 @@ export const DependencyRequest = new RequestType<DependencyRequest, DependencyRe
 
 export const ResourceExistsRequest = new RequestType<ResourceExistsRequest, ResourceExistsRequestResponse, undefined>(
   'rwxml-language-server:request:ResourceExistsRequest'
+)
+
+export const DocumentTokenRequest = new RequestType<DocumentTokenRequest, DocumentTokenRequestResponse, undefined>(
+  'rwxml-language-server:request:DocumentTokenRequest'
 )
