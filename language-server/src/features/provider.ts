@@ -1,4 +1,3 @@
-import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import winston from 'winston'
@@ -27,7 +26,7 @@ export abstract class Provider {
     return versions
   }
 
-  protected wrapExceptionStackTraces<P, R>(func: (arg: P) => Promise<R>): (arg: P) => Promise<R | undefined> {
+  protected wrapExceptionStackTraces<P, R>(func: (arg: P) => Promise<R> | R): (arg: P) => Promise<R | undefined> {
     return async (arg: P) => {
       try {
         return await func(arg)
