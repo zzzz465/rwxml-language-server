@@ -36,7 +36,9 @@ type InjectableTokenType = `injectable.${InjectableTokenBaseType}` | `injectable
 
 type DefTokenType = `def.${InjectableTokenBaseType}`
 
-export type TokenType = ElementTokenType | InjectableTokenType | DefTokenType
+type RootDefsTokenType = `defs.${TokenBaseType}`
+
+export type TokenType = ElementTokenType | InjectableTokenType | DefTokenType | RootDefsTokenType
 
 export interface DocumentToken {
   range: ls.Range
