@@ -15,6 +15,7 @@ import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
 import { LogLevelToken } from './log'
+import { SemanticTokenProvider } from './features/semanticTokenProvider'
 
 const disposables: vscode.Disposable[] = []
 
@@ -62,6 +63,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // 5. start language server and wait
   client.start()
   await client.onReady()
+
+  // initialize token provider (no used)
+  // const semanticTokenProvider = container.resolve(SemanticTokenProvider)
+  // vscode.languages.registerDocumentSemanticTokensProvider(
+  //   { language: 'xml', scheme: 'file' },
+  //   semanticTokenProvider,
+  //   semanticTokenProvider.legend
+  // )
 
   // 6. initialize && wait Runtime TypeInfo Extractor
   console.log('checking Runtime TypeInfo Extractor available...')

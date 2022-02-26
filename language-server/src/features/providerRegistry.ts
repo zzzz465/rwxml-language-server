@@ -2,11 +2,17 @@ import * as tsyringe from 'tsyringe'
 import { HoverProvider } from './hover/hover'
 import { Provider } from './provider'
 import * as ls from 'vscode-languageserver'
+import { DecoProvider } from './decorate'
 
 @tsyringe.registry([
   {
     token: ProviderRegistry.token,
     useClass: HoverProvider,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: ProviderRegistry.token,
+    useClass: DecoProvider,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])

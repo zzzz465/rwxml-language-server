@@ -1,5 +1,6 @@
-import { NotificationType, RequestType } from 'vscode-languageserver'
-import { DecoItem, UrlEncodedString } from '../types'
+import * as ls from 'vscode-languageserver'
+import { UrlEncodedString } from '../types'
+import { DocumentToken, TokenType } from '../types/documentToken'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
@@ -19,15 +20,6 @@ export interface SerializedXMLDocumentRequest {
 
 export interface SerializedXMLDocumentResponse {
   document?: Record<string, unknown>
-}
-
-export interface XMLDocumentDecoItemRequest {
-  uri: string
-}
-
-export interface XMLDocumentDecoItemResponse {
-  uri: string
-  items: DecoItem[]
 }
 
 export interface TextRequest {
@@ -68,42 +60,51 @@ export interface ResourceExistsRequestResponse {
   error?: any
 }
 
-export const ProjectFileAdded = new NotificationType<ProjectFileAddedNotificationParams>(
+export interface DocumentTokenRequest {
+  uri: string
+}
+
+export interface DocumentTokenRequestResponse {
+  uri: string
+  tokens: DocumentToken[]
+}
+
+export const ProjectFileAdded = new ls.NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
 
-export const ProjectFileChanged = new NotificationType<ProjectFileChangedNotificationParams>(
+export const ProjectFileChanged = new ls.NotificationType<ProjectFileChangedNotificationParams>(
   'rwxml-languge-server:notification:ProjectFileChanged'
 )
 
-export const ProjectFileDeleted = new NotificationType<ProjectFileDeletedNotificationParams>(
+export const ProjectFileDeleted = new ls.NotificationType<ProjectFileDeletedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileChanged'
 )
 
-export const SerializedXMLDocumentRequest = new RequestType<
+export const SerializedXMLDocumentRequest = new ls.RequestType<
   SerializedXMLDocumentRequest,
   SerializedXMLDocumentResponse,
   undefined
 >('rwxml-language-server:request:SerializedXMLDocument')
 
-export const XMLDocumentDecoItemRequest = new RequestType<
-  XMLDocumentDecoItemRequest,
-  XMLDocumentDecoItemResponse,
-  undefined
->('rwxml-language-server:request:XMLDocumentDecoItem')
-
-export const TextRequest = new RequestType<TextRequest, TextRequestResponse, undefined>(
+export const TextRequest = new ls.RequestType<TextRequest, TextRequestResponse, undefined>(
   'rwxml-language-server:request:TextRequest'
 )
 
-export const TypeInfoRequest = new RequestType<TypeInfoRequest, TypeInfoRequestResponse, undefined>(
+export const TypeInfoRequest = new ls.RequestType<TypeInfoRequest, TypeInfoRequestResponse, undefined>(
   'rwxml-language-server:request:TypeInfoRequest'
 )
 
-export const DependencyRequest = new RequestType<DependencyRequest, DependencyRequestResponse, undefined>(
+export const DependencyRequest = new ls.RequestType<DependencyRequest, DependencyRequestResponse, undefined>(
   'rwxml-language-server:request:DependencyRequest'
 )
 
-export const ResourceExistsRequest = new RequestType<ResourceExistsRequest, ResourceExistsRequestResponse, undefined>(
-  'rwxml-language-server:request:ResourceExistsRequest'
+export const ResourceExistsRequest = new ls.RequestType<
+  ResourceExistsRequest,
+  ResourceExistsRequestResponse,
+  undefined
+>('rwxml-language-server:request:ResourceExistsRequest')
+
+export const DocumentTokenRequest = new ls.RequestType<DocumentTokenRequest, DocumentTokenRequestResponse, undefined>(
+  'rwxml-language-server:request:DocumentTokenRequest'
 )
