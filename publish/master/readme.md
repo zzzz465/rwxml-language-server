@@ -41,6 +41,7 @@ configures RWXML Language Server.
 ```jsonc
 {
   "rwxml.logs.level": "info", // set log level, "info", "warn", "error", "debug", "silly"
+  "rwxml.codeHighlighting.enabled": true, // true, false (fine-grained control is not implemented yet)
 
   "rwxml.paths.rimWorld": "C:\\...\\common\\RimWorld", // RimWorld/ Directory path.
 
