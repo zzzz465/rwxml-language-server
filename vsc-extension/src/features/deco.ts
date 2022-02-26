@@ -1,16 +1,16 @@
 import { Disposable, window } from 'vscode'
 import vscode from 'vscode'
-import { LanguageClient, Range } from 'vscode-languageclient'
-import { DefaultDictionary } from 'typescript-collections'
+import * as ls from 'vscode-languageclient'
 import { container } from 'tsyringe'
 import { DocumentTokenRequest } from '../events'
 import { DocumentToken, TokenType } from '../types/documentToken'
 import { AsEnumerable } from 'linq-es2015'
+import { rangeJSONToRange } from '../utils/range'
 
 let timeout: NodeJS.Timeout | undefined = undefined
 
 function triggerDecoration() {
-  const client = container.resolve(LanguageClient)
+  const client = container.resolve(ls.LanguageClient)
   const uri = window.activeTextEditor?.document.uri.toString()
   if (uri) {
     updateDecoration(client, uri)
@@ -32,7 +32,7 @@ export function registerDecoHook(): Disposable[] {
   return disposables
 }
 
-export function updateDecoration(client: LanguageClient, uri: string, timeout_ms = 250) {
+export function updateDecoration(client: ls.LanguageClient, uri: string, timeout_ms = 250) {
   if (timeout === undefined) {
     timeout = setTimeout(async () => {
       await _updateDecoration(client, uri)
@@ -41,7 +41,7 @@ export function updateDecoration(client: LanguageClient, uri: string, timeout_ms
   }
 }
 
-async function _updateDecoration(client: LanguageClient, uri: string) {
+async function _updateDecoration(client: ls.LanguageClient, uri: string) {
   try {
     const response = await client.sendRequest(DocumentTokenRequest, { uri })
 
@@ -54,9 +54,10 @@ async function _updateDecoration(client: LanguageClient, uri: string) {
   }
 }
 
+// https://stackoverflow.com/questions/47117621/how-to-get-the-vscode-theme-color-in-vscode-extensions
 const decos: Partial<Record<TokenType, vscode.TextEditorDecorationType>> = {
   tag: vscode.window.createTextEditorDecorationType({
-    color: 'gray',
+    color: 'editor.foreground',
   }),
   'injectable.content.defReference.linked': vscode.window.createTextEditorDecorationType({
     cursor: 'pointing',
@@ -82,11 +83,4 @@ function applyDecos(tokens: DocumentToken[]): void {
     const ranges = (items.get(key as TokenType) ?? []).map((token) => rangeJSONToRange(token.range))
     activeEditor.setDecorations(deco, ranges)
   }
-}
-
-function rangeJSONToRange(range: Range): vscode.Range {
-  return new vscode.Range(
-    new vscode.Position(range.start.line, range.start.character),
-    new vscode.Position(range.end.line, range.end.character)
-  )
 }
