@@ -152,7 +152,7 @@ export class DecoProvider extends Provider {
   private getTokenOfText(project: Project, node: Text): DocumentToken[] {
     const res: DocumentToken[] = []
     const uri = node.document.uri
-    const offset = node.dataRange.start
+    const offset = node.dataRange.start + 1
     if (!(node.parent instanceof Injectable)) {
       return []
     }
@@ -160,7 +160,7 @@ export class DecoProvider extends Provider {
     const textNode = node as Text & { parent: Injectable }
 
     if (textNode.parent.typeInfo.isDef()) {
-      if (this.defProvider.findDefType(textNode)) {
+      if (this.defProvider.findDefs(project, URI.parse(uri), offset).length) {
         res.push({
           range: this.rangeConverter.toLanguageServerRange(textNode.dataRange, uri)!,
           type: 'injectable.content.defReference.linked',
