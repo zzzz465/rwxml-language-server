@@ -82,6 +82,8 @@ function applyDecos(tokens: DocumentToken[]): void {
     return
   }
 
+  const enabled = vscode.workspace.getConfiguration('rwxml.codeHighlighting').get('enabled')
+
   const items = AsEnumerable(tokens)
     .GroupBy((token) => token.type)
     .ToMap(
@@ -91,6 +93,11 @@ function applyDecos(tokens: DocumentToken[]): void {
 
   for (const [key, deco] of Object.entries(decos)) {
     const ranges = (items.get(key as TokenType) ?? []).map((token) => rangeJSONToRange(token.range))
-    activeEditor.setDecorations(deco, ranges)
+
+    if (enabled) {
+      activeEditor.setDecorations(deco, ranges)
+    } else {
+      activeEditor.setDecorations(deco, [])
+    }
   }
 }
