@@ -57,9 +57,19 @@ async function _updateDecoration(client: ls.LanguageClient, uri: string) {
 // https://stackoverflow.com/questions/47117621/how-to-get-the-vscode-theme-color-in-vscode-extensions
 const decos: Partial<Record<TokenType, vscode.TextEditorDecorationType>> = {
   tag: vscode.window.createTextEditorDecorationType({
-    color: 'editor.foreground',
+    color: 'gray',
+  }),
+  'injectable.content.defReference': vscode.window.createTextEditorDecorationType({
+    // color: 'red',
   }),
   'injectable.content.defReference.linked': vscode.window.createTextEditorDecorationType({
+    cursor: 'pointing',
+    textDecoration: 'underline',
+  }),
+  'injectable.open.parentNameAttributeValue': vscode.window.createTextEditorDecorationType({
+    // color: 'red',
+  }),
+  'injectable.open.parentNameAttributeValue.linked': vscode.window.createTextEditorDecorationType({
     cursor: 'pointing',
     textDecoration: 'underline',
   }),
