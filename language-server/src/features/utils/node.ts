@@ -109,3 +109,18 @@ export function getNodeAndOffset(project: Project, uri: URI, position: lsp.Posit
 export function isDefOrInjectable(node: Node | null | undefined): node is Def | Injectable {
   return !!node && (node instanceof Def || node instanceof Injectable)
 }
+
+/**
+ * 1. text node and opening a tag eg. <foo> <| </foo>
+ * 2. element and selecting a opening tag name <s|ome...
+ */
+export function isPointingOpenTagName(node: Element | Text, offset: number): boolean {
+  if (node instanceof Text) {
+    const localOffset = offset - node.dataRange.start - 1
+    const beforeCursor = node.data.charAt(localOffset)
+
+    return beforeCursor === '<'
+  } else {
+    return node.openTagNameRange.include(offset)
+  }
+}
