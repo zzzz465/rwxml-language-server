@@ -161,7 +161,6 @@ export class OpenTagCompletion {
     if (editRange) {
       return {
         label,
-        // command: cursorCommand,
         kind: CompletionItemKind.Field,
         textEdit: TextEdit.replace(editRange, tagNode),
         additionalTextEdits,
