@@ -6,7 +6,7 @@ import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, TextEdit, Command } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
-import { makeTagNode } from '../utils/node'
+import { isPointingOpenTagName, makeTagNode } from '../utils/node'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { injectable } from 'tsyringe'
 
@@ -60,17 +60,21 @@ export class OpenTagCompletion {
   }
 
   private shouldSuggestTagNames(node: Node, offset: number): node is Element | Text {
-    if (node instanceof Element && node.openTagNameRange.include(offset)) {
-      // <ta|... Key="Value"...>
-      return true
-    } else if (node instanceof Text) {
-      if (
-        node.nodeRange.include(offset) && // is inside text range?
-        node.parent instanceof Element &&
-        !node.parent.leafNode
-      ) {
-        return true
-      }
+    // if (node instanceof Element && node.openTagNameRange.include(offset)) {
+    //   // <ta|... Key="Value"...>
+    //   return true
+    // } else if (node instanceof Text) {
+    //   if (
+    //     node.nodeRange.include(offset) && // is inside text range?
+    //     isDefOrInjectable(node.parent) &&
+    //     !node.parent.leafNode
+    //   ) {
+    //     return true
+    //   }
+    // }
+
+    if (node instanceof Element || node instanceof Text) {
+      return isPointingOpenTagName(node, offset)
     }
 
     return false
