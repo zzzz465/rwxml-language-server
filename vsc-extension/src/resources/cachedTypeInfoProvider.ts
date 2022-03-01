@@ -15,8 +15,10 @@ import { v4 as uuid } from 'uuid'
 import * as vscode from 'vscode'
 import * as os from 'os'
 import * as cp from 'child_process'
+import * as semver from 'semver'
 
 interface Cache {
+  extractorVersion: string // semver
   createdBy: string
   createdAt: string // iso8601 format datetime
 
@@ -28,6 +30,8 @@ interface Cache {
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
+  private static readonly extractorVersion = new semver.SemVer('0.1.0')
+
   get dllCacheDirectory(): string {
     return path.join(this.pathStore.cacheDirectory, 'dlls')
   }
@@ -96,7 +100,7 @@ export class CachedTypeInfoProvider implements Provider {
 
         const cache = await this.getCache(file)
         return {
-          valid: this.isCacheValid(cache, uris),
+          valid: await this.isCacheValid(cache, uris),
           data: cache.data,
         }
       } catch (e) {
@@ -147,6 +151,15 @@ export class CachedTypeInfoProvider implements Provider {
   }
 
   private async isCacheValid(cache: Cache, files: string[]): Promise<boolean> {
+    const cacheVersion = semver.parse(cache.extractorVersion, true)
+    if (!cacheVersion) {
+      return false
+    }
+
+    if (CachedTypeInfoProvider.extractorVersion.compare(cacheVersion) !== 0) {
+      return false
+    }
+
     const checksums = await this.getChecksums(files)
 
     return _.isEqual(cache.checksums, checksums)
@@ -161,6 +174,7 @@ export class CachedTypeInfoProvider implements Provider {
       const checksums = await this.getChecksums(files)
 
       const cache: Cache = {
+        extractorVersion: CachedTypeInfoProvider.extractorVersion.format(),
         checksums,
         createdAt: dayjs().format(),
         createdBy: CachedTypeInfoProvider.name,

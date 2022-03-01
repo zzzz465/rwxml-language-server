@@ -69,8 +69,9 @@ namespace extractor
             }
 
             // fields
-            foreach (var field in T.GetFields())
+            foreach (var field in T.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
+                var fieldName = field.Name;
                 if (!TypeFilter.IsBannedField(field))
                 {
                     var rawFieldInfo = new RawFieldInfo(field);
