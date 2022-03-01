@@ -100,7 +100,7 @@ export class CachedTypeInfoProvider implements Provider {
 
         const cache = await this.getCache(file)
         return {
-          valid: this.isCacheValid(cache, uris),
+          valid: await this.isCacheValid(cache, uris),
           data: cache.data,
         }
       } catch (e) {
