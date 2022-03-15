@@ -122,6 +122,8 @@ export const DocumentTokenRequest = new ls.RequestType<DocumentTokenRequest, Doc
   'rwxml-language-server:request:DocumentTokenRequest'
 )
 
-export const TypeInfoJSONRequest = new ls.RequestType<ParsedTypeInfoRequest, ParsedTypeInfoRequestResponse, undefined>(
-  'rwxml-language-server:request:ParsedTypeInfoRequest'
-)
+export const ParsedTypeInfoRequest = new ls.RequestType<
+  ParsedTypeInfoRequest,
+  ParsedTypeInfoRequestResponse,
+  undefined
+>('rwxml-language-server:request:ParsedTypeInfoRequest')
