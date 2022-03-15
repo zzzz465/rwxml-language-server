@@ -21,6 +21,9 @@ const rimworldNamespaces = [
 export class TypeInfoMap {
   private typeMap: Map<TypeIdentifier, TypeInfo> = new Map()
 
+  /** raw data used for building typeInfoMap. read-only */
+  rawData: any = undefined
+
   addTypeInfo(typeInfo: TypeInfo): void {
     this.checkTypeAlreadyExists(typeInfo)
     this.typeMap.set(typeInfo.fullName, typeInfo)

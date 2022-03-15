@@ -87,6 +87,8 @@ export class TypeInfoLoader {
 
     const ret = new TypeInfoMap()
     ret.addTypeInfos(...typeInfoMap.values())
+
+    ret.rawData = rawTypeInfos
     return ret
   }
 }
