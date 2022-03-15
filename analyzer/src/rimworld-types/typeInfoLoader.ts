@@ -4,9 +4,12 @@ import { AsEnumerable } from 'linq-es2015'
 import { RawTypeInfo } from './rawTypeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
+import _ from 'lodash'
 
 export class TypeInfoLoader {
   static load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
+    const rawData = JSON.parse(JSON.stringify(rawTypeInfos))
+
     const rawTypeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
       (k) => k.fullName,
       (k) => k
@@ -88,7 +91,7 @@ export class TypeInfoLoader {
     const ret = new TypeInfoMap()
     ret.addTypeInfos(...typeInfoMap.values())
 
-    ret.rawData = rawTypeInfos
+    ret.rawData = rawData
     return ret
   }
 }
