@@ -26,7 +26,7 @@ export class TypeInfoInjector {
 
   // recursively inject all typeInfo to xmlNode
   injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
-    const classAttribute = xmlNode.attribs['ClassName']?.value
+    const classAttribute = xmlNode.attribs['Class']?.value
 
     // support <li Class="XXXCompProperties_YYY">
     if (classAttribute) {
