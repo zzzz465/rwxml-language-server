@@ -21,7 +21,8 @@ class DisplayTypeInfo {
 
     try {
       const content = await this.requestParsedTypeInfo(version)
-      vscode.workspace.openTextDocument({ language: 'json', content })
+      const doc = await vscode.workspace.openTextDocument({ language: 'json', content })
+      await vscode.window.showTextDocument(doc)
     } catch (err) {
       vscode.window.showErrorMessage(`requestParsedTypeInfo failed ${String(err)}`)
     }
@@ -54,6 +55,6 @@ class DisplayTypeInfo {
       throw new Error(res.error)
     }
 
-    return JSON.stringify(res.data)
+    return JSON.stringify(res.data, null, 4)
   }
 }

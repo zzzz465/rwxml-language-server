@@ -3,6 +3,7 @@ import { HoverProvider } from './hover/hover'
 import { Provider } from './provider'
 import * as ls from 'vscode-languageserver'
 import { DecoProvider } from './decorate'
+import { ParsedTypeInfoRequestHandler } from './commands/parsedTypeInfoRequest'
 
 @tsyringe.registry([
   {
@@ -13,6 +14,11 @@ import { DecoProvider } from './decorate'
   {
     token: ProviderRegistry.token,
     useClass: DecoProvider,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: ProviderRegistry.token,
+    useClass: ParsedTypeInfoRequestHandler,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])
