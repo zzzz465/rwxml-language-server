@@ -135,10 +135,14 @@ export class Project {
         2
       )}`
     )
-    const typeInfoMap = await this.typeInfoMapProvider.get(requestId)
+    const typeInfoMap = await this.getTypeInfo(requestId)
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.log, this.version)
+  }
+
+  async getTypeInfo(requestId: string = uuid()) {
+    return this.typeInfoMapProvider.get(requestId)
   }
 
   /**

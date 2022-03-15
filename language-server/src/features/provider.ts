@@ -5,7 +5,7 @@ import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 
 export abstract class Provider {
-  constructor(private readonly loadFolder: LoadFolder, private readonly projectManager: ProjectManager) {}
+  constructor(protected readonly loadFolder: LoadFolder, protected readonly projectManager: ProjectManager) {}
 
   abstract listen(connection: ls.Connection): void
   protected abstract getLogger(): winston.Logger
