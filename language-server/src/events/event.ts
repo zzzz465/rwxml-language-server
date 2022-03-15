@@ -1,6 +1,6 @@
 import * as ls from 'vscode-languageserver'
 import { UrlEncodedString } from '../types'
-import { DocumentToken, TokenType } from '../types/documentToken'
+import { DocumentToken } from '../types/documentToken'
 
 export interface ProjectFileAddedNotificationParams {
   uri: UrlEncodedString
@@ -69,6 +69,19 @@ export interface DocumentTokenRequestResponse {
   tokens: DocumentToken[]
 }
 
+/**
+ * ParsedTypeInfoRequest requests full typeInfo data of the specific version to the server by client.
+ */
+export interface ParsedTypeInfoRequest {
+  version: string
+}
+
+export interface ParsedTypeInfoRequestResponse {
+  version: string
+  data: any
+  error?: any
+}
+
 export const ProjectFileAdded = new ls.NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -107,4 +120,8 @@ export const ResourceExistsRequest = new ls.RequestType<
 
 export const DocumentTokenRequest = new ls.RequestType<DocumentTokenRequest, DocumentTokenRequestResponse, undefined>(
   'rwxml-language-server:request:DocumentTokenRequest'
+)
+
+export const TypeInfoJSONRequest = new ls.RequestType<ParsedTypeInfoRequest, ParsedTypeInfoRequestResponse, undefined>(
+  'rwxml-language-server:request:ParsedTypeInfoRequest'
 )
