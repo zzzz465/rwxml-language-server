@@ -1,0 +1,59 @@
+import * as vscode from 'vscode'
+import * as tsyringe from 'tsyringe'
+import { LanguageClient } from 'vscode-languageclient'
+import { ParsedTypeInfoRequest } from '../events'
+
+export function registerFeature() {
+  // TODO: refactor this code
+  const instance = tsyringe.container.resolve(DisplayTypeInfo)
+  return vscode.commands.registerCommand('rwxml:debug:displayTypeInfo', instance.callback.bind(instance))
+}
+
+@tsyringe.singleton()
+class DisplayTypeInfo {
+  constructor(private readonly client: LanguageClient) {}
+
+  async callback() {
+    const version = await this.askProjectVersion()
+    if (!version) {
+      return vscode.window.showInformationMessage('user canceled the task.')
+    }
+
+    try {
+      const content = await this.requestParsedTypeInfo(version)
+      vscode.workspace.openTextDocument({ language: 'json', content })
+    } catch (err) {
+      vscode.window.showErrorMessage(`requestParsedTypeInfo failed ${String(err)}`)
+    }
+  }
+
+  private async askProjectVersion(): Promise<string> {
+    const inputBox = vscode.window.createInputBox()
+    inputBox.show()
+
+    const acceptedPromise = new Promise((res) => {
+      inputBox.onDidAccept(res)
+    })
+
+    const rejectedPromise = new Promise((res) => {
+      inputBox.onDidHide(res)
+    })
+
+    // https://stackoverflow.com/questions/36734900/what-happens-if-you-dont-resolve-or-reject-a-promise
+    await Promise.race([acceptedPromise, rejectedPromise])
+    inputBox.hide()
+    const value = inputBox.value
+    inputBox.dispose()
+
+    return value
+  }
+
+  private async requestParsedTypeInfo(version: string): Promise<string> {
+    const res = await this.client.sendRequest(ParsedTypeInfoRequest, { version }, undefined)
+    if (res.error) {
+      throw new Error(res.error)
+    }
+
+    return JSON.stringify(res.data)
+  }
+}
