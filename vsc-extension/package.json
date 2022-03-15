@@ -20,6 +20,10 @@
       {
         "command": "rwxml:cache:openDir",
         "title": "RWXML: Open Cache Directory"
+      },
+      {
+        "command": "rwxml:debug:displayTypeInfo",
+        "title": "RWXML: Display full TypeInfo"
       }
     ],
     "configuration": [
