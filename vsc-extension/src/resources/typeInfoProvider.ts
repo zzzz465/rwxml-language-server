@@ -1,13 +1,16 @@
-import { injectable } from 'tsyringe'
+import * as tsyringe from 'tsyringe'
 import { LanguageClient } from 'vscode-languageclient'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
 import { extractTypeInfos } from '../typeInfo'
 import { Provider } from './provider'
 import * as vscode from 'vscode'
 import { createProgress } from '../utils/progress'
+import * as mod from '../mod'
 
-@injectable()
+@tsyringe.injectable()
 export class TypeInfoProvider implements Provider {
+  constructor(@tsyringe.inject(mod.PathStore.token) private readonly pathStore: mod.PathStore) {}
+
   async listen(client: LanguageClient): Promise<void> {
     await client.onReady()
     client.onRequest(TypeInfoRequest, this.onTypeInfoRequest.bind(this))
@@ -18,9 +21,11 @@ export class TypeInfoProvider implements Provider {
 
   async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
     const res: TypeInfoRequestResponse = {}
-    const fsPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath)
-
-    console.log('typeInfoRequest received request for: ', fsPaths)
+    const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
+    
+    const managedDirectory = this.pathStore.RimWorldManagedDirectory
+    console.log('managed directory: ', managedDirectory)
+    dllPaths.push(managedDirectory)
 
     if (!this.clearProgress) {
       const { resolve } = await createProgress({
@@ -33,7 +38,8 @@ export class TypeInfoProvider implements Provider {
     this.requestCounter += 1
 
     try {
-      const typeInfos = await extractTypeInfos(...fsPaths)
+      console.log('requesting dll extraction. paths: ', JSON.stringify(dllPaths, null, 2))
+      const typeInfos = await extractTypeInfos(...dllPaths)
 
       res.data = typeInfos
     } catch (err: unknown) {

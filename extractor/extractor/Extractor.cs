@@ -47,7 +47,7 @@ namespace extractor
                     Log.Info($"Extracting data from {assembly.GetName().FullName}");
 
                     // collect Def or CompProperties (naming convention)
-                    var types = from type in assembly.GetTypes()
+                    var types = from type in TypeUtility.GetTypes(assembly)
                                 where type != null && (type.IsSubclassOf(RWTypes.Def) || type.Name.Contains("CompProperties"))
                                 select type;
                     var name = assembly.GetName().Name;
@@ -141,7 +141,7 @@ namespace extractor
             };
 
             var relatedTypes = from assem in AppDomain.CurrentDomain.GetAssemblies()
-                               let types = assem.GetTypes()
+                               let types = TypeUtility.GetTypes(assem)
                                from type in types
                                where type != null && isRelated(type)
                                select type;
