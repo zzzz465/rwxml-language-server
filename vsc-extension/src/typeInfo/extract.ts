@@ -36,18 +36,26 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const cwd = getCWD()
   const port = options?.port ?? 9870
 
-  let p: ChildProcess
-  if (process.platform === 'win32') {
-    p = execFile('extractor.exe', [...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
-  } else {
-    p = execFile('mono', ['extractor.exe', ...dllPaths, '--output-mode=TCP', `--port=${port}`], {
-      cwd,
-    })
-  }
+  const cmd = (() => {
+    switch (process.platform) {
+      case 'win32':
+        return 'extractor.exe'
 
+      case 'darwin':
+        return 'mono'
+
+      default:
+        return ''
+    }
+  })()
+
+  const args = [...dllPaths, '--output-mode=TCP', `--port=${port}`]
+
+  console.log(`executing process: "${cmd} ${args.map(v => `"${v}"`).join(' ')}"`)
+
+  const p = execFile(cmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
-
   // p.stdout?.on('data', console.log)
   p.stderr?.on('data', console.error)
 
