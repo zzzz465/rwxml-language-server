@@ -1,10 +1,9 @@
 import { execFile, ChildProcess } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
-import { container } from 'tsyringe'
+import * as tsyringe from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { ExtensionContextToken } from '../extension'
-import { PathStore } from '../mod'
 
 function getExtractorDirectory() {
   let processPath: string | undefined = undefined
@@ -27,7 +26,7 @@ function getExtractorDirectory() {
 }
 
 function getCWD() {
-  const extensionContext = container.resolve<ExtensionContext>(ExtensionContextToken)
+  const extensionContext = tsyringe.container.resolve<ExtensionContext>(ExtensionContextToken)
   const cwd = extensionContext.asAbsolutePath(getExtractorDirectory())
 
   return cwd
@@ -35,14 +34,13 @@ function getCWD() {
 
 function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const cwd = getCWD()
-  const managedDirectory = container.resolve<PathStore>(PathStore.token).RimWorldManagedDirectory
   const port = options?.port ?? 9870
 
   let p: ChildProcess
   if (process.platform === 'win32') {
-    p = execFile('extractor.exe', [managedDirectory, ...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
+    p = execFile('extractor.exe', [...dllPaths, '--output-mode=TCP', `--port=${port}`], { cwd })
   } else {
-    p = execFile('mono', ['extractor.exe', managedDirectory, ...dllPaths, '--output-mode=TCP', `--port=${port}`], {
+    p = execFile('mono', ['extractor.exe', ...dllPaths, '--output-mode=TCP', `--port=${port}`], {
       cwd,
     })
   }
@@ -51,7 +49,7 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   p.stderr?.setEncoding('utf-8')
 
   // p.stdout?.on('data', console.log)
-  // p.stderr?.on('data', console.error)
+  p.stderr?.on('data', console.error)
 
   return p
 }
