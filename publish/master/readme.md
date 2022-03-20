@@ -40,9 +40,6 @@ configures RWXML Language Server.
 
 ```jsonc
 {
-  "rwxml.logs.level": "info", // set log level, "info", "warn", "error", "debug", "silly"
-  "rwxml.codeHighlighting.enabled": true, // true, false (fine-grained control is not implemented yet)
-
   "rwxml.paths.rimWorld": "C:\\...\\common\\RimWorld", // RimWorld/ Directory path.
 
   // overrides default path / assumed path from rimWorld
@@ -54,7 +51,14 @@ configures RWXML Language Server.
     "<other-mods-directory-1>",
     "<other-mods-directory-2>",
     // and so on...
-  ]
+  ],
+
+  
+  "rwxml.logs.level": "info", // set log level, "info", "warn", "error", "debug", "silly"
+
+  "rwxml.codeHighlighting.enabled": true, // manages code highlighting. fine-grained control is not implemented yet
+  
+  "rwxml.diagnostics.enabled": true, // manages code diagnostics.
 }
 ```
 
