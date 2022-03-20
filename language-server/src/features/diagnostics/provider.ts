@@ -38,6 +38,7 @@ export class DiagnosticsProvider implements Provider {
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     this.projectManager.events.on('onProjectInitialized', this.subscribeProject.bind(this))
+    this.configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))
   }
 
   init(connection: ls.Connection): void {
@@ -48,7 +49,11 @@ export class DiagnosticsProvider implements Provider {
     project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
   }
 
-  private async onDefChanged(project: Project, document: Document, nodes: (Def | Injectable)[]): Promise<void> {
+  private async onDefChanged(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
+    this.sendDiagnostics(project, document, dirtyNodes)
+  }
+
+  async sendDiagnostics(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
     if (!this.connection) {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
@@ -58,34 +63,58 @@ export class DiagnosticsProvider implements Provider {
       return
     }
 
-    const grouped = AsEnumerable(nodes)
-      .GroupBy((node) => node.document.uri)
-      .Select((group) => ({
-        key: group.key,
-        values: [...group.values()],
+    const diagnosticsArr = this.diagnoseDocument(project, document, dirtyNodes)
+
+    for (const dig of diagnosticsArr) {
+      this.connection?.sendDiagnostics({
+        uri: dig.uri,
+        diagnostics: dig.diagnostics,
+      })
+    }
+  }
+
+  private diagnoseDocument(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]) {
+    return AsEnumerable(this.contributors)
+      .Select((contributor) => contributor.getDiagnostics(project, document, dirtyNodes))
+      .GroupBy((x) => x.uri)
+      .Select((x) => ({
+        uri: x.key,
+        diagnostics: AsEnumerable(x.values())
+          .SelectMany((y) => y.diagnostics)
+          .ToArray(),
       }))
-      .ToArray()
+  }
 
-    const diagnosticsMap: DefaultDictionary<string, ls.Diagnostic[]> = new DefaultDictionary(() => [])
+  private async enabled(): Promise<boolean> {
+    const value = await this.configuration.get('rwxml.diagnostics.enabled')
+    return value !== false
+  }
 
-    for (const { key, values } of grouped) {
-      const document = project.getXMLDocumentByUri(key)
-      if (!document) {
-        this.log
-        continue
-      }
+  private async onConfigurationChanged() {
+    if (await this.enabled()) {
+      this.diagnoseAllDocuments()
+    } else {
+      this.clearAllDiagnostics()
+    }
+  }
 
-      for (const contributor of this.contributors) {
-        const { uri, diagnostics } = contributor.getDiagnostics(project, document, values)
-        diagnosticsMap.getValue(uri).push(...diagnostics)
+  private diagnoseAllDocuments(): void {
+    for (const project of this.projectManager.projects) {
+      for (const doc of project.getXMLDocuments()) {
+        this.sendDiagnostics(project, doc, [])
       }
     }
+  }
 
-    diagnosticsMap.forEach((k, v) => {
-      this.connection?.sendDiagnostics({
-        uri: k,
-        diagnostics: v,
-      })
-    })
+  private clearAllDiagnostics(): void {
+    for (const project of this.projectManager.projects) {
+      this.clearDiagnostics(project)
+    }
+  }
+
+  private clearDiagnostics(project: Project): void {
+    for (const [uri] of project.resourceStore.xmls) {
+      this.connection?.sendDiagnostics({ uri, diagnostics: [] })
+    }
   }
 }
