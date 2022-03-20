@@ -28,7 +28,7 @@ export abstract class ProviderRegistry {
   static listenAll(connection: ls.Connection): void {
     const providers = tsyringe.container.resolveAll<Provider>(ProviderRegistry.token)
     for (const provider of providers) {
-      provider.listen(connection)
+      provider.init(connection)
     }
   }
 }

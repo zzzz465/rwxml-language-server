@@ -23,7 +23,7 @@ export class ParsedTypeInfoRequestHandler implements Provider {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
-  listen(connection: Connection): void {
+  init(connection: Connection): void {
     connection.onRequest(ParsedTypeInfoRequest, this.projectHelper.wrapExceptionStackTraces(this.onRequest.bind(this)))
   }
 
