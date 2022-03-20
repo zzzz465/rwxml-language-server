@@ -15,6 +15,14 @@ export class DefManager {
   private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
   private readonly typeInfoInjector: TypeInfoInjector
 
+  get unresolvedReferences(): Injectable[] {
+    return this.referenceResolveWanter.values()
+  }
+
+  get unresolvedInherits(): Def[] {
+    return this.inheritResolveWanter.values()
+  }
+
   constructor(
     public readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
