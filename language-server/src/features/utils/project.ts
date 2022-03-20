@@ -12,7 +12,7 @@ import { ProjectManager } from '../../projectManager'
 export class ProjectHelper {
   constructor(protected readonly loadFolder: LoadFolder, protected readonly projectManager: ProjectManager) {}
 
-  getProjects(uri: string | ls.URI) {
+  getProjects(uri: string | URI) {
     const versions = this.getVersions(uri)
 
     return versions.map((ver) => this.projectManager.getProject(ver))

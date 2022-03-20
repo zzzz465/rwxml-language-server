@@ -19,6 +19,7 @@ import {
 import { ParentNameAttribValueHover } from './parentNameAttribValue'
 import { TagHoverProvider } from './tag'
 import { DefHoverProvider } from './def'
+import { ProjectHelper } from '../utils/project'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -61,21 +62,19 @@ type HoverType = 'parentNameValue' | 'defReference' | 'tag' | 'content' | 'def' 
  * don't display anything
  */
 @injectable()
-export class HoverProvider extends Provider {
+export class HoverProvider implements Provider {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${HoverProvider.name}] ${info.message}`)
   private readonly log: winston.Logger
 
   constructor(
-    loadFolder: LoadFolder,
-    projectManager: ProjectManager,
     private readonly rangeConverter: RangeConverter,
     private readonly refHover: DefReferenceHover,
     private readonly parentNameAttribValueHover: ParentNameAttribValueHover,
     private readonly tagHoverProvider: TagHoverProvider,
     private readonly defHoverProvider: DefHoverProvider,
+    private readonly projectHelper: ProjectHelper,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
-    super(loadFolder, projectManager)
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
@@ -83,13 +82,13 @@ export class HoverProvider extends Provider {
     return this.log
   }
 
-  listen(connection: Connection): void {
-    connection.onHover(this.wrapExceptionStackTraces(this.onHoverRequest.bind(this)))
+  init(connection: Connection): void {
+    connection.onHover(this.projectHelper.wrapExceptionStackTraces(this.onHoverRequest.bind(this)))
   }
 
   private async onHoverRequest(p: ls.HoverParams): Promise<ls.Hover | null | undefined> {
     const uri = URI.parse(p.textDocument.uri)
-    const projects = this.getProjects(uri)
+    const projects = this.projectHelper.getProjects(uri)
     return this.onHover(projects, uri, p.position)
   }
 
