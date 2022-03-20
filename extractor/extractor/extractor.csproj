@@ -64,6 +64,7 @@
     <Compile Include="RawFieldInfo.cs" />
     <Compile Include="RawTypeInfo.cs" />
     <Compile Include="TypeFilter.cs" />
+    <Compile Include="TypeUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
