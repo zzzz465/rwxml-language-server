@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 
-import { createConnection, InitializeParams, InitializeResult, ProposedFeatures } from 'vscode-languageserver/node'
+import * as ls from 'vscode-languageserver/node'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { ProjectManager } from './projectManager'
@@ -15,11 +15,12 @@ import { FileStore } from './fileStore'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
 import * as logs from './log'
 import * as winston from 'winston'
+import { Configuration } from './configuration'
 
-const connection = createConnection(ProposedFeatures.all)
+const connection = ls.createConnection(ls.ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
 
-connection.onInitialize(async (params: InitializeParams) => {
+connection.onInitialize(async (params: ls.InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
   console.log(`current log level: ${logLevel}`)
 
@@ -31,6 +32,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
   // TODO: replace this initalize codes to use token registry
 
+  const configuration = container.resolve(Configuration)
   const about = container.resolve(About)
   const loadFolder = container.resolve(LoadFolder)
   const textDocumentManager = container.resolve(TextDocumentManager)
@@ -42,6 +44,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   const fileStore = container.resolve(FileStore)
   const textDocumentsAdapter = container.resolve(TextDocumentsAdapter)
 
+  configuration.init(connection)
   notificationEventManager.listen(textDocumentsAdapter.event)
   notificationEventManager.listen(dependencyResourceManager.event)
   loadFolder.listen(notificationEventManager.preEvent)
@@ -54,7 +57,7 @@ connection.onInitialize(async (params: InitializeParams) => {
 
   features.ProviderRegistry.listenAll(connection)
 
-  const initializeResult: InitializeResult = {
+  const initializeResult: ls.InitializeResult = {
     capabilities: {
       codeLensProvider: {},
       colorProvider: false,
@@ -78,6 +81,10 @@ connection.onInitialize(async (params: InitializeParams) => {
   log.info('initialization completed!')
 
   return initializeResult
+})
+
+connection.onInitialized(() => {
+  connection.client.register(ls.DidChangeConfigurationNotification.type, undefined)
 })
 
 connection.listen()
