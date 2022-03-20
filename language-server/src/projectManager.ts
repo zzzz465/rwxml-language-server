@@ -1,7 +1,6 @@
 import EventEmitter from 'events'
 import * as tsyringe from 'tsyringe'
 import { File } from './fs'
-import { LoadFolder } from './mod/loadfolders'
 import { NotificationEvents } from './notificationEventManager'
 import { Project } from './project'
 import { RimWorldVersionToken } from './RimWorldVersion'
@@ -9,6 +8,11 @@ import * as winston from 'winston'
 import { About } from './mod'
 import { inject } from 'tsyringe'
 import { LogToken } from './log'
+
+interface Events {
+  onProjectInitialized(project: Project): void
+}
+
 /**
  * ProjectManager manages DI container of specific rimworld version
  * and dispatch various events to each container
@@ -24,11 +28,9 @@ export class ProjectManager {
     return [...this.projectContainers.values()].map((c) => c.resolve(Project))
   }
 
-  constructor(
-    private readonly about: About,
-    private readonly loadFolder: LoadFolder,
-    @inject(LogToken) baseLogger: winston.Logger
-  ) {
+  public readonly events: EventEmitter<Events> = new EventEmitter()
+
+  constructor(private readonly about: About, @inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     about.event.on('supportedVersionsChanged', this.onSupportedVersionsChanged.bind(this))
   }
@@ -96,6 +98,7 @@ export class ProjectManager {
     if (!projectContainer) {
       projectContainer = this.newContainer(version)
       this.projectContainers.set(version, projectContainer)
+      this.events.emit('onProjectInitialized', projectContainer.resolve(Project))
     }
 
     return projectContainer
