@@ -17,6 +17,11 @@ import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 
 interface Events {
+  /**
+   * defChanged event emitted when document is changed
+   * @param updatedDocument the document that updated
+   * @param dirtyNodes project-wide dirty node due to the document update
+   */
   defChanged(updatedDocument: Document, dirtyNodes: (Injectable | Def)[]): void
 }
 
