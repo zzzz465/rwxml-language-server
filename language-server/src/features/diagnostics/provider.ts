@@ -4,6 +4,7 @@ import * as tsyringe from 'tsyringe'
 import { DefaultDictionary } from 'typescript-collections'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
+import { Configuration } from '../../configuration'
 import { LogToken } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
@@ -31,6 +32,7 @@ export class DiagnosticsProvider implements Provider {
 
   constructor(
     private readonly projectManager: ProjectManager,
+    private readonly configuration: Configuration,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -46,9 +48,14 @@ export class DiagnosticsProvider implements Provider {
     project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
   }
 
-  private onDefChanged(project: Project, document: Document, nodes: (Def | Injectable)[]): void {
+  private async onDefChanged(project: Project, document: Document, nodes: (Def | Injectable)[]): Promise<void> {
     if (!this.connection) {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
+    }
+
+    // TODO: add option to control each contributors?
+    if ((await this.configuration.get('rwxml.diagnostics.enabled')) === false) {
+      return
     }
 
     const grouped = AsEnumerable(nodes)

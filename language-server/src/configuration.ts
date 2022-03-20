@@ -12,7 +12,7 @@ export class Configuration {
     connection.onDidChangeConfiguration(this.onConfigurationChanged.bind(this))
   }
 
-  async getConfiguration<T>(key: string): Promise<T | undefined> {
+  async get<T>(key: string): Promise<T | undefined> {
     if (!this.connection) {
       // TODO: add warning
       return
