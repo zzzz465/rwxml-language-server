@@ -86,6 +86,12 @@
             "scope": "machine-overridable",
             "default": true,
             "markdownDescription": "controll context-based code highlighting."
+          },
+          "rwxml.diagnostics.enabled": {
+            "type": "boolean",
+            "scope": "machine-overridable",
+            "default": true,
+            "markdownDescription": "controll context-based code diagnostics."
           }
         }
       }
