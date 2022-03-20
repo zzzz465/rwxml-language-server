@@ -19,14 +19,16 @@ export class Configuration {
     connection.onDidChangeConfiguration(this.onConfigurationChanged.bind(this))
   }
 
-  async get<T>(key: string): Promise<T | undefined> {
+  async get<T>(item: ls.ConfigurationItem): Promise<T | undefined> {
     if (!this.connection) {
       // TODO: add warning
       return
     }
 
+    const key = `${item.scopeUri}#${item.section}`
+
     if (!this.cache.has(key)) {
-      const value = await this.connection.workspace.getConfiguration(key)
+      const value = await this.connection.workspace.getConfiguration(item)
       this.cache.set(key, value)
     }
 

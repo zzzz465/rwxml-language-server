@@ -1,7 +1,6 @@
 import { Def, Document, Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
-import { DefaultDictionary } from 'typescript-collections'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
@@ -59,7 +58,7 @@ export class DiagnosticsProvider implements Provider {
     }
 
     // TODO: add option to control each contributors?
-    if ((await this.configuration.get('rwxml.diagnostics.enabled')) === false) {
+    if (!(await this.enabled())) {
       return
     }
 
@@ -86,7 +85,7 @@ export class DiagnosticsProvider implements Provider {
   }
 
   private async enabled(): Promise<boolean> {
-    const value = await this.configuration.get('rwxml.diagnostics.enabled')
+    const value = (await this.configuration.get<any>({ section: 'rwxml.diagnostics' })).enabled
     return value !== false
   }
 
