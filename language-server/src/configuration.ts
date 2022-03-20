@@ -1,9 +1,16 @@
+import EventEmitter from 'events'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
+
+interface Events {
+  onConfigurationChanged(): void
+}
 
 @tsyringe.singleton()
 export class Configuration {
   private connection?: ls.Connection
+
+  readonly events: EventEmitter<Events> = new EventEmitter()
 
   private cache: Map<string, any> = new Map()
 
@@ -28,5 +35,6 @@ export class Configuration {
 
   private onConfigurationChanged(): void {
     this.cache.clear()
+    this.events.emit('onConfigurationChanged')
   }
 }
