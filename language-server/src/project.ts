@@ -17,7 +17,7 @@ import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 
 interface Events {
-  defChanged(defs: (Injectable | Def)[]): void
+  defChanged(updatedDocument: Document, dirtyNodes: (Injectable | Def)[]): void
 }
 
 @scoped(Lifecycle.ContainerScoped)
@@ -179,6 +179,6 @@ export class Project {
     this.xmls.set(uri, document)
 
     const dirtyDefs = this.defManager.update(document)
-    this.event.emit('defChanged', dirtyDefs)
+    this.event.emit('defChanged', document, dirtyDefs)
   }
 }
