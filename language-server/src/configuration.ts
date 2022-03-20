@@ -26,7 +26,7 @@ export class Configuration {
     }
 
     if (!this.cache.has(key)) {
-      const value = this.connection.workspace.getConfiguration(key)
+      const value = await this.connection.workspace.getConfiguration(key)
       this.cache.set(key, value)
     }
 
