@@ -101,6 +101,10 @@ export class Project {
     return textDocumentManager.get(uri)
   }
 
+  getXMLDocuments(): Document[] {
+    return [...this.xmls.values()]
+  }
+
   /**
    * reloadProject reset project and evaluate all xmls
    * uses debounce to limit reloading too often
