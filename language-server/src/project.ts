@@ -15,6 +15,7 @@ import { TypeInfoMapProvider } from './typeInfoMapProvider'
 import { CancellationTokenSource } from 'vscode-languageserver'
 import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
+import * as documentWithNodeMap from './documentWithNodeMap'
 
 interface Events {
   /**
@@ -183,7 +184,7 @@ export class Project {
    * @param raw xml string, must be parsable
    */
   private parseXML(uri: string, raw: string) {
-    const document = parse(raw, uri)
+    const document = documentWithNodeMap.create(parse(raw, uri))
 
     this.xmls.set(uri, document)
 
