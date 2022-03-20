@@ -94,7 +94,8 @@ export class DecoProvider extends Provider {
       if (node.tagName === 'Defs') {
         return this.getTokenOfRootDefs(project, node)
       } else {
-        return this.getTokenOfElement(project, node)
+        // non <Defs> node should not be decorated at all
+        return []
       }
     } else if (node instanceof Text) {
       return this.getTokenOfText(project, node)
