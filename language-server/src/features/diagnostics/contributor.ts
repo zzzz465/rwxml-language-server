@@ -3,6 +3,7 @@ import * as tsyringe from 'tsyringe'
 import { Project } from '../../project'
 import * as ls from 'vscode-languageserver'
 import { Noop } from './noop'
+import { DuplicatedNode } from './duplicatedNode'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics
@@ -12,6 +13,11 @@ import { Noop } from './noop'
   {
     token: DiagnosticsContributor.token,
     useClass: Noop,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: DiagnosticsContributor.token,
+    useClass: DuplicatedNode,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])
