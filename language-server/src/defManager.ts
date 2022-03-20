@@ -4,6 +4,7 @@ import { DefDatabase, TypeInfoInjector, Def, NameDatabase, Injectable, TypeInfoM
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { RimWorldVersion } from './RimWorldVersion'
+import { DocumentWithNodeMap } from './documentWithNodeMap'
 
 export class DefManager {
   private logFormat = winston.format.printf(
@@ -49,7 +50,7 @@ export class DefManager {
   /**
    * @returns dirty nodes that require re-evaluation. (only referenced injectables/defs are returned)
    */
-  update(document: Document): (Injectable | Def)[] {
+  update(document: DocumentWithNodeMap): (Injectable | Def)[] {
     const injectResult = this.typeInfoInjector.inject(document)
 
     const DefsFromDefDatabase = this.defDatabase.getDefByUri(document.uri)
@@ -65,6 +66,9 @@ export class DefManager {
     for (const def of injectResult.defs) {
       this.addDef(def)
     }
+
+    document.nodeMap.set(Def.name, injectResult.defs)
+    document.nodeMap.set(Injectable.name, injectResult.defs.map((def) => this.getInjectables(def)).flat())
 
     // grab dirty nodes
     const dirtyInjectables: Set<Def | Injectable> = new Set()
