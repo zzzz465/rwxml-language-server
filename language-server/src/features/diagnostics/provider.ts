@@ -27,7 +27,9 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[]
-  ) {}
+  ) {
+    this.projectManager.events.on('onProjectInitialized', this.subscribeProject.bind(this))
+  }
 
   init(connection: ls.Connection): void {
     this.connection = connection
