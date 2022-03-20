@@ -1,7 +1,5 @@
-import { Node } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Diagnostic } from 'vscode-languageserver'
-import { Project } from '../../project'
 import { DiagnosticsContributor } from './contributor'
 
 /**
@@ -10,7 +8,7 @@ import { DiagnosticsContributor } from './contributor'
  */
 @tsyringe.injectable()
 export class Noop implements DiagnosticsContributor {
-  getDiagnostics(project: Project, uri: string, nodes: Node[]): { uri: string; diagnostics: Diagnostic[] } {
-    return { uri, diagnostics: [] }
+  getDiagnostics(): { uri: string; diagnostics: Diagnostic[] } {
+    return { uri: '', diagnostics: [] }
   }
 }

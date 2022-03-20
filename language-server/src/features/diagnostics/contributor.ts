@@ -1,4 +1,4 @@
-import { Node } from '@rwxml/analyzer'
+import { Def, Document, Injectable, Node } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Project } from '../../project'
 import * as ls from 'vscode-languageserver'
@@ -24,5 +24,15 @@ import { DuplicatedNode } from './duplicatedNode'
 export abstract class DiagnosticsContributor {
   static readonly token = Symbol(DiagnosticsContributor.name)
 
-  abstract getDiagnostics(project: Project, uri: string, nodes: Node[]): { uri: string; diagnostics: ls.Diagnostic[] }
+  /**
+   * getDiagnostics returns language server diagnostics from given arguments.
+   * @param project the currnet project context.
+   * @param document the document that need to be diagnosed.
+   * @param dirtyInjectables optional project-wide dirty injectable/defs.
+   */
+  abstract getDiagnostics(
+    project: Project,
+    document: Document,
+    dirtyInjectables: (Def | Injectable)[]
+  ): { uri: string; diagnostics: ls.Diagnostic[] }
 }

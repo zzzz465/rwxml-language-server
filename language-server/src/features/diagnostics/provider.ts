@@ -1,8 +1,10 @@
-import { Def, Injectable } from '@rwxml/analyzer'
+import { Def, Document, Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import { DefaultDictionary } from 'typescript-collections'
 import * as ls from 'vscode-languageserver'
+import winston from 'winston'
+import { LogToken } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -24,10 +26,15 @@ import { DiagnosticsContributor } from './contributor'
 export class DiagnosticsProvider implements Provider {
   private connection?: ls.Connection = undefined
 
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${DiagnosticsProvider.name}] ${info.message}`)
+  private readonly log: winston.Logger
+
   constructor(
     private readonly projectManager: ProjectManager,
-    @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[]
+    @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     this.projectManager.events.on('onProjectInitialized', this.subscribeProject.bind(this))
   }
 
@@ -36,10 +43,10 @@ export class DiagnosticsProvider implements Provider {
   }
 
   subscribeProject(project: Project): void {
-    project.event.on('defChanged', (nodes) => this.onDefChanged(project, nodes))
+    project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
   }
 
-  private onDefChanged(project: Project, nodes: (Def | Injectable)[]): void {
+  private onDefChanged(project: Project, document: Document, nodes: (Def | Injectable)[]): void {
     if (!this.connection) {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
@@ -55,8 +62,14 @@ export class DiagnosticsProvider implements Provider {
     const diagnosticsMap: DefaultDictionary<string, ls.Diagnostic[]> = new DefaultDictionary(() => [])
 
     for (const { key, values } of grouped) {
+      const document = project.getXMLDocumentByUri(key)
+      if (!document) {
+        this.log
+        continue
+      }
+
       for (const contributor of this.contributors) {
-        const { uri, diagnostics } = contributor.getDiagnostics(project, key, values)
+        const { uri, diagnostics } = contributor.getDiagnostics(project, document, values)
         diagnosticsMap.getValue(uri).push(...diagnostics)
       }
     }
