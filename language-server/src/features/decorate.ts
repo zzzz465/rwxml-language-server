@@ -1,47 +1,42 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Attribute, Def, Document, Element, Injectable, Node, NodeWithChildren, Range, Text } from '@rwxml/analyzer'
+import { Attribute, Def, Document, Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
-import { Logger } from 'winston'
-import { LoadFolder } from '../mod/loadfolders'
-import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
 import * as winston from 'winston'
 import { LogToken } from '../log'
 import { DocumentTokenRequest, DocumentTokenRequestResponse } from '../events'
-import { Queue } from 'typescript-collections'
 import { DocumentToken } from '../types/documentToken'
 import { Definition } from './definition'
 import { Project } from '../project'
 import { URI } from 'vscode-uri'
+import { ProjectHelper } from './utils/project'
+import { getNodesBFS } from './utils/node'
 
 @tsyringe.injectable()
-export class DecoProvider extends Provider {
+export class DecoProvider implements Provider {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${DecoProvider.name}] ${info.message}`)
   private readonly log: winston.Logger
 
   constructor(
-    loadFolder: LoadFolder,
-    projectManager: ProjectManager,
+    private readonly projectHelper: ProjectHelper,
     private readonly rangeConverter: RangeConverter,
     private readonly defProvider: Definition,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
-    super(loadFolder, projectManager)
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
-  protected getLogger(): Logger {
-    return this.log
-  }
-
-  listen(connection: Connection): void {
-    connection.onRequest(DocumentTokenRequest, this.wrapExceptionStackTraces(this.onTokenRequest.bind(this)))
+  init(connection: Connection): void {
+    connection.onRequest(
+      DocumentTokenRequest,
+      this.projectHelper.wrapExceptionStackTraces(this.onTokenRequest.bind(this), this.log)
+    )
   }
 
   private onTokenRequest(p: DocumentTokenRequest): DocumentTokenRequestResponse | null | undefined {
-    const projects = this.getProjects(p.uri)
+    const projects = this.projectHelper.getProjects(p.uri)
 
     const tokens: DocumentToken[] = []
 
@@ -65,24 +60,8 @@ export class DecoProvider extends Provider {
     return nodes.map((node) => this.getTokens(project, node)).flat()
   }
 
-  private getNodesBFS(doc: Document) {
-    const nodes: Node[] = []
-    const queue = new Queue<Node>()
-
-    queue.enqueue(doc)
-    while (queue.size() > 0) {
-      const node = queue.dequeue() as Node
-
-      if (node instanceof NodeWithChildren) {
-        for (const child of node.childNodes) {
-          queue.enqueue(child)
-        }
-      }
-
-      nodes.push(node)
-    }
-
-    return nodes
+  private getNodesBFS(doc: Document): Node[] {
+    return getNodesBFS(doc)
   }
 
   private getTokens(project: Project, node: Node): DocumentToken[] {

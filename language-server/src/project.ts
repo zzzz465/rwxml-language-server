@@ -17,7 +17,12 @@ import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 
 interface Events {
-  defChanged(defs: (Injectable | Def)[]): void
+  /**
+   * defChanged event emitted when document is changed
+   * @param updatedDocument the document that updated
+   * @param dirtyNodes project-wide dirty node due to the document update
+   */
+  defChanged(updatedDocument: Document, dirtyNodes: (Injectable | Def)[]): void
 }
 
 @scoped(Lifecycle.ContainerScoped)
@@ -94,6 +99,10 @@ export class Project {
     const textDocumentManager = container.resolve(TextDocumentManager)
 
     return textDocumentManager.get(uri)
+  }
+
+  getXMLDocuments(): Document[] {
+    return [...this.xmls.values()]
   }
 
   /**
@@ -179,6 +188,6 @@ export class Project {
     this.xmls.set(uri, document)
 
     const dirtyDefs = this.defManager.update(document)
-    this.event.emit('defChanged', dirtyDefs)
+    this.event.emit('defChanged', document, dirtyDefs)
   }
 }

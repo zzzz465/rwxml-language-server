@@ -47,7 +47,7 @@ export class DefManager {
   }
 
   /**
-   * @returns dirty nodes that require re-evaluation
+   * @returns dirty nodes that require re-evaluation. (only referenced injectables/defs are returned)
    */
   update(document: Document): (Injectable | Def)[] {
     const injectResult = this.typeInfoInjector.inject(document)

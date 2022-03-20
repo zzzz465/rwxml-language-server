@@ -4,6 +4,7 @@ import { Provider } from './provider'
 import * as ls from 'vscode-languageserver'
 import { DecoProvider } from './decorate'
 import { ParsedTypeInfoRequestHandler } from './commands/parsedTypeInfoRequest'
+import { DiagnosticsProvider } from './diagnostics/provider'
 
 @tsyringe.registry([
   {
@@ -21,6 +22,11 @@ import { ParsedTypeInfoRequestHandler } from './commands/parsedTypeInfoRequest'
     useClass: ParsedTypeInfoRequestHandler,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
+  {
+    token: ProviderRegistry.token,
+    useClass: DiagnosticsProvider,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
 ])
 export abstract class ProviderRegistry {
   static readonly token = Symbol('LanguageFeatureProviderToken')
@@ -28,7 +34,7 @@ export abstract class ProviderRegistry {
   static listenAll(connection: ls.Connection): void {
     const providers = tsyringe.container.resolveAll<Provider>(ProviderRegistry.token)
     for (const provider of providers) {
-      provider.listen(connection)
+      provider.init(connection)
     }
   }
 }
