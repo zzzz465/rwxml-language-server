@@ -13,6 +13,7 @@ import { Definition } from './definition'
 import { Project } from '../project'
 import { URI } from 'vscode-uri'
 import { ProjectHelper } from './utils/project'
+import { getNodesBFS } from './utils/node'
 
 @tsyringe.injectable()
 export class DecoProvider implements Provider {
@@ -60,24 +61,8 @@ export class DecoProvider implements Provider {
     return nodes.map((node) => this.getTokens(project, node)).flat()
   }
 
-  private getNodesBFS(doc: Document) {
-    const nodes: Node[] = []
-    const queue = new Queue<Node>()
-
-    queue.enqueue(doc)
-    while (queue.size() > 0) {
-      const node = queue.dequeue() as Node
-
-      if (node instanceof NodeWithChildren) {
-        for (const child of node.childNodes) {
-          queue.enqueue(child)
-        }
-      }
-
-      nodes.push(node)
-    }
-
-    return nodes
+  private getNodesBFS(doc: Document): Node[] {
+    return getNodesBFS(doc)
   }
 
   private getTokens(project: Project, node: Node): DocumentToken[] {

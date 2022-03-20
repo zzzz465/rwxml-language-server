@@ -1,9 +1,10 @@
-import { Def, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import * as lsp from 'vscode-languageserver'
 import { container } from 'tsyringe'
+import { Queue } from 'typescript-collections'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -123,4 +124,24 @@ export function isPointingOpenTagName(node: Element | Text, offset: number): boo
   } else {
     return node.openTagNameRange.include(offset)
   }
+}
+
+export function getNodesBFS(doc: Document): Node[] {
+  const nodes: Node[] = []
+  const queue = new Queue<Node>()
+
+  queue.enqueue(doc)
+  while (queue.size() > 0) {
+    const node = queue.dequeue() as Node
+
+    if (node instanceof NodeWithChildren) {
+      for (const child of node.childNodes) {
+        queue.enqueue(child)
+      }
+    }
+
+    nodes.push(node)
+  }
+
+  return nodes
 }
