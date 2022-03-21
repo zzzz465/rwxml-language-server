@@ -9,7 +9,7 @@ import { LogToken } from '../../log'
 import { DefReferenceHover } from './defReference'
 import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { isDefRefContent, isPointingInjectableTag, isPointingParentNameAttributeValue } from '../utils/node'
+import { isTextReferencingDef, isPointingInjectableTag, isPointingParentNameAttributeValue } from '../utils/node'
 import { ParentNameAttribValueHover } from './parentNameAttribValue'
 import { TagHoverProvider } from './tag'
 import { DefHoverProvider } from './def'
@@ -93,7 +93,7 @@ export class HoverProvider implements Provider {
     }
 
     const getHoverType: (proj: Project, node: Node) => HoverType = (proj: Project, node: Node) => {
-      if (isDefRefContent(node)) {
+      if (isTextReferencingDef(node)) {
         return 'defReference'
       } else if (isPointingParentNameAttributeValue(node, offset)) {
         return 'parentNameValue'

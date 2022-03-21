@@ -5,7 +5,12 @@ import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
-import { getNodeAndOffset, isPointingDefNameContent, isDefRefContent } from './utils/node'
+import {
+  getNodeAndOffset,
+  isNodeContainsDefReferenceText,
+  isPointingDefNameContent,
+  isTextReferencingDef,
+} from './utils/node'
 
 type Result = {
   definitionLinks: DefinitionLink[]
@@ -62,25 +67,30 @@ export class Definition {
       return []
     }
 
-    return this.findDefsFromDefRefTextNode(project, refNode)
+    return this.findDefsFromDefRefTextNode(project, refNode) ?? []
   }
 
   /**
    * findReferencingDefsFromInjectable returns refrencing defs from given injectable node.
    * @param project the project context.
    * @param node the leaf injectable node that have text node as a children.
+   * @returns array of defs that this node is referencing. null if the node is not a leaf node.
    */
-  findReferencingDefsFromInjectable(project: Project, node: Injectable): Def[] {
-    const defName = node.content ?? ''
+  findReferencingDefsFromInjectable(project: Project, node: Injectable): Def[] | null {
+    if (!isNodeContainsDefReferenceText(node)) {
+      return null
+    }
+
+    const defName = node.content
     const defType = node.typeInfo.getDefType()
-    if (!defType) {
-      return []
+    if (!defName || !defType) {
+      return null
     }
 
     return project.defManager.getDef(defType, defName)
   }
 
-  findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] {
+  findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] | null {
     return this.findReferencingDefsFromInjectable(project, refNode.parent)
   }
 
@@ -121,7 +131,7 @@ export class Definition {
       offset = positionOrOffset
     }
 
-    if (isDefRefContent(node) || isPointingDefNameContent(node, offset)) {
+    if (isTextReferencingDef(node) || isPointingDefNameContent(node, offset)) {
       // is it refernced defName text? or defName text itself?
       return node as DefRefTextNode
     }

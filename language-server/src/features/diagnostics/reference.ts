@@ -44,7 +44,7 @@ export class Reference implements DiagnosticsContributor {
       }
 
       const defs = this.definition.findReferencingDefsFromInjectable(project, ref)
-      if (defs.length > 0) {
+      if (!defs || defs.length > 0) {
         continue
       }
 
