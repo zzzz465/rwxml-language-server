@@ -5,14 +5,17 @@ import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
-import { getNodeAndOffset, isPointingDefNameContent, isPointingDefReferenceContent } from './utils/node'
+import { getNodeAndOffset, isPointingDefNameContent, isDefRefContent } from './utils/node'
 
 type Result = {
   definitionLinks: DefinitionLink[]
   errors: any[]
 }
 
-interface DefReferenceText extends Text {
+/**
+ * DefReferenceTextNode represents TextNode that value is referencing a def.
+ */
+interface DefRefTextNode extends Text {
   parent: Injectable
 }
 
@@ -28,7 +31,7 @@ export class Definition {
   }
 
   findDefinitionLinks(project: Project, uri: URI, position: Position): LocationLink[] {
-    const definitionTextNode = this.findDefinitionTextNode(project, uri, position)
+    const definitionTextNode = this.findDefRefTextNode(project, uri, position)
     // is cursor is pointing definition?
     if (definitionTextNode) {
       const defName = definitionTextNode.data
@@ -50,16 +53,20 @@ export class Definition {
    * @param position
    * @returns
    */
-  findDefs(project: Project, uri: URI, offset: number): Def[]
-  findDefs(project: Project, uri: URI, position: Position): Def[]
-  findDefs(project: Project, uri: URI, positionOrOffset: any): Def[] {
-    const definitionTextNode = this.findDefinitionTextNode(project, uri, positionOrOffset)
-    if (!definitionTextNode) {
+  findDefsFromUriWithPos(project: Project, uri: URI, offset: number): Def[]
+  findDefsFromUriWithPos(project: Project, uri: URI, position: Position): Def[]
+  findDefsFromUriWithPos(project: Project, uri: URI, positionOrOffset: any): Def[] {
+    const refNode = this.findDefRefTextNode(project, uri, positionOrOffset)
+    if (!refNode) {
       return []
     }
 
-    const defName = definitionTextNode.data
-    const defType = this.findDefType(definitionTextNode)
+    return this.findDefsFromDefRefTextNode(project, refNode)
+  }
+
+  findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] {
+    const defName = refNode.data
+    const defType = this.findDefType(refNode)
     if (!defType) {
       return []
     }
@@ -67,7 +74,7 @@ export class Definition {
     return project.defManager.getDef(defType.value, defName)
   }
 
-  findDefType(node: DefReferenceText): { value: string; li?: boolean } | null {
+  findDefType(node: DefRefTextNode): { value: string; li?: boolean } | null {
     if (node.parent.parent.typeInfo.isEnumerable() && node.parent.typeInfo.isDef()) {
       const defType = node.parent.typeInfo.getDefType() ?? null
 
@@ -81,13 +88,9 @@ export class Definition {
     return null
   }
 
-  findDefinitionTextNode(project: Project, uri: URI, offset: number): DefReferenceText | undefined
-  findDefinitionTextNode(project: Project, uri: URI, position: Position): DefReferenceText | undefined
-  findDefinitionTextNode(
-    project: Project,
-    uri: URI,
-    positionOrOffset: Position | number
-  ): DefReferenceText | undefined {
+  findDefRefTextNode(project: Project, uri: URI, offset: number): DefRefTextNode | undefined
+  findDefRefTextNode(project: Project, uri: URI, position: Position): DefRefTextNode | undefined
+  findDefRefTextNode(project: Project, uri: URI, positionOrOffset: Position | number): DefRefTextNode | undefined {
     let node: Node
     let offset: number
     if (typeof positionOrOffset === 'object') {
@@ -108,9 +111,9 @@ export class Definition {
       offset = positionOrOffset
     }
 
-    if (isPointingDefReferenceContent(node, offset) || isPointingDefNameContent(node, offset)) {
+    if (isDefRefContent(node) || isPointingDefNameContent(node, offset)) {
       // is it refernced defName text? or defName text itself?
-      return node as DefReferenceText
+      return node as DefRefTextNode
     }
   }
 

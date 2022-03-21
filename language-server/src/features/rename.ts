@@ -34,7 +34,7 @@ export class Rename {
       return result
     }
 
-    const definitionNode = this.definition.findDefinitionTextNode(project, uri, pos)
+    const definitionNode = this.definition.findDefRefTextNode(project, uri, pos)
     if (!definitionNode) {
       return result
     }

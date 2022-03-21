@@ -36,7 +36,7 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
   return false
 }
 
-export function isPointingDefReferenceContent(node: Node, offset: number): node is Text {
+export function isDefRefContent(node: Node): node is Text {
   if (
     node instanceof Text &&
     node.parent instanceof Injectable &&
