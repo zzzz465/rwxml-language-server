@@ -14,6 +14,7 @@ type Result = {
 
 /**
  * DefReferenceTextNode represents TextNode that value is referencing a def.
+ * @todo refactor this
  */
 interface DefRefTextNode extends Text {
   parent: Injectable
@@ -64,14 +65,23 @@ export class Definition {
     return this.findDefsFromDefRefTextNode(project, refNode)
   }
 
-  findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] {
-    const defName = refNode.data
-    const defType = this.findDefType(refNode)
+  /**
+   * findReferencingDefsFromInjectable returns refrencing defs from given injectable node.
+   * @param project the project context.
+   * @param node the leaf injectable node that have text node as a children.
+   */
+  findReferencingDefsFromInjectable(project: Project, node: Injectable): Def[] {
+    const defName = node.content ?? ''
+    const defType = node.typeInfo.getDefType()
     if (!defType) {
       return []
     }
 
-    return project.defManager.getDef(defType.value, defName)
+    return project.defManager.getDef(defType, defName)
+  }
+
+  findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] {
+    return this.findReferencingDefsFromInjectable(project, refNode.parent)
   }
 
   findDefType(node: DefRefTextNode): { value: string; li?: boolean } | null {

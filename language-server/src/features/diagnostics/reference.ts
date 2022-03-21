@@ -6,17 +6,23 @@ import { Document } from '@rwxml/analyzer'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { LogToken } from '../../log'
+import { DocumentWithNodeMap } from '../../documentWithNodeMap'
+import { Definition } from '../definition'
 
 @tsyringe.injectable()
 export class Reference implements DiagnosticsContributor {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${Reference.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  constructor(private readonly rangeConverter: RangeConverter, @tsyringe.inject(LogToken) baseLogger: winston.Logger) {
+  constructor(
+    private readonly rangeConverter: RangeConverter,
+    private readonly definition: Definition,
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger
+  ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
-  getDiagnostics(project: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {
+  getDiagnostics(project: Project, document: DocumentWithNodeMap): { uri: string; diagnostics: ls.Diagnostic[] } {
     // 1. grab all def from document
     // 2. get all injectable referencing this document?
 
@@ -28,11 +34,17 @@ export class Reference implements DiagnosticsContributor {
     return { uri: document.uri, diagnostics }
   }
 
-  private diagnoseUnresolvedReferences(project: Project, document: Document): ls.Diagnostic[] {
+  private diagnoseUnresolvedReferences(project: Project, document: DocumentWithNodeMap): ls.Diagnostic[] {
     const diagnostics: ls.Diagnostic[] = []
 
-    for (const ref of project.defManager.unresolvedReferences.filter((x) => x.document.uri === document.uri)) {
-      if (!ref.contentRange) {
+    for (const ref of document.injectables()) {
+      const offset = ref.contentRange?.start
+      if (!offset) {
+        continue
+      }
+
+      const defs = this.definition.findReferencingDefsFromInjectable(project, ref)
+      if (defs.length > 0) {
         continue
       }
 
@@ -54,6 +66,7 @@ export class Reference implements DiagnosticsContributor {
   private diagnoseUnresolvedInherit(project: Project, document: Document): ls.Diagnostic[] {
     const diagnostics: ls.Diagnostic[] = []
 
+    /*
     for (const inherit of project.defManager.unresolvedInherits.filter((x) => x.document.uri === document.uri)) {
       const parentNameAttrib = inherit.attribs['ParentName']
       if (!parentNameAttrib) {
@@ -71,11 +84,8 @@ export class Reference implements DiagnosticsContributor {
         severity: ls.DiagnosticSeverity.Error,
       })
     }
+    */
 
     return diagnostics
   }
-
-  // diagnosisNode(project: Project, node: Def | Injectable): ls.Diagnostic[] {
-  //
-  // }
 }

@@ -9,11 +9,7 @@ import { LogToken } from '../../log'
 import { DefReferenceHover } from './defReference'
 import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
 import { RangeConverter } from '../../utils/rangeConverter'
-import {
-  isDefRefContent,
-  isPointingInjectableTag,
-  isPointingParentNameAttributeValue,
-} from '../utils/node'
+import { isDefRefContent, isPointingInjectableTag, isPointingParentNameAttributeValue } from '../utils/node'
 import { ParentNameAttribValueHover } from './parentNameAttribValue'
 import { TagHoverProvider } from './tag'
 import { DefHoverProvider } from './def'
