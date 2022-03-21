@@ -1,5 +1,5 @@
 import * as analyzer from '@rwxml/analyzer'
-import { Document } from '@rwxml/analyzer'
+import { Def, Document, Injectable } from '@rwxml/analyzer'
 
 type NodeType =
   | analyzer.Node
@@ -23,6 +23,8 @@ type NodeType =
  */
 export interface DocumentWithNodeMap extends analyzer.Document {
   get nodeMap(): Map<string, NodeType[]>
+  defs(): analyzer.Def[]
+  injectables(): analyzer.Injectable[]
 }
 
 export function create(document: Document): DocumentWithNodeMap {
@@ -30,6 +32,16 @@ export function create(document: Document): DocumentWithNodeMap {
   return Object.create(document, {
     nodeMap: {
       get: () => map,
+    },
+    defs: {
+      value: () => {
+        map.get(Def.name)
+      },
+    },
+    injectables: {
+      value: () => {
+        map.get(Injectable.name)
+      },
     },
   })
 }
