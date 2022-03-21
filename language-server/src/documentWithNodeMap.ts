@@ -23,25 +23,24 @@ type NodeType =
  */
 export interface DocumentWithNodeMap extends analyzer.Document {
   get nodeMap(): Map<string, NodeType[]>
-  defs(): analyzer.Def[]
-  injectables(): analyzer.Injectable[]
+  get defs(): analyzer.Def[]
+  get injectables(): analyzer.Injectable[]
 }
 
 export function create(document: Document): DocumentWithNodeMap {
   const map = new Map()
+  map.set(Def.name, [])
+  map.set(Injectable.name, [])
+
   return Object.create(document, {
     nodeMap: {
       get: () => map,
     },
     defs: {
-      value: () => {
-        map.get(Def.name)
-      },
+      get: () => map.get(Def.name),
     },
     injectables: {
-      value: () => {
-        map.get(Injectable.name)
-      },
+      get: () => map.get(Injectable.name),
     },
   })
 }

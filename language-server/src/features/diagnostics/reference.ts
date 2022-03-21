@@ -37,7 +37,7 @@ export class Reference implements DiagnosticsContributor {
   private diagnoseUnresolvedReferences(project: Project, document: DocumentWithNodeMap): ls.Diagnostic[] {
     const diagnostics: ls.Diagnostic[] = []
 
-    for (const ref of document.injectables()) {
+    for (const ref of document.injectables) {
       const offset = ref.contentRange?.start
       if (!offset) {
         continue
