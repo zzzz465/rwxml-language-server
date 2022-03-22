@@ -82,6 +82,19 @@ export interface ParsedTypeInfoRequestResponse {
   error?: any
 }
 
+/**
+ * DefListRequest requests all defs of the specific version.
+ */
+ export interface DefListRequest {
+  version: string
+}
+
+export interface DefListRequestResponse {
+  version: string
+  data: string
+  error?: any
+}
+
 export const ProjectFileAdded = new ls.NotificationType<ProjectFileAddedNotificationParams>(
   'rwxml-language-server:notification:ProjectFileAdded'
 )
@@ -127,3 +140,7 @@ export const ParsedTypeInfoRequest = new ls.RequestType<
   ParsedTypeInfoRequestResponse,
   undefined
 >('rwxml-language-server:request:ParsedTypeInfoRequest')
+
+export const DefListRequest = new ls.RequestType<DefListRequest, DefListRequestResponse, undefined>(
+  'rwxml-language-server:DefListRequest'
+)
