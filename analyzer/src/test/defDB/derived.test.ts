@@ -101,10 +101,17 @@ describe('DefDatabase test', () => {
   })
 
   test('DefDatabase should return defs by defName', () => {
-    const def = defDB.getDefByName('AT_ChainDamageDef')
+    defDB.addDef(damageKnockbackDef)
+    defDB.addDef(bulletExecutionerChain)
+
+    let def = defDB.getDefByName('AT_ChainDamageDef')
     expect(def.length).toBeTruthy()
 
-    const def2 = defDB.getDefByName('BulletExecutionerChain')
+    let def2 = defDB.getDefByName('BulletExecutionerChain')
     expect(def2.length).toBeTruthy()
+
+    defDB.removeDef(damageKnockbackDef)
+    def = defDB.getDefByName('AT_ChainDamageDef')
+    expect(def.length).toBe(0)
   })
 })
