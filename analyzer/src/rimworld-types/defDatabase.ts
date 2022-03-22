@@ -70,7 +70,7 @@ export class DefDatabase implements Iterable<Def> {
    * @returns all defs in DefDatabase
    */
   defs(): Iterator<Def> {
-    return this[Symbol.iterator]()
+    return this
   }
 
   /**
