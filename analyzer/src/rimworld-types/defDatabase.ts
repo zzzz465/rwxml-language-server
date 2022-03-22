@@ -1,24 +1,24 @@
 import { Def } from './def'
 import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
 
-export class DefDatabase {
+export class DefDatabase implements Iterable<Def> {
   // store defs sorted by defType
-  private defs: DefaultDictionary<string, MultiDictionary<string, Def>> = new DefaultDictionary(
+  private _defs: DefaultDictionary<string, MultiDictionary<string, Def>> = new DefaultDictionary(
     () => new MultiDictionary()
   )
   // sort defs by uri
-  private uriToDef: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
+  private _uriToDef: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true)
   // only store defs by defName
-  private unsortedDefs: MultiDictionary<string, Def> = new MultiDictionary()
+  private _unsortedDefs: MultiDictionary<string, Def> = new MultiDictionary()
 
   addDef(def: Def): boolean {
     const defType = def.getDefType()
     const defName = def.getDefName()
 
     if (defName) {
-      this.defs.getValue(defType).setValue(defName, def)
-      this.uriToDef.setValue(def.document.uri, def)
-      this.unsortedDefs.setValue(defName, def)
+      this._defs.getValue(defType).setValue(defName, def)
+      this._uriToDef.setValue(def.document.uri, def)
+      this._unsortedDefs.setValue(defName, def)
 
       return true
     } else {
@@ -27,7 +27,7 @@ export class DefDatabase {
   }
 
   getDef(defType: string, defName?: string): Def[] {
-    const defTypeDict = this.defs.getValue(defType)
+    const defTypeDict = this._defs.getValue(defType)
     if (defName) {
       return defTypeDict.getValue(defName)
     } else {
@@ -36,11 +36,11 @@ export class DefDatabase {
   }
 
   getDefByUri(uri: string): Def[] {
-    return this.uriToDef.getValue(uri)
+    return this._uriToDef.getValue(uri)
   }
 
   getDefByName(defName: string): Def[] {
-    return this.unsortedDefs.getValue(defName)
+    return this._unsortedDefs.getValue(defName)
   }
 
   removeDef(def: Def): Def {
@@ -48,10 +48,10 @@ export class DefDatabase {
     const defName = def.getDefName()
 
     if (defName) {
-      const defTypeDict = this.defs.getValue(defType)
+      const defTypeDict = this._defs.getValue(defType)
       defTypeDict.remove(defName, def)
-      this.uriToDef.remove(def.document.uri, def)
-      this.unsortedDefs.remove(defName, def)
+      this._uriToDef.remove(def.document.uri, def)
+      this._unsortedDefs.remove(defName, def)
     }
 
     return def
@@ -64,5 +64,20 @@ export class DefDatabase {
     }
 
     return defs
+  }
+
+  /**
+   * @returns all defs in DefDatabase
+   */
+  defs(): Iterator<Def> {
+    return this[Symbol.iterator]()
+  }
+
+  /**
+   * 
+   * @returns iterator of all defs in DefDatabase
+   */
+  [Symbol.iterator](): Iterator<Def> {
+    return this._unsortedDefs.values()[Symbol.iterator]()
   }
 }
