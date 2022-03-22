@@ -13,11 +13,6 @@ import { Reference } from './reference'
 @tsyringe.registry([
   {
     token: DiagnosticsContributor.token,
-    useClass: Noop,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-  {
-    token: DiagnosticsContributor.token,
     useClass: DuplicatedNode,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
