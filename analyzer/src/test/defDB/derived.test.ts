@@ -2,6 +2,7 @@ import { Document, Element, parse } from '../../parser'
 import $ from 'cheerio'
 import { Def, DefDatabase, Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import typeInfo from './typeInfo.json'
+import { isDerivedType } from '../../rimworld-types/util'
 
 const XML = `\
 <?xml version="1.0" encoding="utf-8" ?>
@@ -80,8 +81,8 @@ const XML = `\
 describe('DefDatabase test', () => {
   let doc: Document
   let defDB: DefDatabase
-  const map = TypeInfoLoader.load(typeInfo as any)
-  const injector = new TypeInfoInjector(map)
+  const typeInfoMap = TypeInfoLoader.load(typeInfo as any)
+  const injector = new TypeInfoInjector(typeInfoMap)
 
   let damageKnockbackDef: Def
   let bulletExecutionerChain: Def
@@ -105,13 +106,25 @@ describe('DefDatabase test', () => {
     defDB.addDef(bulletExecutionerChain)
 
     let def = defDB.getDefByName('AT_ChainDamageDef')
-    expect(def.length).toBeTruthy()
+    expect(def.length).toBeGreaterThan(0)
 
     let def2 = defDB.getDefByName('BulletExecutionerChain')
-    expect(def2.length).toBeTruthy()
+    expect(def2.length).toBeGreaterThan(0)
 
     defDB.removeDef(damageKnockbackDef)
     def = defDB.getDefByName('AT_ChainDamageDef')
     expect(def.length).toBe(0)
+  })
+
+  test('PawnKnockback.DamageKnockbackDef should be determined as derived class of DamageDef', () => {
+    const damageDefTypeInfo = typeInfoMap.getTypeInfoByName('DamageDef')!
+    expect(damageDefTypeInfo).not.toBeUndefined()
+
+    const derived = damageKnockbackDef.typeInfo
+    expect(isDerivedType(derived, damageDefTypeInfo)).toBeTruthy()
+
+    const underived = bulletExecutionerChain.typeInfo!
+    expect(underived).not.toBeUndefined()
+    expect(isDerivedType(underived, damageDefTypeInfo)).toBeFalsy()
   })
 })
