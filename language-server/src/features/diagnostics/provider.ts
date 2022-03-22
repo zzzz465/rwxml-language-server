@@ -62,6 +62,10 @@ export class DiagnosticsProvider implements Provider {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
 
+    if (document.uri === '') {
+      return
+    }
+
     const diagnosticsArr = this.diagnoseDocument(project, document, dirtyNodes)
 
     for (const dig of diagnosticsArr) {
