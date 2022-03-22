@@ -1,6 +1,6 @@
 import { Document, Element, parse } from '../../parser'
 import $ from 'cheerio'
-import { DefDatabase, Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
+import { Def, DefDatabase, Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import typeInfo from './typeInfo.json'
 
 const XML = `\
@@ -52,27 +52,6 @@ const XML = `\
 		<defaultDamage>1</defaultDamage>
 		<defaultArmorPenetration>0.2</defaultArmorPenetration>
 	</PawnKnockback.DamageKnockbackDef>
-	  
-	<ThingDef ParentName="PawnFlyerBase">
-		<defName>AT_KnockbackFlyerDef</defName>
-		<thingClass>PawnKnockback.PawnKnockback</thingClass>
-		<pawnFlyer>
-			<flightDurationMin>6.2</flightDurationMin>
-				<flightSpeed>7.5</flightSpeed>
-			<!--<flightEffecterDef>JumpFlightEffect</flightEffecterDef>-->
-			<soundLanding>AT_ChainSoundE</soundLanding>
-		</pawnFlyer>
-	</ThingDef>
-	
-	<ThingDef ParentName="PawnFlyerBase">
-		<defName>AT_EmptyPullFlyerDef</defName>
-		<thingClass>PawnKnockback.PawnEmptyFlyer</thingClass>
-		<pawnFlyer>
-		  <flightDurationMin>2</flightDurationMin>
-		  <flightSpeed>12</flightSpeed>
-		  <soundLanding>AT_ChainSoundE</soundLanding>
-		</pawnFlyer>
-	</ThingDef>
 	
 	<ThingDef ParentName="BaseBullet">
 		<defName>BulletExecutionerChain</defName>
@@ -104,10 +83,21 @@ describe('DefDatabase test', () => {
   const map = TypeInfoLoader.load(typeInfo as any)
   const injector = new TypeInfoInjector(map)
 
+  let damageKnockbackDef: Def
+  let bulletExecutionerChain: Def
+
   beforeEach(() => {
     doc = parse(XML)
     defDB = new DefDatabase()
     injector.inject(doc)
+
+    damageKnockbackDef = $(doc).find('Defs > PawnKnockback\\.DamageKnockbackDef').get(0) as unknown as Def
+    bulletExecutionerChain = $(doc).find('Defs > ThingDef').get(0) as unknown as Def
+  })
+
+  test('xml should be parsed as intended types', () => {
+    expect(damageKnockbackDef).toBeInstanceOf(Def)
+    expect(bulletExecutionerChain).toBeInstanceOf(Def) 
   })
 
   test('DefDatabase should return defs by defName', () => {
