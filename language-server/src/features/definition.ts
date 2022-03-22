@@ -87,7 +87,12 @@ export class Definition {
       return null
     }
 
-    return project.defManager.getDef(defType, defName)
+    const res = project.defManager.getDef(defType, defName)
+    if (res === 'DEFTYPE_NOT_EXIST') {
+      return []
+    } else {
+      return res
+    }
   }
 
   findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] | null {
@@ -139,7 +144,12 @@ export class Definition {
 
   private getDefinitionLinks(project: Project, defType: string, defName: string): DefinitionLink[] {
     const links: DefinitionLink[] = []
-    const defs = project.defManager.getDef(defType, defName)
+    const getDefsRes = project.defManager.getDef(defType, defName)
+    if (getDefsRes === 'DEFTYPE_NOT_EXIST') {
+      return []
+    }
+
+    const defs = getDefsRes
 
     for (const def of defs) {
       const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')

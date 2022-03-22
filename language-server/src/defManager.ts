@@ -1,6 +1,14 @@
 import Deque from 'double-ended-queue'
 import _ from 'lodash'
-import { DefDatabase, TypeInfoInjector, Def, NameDatabase, Injectable, TypeInfoMap } from '@rwxml/analyzer'
+import {
+  DefDatabase,
+  TypeInfoInjector,
+  Def,
+  NameDatabase,
+  Injectable,
+  TypeInfoMap,
+  isDerivedType,
+} from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { RimWorldVersion } from './RimWorldVersion'
@@ -43,8 +51,33 @@ export class DefManager {
     return this.inheritResolveWanter.getValue(name)
   }
 
-  getDef(defType: string, defName?: string): Def[] {
+  /**
+   * get Defs from given arguments
+   * @param defType def type. eg: "ThingDef", "DamageDef", "RecipeDef", etc.
+   * @param defName optional defName. it will find defs matching to the defName.
+   * @param resolveBaseType resolve defs based on defName, including derived types.
+   * @returns
+   */
+  getDef(
+    defType: string,
+    defName: string | undefined = undefined,
+    resolveBaseType = true
+  ): Def[] | 'DEFTYPE_NOT_EXIST' {
+    if (defName && resolveBaseType) {
+      return this.getDefByDefName(defType, defName)
+    }
+
     return this.defDatabase.getDef(defType, defName)
+  }
+
+  private getDefByDefName(defType: string, defName: string): Def[] | 'DEFTYPE_NOT_EXIST' {
+    const baseType = this.typeInfoMap.getTypeInfoByName(defType)
+    if (!baseType) {
+      return 'DEFTYPE_NOT_EXIST'
+    }
+
+    const defs = this.defDatabase.getDefByName(defName)
+    return defs.filter((def) => isDerivedType(def.typeInfo, baseType))
   }
 
   /**
