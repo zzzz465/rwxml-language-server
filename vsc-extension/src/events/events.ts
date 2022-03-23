@@ -85,7 +85,7 @@ export interface ParsedTypeInfoRequestResponse {
 /**
  * DefListRequest requests all defs of the specific version.
  */
- export interface DefListRequest {
+export interface DefListRequest {
   version: string
 }
 

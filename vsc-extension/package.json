@@ -24,6 +24,10 @@
       {
         "command": "rwxml:debug:displayTypeInfo",
         "title": "RWXML: Display full TypeInfo"
+      },
+      {
+        "command": "rwxml:debug:displayDefs",
+        "title": "RWXML: Display Defs"
       }
     ],
     "configuration": [
