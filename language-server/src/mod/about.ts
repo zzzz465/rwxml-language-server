@@ -86,7 +86,7 @@ export class About {
     }
 
     this.log.debug(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
-    this.log.debug(`new dependencies: ${newVal.modDependencies}`)
+    this.log.debug(`new dependencies: ${JSON.stringify(newVal.modDependencies, null, 4)}`)
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
       this._modDependencies = newVal.modDependencies
