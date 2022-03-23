@@ -5,6 +5,7 @@ import * as ls from 'vscode-languageserver'
 import { DecoProvider } from './decorate'
 import { ParsedTypeInfoRequestHandler } from './commands/parsedTypeInfoRequest'
 import { DiagnosticsProvider } from './diagnostics/provider'
+import { DefListRequestHandler } from './commands/defListRequestHandler'
 
 @tsyringe.registry([
   {
@@ -25,6 +26,11 @@ import { DiagnosticsProvider } from './diagnostics/provider'
   {
     token: ProviderRegistry.token,
     useClass: DiagnosticsProvider,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: ProviderRegistry.token,
+    useClass: DefListRequestHandler,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])

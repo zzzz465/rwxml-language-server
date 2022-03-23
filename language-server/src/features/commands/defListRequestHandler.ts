@@ -39,7 +39,12 @@ export class DefListRequestHandler implements Provider {
       .Select((def) => this.marshalDef(def))
       .ToArray()
 
-    return { version, data: marshalledDefs }
+    return {
+      version,
+      data: {
+        defs: marshalledDefs,
+      },
+    }
   }
 
   private marshalDef(def: Def): PlainObject {
