@@ -91,7 +91,7 @@ export interface DefListRequest {
 
 export interface DefListRequestResponse {
   version: string
-  data: string
+  data: any
   error?: any
 }
 

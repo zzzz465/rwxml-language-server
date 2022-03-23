@@ -91,7 +91,7 @@ export interface ParsedTypeInfoRequestResponse {
 
 export interface DefListRequestResponse {
   version: string
-  data: string
+  data: any
   error?: any
 }
 
