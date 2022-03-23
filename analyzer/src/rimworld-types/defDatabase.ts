@@ -69,15 +69,11 @@ export class DefDatabase implements Iterable<Def> {
   /**
    * @returns all defs in DefDatabase
    */
-  *defs(): Iterable<Def> {
+  defs(): Iterable<Def> {
     return this
   }
 
-  /**
-   * 
-   * @returns iterator of all defs in DefDatabase
-   */
-  [Symbol.iterator](): Iterator<Def> {
+  [Symbol.iterator](): Iterator<Def, any, undefined> {
     return this._unsortedDefs.values()[Symbol.iterator]()
   }
 }
