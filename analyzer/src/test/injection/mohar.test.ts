@@ -52,6 +52,7 @@ describe('TypeInfo injection test against HediffDef with mohar', () => {
 
     const injectable = $(root).find('Defs > HediffDef > comps > li').get(0) as unknown as Injectable
     expect(injectable).toBeInstanceOf(Injectable)
+    // TODO: fix this broken test
     expect(injectable.fieldInfo?.fieldType.className).toBe('HeDiffCompProperties_HediffExclusive')
     expect(injectable.fieldInfo?.fieldType.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
   })

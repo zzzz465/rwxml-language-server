@@ -140,7 +140,7 @@ export class DecoProvider implements Provider {
     const textNode = node as Text & { parent: Injectable }
 
     if (textNode.parent.typeInfo.isDef()) {
-      if (this.defProvider.findDefs(project, URI.parse(uri), offset).length) {
+      if (this.defProvider.findDefsFromUriWithPos(project, URI.parse(uri), offset).length) {
         res.push({
           range: this.rangeConverter.toLanguageServerRange(textNode.dataRange, uri)!,
           type: 'injectable.content.defReference.linked',
@@ -225,7 +225,7 @@ export class DecoProvider implements Provider {
         type: `${prefix}.open.parentNameAttribute`,
       })
 
-      if (this.defProvider.findDefs(project, URI.parse(uri), parentNameAttrib.valueRange.start).length > 0) {
+      if (this.defProvider.findDefsFromUriWithPos(project, URI.parse(uri), parentNameAttrib.valueRange.start).length > 0) {
         res.push({
           range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.valueRange, uri)!,
           type: `${prefix}.open.parentNameAttributeValue.linked`,

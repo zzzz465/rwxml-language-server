@@ -22,7 +22,7 @@ export class TypeInfoProvider implements Provider {
   async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
     const res: TypeInfoRequestResponse = {}
     const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
-    
+
     const managedDirectory = this.pathStore.RimWorldManagedDirectory
     console.log('managed directory: ', managedDirectory)
     dllPaths.push(managedDirectory)

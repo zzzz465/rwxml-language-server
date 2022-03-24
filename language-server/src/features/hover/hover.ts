@@ -4,18 +4,12 @@ import { Provider } from '../provider'
 import * as winston from 'winston'
 import * as ls from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { LoadFolder } from '../../mod/loadfolders'
-import { ProjectManager } from '../../projectManager'
 import { Project } from '../../project'
 import { LogToken } from '../../log'
 import { DefReferenceHover } from './defReference'
 import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
 import { RangeConverter } from '../../utils/rangeConverter'
-import {
-  isPointingDefReferenceContent,
-  isPointingInjectableTag,
-  isPointingParentNameAttributeValue,
-} from '../utils/node'
+import { isTextReferencingDef, isPointingInjectableTag, isPointingParentNameAttributeValue } from '../utils/node'
 import { ParentNameAttribValueHover } from './parentNameAttribValue'
 import { TagHoverProvider } from './tag'
 import { DefHoverProvider } from './def'
@@ -99,7 +93,7 @@ export class HoverProvider implements Provider {
     }
 
     const getHoverType: (proj: Project, node: Node) => HoverType = (proj: Project, node: Node) => {
-      if (isPointingDefReferenceContent(node, offset)) {
+      if (isTextReferencingDef(node)) {
         return 'defReference'
       } else if (isPointingParentNameAttributeValue(node, offset)) {
         return 'parentNameValue'

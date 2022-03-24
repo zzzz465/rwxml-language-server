@@ -23,6 +23,12 @@ export interface Dependency {
   readonly downloadURL?: string
 }
 
+const DLCDependencies: Dependency[] = [
+  { packageId: 'Ludeon.RimWorld' },
+  { packageId: 'Ludeon.RimWorld.Ideology' },
+  { packageId: 'Ludeon.RimWorld.Royalty' },
+]
+
 @singleton()
 export class About {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
@@ -75,14 +81,12 @@ export class About {
     const newVal = this.parseNewXML()
 
     // add packageId of Core, it is always loaded but not included on About.xml
-    if (newVal.modDependencies && !newVal.modDependencies?.find((d) => d.packageId === 'Ludeon.RimWorld')) {
-      newVal.modDependencies.push({
-        packageId: 'Ludeon.RimWorld',
-      })
+    if (newVal.modDependencies) {
+      newVal.modDependencies = _.uniqBy([...newVal.modDependencies, ...DLCDependencies], (x) => x.packageId)
     }
 
     this.log.debug(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
-    this.log.debug(`new dependencies: ${newVal.modDependencies}`)
+    this.log.debug(`new dependencies: ${JSON.stringify(newVal.modDependencies, null, 4)}`)
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
       this._modDependencies = newVal.modDependencies

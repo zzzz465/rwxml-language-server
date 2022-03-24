@@ -40,7 +40,12 @@ export class DefNameCompletion {
       return []
     }
 
-    const defs = AsEnumerable(project.defManager.getDef(defType))
+    const getDefsRes = project.defManager.getDef(defType)
+    if (getDefsRes === 'DEFTYPE_NOT_EXIST') {
+      return []
+    }
+
+    const defs = AsEnumerable(getDefsRes)
       .Select((def) => def.getDefName())
       .Where((defName) => !!defName)
       .ToArray() as string[]

@@ -258,7 +258,8 @@ export class ResourceStore {
       return false
     }
 
-    if (DependencyFile.is(file) && file.ownerPackageId === 'Ludeon.RimWorld') {
+    // check file is registered as dep, or file is from ludeon offical (including dlc)
+    if (DependencyFile.is(file) && file.ownerPackageId.includes('Ludeon.RimWorld')) {
       return true
     }
 

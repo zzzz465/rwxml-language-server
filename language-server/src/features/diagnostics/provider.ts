@@ -49,6 +49,11 @@ export class DiagnosticsProvider implements Provider {
   }
 
   private async onDefChanged(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
+    // TODO: add option to control each contributors?
+    if (!(await this.enabled())) {
+      return
+    }
+
     this.sendDiagnostics(project, document, dirtyNodes)
   }
 
@@ -57,18 +62,20 @@ export class DiagnosticsProvider implements Provider {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
 
-    // TODO: add option to control each contributors?
-    if (!(await this.enabled())) {
+    if (document.uri === '') {
       return
     }
 
     const diagnosticsArr = this.diagnoseDocument(project, document, dirtyNodes)
 
     for (const dig of diagnosticsArr) {
-      this.connection?.sendDiagnostics({
-        uri: dig.uri,
-        diagnostics: dig.diagnostics,
-      })
+      if (dig.uri === document.uri) {
+        this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
+      } else {
+        this.log.warn(
+          `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`
+        )
+      }
     }
   }
 

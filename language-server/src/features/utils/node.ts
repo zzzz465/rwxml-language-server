@@ -36,7 +36,12 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
   return false
 }
 
-export function isPointingDefReferenceContent(node: Node, offset: number): node is Text {
+/**
+ * isDefRefContent checks node is TextNode and the content references def.
+ * @param node
+ * @returns
+ */
+export function isTextReferencingDef(node: Node): node is Text {
   if (
     node instanceof Text &&
     node.parent instanceof Injectable &&
@@ -51,6 +56,27 @@ export function isPointingDefReferenceContent(node: Node, offset: number): node 
   }
 
   return false
+}
+
+/**
+ * isNodeContainsDefReferenceText checks a given node only have a text node that references def.
+ * @param node
+ * @returns
+ */
+export function isNodeContainsDefReferenceText(node: Node): boolean {
+  if (!(node instanceof Injectable)) {
+    return false
+  }
+
+  if (!node.typeInfo.isDef()) {
+    return false
+  }
+
+  if (node.childNodes.length !== 1) {
+    return false
+  }
+
+  return true
 }
 
 export function isPointingParentNameAttributeValue(node: Node, offset: number): boolean {

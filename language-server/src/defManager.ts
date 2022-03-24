@@ -1,9 +1,18 @@
 import Deque from 'double-ended-queue'
 import _ from 'lodash'
-import { DefDatabase, TypeInfoInjector, Def, NameDatabase, Injectable, TypeInfoMap, Document } from '@rwxml/analyzer'
+import {
+  DefDatabase,
+  TypeInfoInjector,
+  Def,
+  NameDatabase,
+  Injectable,
+  TypeInfoMap,
+  isDerivedType,
+} from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { RimWorldVersion } from './RimWorldVersion'
+import { DocumentWithNodeMap } from './documentWithNodeMap'
 
 export class DefManager {
   private logFormat = winston.format.printf(
@@ -42,14 +51,39 @@ export class DefManager {
     return this.inheritResolveWanter.getValue(name)
   }
 
-  getDef(defType: string, defName?: string): Def[] {
+  /**
+   * get Defs from given arguments
+   * @param defType def type. eg: "ThingDef", "DamageDef", "RecipeDef", etc.
+   * @param defName optional defName. it will find defs matching to the defName.
+   * @param resolveBaseType resolve defs based on defName, including derived types.
+   * @returns
+   */
+  getDef(
+    defType: string,
+    defName: string | undefined = undefined,
+    resolveBaseType = true
+  ): Def[] | 'DEFTYPE_NOT_EXIST' {
+    if (defName && resolveBaseType) {
+      return this.getDefByDefName(defType, defName)
+    }
+
     return this.defDatabase.getDef(defType, defName)
+  }
+
+  private getDefByDefName(defType: string, defName: string): Def[] | 'DEFTYPE_NOT_EXIST' {
+    const baseType = this.typeInfoMap.getTypeInfoByName(defType)
+    if (!baseType) {
+      return 'DEFTYPE_NOT_EXIST'
+    }
+
+    const defs = this.defDatabase.getDefByName(defName)
+    return defs.filter((def) => isDerivedType(def.typeInfo, baseType))
   }
 
   /**
    * @returns dirty nodes that require re-evaluation. (only referenced injectables/defs are returned)
    */
-  update(document: Document): (Injectable | Def)[] {
+  update(document: DocumentWithNodeMap): (Injectable | Def)[] {
     const injectResult = this.typeInfoInjector.inject(document)
 
     const DefsFromDefDatabase = this.defDatabase.getDefByUri(document.uri)
@@ -65,6 +99,9 @@ export class DefManager {
     for (const def of injectResult.defs) {
       this.addDef(def)
     }
+
+    document.defs.push(...injectResult.defs)
+    document.injectables.push(...injectResult.defs.map((def) => this.getInjectables(def)).flat())
 
     // grab dirty nodes
     const dirtyInjectables: Set<Def | Injectable> = new Set()

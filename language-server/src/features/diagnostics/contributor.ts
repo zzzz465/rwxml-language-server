@@ -1,9 +1,10 @@
-import { Def, Document, Injectable, Node } from '@rwxml/analyzer'
+import { Def, Document, Injectable } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Project } from '../../project'
 import * as ls from 'vscode-languageserver'
 import { Noop } from './noop'
 import { DuplicatedNode } from './duplicatedNode'
+import { Reference } from './reference'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics
@@ -12,12 +13,12 @@ import { DuplicatedNode } from './duplicatedNode'
 @tsyringe.registry([
   {
     token: DiagnosticsContributor.token,
-    useClass: Noop,
+    useClass: DuplicatedNode,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
   {
     token: DiagnosticsContributor.token,
-    useClass: DuplicatedNode,
+    useClass: Reference,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])
@@ -28,7 +29,7 @@ export abstract class DiagnosticsContributor {
    * getDiagnostics returns language server diagnostics from given arguments.
    * @param project the currnet project context.
    * @param document the document that need to be diagnosed.
-   * @param dirtyInjectables optional project-wide dirty injectable/defs.
+   * @param dirtyInjectables optional project-wide dirty injectable/defs. NOTE: contributor must evaluate only the nodes that matching to the given document.
    */
   abstract getDiagnostics(
     project: Project,

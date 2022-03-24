@@ -21,7 +21,7 @@ export class DefReferenceHover {
   constructor(private readonly defProvider: Definition, private readonly fileStore: FileStore) {}
 
   onReferenceHover(project: Project, uri: URI, position: ls.Position): ls.Hover | null {
-    const defs = this.defProvider.findDefs(project, uri, position)
+    const defs = this.defProvider.findDefsFromUriWithPos(project, uri, position)
     const def = AsEnumerable(defs).FirstOrDefault()
 
     if (!def) {
