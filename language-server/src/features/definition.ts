@@ -5,6 +5,7 @@ import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
+import { getDefNameOfGeneratedDef, isGeneratedDef } from './utils/def'
 import {
   getNodeAndOffset,
   isNodeContainsDefReferenceText,
@@ -79,9 +80,17 @@ export class Definition {
   findReferencingDefsFromInjectable(project: Project, node: Injectable): Def[] | null {
     if (!isNodeContainsDefReferenceText(node)) {
       return null
+    } else if (!node.content) {
+      return null
     }
 
-    const defName = node.content
+    const defName = (() => {
+      if (isGeneratedDef(node.content)) {
+        return getDefNameOfGeneratedDef(node.content)
+      } else {
+        return node.content
+      }
+    })()
     const defType = node.typeInfo.getDefType()
     if (!defName || !defType) {
       return null

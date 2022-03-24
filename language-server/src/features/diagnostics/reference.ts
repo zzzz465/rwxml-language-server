@@ -8,6 +8,9 @@ import { RangeConverter } from '../../utils/rangeConverter'
 import { LogToken } from '../../log'
 import { DocumentWithNodeMap } from '../../documentWithNodeMap'
 import { Definition } from '../definition'
+import { isGeneratedDef } from '../utils/def'
+
+const defGeneratorPrefixes = ['Meat_', 'Building_', 'Corpse_', 'Techprint_']
 
 @tsyringe.injectable()
 export class Reference implements DiagnosticsContributor {
@@ -48,18 +51,24 @@ export class Reference implements DiagnosticsContributor {
         continue
       }
 
-      const defs = this.definition.findReferencingDefsFromInjectable(project, ref)
-      if (!defs || defs.length > 0) {
-        continue
-      }
-
       const range = this.rangeConverter.toLanguageServerRange(ref.contentRange, ref.document.uri)
       if (!range) {
         continue
       }
 
+      if (!ref.content) {
+        continue
+      }
+
+      const defs = this.definition.findReferencingDefsFromInjectable(project, ref)
+      if (!defs || defs.length > 0) {
+        continue
+      }
+
+      const message = isGeneratedDef(ref.content) ? 'Unresolved generated reference' : 'Unresolved reference'
+
       diagnostics.push({
-        message: `Unresolved reference "${ref.content}"`,
+        message: `${message} "${ref.content}"`,
         range,
         severity: ls.DiagnosticSeverity.Error,
       })
