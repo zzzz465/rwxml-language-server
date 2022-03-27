@@ -1,10 +1,11 @@
 import { Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { injectable } from 'tsyringe'
-import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
+import { CodeCompletionContributor } from './contributor'
 
 /*
 1. trie 알고리즘을 기반으로 함?
@@ -18,17 +19,17 @@ import { RangeConverter } from '../../utils/rangeConverter'
 */
 
 @injectable()
-export class DefNameCompletion {
+export class DefNameCompletion implements CodeCompletionContributor {
   constructor(private readonly rangeConverter: RangeConverter) {}
 
-  complete(project: Project, selection: Node, offset: number): CompletionItem[] {
+  getCompletion(project: Project, selection: Node, offset: number): CompletionList | null {
     if (!this.shouldSuggestDefNames(selection, offset)) {
-      return []
+      return null
     }
 
     const node = selection instanceof Injectable ? selection : selection.parent
     if (!(node instanceof Injectable)) {
-      return []
+      return null
     }
 
     const fieldType = node.fieldInfo?.fieldType
@@ -37,12 +38,12 @@ export class DefNameCompletion {
     const editRange = this.rangeConverter.toLanguageServerRange(range, node.document.uri)
 
     if (!(fieldType && defType && editRange)) {
-      return []
+      return null
     }
 
     const getDefsRes = project.defManager.getDef(defType)
     if (getDefsRes === 'DEFTYPE_NOT_EXIST') {
-      return []
+      return null
     }
 
     const defs = AsEnumerable(getDefsRes)
@@ -52,14 +53,17 @@ export class DefNameCompletion {
 
     const completionTexts = getMatchingText(defs, node.content ?? '')
 
-    return completionTexts.map(
-      (label) =>
-        ({
-          label,
-          kind: CompletionItemKind.Value,
-          textEdit: TextEdit.replace(editRange, label),
-        } as CompletionItem)
-    )
+    return {
+      isIncomplete: false,
+      items: completionTexts.map(
+        (label) =>
+          ({
+            label,
+            kind: CompletionItemKind.Value,
+            textEdit: TextEdit.replace(editRange, label),
+          } as CompletionItem)
+      ),
+    }
   }
 
   /**

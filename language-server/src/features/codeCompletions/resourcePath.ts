@@ -1,7 +1,7 @@
 import { Injectable, Node, Text } from '@rwxml/analyzer'
 import * as rwxml from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
-import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
 import { Range } from 'vscode-languageserver-textdocument'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
@@ -10,21 +10,22 @@ import { getTextureResourceNodeType, TextureResourceType } from '../utils'
 import { isPointingContentOfNode } from '../utils/node'
 import { injectable } from 'tsyringe'
 import { RangeConverter } from '../../utils/rangeConverter'
+import { CodeCompletionContributor } from './contributor'
 
 /**
  * ResourcePath suggests resource path completion
  */
 @injectable()
-export class ResourcePath {
+export class ResourcePath implements CodeCompletionContributor {
   constructor(private readonly rangeConverter: RangeConverter) {}
 
-  complete(project: Project, node: Node, offset: number): CompletionItem[] {
+  getCompletion(project: Project, node: Node, offset: number): CompletionList | null {
     let tagNode: Injectable
     let editRange: Range | undefined
     let text: string
 
     if (!isPointingContentOfNode(node, offset)) {
-      return []
+      return null
     }
 
     if (node instanceof Text && node.parent instanceof Injectable) {
@@ -36,20 +37,26 @@ export class ResourcePath {
       text = ''
       editRange = this.rangeConverter.toLanguageServerRange(new rwxml.Range(offset, offset), node.document.uri)
     } else {
-      return []
+      return null
     }
 
     if (!editRange) {
-      return []
+      return null
     }
 
     const liFieldtypeClassName = tagNode.parent.typeInfo.className
     if (liFieldtypeClassName === 'AudioGrain_Clip' || liFieldtypeClassName === 'AudioGrain_Folder') {
-      return this.completeAudioPath(project, text, editRange, liFieldtypeClassName)
+      return {
+        isIncomplete: false,
+        items: this.completeAudioPath(project, text, editRange, liFieldtypeClassName),
+      }
     } else if (tagNode.name.toLowerCase().endsWith('path')) {
-      return this.completeTexturePath(project, tagNode, text, editRange)
+      return {
+        isIncomplete: false,
+        items: this.completeTexturePath(project, tagNode, text, editRange),
+      }
     } else {
-      return []
+      return null
     }
   }
 
