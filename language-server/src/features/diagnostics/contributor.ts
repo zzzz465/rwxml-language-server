@@ -2,9 +2,9 @@ import { Def, Document, Injectable } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Project } from '../../project'
 import * as ls from 'vscode-languageserver'
-import { Noop } from './noop'
 import { DuplicatedNode } from './duplicatedNode'
 import { Reference } from './reference'
+import { PrimitiveValue } from './primitive'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics
@@ -19,6 +19,11 @@ import { Reference } from './reference'
   {
     token: DiagnosticsContributor.token,
     useClass: Reference,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: DiagnosticsContributor.token,
+    useClass: PrimitiveValue,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])
