@@ -1,4 +1,4 @@
-import { Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
+import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
@@ -170,4 +170,40 @@ export function getNodesBFS(doc: Document): Node[] {
   }
 
   return nodes
+}
+
+/**
+ * check node only contains text node as chlidren (except comment, data tag)
+ * NOTE: node's isLeafNode() checks node is leaf in context of node tree. which means usually Text node.
+ * @param node
+ */
+export function isLeafNode(node: Node): boolean {
+  if (!(node instanceof NodeWithChildren)) {
+    return false
+  }
+
+  const containsNonLeafNodeContent = node.childNodes.some(isNonLeafContent)
+
+  return !containsNonLeafNodeContent
+}
+
+/**
+ * check node type is anything but Text, Comment, DataNode
+ * @param node
+ * @returns
+ */
+export function isNonLeafContent(node: Node): boolean {
+  if (!(node instanceof NodeWithChildren)) {
+    return false
+  }
+
+  if (node instanceof Text) {
+    return false
+  } else if (node instanceof Comment) {
+    return false
+  } else if (node instanceof DataNode) {
+    return false
+  }
+
+  return true
 }
