@@ -63,6 +63,8 @@ export class PrimitiveValue implements DiagnosticsContributor {
       return this.diagnosisInt(text, textRange)
     } else if (node.typeInfo.isBoolean()) {
       return this.diagnosisBool(text, textRange)
+    } else if (node.typeInfo.isString()) {
+      return this.diagnosisString(text, textRange)
     }
 
     return null
@@ -103,6 +105,18 @@ export class PrimitiveValue implements DiagnosticsContributor {
       message: `Invalid value "${text}" for boolean type.`,
       severity: ls.DiagnosticSeverity.Error,
     }
+  }
+
+  private diagnosisString(text: string, range: ls.Range): ls.Diagnostic | null {
+    if (text.startsWith(' ') || text.endsWith(' ')) {
+      return {
+        range,
+        message: 'text value has preceding/trailing whitespace.',
+        severity: ls.DiagnosticSeverity.Warning,
+      }
+    }
+
+    return null
   }
 
   private isPrimitive(node: Injectable): boolean {
