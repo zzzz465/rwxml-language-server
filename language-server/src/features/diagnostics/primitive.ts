@@ -1,14 +1,16 @@
-import { Document, Def, Injectable } from '@rwxml/analyzer'
+import { Document, Injectable } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
 import { DiagnosticsContributor } from './contributor'
 import winston from 'winston'
 import { LogToken } from '../../log'
-import { RangeConverter } from '../../utils/rangeConverter'
-import { getNodesBFS, isLeafNode } from '../utils/node'
 import { AsEnumerable } from 'linq-es2015'
 import { Diagnostic } from 'vscode-languageserver'
+import _ from 'lodash'
+import { getNodesBFS, isLeafNode } from '../utils'
+import { RangeConverter } from '../../utils/rangeConverter'
+import { isFloat, isInteger } from '../utils/number'
 
 @tsyringe.injectable()
 export class PrimitiveValue implements DiagnosticsContributor {
@@ -56,7 +58,7 @@ export class PrimitiveValue implements DiagnosticsContributor {
     }
 
     if (node.typeInfo.isInteger()) {
-      return this.diagnosisInt(text, textRange, node)
+      return this.diagnosisInt(text, textRange)
     } else if (node.typeInfo.isBoolean()) {
       return this.diagnosisBool(text, textRange)
     }
@@ -64,8 +66,24 @@ export class PrimitiveValue implements DiagnosticsContributor {
     return null
   }
 
-  private diagnosisInt(text: string, range: ls.Range, node: Injectable): Diagnostic | null {
-    return null
+  private diagnosisInt(text: string, range: ls.Range): Diagnostic | null {
+    if (isInteger(text)) {
+      return null
+    }
+
+    if (isFloat(text)) {
+      return {
+        range,
+        message: `Floating point value "${text}" will be parsed as integer.`,
+        severity: ls.DiagnosticSeverity.Warning,
+      }
+    }
+
+    return {
+      range,
+      message: `Invalid value "${text}" for integer type.`,
+      severity: ls.DiagnosticSeverity.Error,
+    }
   }
 
   private diagnosisBool(text: string, range: ls.Range): Diagnostic | null {
