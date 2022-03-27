@@ -3,33 +3,34 @@ import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import { Range } from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
-import { CompletionItem, CompletionItemKind, TextEdit, Command } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, TextEdit, Command, CompletionList } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { isPointingOpenTagName, makeTagNode } from '../utils/node'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { injectable } from 'tsyringe'
+import { CodeCompletionContributor } from './contributor'
 
 @injectable()
-export class OpenTagCompletion {
+export class OpenTagCompletion implements CodeCompletionContributor {
   private defs: MultiDictionary<string, string> = new MultiDictionary()
 
   constructor(private readonly rangeConverter: RangeConverter) {}
 
-  complete(project: Project, node: Node, offset: number): CompletionItem[] {
+  getCompletion(project: Project, node: Node, offset: number): CompletionList | null {
     if (!this.shouldSuggestTagNames(node, offset)) {
-      return []
+      return null
     }
 
     const textEditRange = this.getTextEditRange(node, offset, this.rangeConverter)
     if (!textEditRange) {
-      return []
+      return null
     }
 
     // Element (<Defs> node), Def, Injectable or nothing
     const parent: Def | Injectable | Element | null = node.parent as unknown as Def | Injectable | null
     if (!(parent instanceof Def || parent instanceof Injectable || parent instanceof Element)) {
-      return []
+      return null
     }
 
     const nodeName = node instanceof Element ? node.name : '' // node name is '' when type is Text
@@ -39,10 +40,10 @@ export class OpenTagCompletion {
       const tags = this.getDefNames(project)
       const completions = getMatchingText(tags, nodeName)
 
-      return this.toCompletionItems(node, offset, this.rangeConverter, node.document, completions)
+      return this.toCompletionList(node, offset, this.rangeConverter, node.document, completions)
     } else if (parent instanceof Def || parent instanceof Injectable) {
       if (parent.typeInfo.isEnumerable()) {
-        return this.toCompletionItems(node, offset, this.rangeConverter, node.document, ['li'])
+        return this.toCompletionList(node, offset, this.rangeConverter, node.document, ['li'])
       } else {
         const childNodes = AsEnumerable(parent.ChildElementNodes)
           .Where((e) => e instanceof Injectable)
@@ -52,11 +53,11 @@ export class OpenTagCompletion {
         const candidates = _.difference(Object.keys(parent.typeInfo.fields), childNodes)
         const completions = getMatchingText(candidates, nodeName)
 
-        return this.toCompletionItems(node, offset, this.rangeConverter, node.document, completions)
+        return this.toCompletionList(node, offset, this.rangeConverter, node.document, completions)
       }
     }
 
-    return []
+    return null
   }
 
   private shouldSuggestTagNames(node: Node, offset: number): node is Element | Text {
@@ -106,17 +107,20 @@ export class OpenTagCompletion {
     return cached
   }
 
-  private toCompletionItems(
+  private toCompletionList(
     node: Text | Element,
     offset: number,
     converter: RangeConverter,
     document: Document,
     labels: string[]
-  ): CompletionItem[] {
-    return AsEnumerable(labels)
-      .Select((label) => this.makeCompletionItem(node, label, offset, converter, document))
-      .Where((item) => item !== null)
-      .ToArray() as CompletionItem[]
+  ): CompletionList {
+    return {
+      isIncomplete: false,
+      items: AsEnumerable(labels)
+        .Select((label) => this.makeCompletionItem(node, label, offset, converter, document))
+        .Where((item) => item !== null)
+        .ToArray() as CompletionItem[],
+    }
   }
 
   private makeCompletionItem(

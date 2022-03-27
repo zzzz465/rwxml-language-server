@@ -3,13 +3,14 @@ import { Attribute, Element, Node, TypeInfo } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { injectable } from 'tsyringe'
 import { MultiDictionary } from 'typescript-collections'
-import { CompletionItem, CompletionItemKind, TextEdit } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { expandUntil, isAllowedCharForClass } from '../../utils/strings'
 import { ModManager } from '../../mod/modManager'
 import { RimWorldVersion } from '../../RimWorldVersion'
+import { CodeCompletionContributor } from './contributor'
 
 const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
 const ClassValueRegex = [
@@ -27,14 +28,14 @@ const ClassValueRegex = [
 ]
 
 @injectable()
-export class CompleteAttribute {
+export class CompleteAttribute implements CodeCompletionContributor {
   private readonly classValue: MultiDictionary<RimWorldVersion, string> = new MultiDictionary()
 
   constructor(private readonly rangeConverter: RangeConverter, private readonly modManager: ModManager) {}
 
-  completeAttribute(project: Project, node: Node, offset: number): CompletionItem[] {
+  getCompletion(project: Project, node: Node, offset: number): CompletionList | null {
     if (!(node instanceof Element) || !node.openTagRange.include(offset)) {
-      return []
+      return null
     }
 
     const attribs = node.attribs
@@ -44,7 +45,7 @@ export class CompleteAttribute {
     const textRange = this.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
 
     if (!textRange) {
-      return []
+      return null
     }
 
     if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset - 1) === ' ')) {
@@ -109,7 +110,7 @@ export class CompleteAttribute {
       }
     }
 
-    return items
+    return { isIncomplete: false, items }
   }
 
   private getClassValues(project: Project) {
