@@ -7,11 +7,13 @@ import winston from 'winston'
 import { LogToken } from '../../log'
 import { AsEnumerable } from 'linq-es2015'
 import { Diagnostic } from 'vscode-languageserver'
-import _ from 'lodash'
-import { getNodesBFS, isLeafNode } from '../utils'
+import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { isFloat, isInteger } from '../utils/number'
 
+/**
+ * PrimitiveValue provides diagnosis for primitive nodes like integer, string, boolean, etc.
+ * @todo refactor code to use consumer(contributor?) pattern
+ */
 @tsyringe.injectable()
 export class PrimitiveValue implements DiagnosticsContributor {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${PrimitiveValue.name}] ${info.message}`)
