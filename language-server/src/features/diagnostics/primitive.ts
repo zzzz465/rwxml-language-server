@@ -6,7 +6,6 @@ import { DiagnosticsContributor } from './contributor'
 import winston from 'winston'
 import { LogToken } from '../../log'
 import { AsEnumerable } from 'linq-es2015'
-import { Diagnostic } from 'vscode-languageserver'
 import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
 import { RangeConverter } from '../../utils/rangeConverter'
 
@@ -39,7 +38,8 @@ export class PrimitiveValue implements DiagnosticsContributor {
     const diagnostics = AsEnumerable(primitiveNodes)
       .Select((node) => this.diagnosisPrimitveNodes(node))
       .Where((result) => result !== null)
-      .Cast<Diagnostic>()
+      .Cast<ls.Diagnostic[]>()
+      .SelectMany((x) => x)
       .ToArray()
 
     return {
@@ -48,7 +48,7 @@ export class PrimitiveValue implements DiagnosticsContributor {
     }
   }
 
-  private diagnosisPrimitveNodes(node: Injectable): Diagnostic | null {
+  private diagnosisPrimitveNodes(node: Injectable): ls.Diagnostic[] | null {
     const text = node.content
     if (!text || !node.contentRange) {
       return null
@@ -59,38 +59,44 @@ export class PrimitiveValue implements DiagnosticsContributor {
       return null
     }
 
+    const diagnostics: ls.Diagnostic[] = []
+
     if (node.typeInfo.isInteger()) {
-      return this.diagnosisInt(text, textRange)
+      diagnostics.push(...(this.diagnosisInt(text, textRange) ?? []))
     } else if (node.typeInfo.isBoolean()) {
-      return this.diagnosisBool(text, textRange)
+      diagnostics.push(...(this.diagnosisBool(text, textRange) ?? []))
     } else if (node.typeInfo.isString()) {
-      return this.diagnosisString(text, textRange)
+      diagnostics.push(...(this.diagnosisString(text, textRange) ?? []))
     }
 
-    return null
+    return diagnostics
   }
 
-  private diagnosisInt(text: string, range: ls.Range): Diagnostic | null {
+  private diagnosisInt(text: string, range: ls.Range): ls.Diagnostic[] | null {
     if (isInteger(text)) {
       return null
     }
 
     if (isFloat(text)) {
-      return {
-        range,
-        message: `Floating point value "${text}" will be parsed as integer.`,
-        severity: ls.DiagnosticSeverity.Warning,
-      }
+      return [
+        {
+          range,
+          message: `Floating point value "${text}" will be parsed as integer.`,
+          severity: ls.DiagnosticSeverity.Warning,
+        },
+      ]
     }
 
-    return {
-      range,
-      message: `Invalid value "${text}" for integer type.`,
-      severity: ls.DiagnosticSeverity.Error,
-    }
+    return [
+      {
+        range,
+        message: `Invalid value "${text}" for integer type.`,
+        severity: ls.DiagnosticSeverity.Error,
+      },
+    ]
   }
 
-  private diagnosisBool(text: string, range: ls.Range): Diagnostic | null {
+  private diagnosisBool(text: string, range: ls.Range): ls.Diagnostic[] | null {
     switch (text.toLowerCase()) {
       case 'true':
       case 'false':
@@ -100,20 +106,24 @@ export class PrimitiveValue implements DiagnosticsContributor {
         break
     }
 
-    return {
-      range,
-      message: `Invalid value "${text}" for boolean type.`,
-      severity: ls.DiagnosticSeverity.Error,
-    }
+    return [
+      {
+        range,
+        message: `Invalid value "${text}" for boolean type.`,
+        severity: ls.DiagnosticSeverity.Error,
+      },
+    ]
   }
 
-  private diagnosisString(text: string, range: ls.Range): ls.Diagnostic | null {
+  private diagnosisString(text: string, range: ls.Range): ls.Diagnostic[] | null {
     if (text.startsWith(' ') || text.endsWith(' ')) {
-      return {
-        range,
-        message: 'text value has preceding/trailing whitespace.',
-        severity: ls.DiagnosticSeverity.Warning,
-      }
+      return [
+        {
+          range,
+          message: 'text value has preceding/trailing whitespace.',
+          severity: ls.DiagnosticSeverity.Warning,
+        },
+      ]
     }
 
     return null
