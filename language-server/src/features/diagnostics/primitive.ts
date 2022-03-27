@@ -65,7 +65,8 @@ export class PrimitiveValue implements DiagnosticsContributor {
       diagnostics.push(...(this.diagnosisInt(text, textRange) ?? []))
     } else if (node.typeInfo.isBoolean()) {
       diagnostics.push(...(this.diagnosisBool(text, textRange) ?? []))
-    } else if (node.typeInfo.isString()) {
+    } else if (node.typeInfo.isString() && !node.parent.typeInfo.isGeneric) {
+      // ignore if LIst<string>
       diagnostics.push(...(this.diagnosisString(text, textRange) ?? []))
     }
 
