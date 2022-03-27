@@ -34,7 +34,16 @@ export class CodeCompletion {
       .Select((contributor) => contributor.getCompletion(project, targetNode, offset))
       .Where((res) => res !== null)
       .Cast<CompletionList>()
+      .DefaultIfEmpty({
+        isIncomplete: true,
+        items: [],
+      })
       .Aggregate((aggr, x) => {
+        // aggr can be undefined if array is empty
+        if (!aggr) {
+          return x
+        }
+
         aggr.isIncomplete ||= x.isIncomplete
         aggr.items.push(...x.items)
 
