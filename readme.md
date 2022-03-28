@@ -2,6 +2,10 @@
 
 provides various IDE functionalities, as VSCode Extension
 
+## Install (if you're using vscode first time?)
+
+[Check how-to](docs/how-to.md)
+
 ## features
 
 - [x] Custom syntax highlighting
