@@ -11,6 +11,7 @@ import { expandUntil, isAllowedCharForClass } from '../../utils/strings'
 import { ModManager } from '../../mod/modManager'
 import { RimWorldVersion } from '../../RimWorldVersion'
 import { CodeCompletionContributor } from './contributor'
+import { getTypeReferenceName } from '../utils/type'
 
 const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
 const ClassValueRegex = [
@@ -131,11 +132,7 @@ export class CompleteAttribute implements CodeCompletionContributor {
   }
 
   private toClassValue(typeInfo: TypeInfo): string {
-    if (typeInfo.namespaceName.startsWith('Verse') || typeInfo.namespaceName.startsWith('RimWorld')) {
-      return typeInfo.className
-    } else {
-      return `${typeInfo.namespaceName}.${typeInfo.className}`
-    }
+    return getTypeReferenceName(typeInfo)
   }
 }
 
