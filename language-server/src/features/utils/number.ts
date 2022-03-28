@@ -15,5 +15,5 @@ export function isFloat(text: string): boolean {
     return false
   }
 
-  return !_.isInteger(num)
+  return true
 }
