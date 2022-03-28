@@ -1,6 +1,7 @@
 import { TypeInfo } from './typeInfo'
 import { DefType, TypeIdentifier } from './declaredType'
 import { isFullName } from './util'
+import { cache, CacheScope, CacheType } from 'cache-decorator'
 
 const rimworldNamespaces = [
   'Verse',
@@ -37,6 +38,11 @@ export class TypeInfoMap {
 
   getAllNodes(): TypeInfo[] {
     return [...this.typeMap.values()]
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getAllVerbTypes(): TypeInfo[] {
+    return this.getAllNodes().filter((type) => type.className.startsWith('Verb_'))
   }
 
   getTypeInfoByName(id: DefType | TypeIdentifier | null | undefined): TypeInfo | undefined {
