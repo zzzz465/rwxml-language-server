@@ -31,7 +31,6 @@ export class PrimitiveValue implements DiagnosticsContributor {
       .Where((node) => node instanceof Injectable)
       .Cast<Injectable>()
       .Where((node) => isLeafNode(node))
-      .Where((node) => this.isPrimitive(node))
       .ToArray()
 
     // 3. send diagnosis
@@ -68,6 +67,8 @@ export class PrimitiveValue implements DiagnosticsContributor {
     } else if (node.typeInfo.isString() && !node.parent.typeInfo.isGeneric) {
       // ignore if LIst<string>
       diagnostics.push(...(this.diagnosisString(text, textRange) ?? []))
+    } else if (node.typeInfo.isFloat()) {
+      diagnostics.push(...(this.diagnosisFloat(text, textRange) ?? []))
     }
 
     return diagnostics
@@ -130,10 +131,17 @@ export class PrimitiveValue implements DiagnosticsContributor {
     return null
   }
 
-  private isPrimitive(node: Injectable): boolean {
-    const flag =
-      node.typeInfo.isBoolean() || node.typeInfo.isInteger() || node.typeInfo.isString() || node.typeInfo.isColor32()
+  private diagnosisFloat(text: string, range: ls.Range): ls.Diagnostic[] | null {
+    if (!isFloat(text)) {
+      return [
+        {
+          range,
+          message: `Invalid value ${text} for float type.`,
+          severity: ls.DiagnosticSeverity.Error,
+        },
+      ]
+    }
 
-    return flag
+    return null
   }
 }
