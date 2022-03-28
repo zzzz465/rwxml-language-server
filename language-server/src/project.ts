@@ -24,6 +24,8 @@ interface Events {
    * @param dirtyNodes project-wide dirty node due to the document update
    */
   defChanged(updatedDocument: Document, dirtyNodes: (Injectable | Def)[]): void
+
+  projectReloaded(): void
 }
 
 @scoped(Lifecycle.ContainerScoped)
@@ -126,6 +128,7 @@ export class Project {
 
     if (!token.isCancellationRequested) {
       this.evaluteProject()
+      this.event.emit('projectReloaded')
     } else {
       this.log.info(`[${requestId}] project evluation canceled`)
     }
