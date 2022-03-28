@@ -79,7 +79,28 @@ export class TypeInfo {
       case 'System.Int64':
       case 'System.Decimal':
       case 'System.Double':
+        return true
+    }
+
+    return false
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isFloat() {
+    switch (this.fullName) {
       case 'System.Single':
+      case 'System.Decimal':
+      case 'System.Double':
+        return true
+    }
+
+    return false
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isType() {
+    switch (this.fullName) {
+      case 'System.Type':
         return true
     }
 
