@@ -45,10 +45,27 @@ export class DiagnosticsProvider implements Provider {
   }
 
   subscribeProject(project: Project): void {
+    project.event.on('projectReloaded', () => this.evaluateAllDocuments(project))
     project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
   }
 
+  private async evaluateAllDocuments(project: Project): Promise<void> {
+    const documents = project.getXMLDocuments()
+
+    for await (const doc of documents) {
+      await this.evaluateDocument(project, doc, [])
+    }
+  }
+
   private async onDefChanged(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
+    await this.evaluateDocument(project, document, dirtyNodes)
+  }
+
+  private async evaluateDocument(
+    project: Project,
+    document: Document,
+    dirtyNodes: (Def | Injectable)[]
+  ): Promise<void> {
     // TODO: add option to control each contributors?
     if (!(await this.enabled())) {
       return
