@@ -5,6 +5,7 @@ import * as ls from 'vscode-languageserver'
 import { DuplicatedNode } from './duplicatedNode'
 import { Reference } from './reference'
 import { PrimitiveValue } from './primitive'
+import { Type } from './type'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics
@@ -24,6 +25,11 @@ import { PrimitiveValue } from './primitive'
   {
     token: DiagnosticsContributor.token,
     useClass: PrimitiveValue,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: DiagnosticsContributor.token,
+    useClass: Type,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])
