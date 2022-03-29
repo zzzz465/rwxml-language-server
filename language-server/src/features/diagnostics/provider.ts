@@ -36,7 +36,7 @@ export class DiagnosticsProvider implements Provider {
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    this.projectManager.events.on('onProjectInitialized', this.subscribeProject.bind(this))
+    this.projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
     this.configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))
   }
 
@@ -44,7 +44,12 @@ export class DiagnosticsProvider implements Provider {
     this.connection = connection
   }
 
-  subscribeProject(project: Project): void {
+  private onProjectInitialized(project: Project): void {
+    this.subscribeProject(project)
+    this.evaluateAllDocuments(project)
+  }
+
+  private subscribeProject(project: Project): void {
     project.event.on('projectReloaded', () => this.evaluateAllDocuments(project))
     project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
   }
@@ -88,6 +93,9 @@ export class DiagnosticsProvider implements Provider {
     for (const dig of diagnosticsArr) {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
+        this.log.debug(
+          `[${project.version}] send diagnostics to uri: ${dig.uri}, data: ${JSON.stringify(dig.diagnostics, null, 4)}`
+        )
       } else {
         this.log.warn(
           `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`
@@ -106,6 +114,7 @@ export class DiagnosticsProvider implements Provider {
           .SelectMany((y) => y.diagnostics)
           .ToArray(),
       }))
+      .ToArray()
   }
 
   private async enabled(): Promise<boolean> {
