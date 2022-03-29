@@ -40,6 +40,7 @@ export class Project {
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
+  private isReloading = false
   private reloadDebounceTimeout = 1000
   private cancelTokenSource = new CancellationTokenSource()
 
@@ -113,6 +114,7 @@ export class Project {
    * uses debounce to limit reloading too often
    */
   private reloadProject = _.debounce(async () => {
+    this.isReloading = true
     const requestId = uuid()
 
     this.cancelTokenSource.cancel()
@@ -134,6 +136,7 @@ export class Project {
     }
 
     cancelTokenSource.dispose()
+    this.isReloading = false
   }, this.reloadDebounceTimeout)
 
   /**
@@ -192,6 +195,8 @@ export class Project {
     this.xmls.set(uri, document)
 
     const dirtyDefs = this.defManager.update(document)
-    this.event.emit('defChanged', document, dirtyDefs)
+    if (!this.isReloading) {
+      this.event.emit('defChanged', document, dirtyDefs)
+    }
   }
 }
