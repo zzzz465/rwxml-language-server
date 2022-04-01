@@ -128,7 +128,7 @@ export class ModDependencyResourceStore {
 
       this.log.silly(
         `dependency file deleted: ${JSON.stringify(
-          files.map((file) => file.uri),
+          files.map((file) => file.uri.toString()),
           null,
           4
         )}`
