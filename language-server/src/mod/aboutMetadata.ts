@@ -77,6 +77,7 @@ export class AboutMetadata {
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
 
+    notiEventManager.preEvent.on('fileAdded', this.onFileChanged.bind(this))
     notiEventManager.preEvent.on('fileChanged', _.debounce(this.onFileChanged.bind(this), 500))
   }
 
