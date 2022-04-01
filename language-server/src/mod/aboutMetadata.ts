@@ -29,6 +29,8 @@ interface Events {
  */
 @tsyringe.singleton()
 export class AboutMetadata {
+  static readonly fileName = 'metadata_rwxml.xml'
+
   private logFormat = winston.format.printf((info) => `[${info.level}] [${AboutMetadata.name}] ${info.message}`)
   private readonly log: winston.Logger
 
@@ -52,7 +54,7 @@ export class AboutMetadata {
   }
 
   async update(data: string): Promise<void> {
-    this.log.silly('AboutMetadata.xml changed.')
+    this.log.info(`${AboutMetadata.fileName} changed.`)
     this.itemMap.clear()
 
     this.rawXML = data
@@ -73,8 +75,6 @@ export class AboutMetadata {
 
   private async onFileChanged(file: File) {
     if (isMetadataFile(file)) {
-      this.log.info(`about file changed, uri: ${file.uri.toString()}`)
-
       const data = await file.read()
       this.update(data)
     }

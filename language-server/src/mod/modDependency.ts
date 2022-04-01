@@ -1,6 +1,8 @@
 import EventEmitter from 'events'
 import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
+import winston from 'winston'
+import { LogToken } from '../log'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
 
@@ -26,6 +28,9 @@ const requiredDependencies = [
  */
 @tsyringe.singleton()
 export class ModDependencyManager {
+  private logFormat = winston.format.printf((info) => `[${info.level}] [${ModDependencyManager.name}] ${info.message}`)
+  private readonly log: winston.Logger
+
   get requiredDependencies(): Dependency[] {
     return [...requiredDependencies, ...this.aboutModDependencies]
   }
@@ -43,7 +48,13 @@ export class ModDependencyManager {
 
   readonly event: EventEmitter<Events> = new EventEmitter()
 
-  constructor(private readonly about: About, aboutMetadata: AboutMetadata) {
+  constructor(
+    private readonly about: About,
+    aboutMetadata: AboutMetadata,
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger
+  ) {
+    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
     aboutMetadata.event.on('aboutMetadataChanged', this.onAboutMetadataChanged.bind(this))
   }
@@ -54,8 +65,9 @@ export class ModDependencyManager {
     }
 
     this.aboutModDependencies = about.modDependencies
+    this.log.debug('modDependency updated due to about.xml change.')
 
-    this.event.emit('dependencyChanged', this)
+    this.emitDependencyChanged()
   }
 
   protected onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
@@ -68,6 +80,16 @@ export class ModDependencyManager {
         this.aboutMetadataOptionalModDependencies = []
       }
     }
+
+    this.log.debug('modDependency updated due to aboutMetadata change.')
+
+    this.emitDependencyChanged()
+  }
+
+  private emitDependencyChanged(): void {
+    this.log.info('ModDependency updated.')
+    this.log.info(`required dependencies: ${JSON.stringify(this.requiredDependencies, null, 4)}`)
+    this.log.info(`optional dependncies: ${JSON.stringify(this.optionalDependencies, null, 4)}`)
 
     this.event.emit('dependencyChanged', this)
   }
