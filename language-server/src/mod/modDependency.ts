@@ -1,10 +1,11 @@
 import EventEmitter from 'events'
+import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import winston from 'winston'
 import { LogToken } from '../log'
 import { About } from './about'
-import { AboutMetadata } from './aboutMetadata'
+import { AboutMetadata, MetadataItem } from './aboutMetadata'
 
 export interface Dependency {
   readonly packageId: string
@@ -70,15 +71,17 @@ export class ModDependencyManager {
     this.emitDependencyChanged()
   }
 
-  protected onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
-    for (const version of this.about.supportedVersions) {
-      const item = aboutMetadata.get(version)
+  private onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
+    const optionalDependencies = AsEnumerable(this.about.supportedVersions)
+      .Select((version) => aboutMetadata.get(version))
+      .Where((item) => item !== null)
+      .Cast<MetadataItem>()
+      .SelectMany((item) => item.modDependency?.optional ?? [])
+      .Distinct((item) => item.packageId)
+      .ToArray()
 
-      if (item) {
-        this.aboutMetadataOptionalModDependencies = item.modDependency?.optional ?? []
-      } else {
-        this.aboutMetadataOptionalModDependencies = []
-      }
+    if (_.isEqual(optionalDependencies, this.aboutMetadataOptionalModDependencies)) {
+      return
     }
 
     this.log.debug('modDependency updated due to aboutMetadata change.')
