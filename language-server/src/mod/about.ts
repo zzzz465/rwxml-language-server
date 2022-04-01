@@ -75,7 +75,7 @@ export class About {
   }
 
   updateAboutXML(text: string) {
-    this.log.debug('About.xml changed.')
+    this.log.silly('About.xml changed.')
 
     this._rawXML = text
     const newVal = this.parseNewXML()
@@ -85,10 +85,8 @@ export class About {
       newVal.modDependencies = _.uniqBy([...newVal.modDependencies, ...DLCDependencies], (x) => x.packageId)
     }
 
-    this.log.debug(`current project name: ${newVal.name}, packageId: ${newVal.packageId}`)
-    this.log.debug(`new dependencies: ${JSON.stringify(newVal.modDependencies, null, 4)}`)
-
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
+      this.log.info(`dependency mods changed. current deps: ${JSON.stringify(newVal.modDependencies, null, 4)}`)
       this._modDependencies = newVal.modDependencies
       this.event.emit('dependencyModsChanged', this)
     }

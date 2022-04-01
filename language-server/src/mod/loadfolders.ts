@@ -57,7 +57,7 @@ export class LoadFolder {
 
     const newVal = this.parseNewXML($)
 
-    this.log.debug(`LoadFolder.xml parsed as: ${JSON.stringify(newVal, null, 2)}`)
+    this.log.silly(`LoadFolder.xml parsed as: ${JSON.stringify(newVal, null, 2)}`)
 
     this['_1.0'] = newVal['1.0']
     this['_1.1'] = newVal['1.1']
