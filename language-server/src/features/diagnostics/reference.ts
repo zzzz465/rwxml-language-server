@@ -10,8 +10,6 @@ import { DocumentWithNodeMap } from '../../documentWithNodeMap'
 import { Definition } from '../definition'
 import { isGeneratedDef } from '../utils/def'
 
-const defGeneratorPrefixes = ['Meat_', 'Building_', 'Corpse_', 'Techprint_']
-
 @tsyringe.injectable()
 export class Reference implements DiagnosticsContributor {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${Reference.name}] ${info.message}`)
