@@ -3,7 +3,7 @@ import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import { RimWorldVersionToken } from '../RimWorldVersion'
 import { About } from './about'
-import { AboutMetadata } from './metadata'
+import { AboutMetadata } from './aboutMetadata'
 
 const DLCDependencies: Dependency[] = [
   { packageId: 'Ludeon.RimWorld' },

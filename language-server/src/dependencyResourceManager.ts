@@ -1,6 +1,6 @@
 import EventEmitter from 'events'
-import { inject, singleton } from 'tsyringe'
-import { Connection } from 'vscode-languageserver'
+import * as tsyringe from 'tsyringe'
+import * as ls from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { File } from './fs'
 import { About } from './mod'
@@ -14,7 +14,7 @@ import { Dependency } from './mod/modDependency'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
-@singleton()
+@tsyringe.singleton()
 export class DependencyResourceManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${DependencyResourceManager.name}] ${info.message}`
@@ -30,8 +30,8 @@ export class DependencyResourceManager {
 
   constructor(
     about: About,
-    @inject(ConnectionToken) private readonly connection: Connection,
-    @inject(LogToken) baseLogger: winston.Logger
+    @tsyringe.inject(ConnectionToken) private readonly connection: ls.Connection,
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
