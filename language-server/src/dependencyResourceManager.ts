@@ -51,20 +51,28 @@ export class ModDependencyResourceStore {
   }
 
   private onModDependencyChanged(modDependencyManager: ModDependencyManager) {
-    this.log.info('reloading because dependency is changed.')
-
     const dependencies = modDependencyManager.dependencies
     this.log.debug(`mod dependencies: ${JSON.stringify(dependencies, null, 4)}`)
 
-    const added = dependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
+    const [added, deleted] = this.getModDiff(dependencies)
+    if (added.length === 0 && deleted.length === 0) {
+      return
+    }
+
+    this.log.info('reloading because dependency is changed.')
+    this.handleDeletedMods(deleted)
+    this.handleAddedMods(added)
+  }
+
+  private getModDiff(newDependencies: Dependency[]): [Dependency[], Dependency[]] {
+    const added = newDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
     // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
     const deleted = [...this.resourcesMap.keys()]
-      .filter((key) => !dependencies.find((dep) => dep.packageId === key))
-      .map((key) => dependencies.find((dep) => dep.packageId === key)) as Dependency[]
+      .filter((key) => !newDependencies.find((dep) => dep.packageId === key))
+      .map((key) => newDependencies.find((dep) => dep.packageId === key)) as Dependency[]
 
-    this.handleDeletedMods(deleted)
-    this.handleAddedMods(added)
+    return [added, deleted]
   }
 
   private async handleAddedMods(deps: Dependency[]) {
