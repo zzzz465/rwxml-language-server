@@ -3,14 +3,14 @@ import { inject, singleton } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { File } from './fs'
-import { About, Dependency } from './mod'
+import { About } from './mod'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { DependencyRequest, DependencyRequestResponse } from './events'
-import assert from 'assert'
 import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
+import { Dependency } from './mod/modDependency'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -34,7 +34,7 @@ export class DependencyResourceManager {
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    about.event.on('dependencyModsChanged', this.onAboutChanged.bind(this))
+    about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 
   isDependencyFile(uri: string): boolean {

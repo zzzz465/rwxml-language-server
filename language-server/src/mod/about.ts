@@ -1,33 +1,18 @@
 import EventEmitter from 'events'
-import { Writable } from '../types'
-import deepEqual from 'fast-deep-equal'
 import path from 'path'
 import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import { inject, singleton } from 'tsyringe'
-import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
+import { RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import _ from 'lodash'
 import { LogToken } from '../log'
+import { Dependency } from './modDependency'
 
 export interface AboutEvents {
-  supportedVersionsChanged(): void
-  dependencyModsChanged(about: About): void
+  aboutChanged(about: About): void
 }
-
-export interface Dependency {
-  readonly packageId: string
-  readonly displayName?: string
-  readonly steamWorkshopURL?: string
-  readonly downloadURL?: string
-}
-
-const DLCDependencies: Dependency[] = [
-  { packageId: 'Ludeon.RimWorld' },
-  { packageId: 'Ludeon.RimWorld.Ideology' },
-  { packageId: 'Ludeon.RimWorld.Royalty' },
-]
 
 @singleton()
 export class About {
@@ -80,32 +65,14 @@ export class About {
     this._rawXML = text
     const newVal = this.parseNewXML()
 
-    // add packageId of Core, it is always loaded but not included on About.xml
-    if (newVal.modDependencies) {
-      newVal.modDependencies = _.uniqBy([...newVal.modDependencies, ...DLCDependencies], (x) => x.packageId)
-    }
-
-    if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
-      this.log.info(`dependency mods changed. current deps: ${JSON.stringify(newVal.modDependencies, null, 4)}`)
-      this._modDependencies = newVal.modDependencies
-      this.event.emit('dependencyModsChanged', this)
-    }
-
-    const versionsDiff = _.xor(this.supportedVersions, newVal.supportedVersions)
-    this.log.debug(
-      `versions diff: ${JSON.stringify(_.difference(this.supportedVersions, newVal.supportedVersions ?? []), null, 4)}`
-    )
-
-    if (versionsDiff.length > 0) {
-      this._supportedVersions = newVal.supportedVersions
-      this.event.emit('supportedVersionsChanged')
-    }
-
     this._name = newVal.name ?? ''
     this._author = newVal.author ?? ''
     this._packageId = newVal.packageId ?? ''
     this._description = newVal.description ?? ''
     this._loadAfter = newVal.loadAfter ?? []
+    this._modDependencies = newVal.modDependencies
+
+    this.event.emit('aboutChanged', this)
   }
 
   private parseNewXML() {
