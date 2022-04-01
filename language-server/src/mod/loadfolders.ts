@@ -198,16 +198,7 @@ export class LoadFolder {
       this.rootDirectory = baseDirUri
       const xml = await file.read()
 
-      this.log.info(
-        `receive loadFolder.xml changes: ${JSON.stringify(
-          {
-            baseDir,
-            baseDirUri,
-          },
-          null,
-          2
-        )}`
-      )
+      this.log.info('loadFolder.xml changed.')
       this.updateLoadFolderXML(file.uri, xml)
     }
   }
