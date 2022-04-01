@@ -4,6 +4,9 @@ import winston from 'winston'
 import { LogToken } from '../log'
 import { About } from './about'
 import * as xml2js from 'xml2js'
+import { NotificationEventManager } from '../notificationEventManager'
+import { File, XMLFile } from '../fs'
+import * as path from 'path'
 
 /**
  * MetadataItem holds various data of a specific version.
@@ -35,10 +38,13 @@ export class AboutMetadata {
   private readonly itemMap: Map<string, MetadataItem> = new Map()
 
   constructor(
+    notiEventManager: NotificationEventManager,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger,
     @tsyringe.inject(tsyringe.delay(() => About)) private readonly about: About
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
+    notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))
   }
 
   get(version: string): MetadataItem | undefined {
@@ -64,4 +70,21 @@ export class AboutMetadata {
       }
     }
   }
+
+  private async onFileChanged(file: File) {
+    if (isMetadataFile(file)) {
+      this.log.info(`about file changed, uri: ${file.uri.toString()}`)
+
+      const data = await file.read()
+      this.update(data)
+    }
+  }
+}
+
+export function isMetadataFile(file: File): file is XMLFile & boolean {
+  const fsPath = file.uri.fsPath
+  const name = path.basename(path.normalize(fsPath))
+  const dirname = path.basename(path.dirname(fsPath))
+
+  return file instanceof XMLFile && dirname.toLowerCase() === 'about' && name.toLowerCase() === 'metadata_rwxml.xml'
 }
