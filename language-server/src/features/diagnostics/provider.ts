@@ -4,8 +4,8 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
+import { ModDependencyResourceStore } from '../../dependencyResourceStore'
 import { LogToken } from '../../log'
-import { ModDependencyManager } from '../../mod/modDependencyManager'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -33,6 +33,7 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
+    private readonly modDependencyResourceStore: ModDependencyResourceStore,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -65,7 +66,17 @@ export class DiagnosticsProvider implements Provider {
   }
 
   private async onDefChanged(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
-    await this.evaluateDocument(project, document, dirtyNodes)
+    // because node.document is plain document, not documentWithNodeMap.
+    const documents = AsEnumerable(dirtyNodes)
+      .Select((node) => project.getXMLDocumentByUri(node.document.uri))
+      .Where((doc) => !!doc)
+      .Cast<Document>()
+      .Distinct((x) => x.uri)
+      .ToArray()
+
+    for (const doc of documents.concat(document)) {
+      await this.evaluateDocument(project, doc, dirtyNodes)
+    }
   }
 
   private async evaluateDocument(
@@ -87,6 +98,8 @@ export class DiagnosticsProvider implements Provider {
     }
 
     if (document.uri === '') {
+      return
+    } else if (this.modDependencyResourceStore.isDependencyFile(document.uri)) {
       return
     }
 
