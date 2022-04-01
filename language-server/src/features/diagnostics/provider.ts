@@ -5,6 +5,7 @@ import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
 import { LogToken } from '../../log'
+import { ModDependencyManager } from '../../mod/modDependencyManager'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -36,8 +37,9 @@ export class DiagnosticsProvider implements Provider {
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    this.projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
-    this.configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))
+
+    projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
+    configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))
   }
 
   init(connection: ls.Connection): void {
@@ -123,6 +125,10 @@ export class DiagnosticsProvider implements Provider {
   }
 
   private async onConfigurationChanged() {
+    await this.diagnoseWorkspace()
+  }
+
+  private async diagnoseWorkspace() {
     if (await this.enabled()) {
       this.diagnoseAllDocuments()
     } else {

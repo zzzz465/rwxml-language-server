@@ -11,6 +11,7 @@ import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
 import { Dependency, ModDependencyManager } from './mod/modDependencyManager'
 import _ from 'lodash'
+import { AsEnumerable } from 'linq-es2015'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -69,9 +70,10 @@ export class ModDependencyResourceStore {
     const added = newDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
     // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
-    const deleted = [...this.resourcesMap.keys()]
-      .filter((key) => !newDependencies.find((dep) => dep.packageId === key))
-      .map((key) => newDependencies.find((dep) => dep.packageId === key)) as Dependency[]
+    const deleted: Dependency[] = AsEnumerable(this.resourcesMap.keys())
+      .Where((id) => !newDependencies.find((dep) => dep.packageId === id))
+      .Select((id) => ({ packageId: id }))
+      .ToArray()
 
     return [added, deleted]
   }
