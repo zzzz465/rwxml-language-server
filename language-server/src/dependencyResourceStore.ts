@@ -117,7 +117,13 @@ export class ModDependencyResourceStore {
   }
 
   private handleDeletedMods(deps: Dependency[]) {
-    this.log.info(`deleted dependencies: ${JSON.stringify(deps, null, 4)}`)
+    this.log.info(
+      `deleted dependencies: ${JSON.stringify(
+        deps.map((dep) => dep.packageId),
+        null,
+        4
+      )}`
+    )
 
     for (const dep of deps) {
       const files = this.resourcesMap.get(dep.packageId)
