@@ -65,11 +65,12 @@ export class About {
     this._rawXML = text
     const newVal = this.parseNewXML()
 
-    this._name = newVal.name ?? ''
-    this._author = newVal.author ?? ''
-    this._packageId = newVal.packageId ?? ''
-    this._description = newVal.description ?? ''
-    this._loadAfter = newVal.loadAfter ?? []
+    this._name = newVal.name
+    this._author = newVal.author
+    this._packageId = newVal.packageId
+    this._description = newVal.description
+    this._loadAfter = newVal.loadAfter
+    this._supportedVersions = newVal.supportedVersions
     this._modDependencies = newVal.modDependencies
 
     this.event.emit('aboutChanged', this)
