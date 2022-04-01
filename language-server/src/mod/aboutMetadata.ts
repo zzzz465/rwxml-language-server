@@ -64,7 +64,12 @@ export class AboutMetadata {
   }
 
   private async parseXML(): Promise<void> {
-    const data = await xml2js.parseStringPromise(this.rawXML)
+    let data: Record<string, any> = {}
+    try {
+      data = await xml2js.parseStringPromise(this.rawXML)
+    } catch (e) {
+      this.log.error(`error while parsing ${AboutMetadata.fileName}. error: "${e}"`)
+    }
 
     for (const version of this.about.supportedVersions) {
       if (data[version]) {
