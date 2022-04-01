@@ -7,6 +7,7 @@ import * as xml2js from 'xml2js'
 import { NotificationEventManager } from '../notificationEventManager'
 import { File, XMLFile } from '../fs'
 import * as path from 'path'
+import _ from 'lodash'
 
 /**
  * MetadataItem holds various data of a specific version.
@@ -46,7 +47,7 @@ export class AboutMetadata {
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
 
-    notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))
+    notiEventManager.preEvent.on('fileChanged', _.debounce(this.onFileChanged.bind(this), 500))
   }
 
   get(version: string): MetadataItem | undefined {
