@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { ModDependencyResourceStore } from '../dependencyResourceManager'
+import { ModDependencyResourceStore } from '../dependencyResourceStore'
 import { FileStore } from '../fileStore'
 import { TextFile } from '../fs'
 
