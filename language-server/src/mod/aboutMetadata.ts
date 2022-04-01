@@ -88,7 +88,7 @@ export class AboutMetadata {
   }
 
   update(data: string): void {
-    this.log.info(`${AboutMetadata.fileName} changed.`)
+    this.log.debug(`${AboutMetadata.fileName} changed.`)
     this.itemMap.clear()
 
     this.rawXML = data
