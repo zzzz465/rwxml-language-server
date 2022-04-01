@@ -21,7 +21,7 @@ export class FileStore {
 
     notiEventManager.preEvent.on('fileAdded', this.onFileAdded.bind(this))
     notiEventManager.preEvent.on('fileChanged', this.onFileChanged.bind(this))
-    notiEventManager.preEvent.on('fileDeleted', this.onFileDeleted.bind(this))
+    notiEventManager.postEvent.on('fileDeleted', this.onFileDeleted.bind(this))
   }
 
   get(uri: string) {
