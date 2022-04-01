@@ -3,11 +3,13 @@ import * as tsyringe from 'tsyringe'
 import winston from 'winston'
 import { LogToken } from '../log'
 import { About } from './about'
-import * as xml2js from 'xml2js'
 import { NotificationEventManager } from '../notificationEventManager'
 import { File, XMLFile } from '../fs'
 import * as path from 'path'
 import _ from 'lodash'
+import * as xml from '../utils/xml'
+import * as cheerio from 'cheerio'
+import { AsEnumerable } from 'linq-es2015'
 
 /**
  * MetadataItem holds various data of a specific version.
@@ -30,31 +32,29 @@ interface Events {
  * @example
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<Data>
-    <spec>
-        <default>
+<Metadata>
+    <default>
+        <modDependency>
+            <optional>
+                <li>
+                    <packageId>erdelf.HumanoidAlienRaces</packageId>
+                </li>
+            </optional>
+        </modDependency>
+    </default>
+    <versions>
+        <v1.3>
             <modDependency>
                 <optional>
                     <li>
                         <packageId>erdelf.HumanoidAlienRaces</packageId>
+                        <packageId>goudaquiche.MoharFramework</packageId>
                     </li>
                 </optional>
             </modDependency>
-        </default>
-        <versions>
-            <v1.3>
-                <modDependency>
-                    <optional>
-                        <li>
-                            <packageId>erdelf.HumanoidAlienRaces</packageId>
-                            <packageId>goudaquiche.MoharFramework</packageId>
-                        </li>
-                    </optional>
-                </modDependency>
-            </v1.3>
-        </versions>
-    </spec>
-</Data>
+        </v1.3>
+    </versions>
+</Metadata>
 ```
  */
 @tsyringe.singleton()
@@ -80,40 +80,63 @@ export class AboutMetadata {
     notiEventManager.preEvent.on('fileChanged', _.debounce(this.onFileChanged.bind(this), 500))
   }
 
+  /**
+   * @param version project version without prefix v
+   */
   get(version: string): MetadataItem | undefined {
-    return this.itemMap.get(version) ?? this.defaultItem
+    return this.itemMap.get(`v${version}`) ?? this.defaultItem
   }
 
-  async update(data: string): Promise<void> {
+  update(data: string): void {
     this.log.info(`${AboutMetadata.fileName} changed.`)
     this.itemMap.clear()
 
     this.rawXML = data
-    await this.parseXML()
+    this.parseXML()
 
     this.event.emit('aboutMetadataChanged', this)
   }
 
   private async parseXML(): Promise<void> {
-    let data: Record<string, any> = {}
-    try {
-      data = await xml2js.parseStringPromise(this.rawXML)
-    } catch (e) {
-      this.log.error(`error while parsing ${AboutMetadata.fileName}. error: "${e}"`)
-      return
+    this.itemMap.clear()
+
+    const $ = xml.parse(this.rawXML)
+
+    const items = AsEnumerable($('Metadata > versions').children())
+      .Select((elem) => this.parseMetadataItem(elem))
+      .Where((item) => !!item)
+      .Cast<MetadataItem>()
+      .ToArray()
+
+    for (const item of items) {
+      this.itemMap.set(item.version, item)
     }
 
-    const versions = data.versions
-    if (versions) {
-      for (const version of this.about.supportedVersions) {
-        if (versions[version]) {
-          this.itemMap.set(version, versions[`v${version}`])
-        }
-      }
+    if ($('Metadata > default').length > 0) {
+      this.defaultItem = this.parseMetadataItem($('Metadata > default')[0])
+    } else {
+      this.defaultItem = undefined
     }
+  }
 
-    if (data.default) {
-      this.defaultItem = data.default
+  /**
+   * create MetadataItem of specific version.
+   */
+  private parseMetadataItem(elem: cheerio.Element): MetadataItem | undefined {
+    const version = elem.tagName
+    const $ = cheerio.load(elem, { xmlMode: true })
+
+    const optionalModDependencyPackageIds = $('modDependency > optional > li > packageId')
+      .toArray()
+      .map((e) => $(e).text())
+
+    return {
+      version,
+      modDependency: {
+        optional: optionalModDependencyPackageIds.map((id) => ({
+          packageId: id,
+        })),
+      },
     }
   }
 
