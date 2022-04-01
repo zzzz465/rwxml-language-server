@@ -32,7 +32,7 @@ export class ModDependency {
   }
 
   get optionalDependencies(): Dependency[] {
-    throw new Error('not implemented.')
+    return this.aboutMetadataOptionalModDependencies
   }
 
   get dependencies(): Dependency[] {
