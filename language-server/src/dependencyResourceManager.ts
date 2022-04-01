@@ -54,11 +54,12 @@ export class DependencyResourceManager {
   private onAboutChanged(about: About) {
     this.log.info('reloading because about.xml is changed.')
     this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies, null, 4)}`)
+
     const added = about.modDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
     // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
     const deleted = [...this.resourcesMap.keys()]
-      .filter((key) => about.modDependencies.find((dep) => dep.packageId === key))
+      .filter((key) => !about.modDependencies.find((dep) => dep.packageId === key))
       .map((key) => about.modDependencies.find((dep) => dep.packageId === key)) as Dependency[]
 
     this.handleDeletedMods(deleted)
