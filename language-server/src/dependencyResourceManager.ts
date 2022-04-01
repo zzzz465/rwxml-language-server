@@ -10,7 +10,7 @@ import { DependencyRequest, DependencyRequestResponse } from './events'
 import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
-import { Dependency } from './mod/modDependency'
+import { Dependency, ModDependency } from './mod/modDependency'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -29,12 +29,12 @@ export class DependencyResourceManager {
   private readonly resources: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
   constructor(
-    about: About,
+    modDependency: ModDependency,
     @tsyringe.inject(ConnectionToken) private readonly connection: ls.Connection,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    about.event.on('aboutChanged', this.onAboutChanged.bind(this))
+    modDependency.event.on('dependencyChanged', this.onModDependencyChanged.bind(this))
   }
 
   isDependencyFile(uri: string): boolean {
@@ -51,16 +51,18 @@ export class DependencyResourceManager {
     this.resources.setValue(uri, next >= 0 ? next : 0) // it must be greater than zero
   }
 
-  private onAboutChanged(about: About) {
-    this.log.info('reloading because about.xml is changed.')
-    this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies, null, 4)}`)
+  private onModDependencyChanged(modDependency: ModDependency) {
+    this.log.info('reloading because dependency is changed.')
 
-    const added = about.modDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
+    const dependencies = modDependency.dependencies
+    this.log.debug(`mod dependencies: ${JSON.stringify(dependencies, null, 4)}`)
+
+    const added = dependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
     // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
     const deleted = [...this.resourcesMap.keys()]
-      .filter((key) => !about.modDependencies.find((dep) => dep.packageId === key))
-      .map((key) => about.modDependencies.find((dep) => dep.packageId === key)) as Dependency[]
+      .filter((key) => !dependencies.find((dep) => dep.packageId === key))
+      .map((key) => dependencies.find((dep) => dep.packageId === key)) as Dependency[]
 
     this.handleDeletedMods(deleted)
     this.handleAddedMods(added)
