@@ -51,7 +51,6 @@
   },
   "dependencies": {
     "@rwxml/analyzer": "../analyzer",
-    "@types/xml2js": "^0.4.9",
     "axios": "^0.21.1",
     "cache-decorator": "^0.1.6",
     "cheerio": "^1.0.0-rc.10",
@@ -71,7 +70,6 @@
     "vscode-languageserver": "^7.0.0",
     "vscode-languageserver-textdocument": "^1.0.1",
     "vscode-uri": "^3.0.2",
-    "winston": "^3.3.3",
-    "xml2js": "^0.4.23"
+    "winston": "^3.3.3"
   }
 }
