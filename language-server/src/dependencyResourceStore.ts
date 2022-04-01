@@ -132,6 +132,13 @@ export class ModDependencyResourceStore {
         continue
       }
 
+      for (const file of files) {
+        this.unmarkFile(file.uri.toString())
+        this.event.emit('fileDeleted', file.uri.toString())
+      }
+
+      this.resourcesMap.delete(dep.packageId)
+
       this.log.silly(
         `dependency file deleted: ${JSON.stringify(
           files.map((file) => file.uri.toString()),
@@ -139,11 +146,6 @@ export class ModDependencyResourceStore {
           4
         )}`
       )
-
-      for (const file of files) {
-        this.unmarkFile(file.uri.toString())
-        this.event.emit('fileDeleted', file.uri.toString())
-      }
     }
   }
 }
