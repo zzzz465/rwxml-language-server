@@ -8,7 +8,7 @@ import { RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import _ from 'lodash'
 import { LogToken } from '../log'
-import { Dependency } from './modDependency'
+import { Dependency } from './modDependencyManager'
 
 export interface AboutEvents {
   aboutChanged(about: About): void

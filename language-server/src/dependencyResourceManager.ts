@@ -9,7 +9,7 @@ import { DependencyRequest, DependencyRequestResponse } from './events'
 import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
-import { Dependency, ModDependencyManager } from './mod/modDependency'
+import { Dependency, ModDependencyManager } from './mod/modDependencyManager'
 import _ from 'lodash'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
