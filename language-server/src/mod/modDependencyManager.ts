@@ -74,7 +74,7 @@ export class ModDependencyManager {
   private onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
     const optionalDependencies = AsEnumerable(this.about.supportedVersions)
       .Select((version) => aboutMetadata.get(version))
-      .Where((item) => item !== null)
+      .Where((item) => !!item)
       .Cast<MetadataItem>()
       .SelectMany((item) => item.modDependency?.optional ?? [])
       .Distinct((item) => item.packageId)
