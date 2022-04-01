@@ -12,7 +12,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import _ from 'lodash'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
-import { CancellationTokenSource } from 'vscode-languageserver'
+import { CancellationToken, CancellationTokenSource } from 'vscode-languageserver'
 import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 import * as documentWithNodeMap from './documentWithNodeMap'
@@ -120,15 +120,15 @@ export class Project {
     this.cancelTokenSource.cancel()
     const cancelTokenSource = new CancellationTokenSource()
     this.cancelTokenSource = cancelTokenSource
-    const token = this.cancelTokenSource.token
+    const cancelToken = this.cancelTokenSource.token
 
     this.log.info(`[${requestId}] reloading project...`)
     this.resourceStore.reload()
 
-    await this.reset(requestId)
-    this.log.info(`[${requestId}] project cleared.`)
+    await this.reset(requestId, cancelToken)
 
-    if (!token.isCancellationRequested) {
+    if (!cancelToken.isCancellationRequested) {
+      this.log.info(`[${requestId}] project cleared.`)
       this.evaluteProject()
       this.event.emit('projectReloaded')
       this.log.info('project reloaded.')
@@ -143,7 +143,7 @@ export class Project {
   /**
    * reset project to initial state
    */
-  private async reset(requestId: string = uuid()) {
+  private async reset(requestId: string = uuid(), cancelToken?: CancellationToken) {
     this.log.debug(
       // TODO: put uuid as log format
       `[${requestId}] current project file dlls: ${JSON.stringify(
@@ -153,6 +153,9 @@ export class Project {
       )}`
     )
     const typeInfoMap = await this.getTypeInfo(requestId)
+    if (cancelToken?.isCancellationRequested) {
+      return
+    }
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.log, this.version)

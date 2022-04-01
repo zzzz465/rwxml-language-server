@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { inject, singleton } from 'tsyringe'
+import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
@@ -14,7 +14,10 @@ export interface NotificationEvents {
   fileDeleted(uri: string): void
 }
 
-@singleton()
+/**
+ * NotificationEventManager spread various events in pre/main/post step.
+ */
+@tsyringe.singleton()
 export class NotificationEventManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${NotificationEventManager.name}] ${info.message}`
@@ -22,12 +25,13 @@ export class NotificationEventManager {
   private readonly log: winston.Logger
 
   // pre-event stage emit
-  public readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()
+  readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()
   // event emit
-  public readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
+  readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
   // post-event emit?
+  readonly postEvent: EventEmitter<NotificationEvents> = new EventEmitter()
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+  constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
@@ -50,15 +54,18 @@ export class NotificationEventManager {
   private onFileAdded(file: File): void {
     this.preEvent.emit('fileAdded', file)
     this.event.emit('fileAdded', file)
+    this.postEvent.emit('fileAdded', file)
   }
 
   private onFileChanged(file: File): void {
     this.preEvent.emit('fileChanged', file)
     this.event.emit('fileChanged', file)
+    this.postEvent.emit('fileChanged', file)
   }
 
   private onFileDeleted(uri: string): void {
     this.preEvent.emit('fileDeleted', uri)
     this.event.emit('fileDeleted', uri)
+    this.postEvent.emit('fileDeleted', uri)
   }
 }

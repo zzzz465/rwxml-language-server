@@ -1,11 +1,11 @@
 import { singleton } from 'tsyringe'
-import { DependencyResourceManager } from '../dependencyResourceManager'
+import { ModDependencyResourceStore } from '../dependencyResourceStore'
 import { FileStore } from '../fileStore'
 import { TextFile } from '../fs'
 
 @singleton()
 export class WritableChecker {
-  constructor(private readonly fileStore: FileStore, private readonly depManager: DependencyResourceManager) {}
+  constructor(private readonly fileStore: FileStore, private readonly depManager: ModDependencyResourceStore) {}
 
   canWrite(uri: string): boolean {
     if (this.depManager.isDependencyFile(uri)) {

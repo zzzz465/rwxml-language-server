@@ -8,6 +8,7 @@ import * as winston from 'winston'
 import { About } from './mod'
 import { inject } from 'tsyringe'
 import { LogToken } from './log'
+import _ from 'lodash'
 
 interface Events {
   onProjectInitialized(project: Project): void
@@ -22,6 +23,7 @@ export class ProjectManager {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${ProjectManager.name}] ${info.message}`)
   private readonly log: winston.Logger
 
+  private supportedVersions: string[] = []
   private readonly projectContainers: Map<string, tsyringe.DependencyContainer> = new Map()
 
   get projects(): Project[] {
@@ -30,9 +32,9 @@ export class ProjectManager {
 
   public readonly events: EventEmitter<Events> = new EventEmitter()
 
-  constructor(private readonly about: About, @inject(LogToken) baseLogger: winston.Logger) {
+  constructor(about: About, @inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    about.event.on('supportedVersionsChanged', this.onSupportedVersionsChanged.bind(this))
+    about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 
   listen(notiEvent: EventEmitter<NotificationEvents>): void {
@@ -65,8 +67,11 @@ export class ProjectManager {
     return c.resolve(Project)
   }
 
-  private onSupportedVersionsChanged() {
-    this.setSupportedVersions(this.about.supportedVersions)
+  private onAboutChanged(about: About) {
+    if (!_.isEqual(this.supportedVersions, about.supportedVersions)) {
+      this.setSupportedVersions(about.supportedVersions)
+      this.supportedVersions = about.supportedVersions
+    }
   }
 
   private onProjectFileAdded(file: File) {

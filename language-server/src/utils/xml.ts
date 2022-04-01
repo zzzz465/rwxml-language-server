@@ -1,9 +1,5 @@
-import cheerio from 'cheerio'
-
-cheerio._options.xmlMode = true
+import { load } from 'cheerio'
 
 export function parse(text: string) {
-  const $ = cheerio.load(text, { xmlMode: true })
-
-  return $
+  return load(text, { xmlMode: true })
 }

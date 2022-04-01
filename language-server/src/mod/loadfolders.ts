@@ -100,24 +100,19 @@ export class LoadFolder {
 
   // determine the file belongs to specific rimworld version.
   private isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
-    this.log.silly(`check uri ${uri.fsPath} is belongs to ${version}`)
-
     const root = this.rootDirectory.fsPath
     const child = uri.fsPath
 
     // check file is under project root directory
     if (!isSubFileOf(root, child)) {
-      this.log.silly(`child ${child} is not subfile of ${root}`)
       return false
     }
 
     // check file is under loadDirectory according to LoadFolders.xml
     if (!this.isUnderResourceDirectory(uri, version)) {
-      this.log.silly('uri is not under resource directory')
       return false
     }
 
-    this.log.silly(`uri ${uri.fsPath} is under version ${version}`)
     return true
   }
 
@@ -198,16 +193,7 @@ export class LoadFolder {
       this.rootDirectory = baseDirUri
       const xml = await file.read()
 
-      this.log.info(
-        `receive loadFolder.xml changes: ${JSON.stringify(
-          {
-            baseDir,
-            baseDirUri,
-          },
-          null,
-          2
-        )}`
-      )
+      this.log.info('loadFolder.xml changed.')
       this.updateLoadFolderXML(file.uri, xml)
     }
   }

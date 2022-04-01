@@ -148,6 +148,8 @@ export class ResourceStore {
     if (!this.files.delete(uri)) {
       this.log.warn(`trying to delete file ${uri} but not exists.`)
     }
+
+    this.event.emit('xmlDeleted', uri)
   }
 
   /**

@@ -1,23 +1,24 @@
 import EventEmitter from 'events'
-import { inject, singleton } from 'tsyringe'
-import { Connection } from 'vscode-languageserver'
+import * as tsyringe from 'tsyringe'
+import * as ls from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { File } from './fs'
-import { About, Dependency } from './mod'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { DependencyRequest, DependencyRequestResponse } from './events'
-import assert from 'assert'
 import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
+import { Dependency, ModDependencyManager } from './mod/modDependencyManager'
+import _ from 'lodash'
+import { AsEnumerable } from 'linq-es2015'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
-@singleton()
-export class DependencyResourceManager {
+@tsyringe.singleton()
+export class ModDependencyResourceStore {
   private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${DependencyResourceManager.name}] ${info.message}`
+    (info) => `[${info.level}] [${ModDependencyResourceStore.name}] ${info.message}`
   )
   private readonly log: winston.Logger
 
@@ -29,12 +30,12 @@ export class DependencyResourceManager {
   private readonly resources: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
   constructor(
-    about: About,
-    @inject(ConnectionToken) private readonly connection: Connection,
-    @inject(LogToken) baseLogger: winston.Logger
+    modDependency: ModDependencyManager,
+    @tsyringe.inject(ConnectionToken) private readonly connection: ls.Connection,
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    about.event.on('dependencyModsChanged', this.onAboutChanged.bind(this))
+    modDependency.event.on('dependencyChanged', _.debounce(this.onModDependencyChanged.bind(this), 500))
   }
 
   isDependencyFile(uri: string): boolean {
@@ -51,19 +52,30 @@ export class DependencyResourceManager {
     this.resources.setValue(uri, next >= 0 ? next : 0) // it must be greater than zero
   }
 
-  private onAboutChanged(about: About) {
-    this.log.info('reloading because about.xml is changed.')
-    this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies, null, 4)}`)
+  private onModDependencyChanged(modDependencyManager: ModDependencyManager) {
+    const dependencies = modDependencyManager.dependencies
+    this.log.debug(`mod dependencies: ${JSON.stringify(dependencies, null, 4)}`)
 
-    const added = about.modDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
+    const [added, deleted] = this.getModDiff(dependencies)
+    if (added.length === 0 && deleted.length === 0) {
+      return
+    }
 
-    // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
-    const deleted = [...this.resourcesMap.keys()]
-      .filter((key) => !about.modDependencies.find((dep) => dep.packageId === key))
-      .map((key) => about.modDependencies.find((dep) => dep.packageId === key)) as Dependency[]
-
+    this.log.info('reloading because dependency is changed.')
     this.handleDeletedMods(deleted)
     this.handleAddedMods(added)
+  }
+
+  private getModDiff(newDependencies: Dependency[]): [Dependency[], Dependency[]] {
+    const added = newDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
+
+    // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
+    const deleted: Dependency[] = AsEnumerable(this.resourcesMap.keys())
+      .Where((id) => !newDependencies.find((dep) => dep.packageId === id))
+      .Select((id) => ({ packageId: id }))
+      .ToArray()
+
+    return [added, deleted]
   }
 
   private async handleAddedMods(deps: Dependency[]) {
@@ -105,7 +117,13 @@ export class DependencyResourceManager {
   }
 
   private handleDeletedMods(deps: Dependency[]) {
-    this.log.info(`deleted dependencies: ${JSON.stringify(deps, null, 4)}`)
+    this.log.info(
+      `deleted dependencies: ${JSON.stringify(
+        deps.map((dep) => dep.packageId),
+        null,
+        4
+      )}`
+    )
 
     for (const dep of deps) {
       const files = this.resourcesMap.get(dep.packageId)
@@ -114,18 +132,20 @@ export class DependencyResourceManager {
         continue
       }
 
-      this.log.silly(
-        `dependency file deleted: ${JSON.stringify(
-          files.map((file) => file.uri),
-          null,
-          4
-        )}`
-      )
-
       for (const file of files) {
         this.unmarkFile(file.uri.toString())
         this.event.emit('fileDeleted', file.uri.toString())
       }
+
+      this.resourcesMap.delete(dep.packageId)
+
+      this.log.silly(
+        `dependency file deleted: ${JSON.stringify(
+          files.map((file) => file.uri.toString()),
+          null,
+          4
+        )}`
+      )
     }
   }
 }

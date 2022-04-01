@@ -225,7 +225,9 @@ export class DecoProvider implements Provider {
         type: `${prefix}.open.parentNameAttribute`,
       })
 
-      if (this.defProvider.findDefsFromUriWithPos(project, URI.parse(uri), parentNameAttrib.valueRange.start).length > 0) {
+      if (
+        this.defProvider.findDefsFromUriWithPos(project, URI.parse(uri), parentNameAttrib.valueRange.start).length > 0
+      ) {
         res.push({
           range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.valueRange, uri)!,
           type: `${prefix}.open.parentNameAttributeValue.linked`,
