@@ -1,7 +1,6 @@
 import EventEmitter from 'events'
 import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
-import { RimWorldVersionToken } from '../RimWorldVersion'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
 
@@ -23,9 +22,9 @@ interface Events {
 }
 
 /**
- * ModDependency provides dependency (required + optional) of the current project.
+ * ModDependency provides dependency (required + optional) of the current workspace.
  */
-@tsyringe.injectable()
+@tsyringe.singleton()
 export class ModDependency {
   get requiredDependencies(): Dependency[] {
     return this.aboutModDependencies
@@ -44,11 +43,7 @@ export class ModDependency {
 
   readonly event: EventEmitter<Events> = new EventEmitter()
 
-  constructor(
-    @tsyringe.inject(RimWorldVersionToken) private readonly version: string,
-    about: About,
-    aboutMetadata: AboutMetadata
-  ) {
+  constructor(private readonly about: About, aboutMetadata: AboutMetadata) {
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
     aboutMetadata.event.on('aboutMetadataChanged', this.onAboutMetadataChanged.bind(this))
   }
@@ -63,12 +58,15 @@ export class ModDependency {
     this.event.emit('dependencyChanged', this)
   }
 
-  private onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
-    const item = aboutMetadata.get(this.version)
-    if (item) {
-      this.aboutMetadataOptionalModDependencies = item.modDependency?.optional ?? []
-    } else {
-      this.aboutMetadataOptionalModDependencies = []
+  protected onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
+    for (const version of this.about.supportedVersions) {
+      const item = aboutMetadata.get(version)
+
+      if (item) {
+        this.aboutMetadataOptionalModDependencies = item.modDependency?.optional ?? []
+      } else {
+        this.aboutMetadataOptionalModDependencies = []
+      }
     }
 
     this.event.emit('dependencyChanged', this)
