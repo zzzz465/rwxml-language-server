@@ -10,6 +10,7 @@ import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
 import { Dependency, ModDependencyManager } from './mod/modDependency'
+import _ from 'lodash'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -33,7 +34,7 @@ export class ModDependencyResourceStore {
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    modDependency.event.on('dependencyChanged', this.onModDependencyChanged.bind(this))
+    modDependency.event.on('dependencyChanged', _.debounce(this.onModDependencyChanged.bind(this), 500))
   }
 
   isDependencyFile(uri: string): boolean {
