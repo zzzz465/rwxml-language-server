@@ -84,6 +84,7 @@ export class ModDependencyManager {
       return
     }
 
+    this.aboutMetadataOptionalModDependencies = optionalDependencies
     this.log.debug('modDependency updated due to aboutMetadata change.')
 
     this.emitDependencyChanged()
@@ -91,8 +92,20 @@ export class ModDependencyManager {
 
   private emitDependencyChanged(): void {
     this.log.info('ModDependency updated.')
-    this.log.info(`required dependencies: ${JSON.stringify(this.requiredDependencies, null, 4)}`)
-    this.log.info(`optional dependncies: ${JSON.stringify(this.optionalDependencies, null, 4)}`)
+    this.log.info(
+      `required dependencies: ${JSON.stringify(
+        this.requiredDependencies.map((dep) => dep.packageId),
+        null,
+        4
+      )}`
+    )
+    this.log.info(
+      `optional dependencies: ${JSON.stringify(
+        this.optionalDependencies.map((dep) => dep.packageId),
+        null,
+        4
+      )}`
+    )
 
     this.event.emit('dependencyChanged', this)
   }
