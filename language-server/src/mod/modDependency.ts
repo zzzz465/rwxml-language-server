@@ -15,13 +15,19 @@ interface Events {
   dependencyChanged(modDependencyManager: ModDependencyManager): void
 }
 
+const requiredDependencies = [
+  {
+    packageId: 'Ludeon.RimWorld',
+  },
+] as const
+
 /**
  * ModDependencyManager provides dependency (required + optional) of the current workspace.
  */
 @tsyringe.singleton()
 export class ModDependencyManager {
   get requiredDependencies(): Dependency[] {
-    return this.aboutModDependencies
+    return [...requiredDependencies, ...this.aboutModDependencies]
   }
 
   get optionalDependencies(): Dependency[] {
