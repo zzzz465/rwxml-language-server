@@ -74,7 +74,7 @@ export class ResourceStore {
       return
     }
 
-    this.log.debug(`file added: ${file}`)
+    this.log.silly(`file added: ${file}`)
 
     this.files.set(file.uri.toString(), file)
 
@@ -98,7 +98,7 @@ export class ResourceStore {
       return
     }
 
-    this.log.debug(`file changed: ${file}`)
+    this.log.silly(`file changed: ${file}`)
 
     this.files.set(file.uri.toString(), file)
 
@@ -122,7 +122,7 @@ export class ResourceStore {
       return
     }
 
-    this.log.debug(`file deleted: ${uri}`)
+    this.log.silly(`file deleted: ${uri}`)
 
     assert(typeof uri === 'string', 'fileDeleted must accept string type')
 
@@ -159,13 +159,13 @@ export class ResourceStore {
       if (this.isProjectResource(uri)) {
         if (!this.files.has(uri)) {
           // when file is not registered but it should
-          this.log.debug(`file added via reload: ${uri}`)
+          this.log.silly(`(reloading) add non-registred project resource: ${uri}`)
           this.fileAdded(file)
         }
       } else {
         if (this.files.has(uri)) {
           // when file is registered but should be removed
-          this.log.debug(`file deleted via reload: ${uri}`)
+          this.log.silly(`(reloading) deleting registered project resource: ${uri}`)
           this.fileDeleted(uri)
         }
       }
@@ -173,7 +173,7 @@ export class ResourceStore {
   }
 
   private async onXMLFileChanged(file: XMLFile) {
-    this.log.debug(`xml file changed: ${file}`)
+    this.log.silly(`xml file changed: ${file}`)
 
     const uri = file.uri.toString()
     const data = await file.read()
@@ -183,7 +183,7 @@ export class ResourceStore {
   }
 
   private onXMLFileDeleted(uri: string) {
-    this.log.debug(`xml file deleted: ${uri}`)
+    this.log.silly(`xml file deleted: ${uri}`)
 
     if (!this.xmls.delete(uri)) {
       this.log.warn(`trying to delete xml ${uri} but not exists.`)
@@ -193,7 +193,7 @@ export class ResourceStore {
   private onTextureFileChanged(file: TextureFile) {
     const resourcePath = this.loadFolder.getResourcePath(file.uri, this.version)
     if (resourcePath) {
-      this.log.debug(`texture added, version: ${this.version}, uri: ${file.toString()}`)
+      this.log.silly(`texture added, version: ${this.version}, uri: ${file.toString()}`)
       this.textures.add(resourcePath)
     }
   }
@@ -201,7 +201,7 @@ export class ResourceStore {
   private onTextureFileDeleted(uri: string) {
     const resourcePath = this.loadFolder.getResourcePath(URI.parse(uri), this.version)
     if (resourcePath) {
-      this.log.debug(`texture deleted, version: ${this.version}, uri: ${uri}`)
+      this.log.silly(`texture deleted, version: ${this.version}, uri: ${uri}`)
       this.textures.delete(resourcePath)
     }
   }
@@ -211,7 +211,7 @@ export class ResourceStore {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
-      this.log.debug(`audio changed, version: ${this.version}, uri: ${file.toString()}`)
+      this.log.silly(`audio changed, version: ${this.version}, uri: ${file.toString()}`)
       this.audios.add(resourcePath)
       this.audioDirectories.add(resourceDir)
     }
@@ -222,14 +222,14 @@ export class ResourceStore {
     if (resourcePath) {
       const resourceDir = path.dirname(resourcePath)
 
-      this.log.debug(`audio deleted, version: ${this.version}, uri: ${uri}`)
+      this.log.silly(`audio deleted, version: ${this.version}, uri: ${uri}`)
       this.audios.delete(resourcePath)
       this.audioDirectories.remove(resourceDir)
     }
   }
 
   private onDLLFileChanged(file: DLLFile) {
-    this.log.debug(`DLLFile changed: ${file.uri.toString()}`)
+    this.log.silly(`DLLFile changed: ${file.uri.toString()}`)
 
     // NOTE: should I pass File or uri string?
     this.dllFiles.add(file.uri.toString())
@@ -237,7 +237,7 @@ export class ResourceStore {
   }
 
   private onDLLFileDeleted(uri: string) {
-    this.log.debug(`DLLFile deleted: ${uri}`)
+    this.log.silly(`DLLFile deleted: ${uri}`)
 
     if (!this.dllFiles.has(uri)) {
       this.log.warn(`trying to delete dllFile, but ${uri} is not exists.`)

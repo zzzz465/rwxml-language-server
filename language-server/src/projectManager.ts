@@ -70,7 +70,7 @@ export class ProjectManager {
   }
 
   private onProjectFileAdded(file: File) {
-    this.log.debug(`file added: ${file.uri}`)
+    this.log.silly(`file added: ${file.uri}`)
 
     for (const proj of this.projects) {
       proj.resourceStore.fileAdded(file)
@@ -78,7 +78,7 @@ export class ProjectManager {
   }
 
   private onProjectFileChanged(file: File) {
-    this.log.debug(`file changed: ${file.uri}`)
+    this.log.silly(`file changed: ${file.uri}`)
 
     for (const proj of this.projects) {
       proj.resourceStore.fileChanged(file)
@@ -86,7 +86,7 @@ export class ProjectManager {
   }
 
   private onProjectFileDeleted(uri: string) {
-    this.log.debug(`file deleted: ${uri}`)
+    this.log.silly(`file deleted: ${uri}`)
 
     for (const proj of this.projects) {
       proj.resourceStore.fileDeleted(uri)

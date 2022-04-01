@@ -35,7 +35,7 @@ export class TextDocumentManager {
   }
 
   private set(uri: string, text: string, language = 'xml') {
-    this.log.debug(`set document, uri: ${uri}, language: ${language}`)
+    this.log.silly(`register document: uri: ${uri}, language: ${language}`)
     const document = TextDocument.create(uri, language, 0, text)
     this.documents.set(uri, document)
   }
@@ -50,7 +50,7 @@ export class TextDocumentManager {
 
   private async onFileChanged(file: File) {
     if (file instanceof XMLFile) {
-      this.log.debug(`TextFile changed, uri: ${file.uri.toString()}`)
+      this.log.silly(`TextFile changed, uri: ${file.uri.toString()}`)
 
       const data = await file.read()
       this.set(file.uri.toString(), data)

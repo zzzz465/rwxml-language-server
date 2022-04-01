@@ -52,6 +52,7 @@ export class DependencyResourceManager {
   }
 
   private onAboutChanged(about: About) {
+    this.log.info('reloading because about.xml is changed.')
     this.log.debug(`mod dependencies: ${JSON.stringify(about.modDependencies, null, 4)}`)
     const added = about.modDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
 
@@ -65,7 +66,7 @@ export class DependencyResourceManager {
   }
 
   private async handleAddedMods(deps: Dependency[]) {
-    this.log.debug(`request dependencies (added): ${JSON.stringify(deps)}`)
+    this.log.info(`added dependencies: ${JSON.stringify(deps)}`)
 
     const requests = deps.map((dep) =>
       this.connection.sendRequest(DependencyRequest, { packageId: dep.packageId }, undefined)
@@ -88,10 +89,7 @@ export class DependencyResourceManager {
   }
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
-    assert(!res.error)
-    this.log.debug(
-      `processing add response, packageId: ${res.packageId}, files: ${(JSON.stringify(res.uris), null, 2)}`
-    )
+    this.log.silly(`dependency file added: ${JSON.stringify(res.uris, null, 4)}`)
 
     const files = res.uris.map((uri) =>
       File.create({ uri: URI.parse(uri), ownerPackageId: res.packageId, readonly: true })
@@ -106,14 +104,22 @@ export class DependencyResourceManager {
   }
 
   private handleDeletedMods(deps: Dependency[]) {
-    this.log.debug(`deleted dependencies: ${JSON.stringify(deps)}`)
+    this.log.info(`deleted dependencies: ${JSON.stringify(deps)}`)
 
     for (const dep of deps) {
       const files = this.resourcesMap.get(dep.packageId)
       if (!files) {
-        this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered`)
+        this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered.`)
         continue
       }
+
+      this.log.silly(
+        `dependency file deleted: ${JSON.stringify(
+          files.map((file) => file.uri),
+          null,
+          4
+        )}`
+      )
 
       for (const file of files) {
         this.unmarkFile(file.uri.toString())
