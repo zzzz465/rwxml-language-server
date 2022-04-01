@@ -27,6 +27,35 @@ interface Events {
 
 /**
  * AboutMetadata provides additional data that about.xml doesn't support.
+ * @example
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <spec>
+        <default>
+            <modDependency>
+                <optional>
+                    <li>
+                        <packageId>erdelf.HumanoidAlienRaces</packageId>
+                    </li>
+                </optional>
+            </modDependency>
+        </default>
+        <versions>
+            <v1.3>
+                <modDependency>
+                    <optional>
+                        <li>
+                            <packageId>erdelf.HumanoidAlienRaces</packageId>
+                            <packageId>goudaquiche.MoharFramework</packageId>
+                        </li>
+                    </optional>
+                </modDependency>
+            </v1.3>
+        </versions>
+    </spec>
+</Data>
+```
  */
 @tsyringe.singleton()
 export class AboutMetadata {
@@ -38,6 +67,7 @@ export class AboutMetadata {
   readonly event: EventEmitter<Events> = new EventEmitter()
 
   private rawXML = ''
+  private defaultItem?: MetadataItem = undefined
   private readonly itemMap: Map<string, MetadataItem> = new Map()
 
   constructor(
@@ -51,7 +81,7 @@ export class AboutMetadata {
   }
 
   get(version: string): MetadataItem | undefined {
-    return this.itemMap.get(version)
+    return this.itemMap.get(version) ?? this.defaultItem
   }
 
   async update(data: string): Promise<void> {
@@ -70,12 +100,20 @@ export class AboutMetadata {
       data = await xml2js.parseStringPromise(this.rawXML)
     } catch (e) {
       this.log.error(`error while parsing ${AboutMetadata.fileName}. error: "${e}"`)
+      return
     }
 
-    for (const version of this.about.supportedVersions) {
-      if (data[version]) {
-        this.itemMap.set(version, data.version)
+    const versions = data.versions
+    if (versions) {
+      for (const version of this.about.supportedVersions) {
+        if (versions[version]) {
+          this.itemMap.set(version, versions[`v${version}`])
+        }
       }
+    }
+
+    if (data.default) {
+      this.defaultItem = data.default
     }
   }
 
