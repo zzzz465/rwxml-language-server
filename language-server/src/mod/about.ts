@@ -86,7 +86,7 @@ export class About {
     }
 
     if (newVal.modDependencies && !deepEqual(this._modDependencies, newVal.modDependencies)) {
-      this.log.info(`dependency mods changed: ${JSON.stringify(newVal.modDependencies)}`)
+      this.log.info(`dependency mods changed. current deps: ${JSON.stringify(newVal.modDependencies, null, 4)}`)
       this._modDependencies = newVal.modDependencies
       this.event.emit('dependencyModsChanged', this)
     }

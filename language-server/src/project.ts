@@ -122,15 +122,16 @@ export class Project {
     this.cancelTokenSource = cancelTokenSource
     const token = this.cancelTokenSource.token
 
-    this.log.info(`[${requestId}] reloading project`)
+    this.log.info(`[${requestId}] reloading project...`)
     this.resourceStore.reload()
 
     await this.reset(requestId)
-    this.log.info(`[${requestId}] project state reset`)
+    this.log.info(`[${requestId}] project cleared.`)
 
     if (!token.isCancellationRequested) {
       this.evaluteProject()
       this.event.emit('projectReloaded')
+      this.log.info('project reloaded.')
     } else {
       this.log.info(`[${requestId}] project evluation canceled`)
     }
