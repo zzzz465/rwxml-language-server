@@ -4,12 +4,6 @@ import * as tsyringe from 'tsyringe'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
 
-const DLCDependencies: Dependency[] = [
-  { packageId: 'Ludeon.RimWorld' },
-  { packageId: 'Ludeon.RimWorld.Ideology' },
-  { packageId: 'Ludeon.RimWorld.Royalty' },
-]
-
 export interface Dependency {
   readonly packageId: string
   readonly displayName?: string
@@ -18,14 +12,14 @@ export interface Dependency {
 }
 
 interface Events {
-  dependencyChanged(modDependency: ModDependency): void
+  dependencyChanged(modDependencyManager: ModDependencyManager): void
 }
 
 /**
- * ModDependency provides dependency (required + optional) of the current workspace.
+ * ModDependencyManager provides dependency (required + optional) of the current workspace.
  */
 @tsyringe.singleton()
-export class ModDependency {
+export class ModDependencyManager {
   get requiredDependencies(): Dependency[] {
     return this.aboutModDependencies
   }

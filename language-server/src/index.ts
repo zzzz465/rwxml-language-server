@@ -10,7 +10,7 @@ import * as features from './features'
 import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
-import { DependencyResourceManager } from './dependencyResourceManager'
+import { ModDependencyResourceStore } from './dependencyResourceManager'
 import { FileStore } from './fileStore'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
 import * as logs from './log'
@@ -40,7 +40,7 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
   const projectManager = container.resolve(ProjectManager)
   const languageFeature = container.resolve(features.LanguageFeature)
   const modManager = container.resolve(ModManager)
-  const dependencyResourceManager = container.resolve(DependencyResourceManager)
+  const dependencyResourceManager = container.resolve(ModDependencyResourceStore)
   const fileStore = container.resolve(FileStore)
   const textDocumentsAdapter = container.resolve(TextDocumentsAdapter)
 

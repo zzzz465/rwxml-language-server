@@ -3,21 +3,20 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { ConnectionToken } from './connection'
 import { File } from './fs'
-import { About } from './mod'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { DependencyRequest, DependencyRequestResponse } from './events'
 import { URI } from 'vscode-uri'
 import { DefaultDictionary } from 'typescript-collections'
 import { LogToken } from './log'
-import { Dependency, ModDependency } from './mod/modDependency'
+import { Dependency, ModDependencyManager } from './mod/modDependency'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
 @tsyringe.singleton()
-export class DependencyResourceManager {
+export class ModDependencyResourceStore {
   private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${DependencyResourceManager.name}] ${info.message}`
+    (info) => `[${info.level}] [${ModDependencyResourceStore.name}] ${info.message}`
   )
   private readonly log: winston.Logger
 
@@ -29,7 +28,7 @@ export class DependencyResourceManager {
   private readonly resources: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
   constructor(
-    modDependency: ModDependency,
+    modDependency: ModDependencyManager,
     @tsyringe.inject(ConnectionToken) private readonly connection: ls.Connection,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -51,10 +50,10 @@ export class DependencyResourceManager {
     this.resources.setValue(uri, next >= 0 ? next : 0) // it must be greater than zero
   }
 
-  private onModDependencyChanged(modDependency: ModDependency) {
+  private onModDependencyChanged(modDependencyManager: ModDependencyManager) {
     this.log.info('reloading because dependency is changed.')
 
-    const dependencies = modDependency.dependencies
+    const dependencies = modDependencyManager.dependencies
     this.log.debug(`mod dependencies: ${JSON.stringify(dependencies, null, 4)}`)
 
     const added = dependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))

@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { inject, singleton } from 'tsyringe'
+import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
@@ -14,7 +14,10 @@ export interface NotificationEvents {
   fileDeleted(uri: string): void
 }
 
-@singleton()
+/**
+ * NotificationEventManager spread various events in pre/main/post step.
+ */
+@tsyringe.singleton()
 export class NotificationEventManager {
   private logFormat = winston.format.printf(
     (info) => `[${info.level}] [${NotificationEventManager.name}] ${info.message}`
@@ -27,7 +30,7 @@ export class NotificationEventManager {
   public readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
   // post-event emit?
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+  constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
