@@ -42,7 +42,8 @@ namespace extractor
         public List<string> genericArguments = new List<string>();
         public List<string> methods = new List<string>();
         public string baseClass;
-        public bool isGeneric, isArray;
+        public bool isGeneric, isArray, isEnum;
+        public List<string> enums = new List<string>();
 
         // helper fields
         [JsonIgnore]
@@ -99,6 +100,13 @@ namespace extractor
                         this.methods.Add(method.Name);
                         break;
                 }
+            }
+
+            // enums
+            if (T.IsEnum)
+            {
+                this.isEnum = true;
+                this.enums.AddRange(T.GetEnumNames());
             }
         }
 

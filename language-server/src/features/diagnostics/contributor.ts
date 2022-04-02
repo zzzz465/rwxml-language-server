@@ -6,6 +6,7 @@ import { DuplicatedNode } from './duplicatedNode'
 import { Reference } from './reference'
 import { PrimitiveValue } from './primitive'
 import { Type } from './type'
+import { Enum } from './enum'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics
@@ -30,6 +31,11 @@ import { Type } from './type'
   {
     token: DiagnosticsContributor.token,
     useClass: Type,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: DiagnosticsContributor.token,
+    useClass: Enum,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])

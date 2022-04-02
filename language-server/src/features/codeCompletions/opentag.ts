@@ -42,7 +42,7 @@ export class OpenTagCompletion implements CodeCompletionContributor {
 
       return this.toCompletionList(node, offset, this.rangeConverter, node.document, completions)
     } else if (parent instanceof Def || parent instanceof Injectable) {
-      if (parent.typeInfo.isEnumerable()) {
+      if (parent.typeInfo.isEnumerable() || parent.typeInfo.isEnumFlag()) {
         return this.toCompletionList(node, offset, this.rangeConverter, node.document, ['li'])
       } else {
         const childNodes = AsEnumerable(parent.ChildElementNodes)

@@ -53,6 +53,14 @@ export class TypeInfoInjector {
           this.injectType(childNode, injectType)
         }
       }
+    } else if (typeInfo.isEnum && !injectable.parent.typeInfo.isEnum) {
+      // 1. check type is enum
+      // 2. prevent recursive injection if parent is already enum.
+      for (const childNode of injectable.ChildElementNodes) {
+        if (childNode.tagName === 'li') {
+          this.injectType(childNode, typeInfo)
+        }
+      }
     } else {
       for (const childNode of injectable.ChildElementNodes) {
         if (childNode.name) {

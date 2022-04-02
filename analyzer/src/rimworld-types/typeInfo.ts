@@ -28,7 +28,9 @@ export class TypeInfo {
     public readonly baseClass: TypeInfo | undefined, // need to populate typeInfo
     public readonly methods: string[],
     public readonly isGeneric: boolean,
-    public readonly isArray: boolean
+    public readonly isArray: boolean,
+    public readonly isEnum: boolean,
+    public readonly enums: string[]
   ) {}
 
   isDerivedFrom(base: TypeInfo) {
@@ -115,6 +117,15 @@ export class TypeInfo {
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isColor32() {
     return this.fullName === 'UnityEngine.Color32'
+  }
+
+  /**
+   * check this type is enum flag.
+   * @see https://docs.microsoft.com/ko-kr/dotnet/api/system.flagsattribute?view=net-6.0
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isEnumFlag() {
+    return this.isEnum && this.attributes['FlagsAttribute']
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
