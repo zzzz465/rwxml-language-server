@@ -44,9 +44,9 @@ The full example of `metadata_rwxml.xml` is below.
 </Metadata>
 ```
 
-place the `metadata_rwxml.xml` next to your `about.xml` in your mod project, then it recognizes it.
+place the `metadata_rwxml.xml` next to your `about.xml` in your mod project.
 
 ## Optional Dependencies are not found
 
 if you're using attribute `MayRequire="<packageId>"`, you have to make add that mod to a metadata file.  
-see the detailed description [metadata_rwxml.xml guide](#using-metadata_rwxml.xml)  
+see the detailed description [metadata_rwxml.xml guide](#what-is-metadata_rwxml.xml)  
