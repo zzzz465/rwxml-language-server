@@ -16,6 +16,7 @@ import { TextDocumentsAdapter } from './textDocumentsAdapter'
 import * as logs from './log'
 import * as winston from 'winston'
 import { Configuration } from './configuration'
+import { InitRegistry } from './initRegistry'
 
 const connection = ls.createConnection(ls.ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
@@ -30,7 +31,7 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
 
   log.info('hello world! initializing @rwxml-language-server/language-server ...')
 
-  // TODO: replace this initalize codes to use token registry
+  InitRegistry.init()
 
   const configuration = container.resolve(Configuration)
   const about = container.resolve(About)
