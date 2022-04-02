@@ -1,4 +1,4 @@
-import { execFile, ChildProcess } from 'child_process'
+import { execFile } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
 import * as tsyringe from 'tsyringe'
@@ -51,7 +51,7 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
 
   const args = [...dllPaths, '--output-mode=TCP', `--port=${port}`]
 
-  console.log(`executing process: "${cmd} ${args.map(v => `"${v}"`).join(' ')}"`)
+  console.log(`executing process: "${cmd} ${args.map((v) => `"${v}"`).join(' ')}"`)
 
   const p = execFile(cmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
