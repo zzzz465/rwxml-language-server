@@ -48,5 +48,5 @@ place the `metadata_rwxml.xml` next to your `about.xml` in your mod project, the
 
 ## Optional Dependencies are not found
 
-if you have a node that contains `MayRequire`, you have to make add that mod to a metadata file.  
-see [metadata_rwxml.xml guide](#using-metadata_rwxml.xml)  
+if you're using attribute `MayRequire="<packageId>"`, you have to make add that mod to a metadata file.  
+see the detailed description [metadata_rwxml.xml guide](#using-metadata_rwxml.xml)  
