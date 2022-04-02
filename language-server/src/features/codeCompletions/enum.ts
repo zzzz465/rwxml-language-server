@@ -3,6 +3,7 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
+import { isLeafNode } from '../utils'
 import { CodeCompletionContributor } from './contributor'
 
 @tsyringe.injectable()
@@ -12,7 +13,7 @@ export class Enum implements CodeCompletionContributor {
       node = node.parent as Injectable
     }
 
-    if (!(node instanceof Injectable) || !node.typeInfo.isEnum) {
+    if (!(node instanceof Injectable) || !node.typeInfo.isEnum || !isLeafNode(node)) {
       return null
     }
 
