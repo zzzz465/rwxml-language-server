@@ -1,4 +1,5 @@
 import { Document, Injectable } from '@rwxml/analyzer'
+import { stringify } from 'flatted'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
@@ -22,7 +23,7 @@ export class Enum implements DiagnosticsContributor {
       .ToArray()
 
     const diagnostics = AsEnumerable(typeNodes)
-      .Select((node) => this.diagnosisTypeNode(node))
+      .Select((node) => this.diagnosisEnum(node))
       .Where((res) => res !== null)
       .Cast<ls.Diagnostic[]>()
       .SelectMany((x) => x)
@@ -34,7 +35,7 @@ export class Enum implements DiagnosticsContributor {
     }
   }
 
-  private diagnosisTypeNode(node: Injectable): ls.Diagnostic[] | null {
+  private diagnosisEnum(node: Injectable): ls.Diagnostic[] | null {
     if (!node.contentRange) {
       return null
     }
@@ -45,10 +46,15 @@ export class Enum implements DiagnosticsContributor {
       return null
     }
 
-    if (!node.typeInfo.enums.includes(content)) {
+    const invalidEnums = content
+      .split(',')
+      .map((e) => e.trim())
+      .filter((e) => !node.typeInfo.enums.includes(e))
+
+    if (invalidEnums.length > 0) {
       return [
         {
-          message: `Unknown enum value ${content}`,
+          message: `Unknown enum value ${JSON.stringify(invalidEnums)}`,
           range,
           severity: ls.DiagnosticSeverity.Error,
         },
