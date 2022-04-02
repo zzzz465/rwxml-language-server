@@ -31,7 +31,9 @@ export class TypeInfoLoader {
             rawTypeInfo.baseClass,
             rawTypeInfo.methods ?? [],
             rawTypeInfo.isGeneric ?? false,
-            rawTypeInfo.isArray ?? false
+            rawTypeInfo.isArray ?? false,
+            rawTypeInfo.isEnum ?? false,
+            rawTypeInfo.enums ?? [],
           )
         )
       }
