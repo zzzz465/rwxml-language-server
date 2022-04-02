@@ -6,6 +6,10 @@ provides various IDE functionalities, as VSCode Extension
 
 [Check how-to](docs/how-to.md)
 
+## FAQ
+
+[Check FAQ](docs/FAQ.md)
+
 ## features
 
 - [x] Custom syntax highlighting
