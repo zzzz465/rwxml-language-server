@@ -47,11 +47,13 @@ export class ModDependencyManager {
   private aboutModDependencies: Dependency[] = []
   private aboutMetadataOptionalModDependencies: Dependency[] = []
 
+  private supportedVersions: string[] = []
+
   readonly event: EventEmitter<Events> = new EventEmitter()
 
   constructor(
     private readonly about: About,
-    aboutMetadata: AboutMetadata,
+    private readonly aboutMetadata: AboutMetadata,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
@@ -61,6 +63,20 @@ export class ModDependencyManager {
   }
 
   private onAboutChanged(about: About): void {
+    this.checkSupportedVersionChanged(about)
+    this.fetchDependencyModsFromAbout(about)
+  }
+
+  private checkSupportedVersionChanged(about: About): void {
+    if (_.isEqual(this.supportedVersions, about.supportedVersions)) {
+      return
+    }
+
+    // need to be updated because supportedVersions might be added.
+    this.fetchDependencyModsFromAboutMetadata(this.aboutMetadata)
+  }
+
+  private fetchDependencyModsFromAbout(about: About): void {
     if (_.isEqual(this.aboutModDependencies, about.modDependencies)) {
       return
     }
@@ -72,6 +88,10 @@ export class ModDependencyManager {
   }
 
   private onAboutMetadataChanged(aboutMetadata: AboutMetadata): void {
+    this.fetchDependencyModsFromAboutMetadata(aboutMetadata)
+  }
+
+  private fetchDependencyModsFromAboutMetadata(aboutMetadata: AboutMetadata): void {
     const optionalDependencies = AsEnumerable(this.about.supportedVersions)
       .Select((version) => aboutMetadata.get(version))
       .Where((item) => !!item)
@@ -81,6 +101,9 @@ export class ModDependencyManager {
       .ToArray()
 
     if (_.isEqual(optionalDependencies, this.aboutMetadataOptionalModDependencies)) {
+      this.log.debug(
+        `aboutMetadata changed but no dependency is changed. deps: ${JSON.stringify(optionalDependencies, null, 4)}`
+      )
       return
     }
 

@@ -109,6 +109,8 @@ export class AboutMetadata {
       .Cast<MetadataItem>()
       .ToArray()
 
+    this.log.silly(`aboutMetadata parsed items: ${JSON.stringify(items, null, 4)}`)
+
     for (const item of items) {
       this.itemMap.set(item.version, item)
     }
@@ -118,6 +120,8 @@ export class AboutMetadata {
     } else {
       this.defaultItem = undefined
     }
+
+    this.log.silly(`aboutMetadata parsed default: ${JSON.stringify(this.defaultItem, null, 4)}`)
   }
 
   /**
