@@ -79,7 +79,13 @@ export class ModDependencyResourceStore {
   }
 
   private async handleAddedMods(deps: Dependency[]) {
-    this.log.info(`added dependencies: ${JSON.stringify(deps, null, 4)}`)
+    this.log.info(
+      `added dependencies: ${JSON.stringify(
+        deps.map((dep) => dep.packageId),
+        null,
+        4
+      )}`
+    )
 
     const requests = deps.map((dep) =>
       this.connection.sendRequest(DependencyRequest, { packageId: dep.packageId }, undefined)
