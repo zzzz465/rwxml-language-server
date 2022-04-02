@@ -119,6 +119,15 @@ export class TypeInfo {
     return this.fullName === 'UnityEngine.Color32'
   }
 
+  /**
+   * check this type is enum flag.
+   * @see https://docs.microsoft.com/ko-kr/dotnet/api/system.flagsattribute?view=net-6.0
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isEnumFlag() {
+    return this.isEnum && this.attributes['FlagsAttribute']
+  }
+
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getDefType(): string | undefined {
     if (this.isDef()) {
