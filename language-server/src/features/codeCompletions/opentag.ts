@@ -50,7 +50,10 @@ export class OpenTagCompletion implements CodeCompletionContributor {
           .Select((e) => e.name)
           .ToArray()
 
-        const candidates = _.difference(Object.keys(parent.typeInfo.getFields()), childNodes)
+        const candidates = _.difference(
+          parent.typeInfo.getFields().map((x) => x.name),
+          childNodes
+        )
         const completions = getMatchingText(candidates, nodeName)
 
         return this.toCompletionList(node, offset, this.rangeConverter, node.document, completions)

@@ -33,7 +33,7 @@ export class TypeInfoLoader {
             rawTypeInfo.isGeneric ?? false,
             rawTypeInfo.isArray ?? false,
             rawTypeInfo.isEnum ?? false,
-            rawTypeInfo.enums ?? [],
+            rawTypeInfo.enums ?? []
           )
         )
       }
@@ -53,13 +53,13 @@ export class TypeInfoLoader {
         }
 
         // populate fields
-        for (const field of Object.values(typeInfo.fields)) {
+        for (const field of Object.values<Writable<FieldInfo>>(typeInfo.fields)) {
           const fieldType = typeInfoMap.get(<string>(<unknown>field.fieldType))
           const declaringType = typeInfoMap.get(<string>(<unknown>field.declaringType))
 
           if (fieldType && declaringType) {
-            ;(field as Writable<FieldInfo>).fieldType = fieldType
-            ;(field as Writable<FieldInfo>).declaringType = declaringType
+            field.fieldType = fieldType
+            field.declaringType = declaringType
           } else {
             // throw new Error('fieldType or declaringType is undefined or null.')
           }

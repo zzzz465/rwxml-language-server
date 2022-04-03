@@ -15,7 +15,7 @@ namespace extractor
         }
 
         public RawFieldMetadata fieldMetadata;
-        public string Name;
+        public string name;
         public string declaringType;
         public string fieldType;
         public Dictionary<string, string> attributes = new Dictionary<string, string>();
@@ -23,7 +23,7 @@ namespace extractor
 
         public RawFieldInfo(FieldInfo fieldInfo)
         {
-            this.Name = fieldInfo.Name;
+            this.name = fieldInfo.Name;
             this.declaringType = NameUtility.GetTypeIdentifier(fieldInfo.DeclaringType);
             this.fieldType = NameUtility.GetTypeIdentifier(fieldInfo.FieldType);
             this.isPublic = fieldInfo.IsPublic;

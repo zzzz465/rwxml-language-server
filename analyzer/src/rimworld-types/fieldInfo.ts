@@ -10,6 +10,7 @@ export class FieldInfo {
     public readonly fieldType: TypeInfo,
     public readonly attributes: Record<string, TypeIdentifier>,
     public readonly isPublic: boolean,
-    public readonly isPrivate: boolean
+    public readonly isPrivate: boolean,
+    public readonly name: string
   ) {}
 }

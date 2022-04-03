@@ -30,7 +30,7 @@ interface Cache {
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
-  private static readonly extractorVersion = new semver.SemVer('0.1.0')
+  private static readonly extractorVersion = new semver.SemVer('0.2.0')
 
   get dllCacheDirectory(): string {
     return path.join(this.pathStore.cacheDirectory, 'dlls')
