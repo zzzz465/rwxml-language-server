@@ -146,6 +146,10 @@ export class CachedTypeInfoProvider implements Provider {
       return false
     }
 
+    if (cache.createdBy !== this.cacheCreator) {
+      return false
+    }
+
     const checksums = await this.getChecksums(files)
 
     return _.isEqual(cache.checksums, checksums)
@@ -163,7 +167,7 @@ export class CachedTypeInfoProvider implements Provider {
         extractorVersion: CachedTypeInfoProvider.extractorVersion.format(),
         checksums,
         createdAt: dayjs().format(),
-        createdBy: CachedTypeInfoProvider.name,
+        createdBy: this.cacheCreator,
         compression: this.compressionType,
         data,
         requestedFileUris: files,
@@ -201,6 +205,10 @@ export class CachedTypeInfoProvider implements Provider {
     const raw = JSON.stringify(cache, null, 4)
 
     await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
+  }
+
+  protected get cacheCreator(): string {
+    return CachedTypeInfoProvider.name
   }
 
   /**
