@@ -1,7 +1,7 @@
 import { Document, parse } from '../../parser'
 import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
-import data from './core.json'
+import data from './anty.json'
 
 const xml = `\
 <?xml version="1.0" encoding="utf-8"?>
@@ -20,12 +20,11 @@ const xml = `\
 
 describe('Enum type test', () => {
   let root: Document
-  let map: TypeInfoMap
+  const map: TypeInfoMap = TypeInfoLoader.load(data as RawTypeInfo[])
 
   beforeEach(() => {
     root = parse(xml)
 
-    map = TypeInfoLoader.load(data as RawTypeInfo[])
     const injector = new TypeInfoInjector(map)
 
     injector.inject(root)

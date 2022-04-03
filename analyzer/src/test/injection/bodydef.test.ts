@@ -1,7 +1,7 @@
 import { Element, parse } from '../../parser'
 import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
-import core from './core.json'
+import core from './anty.json'
 
 $._options.xmlMode = true
 

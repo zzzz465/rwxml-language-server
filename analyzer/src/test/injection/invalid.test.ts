@@ -1,5 +1,5 @@
 import { TypeInfoLoader, RawTypeInfo, TypeInfoInjector, parse } from '../..'
-import core from './core.json'
+import data from './anty.json'
 
 describe('wrong xml test', () => {
   test('injector should not throw error if no Defs node exists', () => {
@@ -10,7 +10,7 @@ describe('wrong xml test', () => {
     `
 
     const root = parse(wrongXML)
-    const map = TypeInfoLoader.load(core as RawTypeInfo[])
+    const map = TypeInfoLoader.load(data as RawTypeInfo[])
     const injector = new TypeInfoInjector(map)
 
     injector.inject(root)
