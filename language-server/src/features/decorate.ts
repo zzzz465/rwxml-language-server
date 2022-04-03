@@ -12,7 +12,7 @@ import { Definition } from './definition'
 import { Project } from '../project'
 import { URI } from 'vscode-uri'
 import { ProjectHelper } from './utils/project'
-import { getNodesBFS } from './utils/node'
+import { getNodesBFS, getRootElement } from './utils/node'
 
 @tsyringe.injectable()
 export class DecoProvider implements Provider {
@@ -42,7 +42,8 @@ export class DecoProvider implements Provider {
 
     for (const proj of projects) {
       const doc = proj.getXMLDocumentByUri(p.uri)
-      if (!doc) {
+
+      if (!doc || getRootElement(doc)?.tagName !== 'Defs') {
         continue
       }
 
