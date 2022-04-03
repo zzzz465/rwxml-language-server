@@ -34,7 +34,7 @@ export class TypeInfoLoader {
             rawTypeInfo.isArray ?? false,
             rawTypeInfo.isEnum ?? false,
             rawTypeInfo.enums ?? [],
-            rawTypeInfo.interfaces ?? []
+            rawTypeInfo.interfaces ?? {}
           )
         )
       }
@@ -47,9 +47,9 @@ export class TypeInfoLoader {
 
         // link attributes
         for (const [name, fullName] of Object.entries(typeInfo.attributes)) {
-          const t = typeInfoMap.get(<string>(<unknown>fullName))
-          if (t) {
-            typeInfo.attributes.name = t
+          const type = typeInfoMap.get(<string>(<unknown>fullName))
+          if (type) {
+            typeInfo.attributes[name] = type
           } else {
             errors.push(new Error(`while linking attribute "${name}", attribute type ${fullName} is not found.`))
           }
@@ -104,17 +104,12 @@ export class TypeInfoLoader {
           }
         }
 
-        // link interfaces
-        for (let i = 0; i < typeInfo.interfaces.length; i++) {
-          const typeName = typeInfo.interfaces[i] as unknown as string
-          const type = typeInfoMap.get(typeName)
-
+        for (const [name, fullName] of Object.entries(typeInfo.interfaces)) {
+          const type = typeInfoMap.get(<string>(<unknown>fullName))
           if (type) {
-            typeInfo.interfaces[i] = type
+            typeInfo.interfaces[name] = type
           } else {
-            errors.push(
-              new Error(`while linking "${typeInfo.fullName}"'s interfaces, type "${typeName}" is not found.`)
-            )
+            new Error(`while linking "${typeInfo.fullName}"'s interfaces, type "${fullName}" is not found.`)
           }
         }
       }

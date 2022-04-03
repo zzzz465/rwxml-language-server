@@ -41,7 +41,7 @@ export class TypeInfo {
     /**
      * interfaces is an array of types that this typeInfo impelments.
      */
-    public readonly interfaces: TypeInfo[] // need to populate typeInfo
+    public readonly interfaces: Record<string, TypeInfo> // need to populate typeInfo
   ) {}
 
   isDerivedFrom(base: TypeInfo) {
@@ -185,6 +185,36 @@ export class TypeInfo {
     return AsEnumerable([...this._getFields(), ...(this.baseClass?._getFieldsWithBase() ?? [])])
       .Where((x) => x !== null)
       .Cast<FieldInfo[]>()
+      .SelectMany((x) => x)
+      .ToArray()
+  }
+
+  getInterface(name: string, inherited = true): TypeInfo | null {
+    if (this.interfaces[name]) {
+      return this.interfaces[name]
+    }
+
+    if (inherited && this.baseClass) {
+      return this.baseClass.getInterface(name, inherited)
+    }
+
+    return null
+  }
+
+  getInterfaces(inherited = true): TypeInfo[] {
+    return inherited ? this._getInterfaces() : this._getInterfacesWthBase()
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  private _getInterfaces(): TypeInfo[] {
+    return Object.values(this.interfaces)
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  private _getInterfacesWthBase(): TypeInfo[] {
+    return AsEnumerable([...this._getInterfaces(), ...(this.baseClass?._getInterfacesWthBase() ?? [])])
+      .Where((x) => x !== null)
+      .Cast<TypeInfo[]>()
       .SelectMany((x) => x)
       .ToArray()
   }

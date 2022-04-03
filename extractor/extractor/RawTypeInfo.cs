@@ -38,13 +38,13 @@ namespace extractor
         public string className;
         public string namespaceName;
         public Dictionary<string, string> attributes = new Dictionary<string, string>();
+        public Dictionary<string, string> interfaces = new Dictionary<string, string>();
         public Dictionary<string, RawFieldInfo> fields = new Dictionary<string, RawFieldInfo>();
         public List<string> genericArguments = new List<string>();
         public List<string> methods = new List<string>();
         public string baseClass;
         public bool isGeneric, isArray, isEnum;
         public List<string> enums = new List<string>();
-        public List<string> interfaces = new List<string>();
 
         // helper fields
         [JsonIgnore]
@@ -115,7 +115,7 @@ namespace extractor
             {
                 foreach (var type in T.GetInterfaces())
                 {
-                    this.interfaces.Add(NameUtility.GetTypeIdentifier(type));
+                    this.interfaces.Add(type.Name, NameUtility.GetTypeIdentifier(type));
                 }
             }
         }
