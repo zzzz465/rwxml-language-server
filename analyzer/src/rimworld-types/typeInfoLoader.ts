@@ -52,6 +52,7 @@ export class TypeInfoLoader {
           if (type) {
             typeInfo.attributes[name] = type
           } else {
+            delete typeInfo.attributes[name]
             errors.push(new Error(`while linking attribute "${name}", attribute type ${fullName} is not found.`))
           }
         }
@@ -65,6 +66,7 @@ export class TypeInfoLoader {
             field.fieldType = fieldType
             field.declaringType = declaringType
           } else {
+            delete typeInfo.fields[field.name]
             errors.push(
               new Error(
                 `while linking field "${field.name}", fieldType "${field.fieldType}" or declaringType "${field.declaringType}" is undefined or null.`
@@ -97,6 +99,7 @@ export class TypeInfoLoader {
           if (baseClassTypeinfoName) {
             typeInfo.baseClass = baseClassTypeInfo
           } else {
+            delete typeInfo.baseClass
             errors.push(
               new Error(
                 `while linking "${typeInfo.fullName}"'s base class, type "${baseClassTypeinfoName}" is not found.`
@@ -110,7 +113,10 @@ export class TypeInfoLoader {
           if (type) {
             typeInfo.interfaces[name] = type
           } else {
-            new Error(`while linking "${typeInfo.fullName}"'s interfaces, type "${fullName}" is not found.`)
+            delete typeInfo.interfaces[name]
+            errors.push(
+              new Error(`while linking "${typeInfo.fullName}"'s interfaces, type "${fullName}" is not found.`)
+            )
           }
         }
       }
