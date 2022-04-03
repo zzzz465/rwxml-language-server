@@ -109,6 +109,15 @@ namespace extractor
                 this.isEnum = true;
                 this.enums.AddRange(T.GetEnumNames());
             }
+
+            // interface
+            if (T.IsInterface)
+            {
+                foreach (var type in T.GetInterfaces())
+                {
+                    this.interfaces.Add(NameUtility.GetTypeIdentifier(type));
+                }
+            }
         }
 
         // json properties
