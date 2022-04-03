@@ -76,7 +76,7 @@ namespace extractor
                 if (!TypeFilter.IsBannedField(field))
                 {
                     var rawFieldInfo = new RawFieldInfo(field);
-                    fields.Add(rawFieldInfo.Name, rawFieldInfo);
+                    fields.Add(rawFieldInfo.name, rawFieldInfo);
                 }
             }
 
