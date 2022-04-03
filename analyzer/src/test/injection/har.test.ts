@@ -2,7 +2,7 @@ import { parse } from '../../parser'
 import $ from 'cheerio'
 import har from './anty.json'
 import { TypeInfoLoader, RawTypeInfo, TypeInfoInjector } from '../..'
-import { Def, Injectable } from '../../rimworld-types'
+import { Def } from '../../rimworld-types'
 
 $._options.xmlMode = true
 
@@ -33,8 +33,6 @@ describe('API with HAR2.0 test', () => {
     const injector = new TypeInfoInjector(map)
 
     injector.inject(root)
-
-    const defs = $(root, undefined, undefined, { xml: true }).find('AlienRace.BackstoryDef')
 
     const def = $(root).find('AlienRace\\.BackstoryDef').get(0) as unknown as Def
     expect(def).toBeInstanceOf(Def)
