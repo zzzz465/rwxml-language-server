@@ -64,7 +64,7 @@ export class TypeInfoInjector {
     } else {
       for (const childNode of injectable.ChildElementNodes) {
         if (childNode.name) {
-          const fieldInfo = injectable.typeInfo.fields[childNode.name]
+          const fieldInfo = injectable.typeInfo.getField(childNode.name)
 
           if (fieldInfo) {
             this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
