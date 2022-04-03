@@ -1,6 +1,7 @@
 import { FieldInfo } from './fieldInfo'
 import { cache, CacheType, CacheScope } from 'cache-decorator'
 import { AsEnumerable } from 'linq-es2015'
+import _ from 'lodash'
 
 export type SpecialType =
   | 'integer'
@@ -189,7 +190,7 @@ export class TypeInfo {
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   private _getFields(): FieldInfo[] {
-    return Object.values(this.fields)
+    return _.uniqWith(Object.values(this.fields), (x, y) => x.name === y.name)
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
@@ -198,6 +199,7 @@ export class TypeInfo {
       .Where((x) => x !== null)
       .Cast<FieldInfo[]>()
       .SelectMany((x) => x)
+      .Distinct((x) => x.name)
       .ToArray()
   }
 
@@ -227,7 +229,7 @@ export class TypeInfo {
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   private _getInterfaces(): TypeInfo[] {
-    return Object.values(this.interfaces)
+    return _.uniqWith(Object.values(this.interfaces), (x, y) => x.fullName === y.fullName)
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
