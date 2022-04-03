@@ -88,7 +88,9 @@ namespace extractor
                 var type = attrib.AttributeType;
                 if (!this.attributes.ContainsKey(type.Name))
                 {
-                    this.attributes.Add(type.Name, NameUtility.GetTypeIdentifier(type));
+                    var typeId = NameUtility.GetTypeIdentifier(type);
+                    // value will be linked to the typeInfo object in analzyer module.
+                    this.interfaces[typeId] = typeId;
                 }
             }
 
@@ -114,7 +116,9 @@ namespace extractor
             // interface
             foreach (var type in T.GetInterfaces())
             {
-                this.interfaces[type.Name] = NameUtility.GetTypeIdentifier(type);
+                var typeId = NameUtility.GetTypeIdentifier(type);
+                // value will be linked to the typeInfo object in analzyer module.
+                this.interfaces[typeId] = typeId;
             }
         }
 
