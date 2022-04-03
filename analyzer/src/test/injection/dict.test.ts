@@ -82,9 +82,9 @@ describe('Dictionary K, V type test', () => {
     expect(nodes.length).toBeGreaterThan(0)
 
     for (const node of nodes) {
-      expect(node.tagName).toBe('li')
+      expect(node.tagName).toBe('value')
       expect(node).toBeInstanceOf(Injectable)
-      expect(node.typeInfo.isType()).toBeTruthy()
+      expect(node.typeInfo.fullName).toBe('AlienRace.StyleSettings')
     }
   })
 })

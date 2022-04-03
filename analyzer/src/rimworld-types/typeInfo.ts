@@ -246,14 +246,20 @@ export class TypeInfo {
       .ToArray()
   }
 
+  /**
+   * getEnumerableType returns T in IEnumerable<T>
+   */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getEnumerableType(): TypeInfo | null {
-    const interfaces = this.getInterfaces()
-
-    return (
+    const enumerableType =
       AsEnumerable(this.getInterfaces())
-        .Where((type) => type.isEnumerable())
+        .Where((type) => type.isEnumerable() && type.isGeneric && type.className.includes('IEnumerable'))
         .FirstOrDefault() ?? null
-    )
+
+    if (enumerableType?.genericArguments.length === 1) {
+      return enumerableType.genericArguments[0]
+    }
+
+    return null
   }
 }
