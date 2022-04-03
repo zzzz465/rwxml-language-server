@@ -37,7 +37,11 @@ export class TypeInfo {
     public readonly isGeneric: boolean,
     public readonly isArray: boolean,
     public readonly isEnum: boolean,
-    public readonly enums: string[]
+    public readonly enums: string[],
+    /**
+     * interfaces is an array of types that this typeInfo impelments.
+     */
+    public readonly interfaces: TypeInfo[] // need to populate typeInfo
   ) {}
 
   isDerivedFrom(base: TypeInfo) {

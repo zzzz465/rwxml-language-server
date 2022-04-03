@@ -108,7 +108,7 @@ namespace extractor
 
                         if (fieldType.IsGenericType)
                         {
-                            foreach(var T in fieldType.GenericTypeArguments)
+                            foreach (var T in fieldType.GenericTypeArguments)
                             {
                                 if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
                                 {
@@ -119,6 +119,23 @@ namespace extractor
                         }
                     }
                 }
+
+                // only get interface 1-depth.
+                // MEMO: to make analyzer's data linking between typeInfos work. this must be enabled.
+                // if (!type.IsInterface)
+                if (true)
+                {
+                    var interfaces = type.GetInterfaces();
+                    foreach (var iface in interfaces)
+                    {
+                        if (!typeDict.ContainsKey(iface))
+                        {
+                            typeDict.Add(iface, new RawTypeInfo(iface));
+                            types.Enqueue(iface);
+                        }
+                    }
+                }
+
                 typeInfo.childCollected = true;
             }
         }
@@ -167,7 +184,7 @@ namespace extractor
                         baseType = baseType.BaseType;
                     }
 
-					rawTypeInfo.metadata.compClass.baseClass = NameUtility.GetTypeIdentifier(baseType);
+                    rawTypeInfo.metadata.compClass.baseClass = NameUtility.GetTypeIdentifier(baseType);
                 }
 
                 rawTypeInfo.populated = true;

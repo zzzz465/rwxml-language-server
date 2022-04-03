@@ -44,6 +44,7 @@ namespace extractor
         public string baseClass;
         public bool isGeneric, isArray, isEnum;
         public List<string> enums = new List<string>();
+        public List<string> interfaces = new List<string>();
 
         // helper fields
         [JsonIgnore]
