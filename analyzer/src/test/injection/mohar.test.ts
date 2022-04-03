@@ -1,7 +1,7 @@
 import { Element, parse } from '../../parser'
 import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
-import typeInfo from './mohar.json'
+import data from './anty.json'
 
 $._options.xmlMode = true
 
@@ -18,7 +18,7 @@ const exampleXML = `\
   <maxSeverity>1.0</maxSeverity>
   <isBad>false</isBad>
   <comps>
-    <li Class="MoharHediffs.HediffCompProperties_HediffExclusive">
+    <li Class="MoharHediffs.HeDiffCompProperties_HediffExclusive">
       <hediffToNullify>
         <li>Antypheromone_SuicideHigh_Proty_Ready</li>
       </hediffToNullify>
@@ -45,15 +45,13 @@ describe('TypeInfo injection test against HediffDef with mohar', () => {
     const defName = $(root).find('Defs > HediffDef > defName').get(0)
     expect(defName).toBeInstanceOf(Element)
 
-    const map = TypeInfoLoader.load(typeInfo as RawTypeInfo[])
+    const map = TypeInfoLoader.load(data as RawTypeInfo[])
     const injector = new TypeInfoInjector(map)
 
     injector.inject(root)
 
     const injectable = $(root).find('Defs > HediffDef > comps > li').get(0) as unknown as Injectable
     expect(injectable).toBeInstanceOf(Injectable)
-    // TODO: fix this broken test
-    expect(injectable.fieldInfo?.fieldType.className).toBe('HeDiffCompProperties_HediffExclusive')
-    expect(injectable.fieldInfo?.fieldType.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
+    expect(injectable.typeInfo.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
   })
 })

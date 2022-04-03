@@ -109,7 +109,7 @@ export class Definition {
   }
 
   findDefType(node: DefRefTextNode): { value: string; li?: boolean } | null {
-    if (node.parent.parent.typeInfo.isEnumerable() && node.parent.typeInfo.isDef()) {
+    if (node.parent.parent.typeInfo.isList() && node.parent.typeInfo.isDef()) {
       const defType = node.parent.typeInfo.getDefType() ?? null
 
       return !!defType ? { value: defType, li: true } : null

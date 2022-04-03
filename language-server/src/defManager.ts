@@ -193,7 +193,7 @@ export class DefManager {
       }
 
       // TODO: support for CompProperties_XXX or something else.
-    } else if (injectable.parent instanceof Injectable && injectable.parent.typeInfo.isEnumerable()) {
+    } else if (injectable.parent instanceof Injectable && injectable.parent.typeInfo.isList()) {
       if (injectable.typeInfo.isDef()) {
         return true
       }

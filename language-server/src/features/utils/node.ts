@@ -48,7 +48,7 @@ export function isTextReferencingDef(node: Node): node is Text {
     node.parent instanceof Injectable &&
     (node.parent.parent instanceof Injectable || node.parent.parent instanceof Def)
   ) {
-    if (node.parent.parent.typeInfo.isEnumerable() && node.parent.typeInfo.isDef()) {
+    if (node.parent.parent.typeInfo.isList() && node.parent.typeInfo.isDef()) {
       // if node is child of list node
       return true
     } else if (node.parent.fieldInfo?.fieldType.isDef()) {

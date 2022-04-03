@@ -4,10 +4,10 @@ import { AsEnumerable } from 'linq-es2015'
 import { RawTypeInfo } from './rawTypeInfo'
 import { FieldInfo } from './fieldInfo'
 import { Writable } from '../utils/types'
-import _ from 'lodash'
 
 export class TypeInfoLoader {
   static load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
+    const errors: Error[] = []
     const rawData = JSON.parse(JSON.stringify(rawTypeInfos))
 
     const rawTypeInfoMap = AsEnumerable(rawTypeInfos).ToMap(
@@ -33,26 +33,31 @@ export class TypeInfoLoader {
             rawTypeInfo.isGeneric ?? false,
             rawTypeInfo.isArray ?? false,
             rawTypeInfo.isEnum ?? false,
-            rawTypeInfo.enums ?? []
+            rawTypeInfo.enums ?? [],
+            rawTypeInfo.interfaces ?? {},
+            rawTypeInfo.isInterface ?? false
           )
         )
       }
     }
 
-    // populate
+    // link
     for (const [fullName] of rawTypeInfoMap) {
       if (fullName) {
-        const typeInfo = typeInfoMap.get(fullName) as TypeInfo
+        const typeInfo = typeInfoMap.get(fullName) as Writable<TypeInfo>
 
-        // populate attributes
+        // link attributes
         for (const [name, fullName] of Object.entries(typeInfo.attributes)) {
-          const t = typeInfoMap.get(<string>(<unknown>fullName))
-          if (t) {
-            typeInfo.attributes.name = t
+          const type = typeInfoMap.get(<string>(<unknown>fullName))
+          if (type) {
+            typeInfo.attributes[name] = type
+          } else {
+            delete typeInfo.attributes[name]
+            errors.push(new Error(`while linking attribute "${name}", attribute type ${fullName} is not found.`))
           }
         }
 
-        // populate fields
+        // link fields
         for (const field of Object.values<Writable<FieldInfo>>(typeInfo.fields)) {
           const fieldType = typeInfoMap.get(<string>(<unknown>field.fieldType))
           const declaringType = typeInfoMap.get(<string>(<unknown>field.declaringType))
@@ -61,11 +66,16 @@ export class TypeInfoLoader {
             field.fieldType = fieldType
             field.declaringType = declaringType
           } else {
-            // throw new Error('fieldType or declaringType is undefined or null.')
+            delete typeInfo.fields[field.name]
+            errors.push(
+              new Error(
+                `while linking field "${field.name}", fieldType "${field.fieldType}" or declaringType "${field.declaringType}" is undefined or null.`
+              )
+            )
           }
         }
 
-        // populate genericArguments
+        // link genericArguments
         for (let i = 0; i < typeInfo.genericArguments.length; i++) {
           const genericArgumentTypeName = typeInfo.genericArguments[i] as unknown as string
           const genericArgumentType = typeInfoMap.get(genericArgumentTypeName)
@@ -73,18 +83,40 @@ export class TypeInfoLoader {
           if (genericArgumentType) {
             typeInfo.genericArguments[i] = genericArgumentType
           } else {
-            // throw new Error()
+            errors.push(
+              new Error(
+                `while linking "${typeInfo.fullName}"'s genArgs, type "${genericArgumentTypeName}" is not found.`
+              )
+            )
           }
         }
 
-        // populate baseClass
+        // link baseClass
         if (typeInfo.baseClass) {
           const baseClassTypeinfoName = typeInfo.baseClass as unknown as string
           const baseClassTypeInfo = typeInfoMap.get(baseClassTypeinfoName)
 
           if (baseClassTypeinfoName) {
-            ;(typeInfo as Writable<TypeInfo>).baseClass = baseClassTypeInfo
+            typeInfo.baseClass = baseClassTypeInfo
           } else {
+            delete typeInfo.baseClass
+            errors.push(
+              new Error(
+                `while linking "${typeInfo.fullName}"'s base class, type "${baseClassTypeinfoName}" is not found.`
+              )
+            )
+          }
+        }
+
+        for (const [name, fullName] of Object.entries(typeInfo.interfaces)) {
+          const type = typeInfoMap.get(<string>(<unknown>fullName))
+          if (type) {
+            typeInfo.interfaces[name] = type
+          } else {
+            delete typeInfo.interfaces[name]
+            errors.push(
+              new Error(`while linking "${typeInfo.fullName}"'s interfaces, type "${fullName}" is not found.`)
+            )
           }
         }
       }

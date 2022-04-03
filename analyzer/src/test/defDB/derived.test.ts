@@ -1,6 +1,7 @@
-import { Document, Element, parse } from '../../parser'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { Document, parse } from '../../parser'
 import $ from 'cheerio'
-import { Def, DefDatabase, Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
+import { Def, DefDatabase, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import typeInfo from './typeInfo.json'
 import { isDerivedType } from '../../rimworld-types/util'
 
@@ -98,7 +99,7 @@ describe('DefDatabase test', () => {
 
   test('xml should be parsed as intended types', () => {
     expect(damageKnockbackDef).toBeInstanceOf(Def)
-    expect(bulletExecutionerChain).toBeInstanceOf(Def) 
+    expect(bulletExecutionerChain).toBeInstanceOf(Def)
   })
 
   test('DefDatabase should return defs by defName', () => {
@@ -108,7 +109,7 @@ describe('DefDatabase test', () => {
     let def = defDB.getDefByName('AT_ChainDamageDef')
     expect(def.length).toBeGreaterThan(0)
 
-    let def2 = defDB.getDefByName('BulletExecutionerChain')
+    const def2 = defDB.getDefByName('BulletExecutionerChain')
     expect(def2.length).toBeGreaterThan(0)
 
     defDB.removeDef(damageKnockbackDef)

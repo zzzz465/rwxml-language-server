@@ -71,7 +71,7 @@ namespace extractor
             while (types.Count > 0)
             {
                 var type = types.Dequeue();
-                var typeName = type.Name;
+                var typeName = type.FullName;
 
                 if (TypeFilter.IsBannedType(type))
                 {
@@ -101,24 +101,44 @@ namespace extractor
                     var fieldType = fieldInfo.FieldType;
                     var fieldName = fieldInfo.Name;
 
-                    if (!typeDict.ContainsKey(fieldType))
+                    if (typeDict.ContainsKey(fieldType))
                     {
-                        typeDict.Add(fieldType, new RawTypeInfo(fieldType));
-                        types.Enqueue(fieldType);
+                        continue;
+                    }
 
-                        if (fieldType.IsGenericType)
+                    typeDict.Add(fieldType, new RawTypeInfo(fieldType));
+                    types.Enqueue(fieldType);
+                }
+
+                // generic type
+                if (type.IsGenericType)
+                {
+                    foreach (var T in type.GenericTypeArguments)
+                    {
+                        if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
                         {
-                            foreach(var T in fieldType.GenericTypeArguments)
-                            {
-                                if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
-                                {
-                                    typeDict.Add(T, new RawTypeInfo(T));
-                                    types.Enqueue(T);
-                                }
-                            }
+                            typeDict.Add(T, new RawTypeInfo(T));
+                            types.Enqueue(T);
                         }
                     }
                 }
+
+                // only get interface 1-depth.
+                // MEMO: to make analyzer's data linking between typeInfos work. this must be enabled.
+                // if (!type.IsInterface)
+                var interfaces = type.GetInterfaces();
+                foreach (var iface in interfaces)
+                {
+                    var ifaceTypeName = iface.FullName;
+                    if (TypeFilter.IsBannedType(iface) || typeDict.ContainsKey(iface))
+                    {
+                        continue;
+                    }
+
+                    typeDict.Add(iface, new RawTypeInfo(iface));
+                    types.Enqueue(iface);
+                }
+
                 typeInfo.childCollected = true;
             }
         }
@@ -167,7 +187,7 @@ namespace extractor
                         baseType = baseType.BaseType;
                     }
 
-					rawTypeInfo.metadata.compClass.baseClass = NameUtility.GetTypeIdentifier(baseType);
+                    rawTypeInfo.metadata.compClass.baseClass = NameUtility.GetTypeIdentifier(baseType);
                 }
 
                 rawTypeInfo.populated = true;

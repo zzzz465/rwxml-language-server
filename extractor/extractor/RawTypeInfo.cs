@@ -38,11 +38,12 @@ namespace extractor
         public string className;
         public string namespaceName;
         public Dictionary<string, string> attributes = new Dictionary<string, string>();
+        public Dictionary<string, string> interfaces = new Dictionary<string, string>();
         public Dictionary<string, RawFieldInfo> fields = new Dictionary<string, RawFieldInfo>();
         public List<string> genericArguments = new List<string>();
         public List<string> methods = new List<string>();
         public string baseClass;
-        public bool isGeneric, isArray, isEnum;
+        public bool isGeneric, isArray, isEnum, isInterface;
         public List<string> enums = new List<string>();
 
         // helper fields
@@ -58,6 +59,7 @@ namespace extractor
             this.className = NameUtility.GetTypeClassName(T);
             this.isGeneric = T.IsGenericType;
             this.isArray = T.IsArray;
+            this.isInterface = T.IsInterface;
 
             if (this.isGeneric)
             {
@@ -84,9 +86,11 @@ namespace extractor
             foreach (var attrib in T.CustomAttributes)
             {
                 var type = attrib.AttributeType;
-                if (!this.attributes.ContainsKey(type.Name))
+                if (!TypeFilter.IsBannedType(type))
                 {
-                    this.attributes.Add(type.Name, NameUtility.GetTypeIdentifier(type));
+                    var typeId = NameUtility.GetTypeIdentifier(type);
+                    // value will be linked to the typeInfo object in analzyer module.
+                    this.interfaces[typeId] = typeId;
                 }
             }
 
@@ -107,6 +111,17 @@ namespace extractor
             {
                 this.isEnum = true;
                 this.enums.AddRange(T.GetEnumNames());
+            }
+
+            // interface
+            foreach (var type in T.GetInterfaces())
+            {
+                if (!TypeFilter.IsBannedType(type))
+                {
+                    var typeId = NameUtility.GetTypeIdentifier(type);
+                    // value will be linked to the typeInfo object in analzyer module.
+                    this.interfaces[typeId] = typeId;
+                }
             }
         }
 

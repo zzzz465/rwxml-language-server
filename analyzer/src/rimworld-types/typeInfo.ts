@@ -1,6 +1,7 @@
 import { FieldInfo } from './fieldInfo'
 import { cache, CacheType, CacheScope } from 'cache-decorator'
 import { AsEnumerable } from 'linq-es2015'
+import _ from 'lodash'
 
 export type SpecialType =
   | 'integer'
@@ -37,7 +38,12 @@ export class TypeInfo {
     public readonly isGeneric: boolean,
     public readonly isArray: boolean,
     public readonly isEnum: boolean,
-    public readonly enums: string[]
+    public readonly enums: string[],
+    /**
+     * interfaces is an array of types that this typeInfo impelments.
+     */
+    public readonly interfaces: Record<string, TypeInfo>, // need to populate typeInfo
+    public readonly isInterface: boolean
   ) {}
 
   isDerivedFrom(base: TypeInfo) {
@@ -65,9 +71,28 @@ export class TypeInfo {
     }
   }
 
+  /**
+   * isEnumerable() retruns the Typeinfo implements IEnumerable.
+   */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isEnumerable(): boolean {
-    return this.isArray || (this.isGeneric && this.fullName.match(/System\.Collections\.Generic\.List.*/) != null)
+    return !!this.isImplementingInterface('System.Collections.IEnumerable')
+  }
+
+  /**
+   * isList() returns the TypeInfo implements IList.
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isList(): boolean {
+    return !!this.isImplementingInterface('System.Collections.IList')
+  }
+
+  /**
+   * isDictionary() returns the TypeInfo implements IDictionary.
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isDictionary(): boolean {
+    return !!this.isImplementingInterface('System.Collections.IDictionary')
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
@@ -173,7 +198,7 @@ export class TypeInfo {
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   private _getFields(): FieldInfo[] {
-    return Object.values(this.fields)
+    return _.uniqWith(Object.values(this.fields), (x, y) => x.name === y.name)
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
@@ -182,6 +207,59 @@ export class TypeInfo {
       .Where((x) => x !== null)
       .Cast<FieldInfo[]>()
       .SelectMany((x) => x)
+      .Distinct((x) => x.name)
       .ToArray()
+  }
+
+  getInterface(name: string, inherited = true): TypeInfo | null {
+    if (this.interfaces[name]) {
+      return this.interfaces[name]
+    }
+
+    if (inherited && this.baseClass) {
+      return this.baseClass.getInterface(name, inherited)
+    }
+
+    return null
+  }
+
+  getInterfaces(inherited = true): TypeInfo[] {
+    return inherited ? this._getInterfaces() : this._getInterfacesWthBase()
+  }
+
+  isImplementingInterface(fullName: string): boolean {
+    return this.getInterfaces().some((iface) => iface.fullName === fullName)
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  private _getInterfaces(): TypeInfo[] {
+    return _.uniqWith(Object.values(this.interfaces), (x, y) => x.fullName === y.fullName)
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  private _getInterfacesWthBase(): TypeInfo[] {
+    return AsEnumerable([...this._getInterfaces(), ...(this.baseClass?._getInterfacesWthBase() ?? [])])
+      .Where((x) => x !== null)
+      .Cast<TypeInfo[]>()
+      .SelectMany((x) => x)
+      .Distinct((x) => x.fullName)
+      .ToArray()
+  }
+
+  /**
+   * getEnumerableType returns T in IEnumerable<T>
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getEnumerableType(): TypeInfo | null {
+    const enumerableType =
+      AsEnumerable(this.getInterfaces())
+        .Where((type) => type.isEnumerable() && type.isGeneric && type.className.includes('IEnumerable'))
+        .FirstOrDefault() ?? null
+
+    if (enumerableType?.genericArguments.length === 1) {
+      return enumerableType.genericArguments[0]
+    }
+
+    return null
   }
 }
