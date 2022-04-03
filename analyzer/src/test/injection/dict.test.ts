@@ -61,11 +61,11 @@ describe('Dictionary<K, V> type test', () => {
 
   test('dictionary<K, V> should have <li> as key with type K', () => {
     const nodes = $(root)
-      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li')
+      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > key')
       .toArray() as unknown as Injectable[]
 
     for (const node of nodes) {
-      expect(node.tagName).toBe('li')
+      expect(node.tagName).toBe('key')
       expect(node).toBeInstanceOf(Injectable)
       expect(node.typeInfo.isType()).toBeTruthy()
     }
