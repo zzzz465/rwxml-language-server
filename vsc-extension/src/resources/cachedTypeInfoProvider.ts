@@ -111,6 +111,8 @@ export class CachedTypeInfoProvider implements Provider {
 
       typeInfoData = res.data
       await this.updateCache(cachePath, uris, res.data, requestId)
+    } else {
+      typeInfoData = this.deserializeData(typeInfoData)
     }
 
     return { data: typeInfoData }
@@ -184,7 +186,6 @@ export class CachedTypeInfoProvider implements Provider {
       const raw = data.toString('utf-8')
 
       const cache = JSON.parse(raw) as Cache
-      cache.data = this.deserializeData(cache.data)
 
       return [cache, undefined]
     } catch (e) {
