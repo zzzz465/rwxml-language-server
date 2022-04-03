@@ -206,6 +206,14 @@ export class TypeInfo {
     return inherited ? this._getInterfaces() : this._getInterfacesWthBase()
   }
 
+  isImplementingInterface(fullName: string): boolean {
+    if (this.isInterface && this.fullName === fullName) {
+      return true
+    }
+
+    return this.getInterfaces().some((type) => type.isImplementingInterface(fullName))
+  }
+
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   private _getInterfaces(): TypeInfo[] {
     return Object.values(this.interfaces)
