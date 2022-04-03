@@ -42,10 +42,6 @@ export class Property implements DiagnosticsContributor {
   }
 
   private diagnosisInvalidField(node: Element): ls.Diagnostic[] | null {
-    if (!node.contentRange) {
-      return null
-    }
-
     const range = this.rangeConverter.toLanguageServerRange(node.nodeRange, node.document.uri)
     if (!range) {
       return null
