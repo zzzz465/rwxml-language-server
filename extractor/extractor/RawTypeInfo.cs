@@ -59,6 +59,7 @@ namespace extractor
             this.className = NameUtility.GetTypeClassName(T);
             this.isGeneric = T.IsGenericType;
             this.isArray = T.IsArray;
+            this.isInterface = T.IsInterface;
 
             if (this.isGeneric)
             {
@@ -111,14 +112,9 @@ namespace extractor
             }
 
             // interface
-            if (T.IsInterface)
+            foreach (var type in T.GetInterfaces())
             {
-                this.isInterface = T.IsInterface;
-
-                foreach (var type in T.GetInterfaces())
-                {
-                    this.interfaces.Add(type.Name, NameUtility.GetTypeIdentifier(type));
-                }
+                this.interfaces[type.Name] = NameUtility.GetTypeIdentifier(type);
             }
         }
 
