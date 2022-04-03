@@ -7,6 +7,7 @@ import { Reference } from './reference'
 import { PrimitiveValue } from './primitive'
 import { Type } from './type'
 import { Enum } from './enum'
+import { Property } from './property'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics
@@ -36,6 +37,11 @@ import { Enum } from './enum'
   {
     token: DiagnosticsContributor.token,
     useClass: Enum,
+    options: { lifecycle: tsyringe.Lifecycle.Singleton },
+  },
+  {
+    token: DiagnosticsContributor.token,
+    useClass: Property,
     options: { lifecycle: tsyringe.Lifecycle.Singleton },
   },
 ])
