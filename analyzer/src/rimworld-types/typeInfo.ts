@@ -220,11 +220,7 @@ export class TypeInfo {
   }
 
   isImplementingInterface(fullName: string): boolean {
-    if (this.isInterface && this.fullName === fullName) {
-      return true
-    }
-
-    return this.getInterfaces().some((type) => type.isImplementingInterface(fullName))
+    return this.getInterfaces().some((iface) => iface.fullName === fullName)
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
