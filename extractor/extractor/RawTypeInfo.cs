@@ -43,7 +43,7 @@ namespace extractor
         public List<string> genericArguments = new List<string>();
         public List<string> methods = new List<string>();
         public string baseClass;
-        public bool isGeneric, isArray, isEnum;
+        public bool isGeneric, isArray, isEnum, isInterface;
         public List<string> enums = new List<string>();
 
         // helper fields
@@ -113,6 +113,8 @@ namespace extractor
             // interface
             if (T.IsInterface)
             {
+                this.isInterface = T.IsInterface;
+
                 foreach (var type in T.GetInterfaces())
                 {
                     this.interfaces.Add(type.Name, NameUtility.GetTypeIdentifier(type));

@@ -34,7 +34,8 @@ export class TypeInfoLoader {
             rawTypeInfo.isArray ?? false,
             rawTypeInfo.isEnum ?? false,
             rawTypeInfo.enums ?? [],
-            rawTypeInfo.interfaces ?? {}
+            rawTypeInfo.interfaces ?? {},
+            rawTypeInfo.isInterface ?? false
           )
         )
       }

@@ -41,7 +41,8 @@ export class TypeInfo {
     /**
      * interfaces is an array of types that this typeInfo impelments.
      */
-    public readonly interfaces: Record<string, TypeInfo> // need to populate typeInfo
+    public readonly interfaces: Record<string, TypeInfo>, // need to populate typeInfo
+    public readonly isInterface: boolean
   ) {}
 
   isDerivedFrom(base: TypeInfo) {
