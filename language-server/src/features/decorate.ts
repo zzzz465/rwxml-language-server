@@ -74,7 +74,7 @@ export class DecoProvider implements Provider {
         return this.getTokenOfRootDefs(project, node)
       } else {
         // non <Defs> node should not be decorated at all
-        return []
+        return this.getTokenOfElement(project, node)
       }
     } else if (node instanceof Text) {
       return this.getTokenOfText(project, node)
