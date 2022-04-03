@@ -86,7 +86,7 @@ namespace extractor
             foreach (var attrib in T.CustomAttributes)
             {
                 var type = attrib.AttributeType;
-                if (!this.attributes.ContainsKey(type.Name))
+                if (!TypeFilter.IsBannedType(type))
                 {
                     var typeId = NameUtility.GetTypeIdentifier(type);
                     // value will be linked to the typeInfo object in analzyer module.
@@ -116,9 +116,12 @@ namespace extractor
             // interface
             foreach (var type in T.GetInterfaces())
             {
-                var typeId = NameUtility.GetTypeIdentifier(type);
-                // value will be linked to the typeInfo object in analzyer module.
-                this.interfaces[typeId] = typeId;
+                if (!TypeFilter.IsBannedType(type))
+                {
+                    var typeId = NameUtility.GetTypeIdentifier(type);
+                    // value will be linked to the typeInfo object in analzyer module.
+                    this.interfaces[typeId] = typeId;
+                }
             }
         }
 

@@ -101,20 +101,22 @@ namespace extractor
                     var fieldType = fieldInfo.FieldType;
                     var fieldName = fieldInfo.Name;
 
-                    if (!typeDict.ContainsKey(fieldType))
+                    if (typeDict.ContainsKey(fieldType))
                     {
-                        typeDict.Add(fieldType, new RawTypeInfo(fieldType));
-                        types.Enqueue(fieldType);
+                        continue;
+                    }
 
-                        if (fieldType.IsGenericType)
+                    typeDict.Add(fieldType, new RawTypeInfo(fieldType));
+                    types.Enqueue(fieldType);
+
+                    if (fieldType.IsGenericType)
+                    {
+                        foreach (var T in fieldType.GenericTypeArguments)
                         {
-                            foreach (var T in fieldType.GenericTypeArguments)
+                            if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
                             {
-                                if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
-                                {
-                                    typeDict.Add(T, new RawTypeInfo(T));
-                                    types.Enqueue(T);
-                                }
+                                typeDict.Add(T, new RawTypeInfo(T));
+                                types.Enqueue(T);
                             }
                         }
                     }
@@ -123,17 +125,16 @@ namespace extractor
                 // only get interface 1-depth.
                 // MEMO: to make analyzer's data linking between typeInfos work. this must be enabled.
                 // if (!type.IsInterface)
-                if (true)
+                var interfaces = type.GetInterfaces();
+                foreach (var iface in interfaces)
                 {
-                    var interfaces = type.GetInterfaces();
-                    foreach (var iface in interfaces)
+                    if (TypeFilter.IsBannedType(iface) || typeDict.ContainsKey(iface))
                     {
-                        if (!typeDict.ContainsKey(iface))
-                        {
-                            typeDict.Add(iface, new RawTypeInfo(iface));
-                            types.Enqueue(iface);
-                        }
+                        continue;
                     }
+
+                    typeDict.Add(iface, new RawTypeInfo(iface));
+                    types.Enqueue(iface);
                 }
 
                 typeInfo.childCollected = true;
