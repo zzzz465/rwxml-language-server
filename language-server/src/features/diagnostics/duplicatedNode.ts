@@ -49,7 +49,7 @@ export class DuplicatedNode implements DiagnosticsContributor {
    * @returns
    */
   getDuplicatedNodes(node: Def | Injectable): { tagName: string; nodes: Element[] }[] {
-    if (node.typeInfo.isEnumerable()) {
+    if (node.typeInfo.isList() || node.typeInfo.isDictionary()) {
       return []
     }
 

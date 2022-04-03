@@ -45,7 +45,7 @@ export class TypeInfoInjector {
     const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo)
     if (specificTypeInfo) {
       this.injectType(injectable, specificTypeInfo)
-    } else if (typeInfo.isEnumerable()) {
+    } else if (typeInfo.isList() || typeInfo.isDictionary()) {
       const enumerableType = typeInfo.getEnumerableType()
 
       if (enumerableType) {

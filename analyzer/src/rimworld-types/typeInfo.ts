@@ -80,6 +80,14 @@ export class TypeInfo {
   }
 
   /**
+   * isList() returns the TypeInfo implements IList.
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isList(): boolean {
+    return !!this.isImplementingInterface('System.Collections.IList')
+  }
+
+  /**
    * isDictionary() returns the TypeInfo implements IDictionary.
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })

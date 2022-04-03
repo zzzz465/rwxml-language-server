@@ -32,7 +32,7 @@ export class Injectable extends Element {
   getDefPath(): string | undefined {
     const parentDefPath = this.parent.getDefPath()
     if (parentDefPath) {
-      if (this.parent.typeInfo.isEnumerable()) {
+      if (this.parent.typeInfo.isList()) {
         // TODO: add rule which doesn't use <li> node
         const index = this.parent.children.indexOf(this)
         return parentDefPath + '.' + String(index)
