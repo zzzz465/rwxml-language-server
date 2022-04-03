@@ -27,25 +27,16 @@ export class TypeInfoInjector {
   // recursively inject all typeInfo to xmlNode
   // TODO: refactor this hell.
   injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
-    const classAttribute = xmlNode.attribs['Class']?.value
-
-    // support <li Class="XXXCompProperties_YYY">
-    if (classAttribute) {
-      const ClassTypeInfo = this.typeInfoMap.getTypeInfoByName(classAttribute)
-      if (ClassTypeInfo) {
-        typeInfo = ClassTypeInfo
-      }
-    }
-
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
+
+    const classAttributeValue = xmlNode.attribs['Class']?.value
+    const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo)
+
+    typeInfo = specificTypeInfo ?? typeInfo
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
-    const classAttributeValue = injectable.attribs['Class']?.value
-    const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo)
-    if (specificTypeInfo && specificTypeInfo !== typeInfo) {
-      this.injectType(injectable, specificTypeInfo)
-    } else if (typeInfo.isList() || typeInfo.isDictionary()) {
+    if (typeInfo.isList() || typeInfo.isDictionary()) {
       const enumerableType = typeInfo.getEnumerableType()
 
       if (enumerableType) {

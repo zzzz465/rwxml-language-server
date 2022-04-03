@@ -18,7 +18,7 @@ const exampleXML = `\
   <maxSeverity>1.0</maxSeverity>
   <isBad>false</isBad>
   <comps>
-    <li Class="MoharHediffs.HediffCompProperties_HediffExclusive">
+    <li Class="MoharHediffs.HeDiffCompProperties_HediffExclusive">
       <hediffToNullify>
         <li>Antypheromone_SuicideHigh_Proty_Ready</li>
       </hediffToNullify>
@@ -52,8 +52,6 @@ describe('TypeInfo injection test against HediffDef with mohar', () => {
 
     const injectable = $(root).find('Defs > HediffDef > comps > li').get(0) as unknown as Injectable
     expect(injectable).toBeInstanceOf(Injectable)
-    // TODO: fix this broken test
-    expect(injectable.fieldInfo?.fieldType.className).toBe('HeDiffCompProperties_HediffExclusive')
-    expect(injectable.fieldInfo?.fieldType.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
+    expect(injectable.typeInfo.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
   })
 })
