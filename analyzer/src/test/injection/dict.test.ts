@@ -1,4 +1,4 @@
-import { Document, Element, parse } from '../../parser'
+import { Document, parse } from '../../parser'
 import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
 import data from './anty.json'
@@ -38,7 +38,8 @@ const xml = `\
 </Defs>
 `
 
-describe('Dictionary<K, V> type test', () => {
+// jest 가 <, > 를 인식 못함..
+describe('Dictionary K, V type test', () => {
   let root: Document
   const map: TypeInfoMap = TypeInfoLoader.load(data as RawTypeInfo[])
 
@@ -59,10 +60,12 @@ describe('Dictionary<K, V> type test', () => {
     expect(dictNode).toBeInstanceOf(Injectable)
   })
 
-  test('dictionary<K, V> should have <li> as key with type K', () => {
+  test('dictionary K, V should have li as key with type K', () => {
     const nodes = $(root)
       .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > key')
       .toArray() as unknown as Injectable[]
+
+    expect(nodes.length).toBeGreaterThan(0)
 
     for (const node of nodes) {
       expect(node.tagName).toBe('key')
@@ -71,10 +74,12 @@ describe('Dictionary<K, V> type test', () => {
     }
   })
 
-  test('dictionary<K, V> should have <value> as value with type V', () => {
+  test('dictionary K, V should have value as value with type V', () => {
     const nodes = $(root)
-      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > value')
+      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > value')
       .toArray() as unknown as Injectable[]
+
+    expect(nodes.length).toBeGreaterThan(0)
 
     for (const node of nodes) {
       expect(node.tagName).toBe('li')
