@@ -71,7 +71,7 @@ namespace extractor
             while (types.Count > 0)
             {
                 var type = types.Dequeue();
-                var typeName = type.Name;
+                var typeName = type.FullName;
 
                 if (TypeFilter.IsBannedType(type))
                 {
@@ -108,16 +108,17 @@ namespace extractor
 
                     typeDict.Add(fieldType, new RawTypeInfo(fieldType));
                     types.Enqueue(fieldType);
+                }
 
-                    if (fieldType.IsGenericType)
+                // generic type
+                if (type.IsGenericType)
+                {
+                    foreach (var T in type.GenericTypeArguments)
                     {
-                        foreach (var T in fieldType.GenericTypeArguments)
+                        if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
                         {
-                            if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
-                            {
-                                typeDict.Add(T, new RawTypeInfo(T));
-                                types.Enqueue(T);
-                            }
+                            typeDict.Add(T, new RawTypeInfo(T));
+                            types.Enqueue(T);
                         }
                     }
                 }
@@ -128,6 +129,7 @@ namespace extractor
                 var interfaces = type.GetInterfaces();
                 foreach (var iface in interfaces)
                 {
+                    var ifaceTypeName = iface.FullName;
                     if (TypeFilter.IsBannedType(iface) || typeDict.ContainsKey(iface))
                     {
                         continue;
