@@ -5,6 +5,7 @@ import { RangeConverter } from '../../utils/rangeConverter'
 import * as lsp from 'vscode-languageserver'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
+import { AsEnumerable } from 'linq-es2015'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {
@@ -206,4 +207,17 @@ export function isNonLeafContent(node: Node): boolean {
   }
 
   return true
+}
+
+export function getRootElement(node: Node): Element | undefined {
+  let doc: Node = node
+  while (!(doc instanceof Document) && doc.parentNode) {
+    doc = doc.parentNode
+  }
+
+  if (!doc || !(doc instanceof Document)) {
+    return
+  }
+
+  return AsEnumerable(doc.childNodes).FirstOrDefault((x) => x instanceof Element) as Element | undefined
 }

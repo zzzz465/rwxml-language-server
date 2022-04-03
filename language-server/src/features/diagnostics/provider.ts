@@ -9,6 +9,7 @@ import { LogToken } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
+import { getRootElement } from '../utils'
 import { DiagnosticsContributor } from './contributor'
 
 /*
@@ -97,9 +98,12 @@ export class DiagnosticsProvider implements Provider {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
 
-    if (document.uri === '') {
-      return
-    } else if (this.modDependencyResourceStore.isDependencyFile(document.uri)) {
+    const shouldDiagnosis =
+      document.uri !== '' &&
+      !this.modDependencyResourceStore.isDependencyFile(document.uri) &&
+      getRootElement(document)?.tagName === 'Defs'
+
+    if (!shouldDiagnosis) {
       return
     }
 
