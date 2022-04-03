@@ -234,6 +234,18 @@ export class TypeInfo {
       .Where((x) => x !== null)
       .Cast<TypeInfo[]>()
       .SelectMany((x) => x)
+      .Distinct((x) => x.fullName)
       .ToArray()
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getEnumerableType(): TypeInfo | null {
+    const interfaces = this.getInterfaces()
+
+    return (
+      AsEnumerable(this.getInterfaces())
+        .Where((type) => type.isEnumerable())
+        .FirstOrDefault() ?? null
+    )
   }
 }

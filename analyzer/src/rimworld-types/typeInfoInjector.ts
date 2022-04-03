@@ -25,6 +25,7 @@ export class TypeInfoInjector {
   }
 
   // recursively inject all typeInfo to xmlNode
+  // TODO: refactor this hell.
   injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
     const classAttribute = xmlNode.attribs['Class']?.value
 
@@ -39,18 +40,17 @@ export class TypeInfoInjector {
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
-    if (typeInfo.isEnumerable()) {
-      // <li> types
-      const listGenericType = typeInfo.genericArguments[0] as TypeInfo | undefined
 
-      if (listGenericType) {
-        for (const childNode of injectable.ChildElementNodes) {
-          const classAttributeValue = childNode.attribs['Class']?.value
-          const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', listGenericType)
+    const classAttributeValue = injectable.attribs['Class']?.value
+    const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo)
+    if (specificTypeInfo) {
+      this.injectType(injectable, specificTypeInfo)
+    } else if (typeInfo.isEnumerable()) {
+      const enumerableType = typeInfo.getEnumerableType()
 
-          // use Specific typeInfo annotated in attribute Class="", use generic otherwise.
-          const injectType = specificTypeInfo ?? listGenericType
-          this.injectType(childNode, injectType)
+      if (enumerableType) {
+        for (const childNode of injectable.ChildElementNodes.filter((node) => node.tagName === 'li')) {
+          this.injectType(childNode, enumerableType)
         }
       }
     } else if (typeInfo.isEnum && !injectable.parent.typeInfo.isEnum) {
@@ -72,6 +72,7 @@ export class TypeInfoInjector {
         }
       }
     }
+
     return injectable
   }
 
