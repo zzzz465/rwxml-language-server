@@ -70,9 +70,20 @@ export class TypeInfo {
     }
   }
 
+  /**
+   * isEnumerable() retruns the Typeinfo implements IEnumerable.
+   */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isEnumerable(): boolean {
-    return this.isArray || (this.isGeneric && this.fullName.match(/System\.Collections\.Generic\.List.*/) != null)
+    return !!this.isImplementingInterface('System.Collections.IEnumerable')
+  }
+
+  /**
+   * isDictionary() returns the TypeInfo implements IDictionary.
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isDictionary(): boolean {
+    return !!this.isImplementingInterface('System.Collections.IDictionary')
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
