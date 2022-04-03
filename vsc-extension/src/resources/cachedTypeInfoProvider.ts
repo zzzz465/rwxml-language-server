@@ -25,12 +25,13 @@ interface Cache {
   requestedFileUris: string[]
   checksums: string[] // length is equal to rqeustedFileUris field
 
+  compression: string
   data: any
 }
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
-  private static readonly extractorVersion = new semver.SemVer('0.5.0')
+  private static readonly extractorVersion = new semver.SemVer('0.6.0')
 
   get dllCacheDirectory(): string {
     return path.join(this.pathStore.cacheDirectory, 'dlls')
@@ -91,48 +92,28 @@ export class CachedTypeInfoProvider implements Provider {
     console.log(`[${requestId}] requested uris: ${JSON.stringify(uris, null, 4)}`)
     console.log(`[${requestId}] cache path: ${uris}`)
 
-    const checkCacheValid = async () => {
-      // https://nodejs.org/api/fs.html#file-system-flags
-      let file: fs.FileHandle | null = null
-
-      try {
-        file = await fs.open(cachePath, 'a+', '644')
-
-        const cache = await this.getCache(file)
-        return {
-          valid: await this.isCacheValid(cache, uris),
-          data: cache.data,
-        }
-      } catch (e) {
-        console.error(`[${requestId}] failed opening cache. file: ${cachePath}, err: `, e)
-      } finally {
-        await file?.close()
-      }
-
-      return {
-        valid: false,
-        data: null,
-      }
+    const [cache, err0] = await this.getCacheFromFile(cachePath)
+    if (err0) {
+      console.warn(err0)
     }
 
-    const cacheData = await checkCacheValid()
-    let data = cacheData.data
-    if (!cacheData.valid) {
+    let typeInfoData = cache?.data
+
+    if (!(await this.isCacheValid(cache, uris))) {
       console.log(`[${requestId}] checksum invalid, updating cache.`)
 
       const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
       if (res.error) {
         return res
+      } else if (!res.data) {
+        return { error: `[${requestId}] while extracting typeInfos, error is null but data is undefined.` }
       }
 
-      data = res.data
-
-      await this.updateCache(cachePath, uris, data, requestId)
-    } else {
-      console.log(`cache hit! uris: ${JSON.stringify(uris, null, 4)}`)
+      typeInfoData = res.data
+      await this.updateCache(cachePath, uris, res.data, requestId)
     }
 
-    return { data }
+    return { data: typeInfoData }
   }
 
   private getCacheName(files: string[]): string {
@@ -145,18 +126,21 @@ export class CachedTypeInfoProvider implements Provider {
     return hash.digest('hex')
   }
 
-  private async getCache(file: fs.FileHandle): Promise<Cache> {
-    const data = (await file.readFile()).toString('utf-8')
-    return JSON.parse(data) as Cache
-  }
+  private async isCacheValid(cache: Cache | undefined, files: string[]): Promise<boolean> {
+    if (!cache) {
+      return false
+    }
 
-  private async isCacheValid(cache: Cache, files: string[]): Promise<boolean> {
     const cacheVersion = semver.parse(cache.extractorVersion, true)
     if (!cacheVersion) {
       return false
     }
 
     if (CachedTypeInfoProvider.extractorVersion.compare(cacheVersion) !== 0) {
+      return false
+    }
+
+    if (cache.compression !== this.compressionType) {
       return false
     }
 
@@ -178,16 +162,66 @@ export class CachedTypeInfoProvider implements Provider {
         checksums,
         createdAt: dayjs().format(),
         createdBy: CachedTypeInfoProvider.name,
+        compression: this.compressionType,
         data,
         requestedFileUris: files,
       }
 
-      const raw = JSON.stringify(cache, null, 4)
+      await this.saveCache(cachePath, cache)
 
-      await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
       console.log(`[${requestId}] write cache to file: `, cachePath)
     } catch (err) {
       console.error(`[${requestId}] failed to write cache to file: ${cachePath}, err: `, err)
     }
+  }
+
+  private async getCacheFromFile(cachePath: string): Promise<[Cache?, Error?]> {
+    let file: fs.FileHandle | null = null
+
+    try {
+      file = await fs.open(cachePath, 'a+', '644')
+      const data = await file.readFile()
+      const raw = data.toString('utf-8')
+
+      const cache = JSON.parse(raw) as Cache
+      cache.data = this.deserializeData(cache.data)
+
+      return [cache, undefined]
+    } catch (e) {
+      return [undefined, new Error(String(e))]
+    } finally {
+      await file?.close()
+    }
+  }
+
+  private async saveCache(cachePath: string, cache: Cache): Promise<void> {
+    cache.data = this.serializeData(cache.data)
+
+    const raw = JSON.stringify(cache, null, 4)
+
+    await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
+  }
+
+  /**
+   * serializeData is used to make value of the field "data" in cache.
+   * @virtual called when updating cache.
+   */
+  protected serializeData(data: any): any {
+    return data
+  }
+
+  /**
+   * deserializeData is used to make value of the field "data" in cache.
+   * @virtual called when loading cache.
+   */
+  protected deserializeData(data: any): any {
+    return data
+  }
+
+  /**
+   * type of the value compression. must be changed if serialize/deserialize is updated.
+   */
+  protected get compressionType(): string {
+    return 'None'
   }
 }
