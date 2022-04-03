@@ -1,5 +1,6 @@
 import { FieldInfo } from './fieldInfo'
 import { cache, CacheType, CacheScope } from 'cache-decorator'
+import { AsEnumerable } from 'linq-es2015'
 
 export type SpecialType =
   | 'integer'
@@ -23,7 +24,13 @@ export class TypeInfo {
     public readonly namespaceName: string,
     public readonly className: string,
     public readonly attributes: Record<string, TypeInfo>, // need to populate typeInfo
+    /**
+     * fields is an array of FieldInfo that this TypeInfo declares.
+     */
     public readonly fields: Record<string, FieldInfo>, // need to populate typeInfo
+    /**
+     * genericArguments is an array of types if this TypeInfo is generic Type.
+     */
     public readonly genericArguments: TypeInfo[], // need to populate typeInfo
     public readonly baseClass: TypeInfo | undefined, // need to populate typeInfo
     public readonly methods: string[],
@@ -137,5 +144,44 @@ export class TypeInfo {
         return this.fullName
       }
     }
+  }
+
+  /**
+   * getField returns a FieldInfo of the given name.
+   * @param name name of the field
+   * @param inherited search including base classes, recursively.
+   */
+  getField(name: string, inherited = true): FieldInfo | null {
+    if (this.fields[name]) {
+      return this.fields[name]
+    }
+
+    if (inherited && this.baseClass) {
+      return this.baseClass.getField(name, inherited)
+    }
+
+    return null
+  }
+
+  /**
+   * getFields returns all field that this TypeInfo holds.
+   * @param inherited whether to include base class's fields, recursively.
+   */
+  getFields(inherited = true): FieldInfo[] {
+    return inherited ? this._getFields() : this._getFieldsWithBase()
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  private _getFields(): FieldInfo[] {
+    return Object.values(this.fields)
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  private _getFieldsWithBase(): FieldInfo[] {
+    return AsEnumerable([...this._getFields(), ...(this.baseClass?._getFieldsWithBase() ?? [])])
+      .Where((x) => x !== null)
+      .Cast<FieldInfo[]>()
+      .SelectMany((x) => x)
+      .ToArray()
   }
 }
