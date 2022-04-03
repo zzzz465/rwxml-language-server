@@ -40,7 +40,7 @@ export class TypeInfoInjector {
       const enumerableType = typeInfo.getEnumerableType()
 
       if (enumerableType) {
-        for (const childNode of injectable.ChildElementNodes.filter((node) => node.tagName === 'li')) {
+        for (const childNode of injectable.ChildElementNodes) {
           this.injectType(childNode, enumerableType)
         }
       }
