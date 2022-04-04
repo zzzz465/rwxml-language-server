@@ -37,11 +37,14 @@ export class ParsedTypeInfoRequestHandler implements Provider {
     const project = this.projectManager.getProject(version)
 
     try {
-      const typeInfoMap = await project.getTypeInfo()
+      const [typeInfoMap, error] = await project.getTypeInfo()
+      if (error) {
+        return { version, data: '', error: error }
+      }
 
       return { version, data: typeInfoMap.rawData }
     } catch (err) {
-      return { version, data: null, error: err }
+      return { version, data: null, error: err as Error }
     }
   }
 }
