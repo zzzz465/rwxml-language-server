@@ -55,7 +55,7 @@ export class TypeInfoMapProvider {
     })
 
     if (error) {
-      throw new Error(error)
+      throw error
     }
 
     // NOTE: should I type check this result?

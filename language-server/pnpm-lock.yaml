@@ -30,6 +30,7 @@ specifiers:
   prettier: ^2.3.2
   prettydiff: ^101.2.6
   reflect-metadata: ^0.1.13
+  serialize-error: ^9.1.1
   ts-jest: ^26.1.4
   ts-loader: ^8.0.3
   ts-node: ^10.1.0
@@ -59,6 +60,7 @@ dependencies:
   normalize-path: 3.0.0
   prettydiff: 101.2.6
   reflect-metadata: 0.1.13
+  serialize-error: 9.1.1
   tsconfig-paths: 3.11.0
   tsyringe: 4.6.0
   typescript-collections: 1.3.3
@@ -4309,6 +4311,13 @@ packages:
       lru-cache: 6.0.0
     dev: true
 
+  /serialize-error/9.1.1:
+    resolution: {integrity: sha512-6uZQLGyUkNA4N+Zii9fYukmNu9PEA1F5rqcwXzN/3LtBjwl2dFBbVZ1Zyn08/CGkB4H440PIemdOQBt1Wvjbrg==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      type-fest: 2.12.2
+    dev: false
+
   /serialize-javascript/6.0.0:
     resolution: {integrity: sha512-Qr3TosvguFt8ePWqsvRfrKyQXIiW+nGbYpy8XK24NQHE83caxWt+mIymTT19DGFbNWNLfEwsrkSmN64lVWB9ag==}
     dependencies:
@@ -4892,6 +4901,11 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
     dev: true
+
+  /type-fest/2.12.2:
+    resolution: {integrity: sha512-qt6ylCGpLjZ7AaODxbpyBZSs9fCI9SkL3Z9q2oxMBQhs/uyY+VD8jHA8ULCGmWQJlBgqvO3EJeAngOHD8zQCrQ==}
+    engines: {node: '>=12.20'}
+    dev: false
 
   /typedarray-to-buffer/3.1.5:
     resolution: {integrity: sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==}

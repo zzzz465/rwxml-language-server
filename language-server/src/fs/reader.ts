@@ -27,7 +27,7 @@ export class TextReader {
 
     if (error) {
       this.log.error(`request failed, error: ${error}`)
-      throw new Error(error)
+      throw error
     }
 
     return data
