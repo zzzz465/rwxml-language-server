@@ -117,7 +117,7 @@ export class Project {
   private reloadProject = _.debounce(async (reason = '') => {
     const requestId = uuid()
     if (this.isReloading) {
-      this.reloadProject(reason + ' (retry)')
+      this.reloadProject(reason)
       return
     }
 
