@@ -32,7 +32,7 @@ interface Events {
 @scoped(Lifecycle.ContainerScoped)
 export class Project {
   private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
+    (info) => `[${info.level}] [${Project.name}] [${this.version}] ${info.message}`
   )
   private readonly log: winston.Logger
 
