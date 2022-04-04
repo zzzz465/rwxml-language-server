@@ -250,7 +250,12 @@ export class ResourceStore {
     this.event.emit('dllDeleted', uri)
   }
 
-  private isProjectResource(fileOrUri: File | string): boolean {
+  /**
+   * isProjectResource determines given arg is a part of this project.
+   * @param fileOrUri file or uri to test.
+   * @returns whether the file is a part of this project.
+   */
+  isProjectResource(fileOrUri: File | string): boolean {
     const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
 
     // 1. (add/change) does this exists?

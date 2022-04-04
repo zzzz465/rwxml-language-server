@@ -9,7 +9,11 @@ import * as LINQ from 'linq-es2015'
 export class ProjectWorkspace {
   private static readonly knownSubDirectories = ['Defs', 'Textures', 'Languages', 'Sounds']
 
-  constructor(public readonly version: string, private readonly directories: URI[]) {}
+  constructor(
+    public readonly version: string,
+    private readonly rootDir: URI,
+    private readonly relativeDirectories: string[]
+  ) {}
 
   getResourcePath(uri: URI): string | null {
     if (!this.includes(uri)) {
@@ -35,7 +39,8 @@ export class ProjectWorkspace {
       return null
     }
 
-    const result = LINQ.from(this.directories)
+    const result = LINQ.from(this.relativeDirectories)
+      .Select((x) => this.toAbsoluteURI(x))
       .SelectMany((x) => this.getResourceDirectories(x))
       .FirstOrDefault((x) => isSubFileOf(x.fsPath, uri.fsPath)) as URI | undefined
 
@@ -47,8 +52,8 @@ export class ProjectWorkspace {
    * @param uri
    */
   includes(uri: URI): boolean {
-    for (const dir of this.directories) {
-      if (this.isDirectoryIncludes(dir, uri)) {
+    for (const relativeDir of this.relativeDirectories) {
+      if (this.isDirectoryIncludes(this.toAbsoluteURI(relativeDir), uri)) {
         return true
       }
     }
@@ -65,8 +70,17 @@ export class ProjectWorkspace {
 
   private getResourceDirectories(directory: URI): URI[] {
     return LINQ.from(ProjectWorkspace.knownSubDirectories)
-      .Select((x) => path.join(directory.fsPath, x))
+      .Select((x) => path.resolve(directory.fsPath, x))
       .Select((x) => URI.file(x))
       .ToArray()
+  }
+
+  /**
+   * creates absolute URI from given relative path based on root URI.
+   */
+  private toAbsoluteURI(relativePath: string): URI {
+    const absPath = path.resolve(this.rootDir.fsPath, relativePath)
+
+    return URI.file(absPath)
   }
 }

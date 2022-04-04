@@ -9,6 +9,7 @@ import * as winston from 'winston'
 import _ from 'lodash'
 import { LogToken } from '../log'
 import { Dependency } from './modDependencyManager'
+import { URI } from 'vscode-uri'
 
 export interface AboutEvents {
   aboutChanged(about: About): void
@@ -20,6 +21,11 @@ export class About {
   private readonly log: winston.Logger
 
   readonly event: EventEmitter<AboutEvents> = new EventEmitter()
+
+  private _filePath: URI = URI.parse('')
+  get filePath() {
+    return this._filePath
+  }
 
   private _rawXML = ''
   private _name = ''
@@ -130,6 +136,8 @@ export class About {
   private async onFileChanged(file: File) {
     if (isAboutFile(file)) {
       this.log.info(`about file changed, uri: ${file.uri.toString()}`)
+
+      this._filePath = file.uri
 
       const text = await file.read()
       this.updateAboutXML(text)
