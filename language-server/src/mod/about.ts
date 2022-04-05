@@ -23,8 +23,19 @@ export class About {
   readonly event: EventEmitter<AboutEvents> = new EventEmitter()
 
   private _filePath: URI = URI.parse('')
-  get filePath() {
+
+  get filePath(): URI {
     return this._filePath
+  }
+
+  /**
+   * return the project root directory URI as the About is the workspace's anchor.
+   */
+  get rootDirectory(): URI {
+    const aboutFilePath = this.filePath.fsPath
+    const rootDirPath = path.resolve(path.dirname(aboutFilePath), '../')
+
+    return URI.file(rootDirPath)
   }
 
   private _rawXML = ''
@@ -135,9 +146,14 @@ export class About {
 
   private async onFileChanged(file: File) {
     if (isAboutFile(file)) {
-      this.log.info(`about file changed, uri: ${file.uri.toString()}`)
+      this.log.info('about file changed.')
 
-      this._filePath = file.uri
+      if (file.uri.toString() !== this.filePath.toString()) {
+        this._filePath = file.uri
+        this.log.debug('updating paths because about.xml path is changed.')
+        this.log.debug(`about.xml path: ${this.filePath.toString()}`)
+        this.log.debug(`rootDirectory path: ${this.rootDirectory.toString()}`)
+      }
 
       const text = await file.read()
       this.updateAboutXML(text)
