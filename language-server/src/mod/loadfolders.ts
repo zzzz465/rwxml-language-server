@@ -4,7 +4,7 @@ import EventEmitter from 'events'
 import path from 'path'
 import { URI } from 'vscode-uri'
 import { File, XMLFile } from '../fs'
-import { NotificationEvents } from '../notificationEventManager'
+import { NotificationEventManager, NotificationEvents } from '../notificationEventManager'
 import * as LINQ from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
@@ -12,8 +12,9 @@ import * as winston from 'winston'
 import { LogToken } from '../log'
 import { About } from './about'
 import { ProjectWorkspace } from './projectWorkspace'
+import { FileStore } from '../fileStore'
 
-const VERSION_REGEX = /v[\d]\.\[\d]$/
+const VERSION_REGEX = /v[\d]\.[\d]$/
 
 // TODO: support on LoadFolder changes.
 @tsyringe.singleton()
@@ -24,16 +25,32 @@ export class LoadFolder {
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
 
-  private _rootDirectory: URI = URI.parse('')
-  get rootDirectory() {
+  /**
+   * filePath is a URI of the current LoadFolder.xml
+   */
+  private filePath: URI = URI.file('')
+
+  /**
+   * rootDirectory is a project root path
+   */
+  get rootDirectory(): URI {
     // TODO: make _rootDirectory nullable and if it's null, return root dir based on about.xml
-    return this._rootDirectory
+    return URI.file(path.dirname(this.filePath.fsPath))
   }
 
   private projectWorkspaces: Map<string, ProjectWorkspace> = new Map()
 
-  constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger, private readonly about: About) {
+  constructor(
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger,
+    private readonly fileStore: FileStore,
+    notiEventManager: NotificationEventManager,
+    about: About
+  ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
+    about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
+    notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))
+    notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))
   }
 
   getProjectWorkspace(version: string) {
@@ -89,9 +106,11 @@ export class LoadFolder {
   /**
    * update() updates this instance, parsing the given text.
    */
-  update(text: string) {
+  private update(text: string) {
     this._rawXML = text
     this.projectWorkspaces.clear()
+
+    this.log.silly(`LoadFolder content below.\n${text}\n`)
 
     const $ = xml.parse(this._rawXML)
     const workspaces = this.parseLoadFolderXML($('loadFolders'))
@@ -102,11 +121,14 @@ export class LoadFolder {
 
     this.projectWorkspaces.set('default', new ProjectWorkspace('default', this.rootDirectory, ['.']))
 
+    this.log.debug(`updated workspaces: ${JSON.stringify([...this.projectWorkspaces.values()], null, 4)}`)
+    this.log.debug(`default workspace: ${JSON.stringify(this.getProjectWorkspace('default'), null, 4)}`)
+
     // TODO: emit event
   }
 
   /**
-   * parse <loadFolders> node
+   * parse <loadFolders> node.
    */
   private parseLoadFolderXML(loadFolders: cheerio.Cheerio<cheerio.Element>): ProjectWorkspace[] {
     return LINQ.from(loadFolders.children())
@@ -121,49 +143,56 @@ export class LoadFolder {
    * parse<v1.0>, <v1.1>, ... nodes.
    */
   private parseVersion(versionNode: cheerio.Element): ProjectWorkspace | null {
-    const $ = cheerio.load(versionNode)
-    const version = $().first().text()
+    const version = versionNode.tagName
     if (!version.match(VERSION_REGEX)) {
       return null
     }
+
+    const $ = cheerio.load(versionNode)
 
     const relativePaths = LINQ.from($('li'))
       .Select((x) => cheerio.load(x).text())
       .ToArray()
 
-    return new ProjectWorkspace(version, this._rootDirectory, relativePaths)
+    return new ProjectWorkspace(version, this.rootDirectory, relativePaths)
   }
 
   private async onFileChanged(file: File) {
-    const uri = file.uri
-    if (file instanceof XMLFile && this.isLoadFolderFile(file.uri)) {
-      const baseDir = path.dirname(uri.fsPath)
-      const baseDirUri = URI.file(baseDir)
-      this._rootDirectory = baseDirUri
-      const xml = await file.read()
-
-      this.log.debug(`loadFolder.xml changed. source: ${file.uri.toString()}`)
-      this.update(xml)
+    if (file instanceof XMLFile && file.uri.toString() === this.filePath.toString()) {
+      this.update(await file.read())
     }
   }
 
   private onFileDeleted(uri: string) {
-    if (this.isLoadFolderFile(URI.parse(uri))) {
-      // TODO: implement this
-      throw new Error('onFileDeleted not implemented.')
+    if (uri === this.filePath.toString()) {
+      throw new Error('onFileDeleted is not implemented.')
     }
   }
 
-  private isLoadFolderFile(uri: URI): boolean {
-    const path1 = path.join(path.dirname(this.about.filePath.fsPath), '../')
-    const path2 = path.dirname(uri.fsPath)
-
-    const isWorkspaceLoadFolderFile = path1 === path2
-    if (!isWorkspaceLoadFolderFile) {
-      return false
+  private onAboutChanged(about: About): void {
+    const newAboutMetadataFilePath = this.getAboutMetadataFilePathFromAbout(about)
+    if (newAboutMetadataFilePath.toString() === this.filePath.toString()) {
+      return
     }
 
-    const basename = path.basename(uri.fsPath)
-    return basename.toLowerCase() === 'loadfolders.xml'
+    this.filePath = newAboutMetadataFilePath
+    this.log.debug(`reloading because About.xml path is changed. new source: ${newAboutMetadataFilePath.toString()}`)
+    this.reload()
+  }
+
+  private getAboutMetadataFilePathFromAbout(about: About): URI {
+    return URI.file(path.resolve(path.dirname(about.filePath.fsPath), '../', 'LoadFolders.xml'))
+  }
+
+  /**
+   * reload() reloads LoadFolders fetching text from fileStore.
+   */
+  private async reload(): Promise<void> {
+    const file = this.fileStore.get(this.filePath.toString())
+    if (!file || !(file instanceof XMLFile)) {
+      return this.update('')
+    }
+
+    this.update(await file.read())
   }
 }
