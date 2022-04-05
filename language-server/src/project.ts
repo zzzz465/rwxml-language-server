@@ -29,6 +29,7 @@ interface Events {
   projectReloaded(): void
 }
 
+// TODO: impl disposable() for ContainerScoped classes.
 @scoped(Lifecycle.ContainerScoped)
 export class Project {
   private logFormat = winston.format.printf(
@@ -60,6 +61,7 @@ export class Project {
     resourceStore.event.on('xmlDeleted', this.onXMLDeleted.bind(this))
     resourceStore.event.on('dllChanged', () => this.reloadProject('dll is changed.'))
     resourceStore.event.on('dllDeleted', () => this.reloadProject('dll is deleted.'))
+    resourceStore.event.on('workspaceChanged', () => this.reloadProject('project workspace is changed.'))
 
     this.reloadProject('project initialize')
   }
