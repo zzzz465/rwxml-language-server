@@ -123,6 +123,7 @@ export class LoadFolder {
     const workspaces = this.parseLoadFolderXML($('loadFolders'))
 
     for (const workspace of workspaces) {
+      // because loadfolder's item is v-prefixed.
       this.projectWorkspaces.set(workspace.version, workspace)
     }
 
@@ -152,10 +153,12 @@ export class LoadFolder {
    * parse<v1.0>, <v1.1>, ... nodes.
    */
   private parseVersion(versionNode: cheerio.Element): ProjectWorkspace | null {
-    const version = versionNode.tagName
+    let version = versionNode.tagName
     if (!version.match(VERSION_REGEX)) {
       return null
     }
+
+    version = version.replace('v', '')
 
     const $ = cheerio.load(versionNode)
 
