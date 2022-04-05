@@ -16,6 +16,10 @@ import { FileStore } from '../fileStore'
 
 const VERSION_REGEX = /v[\d]\.[\d]$/
 
+interface Events {
+  loadFolderChanged(loadFolder: LoadFolder): void
+}
+
 // TODO: support on LoadFolder changes.
 @tsyringe.singleton()
 export class LoadFolder {
@@ -40,11 +44,13 @@ export class LoadFolder {
 
   private projectWorkspaces: Map<string, ProjectWorkspace> = new Map()
 
+  readonly event: EventEmitter<Events> = new EventEmitter()
+
   constructor(
     @tsyringe.inject(LogToken) baseLogger: winston.Logger,
     private readonly fileStore: FileStore,
     notiEventManager: NotificationEventManager,
-    about: About
+    private readonly about: About
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
 
@@ -108,6 +114,7 @@ export class LoadFolder {
    */
   private update(text: string) {
     this._rawXML = text
+
     this.projectWorkspaces.clear()
 
     this.log.silly(`LoadFolder content below.\n${text}\n`)
@@ -119,12 +126,14 @@ export class LoadFolder {
       this.projectWorkspaces.set(workspace.version, workspace)
     }
 
-    this.projectWorkspaces.set('default', new ProjectWorkspace('default', this.rootDirectory, ['.']))
+    for (const version of this.about.supportedVersions.filter((v) => !this.projectWorkspaces.has(v))) {
+      this.projectWorkspaces.set(version, new ProjectWorkspace(version, this.rootDirectory, ['.']))
+    }
 
     this.log.debug(`updated workspaces: ${JSON.stringify([...this.projectWorkspaces.values()], null, 4)}`)
     this.log.debug(`default workspace: ${JSON.stringify(this.getProjectWorkspace('default'), null, 4)}`)
 
-    // TODO: emit event
+    this.event.emit('loadFolderChanged', this)
   }
 
   /**
