@@ -142,7 +142,7 @@ export class LoadFolder {
       this._rootDirectory = baseDirUri
       const xml = await file.read()
 
-      this.log.info('loadFolder.xml changed.')
+      this.log.info(`loadFolder.xml changed. source: ${file.uri.toString()}`)
       this.update(xml)
     }
   }
@@ -154,7 +154,15 @@ export class LoadFolder {
     }
   }
 
-  private isLoadFolderFile(uri: URI) {
+  private isLoadFolderFile(uri: URI): boolean {
+    const path1 = path.join(path.dirname(uri.fsPath), '../')
+    const path2 = path.dirname(uri.fsPath)
+
+    const isWorkspaceLoadFolderFile = path1 === path2
+    if (!isWorkspaceLoadFolderFile) {
+      return false
+    }
+
     const basename = path.basename(uri.fsPath)
     return basename.toLowerCase() === 'loadfolders.xml'
   }
