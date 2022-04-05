@@ -32,14 +32,23 @@ export class ModDependencyManager {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${ModDependencyManager.name}] ${info.message}`)
   private readonly log: winston.Logger
 
+  /**
+   * workspace-wide required dependencies.
+   */
   get requiredDependencies(): Dependency[] {
     return [...requiredDependencies, ...this.aboutModDependencies]
   }
 
+  /**
+   * workspace-wide optional dependencies.
+   */
   get optionalDependencies(): Dependency[] {
     return this.aboutMetadataOptionalModDependencies
   }
 
+  /**
+   * workspace-wide dependencies. (required + optional)
+   */
   get dependencies(): Dependency[] {
     return [...this.requiredDependencies, ...this.optionalDependencies]
   }
@@ -60,6 +69,16 @@ export class ModDependencyManager {
 
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
     aboutMetadata.event.on('aboutMetadataChanged', this.onAboutMetadataChanged.bind(this))
+  }
+
+  /**
+   * getDependenciesOf() returns array of dependencies of the specific version.
+   * @returns 2 array of dependencies. [Required[], Optional[]]
+   */
+  getDependenciesOf(version: string): [Dependency[], Dependency[]] {
+    // TODO: impl this
+
+    return [this.requiredDependencies, this.optionalDependencies]
   }
 
   private onAboutChanged(about: About): void {
