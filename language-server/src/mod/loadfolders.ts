@@ -42,6 +42,7 @@ export class LoadFolder {
 
   /**
    * isBelongsTo find matching RimWorld versions from given arg.
+   * @deprecated access using getWorkspace()
    */
   isBelongsTo(uri: URI): RimWorldVersion[] {
     const res = RimWorldVersionArray.filter((ver) => ver !== 'default' && this.isBelongsToVersion(uri, ver))
@@ -65,12 +66,16 @@ export class LoadFolder {
   /**
    * @returns string posix-normalized relative path from Resource directory root
    * returns undefined if uri is not under resource directory, or not valid uri
+   * @deprecated access using getProjectWorkspace()
    */
   getResourcePath(uri: URI, version: RimWorldVersion): string | undefined {
     return this.getProjectWorkspace(version)?.getResourcePath(uri) ?? undefined
   }
 
-  // determine the file belongs to specific rimworld version.
+  /**
+   * determine the file belongs to specific rimworld version.
+   * @deprecated access using getProjectWorkspace()
+   */
   private isBelongsToVersion(uri: URI, version: string): boolean {
     return this.getProjectWorkspace(version)?.includes(uri) ?? false
   }
@@ -81,6 +86,9 @@ export class LoadFolder {
     event.on('fileDeleted', this.onFileDeleted.bind(this))
   }
 
+  /**
+   * update() updates this instance, parsing the given text.
+   */
   update(text: string) {
     this._rawXML = text
     this.projectWorkspaces.clear()
