@@ -155,7 +155,7 @@ export class LoadFolder {
   }
 
   private isLoadFolderFile(uri: URI): boolean {
-    const path1 = path.join(path.dirname(uri.fsPath), '../')
+    const path1 = path.join(path.dirname(this.about.filePath.fsPath), '../')
     const path2 = path.dirname(uri.fsPath)
 
     const isWorkspaceLoadFolderFile = path1 === path2
