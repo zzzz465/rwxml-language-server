@@ -8,7 +8,7 @@ import _ from 'lodash'
  * ProjectWorkspace manages resource paths of the specific version.
  */
 export class ProjectWorkspace {
-  private static readonly knownSubDirectories = ['Defs', 'Textures', 'Languages', 'Sounds']
+  private static readonly knownSubDirectories = ['Defs', 'Textures', 'Languages', 'Sounds', 'Assemblies']
 
   constructor(
     public readonly version: string,
