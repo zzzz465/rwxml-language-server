@@ -20,7 +20,7 @@ export class ResourceExistsProvider implements Provider {
         if (err != null) {
           res({ uri, exists: false })
         } else {
-          res({ uri, exists: true, error: err })
+          res({ uri, exists: true })
         }
       })
     })

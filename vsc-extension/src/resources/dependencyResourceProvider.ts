@@ -21,7 +21,7 @@ export class DependencyResourceProvider implements Provider {
 
     const mod = this.modManager.getMod(packageId)
     if (!mod) {
-      return { packageId, uris: [], error: `mod for ${packageId} does not exists` }
+      return { packageId, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
     }
 
     // use fast-glob because vscode doesn't support findFiles for outside of workspace

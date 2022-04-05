@@ -52,7 +52,7 @@ class DisplayTypeInfo {
   private async requestParsedTypeInfo(version: string): Promise<string> {
     const res = await this.client.sendRequest(ParsedTypeInfoRequest, { version }, undefined)
     if (res.error) {
-      throw new Error(res.error)
+      throw new Error(String(res.error))
     }
 
     return JSON.stringify(res.data, null, 4)

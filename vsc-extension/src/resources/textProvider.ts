@@ -17,7 +17,7 @@ export class TextProvider implements Provider {
       const xml = Buffer.from(data).toString('utf-8')
       return { data: xml }
     } catch (err) {
-      return { data: '', error: String(err) }
+      return { data: '', error: err as Error }
     }
   }
 }
