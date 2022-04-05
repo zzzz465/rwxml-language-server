@@ -70,7 +70,7 @@ export class ProjectWorkspace {
 
   private getResourceDirectories(directory: URI): URI[] {
     return LINQ.from(ProjectWorkspace.knownSubDirectories)
-      .Select((x) => path.resolve(directory.fsPath, x))
+      .Select((x) => path.join(directory.fsPath, x))
       .Select((x) => URI.file(x))
       .ToArray()
   }
@@ -79,7 +79,7 @@ export class ProjectWorkspace {
    * creates absolute URI from given relative path based on root URI.
    */
   private toAbsoluteURI(relativePath: string): URI {
-    const absPath = path.resolve(this.rootDir.fsPath, relativePath)
+    const absPath = path.join(this.rootDir.fsPath, relativePath)
 
     return URI.file(absPath)
   }
