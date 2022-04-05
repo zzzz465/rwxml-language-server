@@ -142,7 +142,7 @@ export class LoadFolder {
       this._rootDirectory = baseDirUri
       const xml = await file.read()
 
-      this.log.info(`loadFolder.xml changed. source: ${file.uri.toString()}`)
+      this.log.debug(`loadFolder.xml changed. source: ${file.uri.toString()}`)
       this.update(xml)
     }
   }
