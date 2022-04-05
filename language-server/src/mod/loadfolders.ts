@@ -6,7 +6,7 @@ import { URI } from 'vscode-uri'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
 import * as LINQ from 'linq-es2015'
-import { inject, singleton } from 'tsyringe'
+import * as tsyringe from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import { LogToken } from '../log'
@@ -16,7 +16,7 @@ import { ProjectWorkspace } from './projectWorkspace'
 const VERSION_REGEX = /v[\d]\.\[\d]$/
 
 // TODO: support on LoadFolder changes.
-@singleton()
+@tsyringe.singleton()
 export class LoadFolder {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${LoadFolder.name}] ${info.message}`)
   private readonly log: winston.Logger
@@ -32,7 +32,7 @@ export class LoadFolder {
 
   private projectWorkspaces: Map<string, ProjectWorkspace> = new Map()
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger, private readonly about: About) {
+  constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger, private readonly about: About) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
