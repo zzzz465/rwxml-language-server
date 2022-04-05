@@ -2,6 +2,7 @@ import { URI } from 'vscode-uri'
 import { isSubFileOf, normalizePath } from '../utils'
 import * as path from 'path'
 import * as LINQ from 'linq-es2015'
+import _ from 'lodash'
 
 /**
  * ProjectWorkspace manages resource paths of the specific version.
@@ -59,6 +60,22 @@ export class ProjectWorkspace {
     }
 
     return false
+  }
+
+  isEqual(other: ProjectWorkspace): boolean {
+    if (other.version !== this.version) {
+      return false
+    }
+
+    if (other.rootDir.toString() !== this.rootDir.toString()) {
+      return false
+    }
+
+    if (!_.isEqual(_.sortBy(other.relativeDirectories), _.sortBy(this.relativeDirectories))) {
+      return false
+    }
+
+    return true
   }
 
   /**
