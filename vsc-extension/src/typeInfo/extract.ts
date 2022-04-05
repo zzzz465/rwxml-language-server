@@ -1,9 +1,13 @@
+import { compareDocumentPosition } from '.pnpm/domutils@2.8.0/node_modules/domutils'
 import { execFile } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
 import * as tsyringe from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { ExtensionContextToken } from '../extension'
+import { ExtractionError } from './error'
+
+// TODO: refactor this code.
 
 function getExtractorDirectory() {
   let processPath: string | undefined = undefined
@@ -32,28 +36,35 @@ function getCWD() {
   return cwd
 }
 
+const extractorCmd = (() => {
+  switch (process.platform) {
+    case 'win32':
+      return 'extractor.exe'
+
+    case 'darwin':
+      return 'mono'
+
+    default:
+      return ''
+  }
+})()
+
+function buildExtractorArgs(dllPaths: string[], port: number = 9870): string[] {
+  return [...dllPaths, '--output-mode=TCP', `--port=${port}`]
+}
+
+function commandToString(cmd: string, args: string[]): string {
+  return `${cmd} ${args.map((v) => `"${v}`).join(' ')}`
+}
+
 function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const cwd = getCWD()
   const port = options?.port ?? 9870
 
-  const cmd = (() => {
-    switch (process.platform) {
-      case 'win32':
-        return 'extractor.exe'
+  const args = buildExtractorArgs(dllPaths, port)
+  console.log(`executing process: ${commandToString(extractorCmd, args)}`)
 
-      case 'darwin':
-        return 'mono'
-
-      default:
-        return ''
-    }
-  })()
-
-  const args = [...dllPaths, '--output-mode=TCP', `--port=${port}`]
-
-  console.log(`executing process: "${cmd} ${args.map((v) => `"${v}"`).join(' ')}"`)
-
-  const p = execFile(cmd, args, { cwd })
+  const p = execFile(extractorCmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
   // p.stdout?.on('data', console.log)
@@ -108,7 +119,7 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
 
     server.close()
 
-    throw new Error(`exit code: ${exitCode}`)
+    throw new ExtractionError(`exit code: ${exitCode}`, commandToString(extractorCmd, buildExtractorArgs(dllPaths)))
   }
 
   const result = await connectionPromise

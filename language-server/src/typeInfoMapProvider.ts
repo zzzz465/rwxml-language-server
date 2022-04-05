@@ -26,22 +26,19 @@ export class TypeInfoMapProvider {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
-  async get(requestId: string = uuid()): Promise<TypeInfoMap> {
-    const dllUris = this.getTargetDLLUris()
-
+  async get(requestId: string = uuid()): Promise<[TypeInfoMap, Error?]> {
     try {
-      // TODO: put uuid as log format
+      const dllUris = this.getTargetDLLUris()
+
       this.log.debug(`[${requestId}] requesting typeInfo, uris: ${JSON.stringify(dllUris, null, 2)}`)
       const typeInfos = await this.requestTypeInfos(dllUris)
       this.log.debug(`[${requestId}] received typeInfo from client, length: ${typeInfos.length}`)
 
       const typeInfoMap = TypeInfoLoader.load(typeInfos)
 
-      return typeInfoMap
-    } catch (err) {
-      this.log.error(`[${requestId}] ${(err as Error).message}`)
-
-      return new TypeInfoMap()
+      return [typeInfoMap, undefined]
+    } catch (e) {
+      return [new TypeInfoMap(), e as Error]
     }
   }
 
@@ -55,7 +52,7 @@ export class TypeInfoMapProvider {
     })
 
     if (error) {
-      throw new Error(error)
+      throw error
     }
 
     // NOTE: should I type check this result?

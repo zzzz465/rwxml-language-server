@@ -9,6 +9,7 @@ import * as winston from 'winston'
 import _ from 'lodash'
 import { LogToken } from '../log'
 import { Dependency } from './modDependencyManager'
+import { URI } from 'vscode-uri'
 
 export interface AboutEvents {
   aboutChanged(about: About): void
@@ -20,6 +21,22 @@ export class About {
   private readonly log: winston.Logger
 
   readonly event: EventEmitter<AboutEvents> = new EventEmitter()
+
+  private _filePath: URI = URI.parse('')
+
+  get filePath(): URI {
+    return this._filePath
+  }
+
+  /**
+   * return the project root directory URI as the About is the workspace's anchor.
+   */
+  get rootDirectory(): URI {
+    const aboutFilePath = this.filePath.fsPath
+    const rootDirPath = path.resolve(path.dirname(aboutFilePath), '../')
+
+    return URI.file(rootDirPath)
+  }
 
   private _rawXML = ''
   private _name = ''
@@ -129,7 +146,14 @@ export class About {
 
   private async onFileChanged(file: File) {
     if (isAboutFile(file)) {
-      this.log.info(`about file changed, uri: ${file.uri.toString()}`)
+      this.log.info('about file changed.')
+
+      if (file.uri.toString() !== this.filePath.toString()) {
+        this._filePath = file.uri
+        this.log.debug('updating paths because about.xml path is changed.')
+        this.log.debug(`about.xml path: ${this.filePath.toString()}`)
+        this.log.debug(`rootDirectory path: ${this.rootDirectory.toString()}`)
+      }
 
       const text = await file.read()
       this.updateAboutXML(text)

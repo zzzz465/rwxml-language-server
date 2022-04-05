@@ -16,6 +16,7 @@ import { CancellationToken, CancellationTokenSource } from 'vscode-languageserve
 import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 import * as documentWithNodeMap from './documentWithNodeMap'
+import { serializeError } from 'serialize-error'
 
 interface Events {
   /**
@@ -28,10 +29,11 @@ interface Events {
   projectReloaded(): void
 }
 
+// TODO: impl disposable() for ContainerScoped classes.
 @scoped(Lifecycle.ContainerScoped)
 export class Project {
   private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
+    (info) => `[${info.level}] [${Project.name}] [${this.version}] ${info.message}`
   )
   private readonly log: winston.Logger
 
@@ -41,7 +43,7 @@ export class Project {
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
   private isReloading = false
-  private reloadDebounceTimeout = 1000
+  private reloadDebounceTimeout = 3000 // ms
   private cancelTokenSource = new CancellationTokenSource()
 
   constructor(
@@ -57,10 +59,11 @@ export class Project {
 
     resourceStore.event.on('xmlChanged', this.onXMLChanged.bind(this))
     resourceStore.event.on('xmlDeleted', this.onXMLDeleted.bind(this))
-    resourceStore.event.on('dllChanged', () => this.reloadProject())
-    resourceStore.event.on('dllDeleted', () => this.reloadProject())
+    resourceStore.event.on('dllChanged', () => this.reloadProject('dll is changed.'))
+    resourceStore.event.on('dllDeleted', () => this.reloadProject('dll is deleted.'))
+    resourceStore.event.on('workspaceChanged', () => this.reloadProject('project workspace is changed.'))
 
-    this.reloadProject()
+    this.reloadProject('project initialize')
   }
 
   /**
@@ -113,27 +116,34 @@ export class Project {
    * reloadProject reset project and evaluate all xmls
    * uses debounce to limit reloading too often
    */
-  private reloadProject = _.debounce(async () => {
-    this.isReloading = true
+  private reloadProject = _.debounce(async (reason = '') => {
     const requestId = uuid()
+    if (this.isReloading) {
+      this.reloadProject(reason)
+      return
+    }
+
+    this.log.info(`[${requestId}] reloading project... reason: ${reason}`)
+    this.isReloading = true
 
     this.cancelTokenSource.cancel()
     const cancelTokenSource = new CancellationTokenSource()
     this.cancelTokenSource = cancelTokenSource
     const cancelToken = this.cancelTokenSource.token
 
-    this.log.info(`[${requestId}] reloading project...`)
+    this.log.info(`[${requestId}] loading project resources...`)
     this.resourceStore.reload()
 
+    this.log.info(`[${requestId}] clear project...`)
     await this.reset(requestId, cancelToken)
 
     if (!cancelToken.isCancellationRequested) {
       this.log.info(`[${requestId}] project cleared.`)
       this.evaluteProject()
       this.event.emit('projectReloaded')
-      this.log.info('project reloaded.')
+      this.log.info(`[${requestId}] project evaluated.`)
     } else {
-      this.log.info(`[${requestId}] project evluation canceled`)
+      this.log.info(`[${requestId}] project evluation canceled.`)
     }
 
     cancelTokenSource.dispose()
@@ -152,9 +162,15 @@ export class Project {
         2
       )}`
     )
-    const typeInfoMap = await this.getTypeInfo(requestId)
+    const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
       return
+    }
+
+    if (err0) {
+      this.log.error(
+        `[${requestId}] failed fetching typeInfoMap. error: ${JSON.stringify(serializeError(err0), null, 4)}`
+      )
     }
 
     this.xmls = new Map()

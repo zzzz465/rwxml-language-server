@@ -11,8 +11,11 @@ import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
 import { LogToken } from './log'
+import { ModDependencyManager } from './mod/modDependencyManager'
+import { ProjectWorkspace } from './mod/projectWorkspace'
 
 interface Events {
+  workspaceChanged(): void
   dllChanged(uri: string): void
   dllDeleted(uri: string): void
   xmlChanged(uri: string): void
@@ -41,13 +44,18 @@ export class ResourceStore {
 
   readonly event: EventEmitter<Events> = new EventEmitter()
 
+  private projectWorkspace = new ProjectWorkspace(this.version, URI.parse(''), [])
+
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
+    private readonly modDependencyManager: ModDependencyManager,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
+    loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
   }
 
   listen(events: EventEmitter) {
@@ -74,7 +82,7 @@ export class ResourceStore {
       return
     }
 
-    this.log.silly(`file added: ${file}`)
+    this.log.silly(`file added: ${file.uri.toString()}`)
 
     this.files.set(file.uri.toString(), file)
 
@@ -250,21 +258,57 @@ export class ResourceStore {
     this.event.emit('dllDeleted', uri)
   }
 
-  private isProjectResource(fileOrUri: File | string): boolean {
+  /**
+   * isProjectResource determines given arg is a part of this project.
+   * @param fileOrUri file or uri to test.
+   * @returns whether the file is a part of this project.
+   */
+  isProjectResource(fileOrUri: File | string): boolean {
     const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
+    const file = this.fileStore.get(uri)
 
-    // 1. (add/change) does this exists?
-    // 2. (deleted file) does this already registered as project resource?
-    const file = this.fileStore.get(uri) ?? this.files.get(uri)
+    // 0. is the file registered in fileStore?
     if (!file) {
       return false
     }
 
-    // check file is registered as dep, or file is from ludeon offical (including dlc)
-    if (DependencyFile.is(file) && file.ownerPackageId.includes('Ludeon.RimWorld')) {
+    // 1. is the file already registered as project resource?
+    if (this.files.get(uri)) {
       return true
     }
 
-    return this.loadFolder.isBelongsTo(URI.parse(uri)).includes(this.version)
+    // 2. is the file allowed according to loadFolder.xml?
+    if (this.loadFolder.getProjectWorkspace(this.version)?.includes(URI.parse(uri))) {
+      return true
+    }
+
+    const [required, optional] = this.modDependencyManager.getDependenciesOf(this.version)
+    if (DependencyFile.is(file)) {
+      // 3. is the file marked as current project's dependency?
+      if ([...required, ...optional].some((dep) => dep.packageId === file.ownerPackageId)) {
+        return true
+      }
+
+      // 4. is the file from Ludeon.RimWorld? (aka Core)
+      if (file.ownerPackageId === 'Ludeon.RimWorld') {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private onLoadFolderChanged(loadFolder: LoadFolder): void {
+    const newProjectWorkspace = loadFolder.getProjectWorkspace(this.version)
+    if (!newProjectWorkspace) {
+      this.log.error('loadfolder returns null projectWorkspace.')
+      return
+    }
+
+    if (!newProjectWorkspace.isEqual(this.projectWorkspace)) {
+      this.event.emit('workspaceChanged')
+    }
+
+    this.projectWorkspace = newProjectWorkspace
   }
 }

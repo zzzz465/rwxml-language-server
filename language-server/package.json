@@ -63,6 +63,7 @@
     "normalize-path": "^3.0.0",
     "prettydiff": "^101.2.6",
     "reflect-metadata": "^0.1.13",
+    "serialize-error": "^9.1.1",
     "tsconfig-paths": "^3.9.0",
     "tsyringe": "^4.6.0",
     "typescript-collections": "^1.3.3",

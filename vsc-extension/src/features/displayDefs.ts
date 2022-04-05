@@ -52,7 +52,7 @@ class DisplayDefs {
   private async requestDefs(version: string): Promise<string> {
     const res = await this.client.sendRequest(DefListRequest, { version }, undefined)
     if (res.error) {
-      throw new Error(res.error)
+      throw new Error(String(res.error))
     }
 
     const marshalled = yaml.dump(res.data, {

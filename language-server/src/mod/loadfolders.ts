@@ -1,70 +1,72 @@
-import { Writable } from '../types'
-import { isSubFileOf, xml } from '../utils'
-import { CheerioAPI, Node } from 'cheerio'
+import { xml } from '../utils'
+import * as cheerio from 'cheerio'
 import EventEmitter from 'events'
 import path from 'path'
 import { URI } from 'vscode-uri'
 import { File, XMLFile } from '../fs'
-import { NotificationEvents } from '../notificationEventManager'
-import { AsEnumerable } from 'linq-es2015'
-import normalize_path from 'normalize-path'
-import { inject, singleton } from 'tsyringe'
+import { NotificationEventManager, NotificationEvents } from '../notificationEventManager'
+import * as LINQ from 'linq-es2015'
+import * as tsyringe from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import { LogToken } from '../log'
+import { About } from './about'
+import { ProjectWorkspace } from './projectWorkspace'
+import { FileStore } from '../fileStore'
+
+const VERSION_REGEX = /v[\d]\.[\d]$/
+
+interface Events {
+  loadFolderChanged(loadFolder: LoadFolder): void
+}
 
 // TODO: support on LoadFolder changes.
-@singleton()
+@tsyringe.singleton()
 export class LoadFolder {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${LoadFolder.name}] ${info.message}`)
   private readonly log: winston.Logger
 
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
-  private readonly resourceDirs = ['Defs', 'Textures', 'Languages', 'Sounds']
 
-  rootDirectory: URI = URI.file('')
+  /**
+   * filePath is a URI of the current LoadFolder.xml
+   */
+  private filePath: URI = URI.file('')
 
-  private '_1.0': URI[] = []
-  private '_1.1': URI[] = []
-  private '_1.2': URI[] = []
-  private '_1.3': URI[] = []
-
-  get '1.0'(): URI[] {
-    return [...this['_1.0']]
-  }
-  get '1.1'(): URI[] {
-    return [...this['_1.1']]
-  }
-  get '1.2'(): URI[] {
-    return [...this['_1.2']]
-  }
-  get '1.3'(): URI[] {
-    return [...this['_1.3']]
-  }
-  get default(): URI[] {
-    return [this.rootDirectory]
+  /**
+   * rootDirectory is a project root path
+   */
+  get rootDirectory(): URI {
+    // TODO: make _rootDirectory nullable and if it's null, return root dir based on about.xml
+    return URI.file(path.dirname(this.filePath.fsPath))
   }
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger) {
+  private projectWorkspaces: Map<string, ProjectWorkspace> = new Map()
+
+  readonly event: EventEmitter<Events> = new EventEmitter()
+
+  constructor(
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger,
+    private readonly fileStore: FileStore,
+    notiEventManager: NotificationEventManager,
+    private readonly about: About
+  ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
+    about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
+    notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))
+    notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))
   }
 
-  updateLoadFolderXML(uri: URI, text: string) {
-    this._rawXML = text
-
-    const $ = xml.parse(this._rawXML)
-
-    const newVal = this.parseNewXML($)
-
-    this.log.silly(`LoadFolder.xml parsed as: ${JSON.stringify(newVal, null, 2)}`)
-
-    this['_1.0'] = newVal['1.0']
-    this['_1.1'] = newVal['1.1']
-    this['_1.2'] = newVal['1.2']
-    this['_1.3'] = newVal['1.3']
+  getProjectWorkspace(version: string) {
+    return this.projectWorkspaces.get(version)
   }
 
+  /**
+   * isBelongsTo find matching RimWorld versions from given arg.
+   * @deprecated access using getWorkspace()
+   */
   isBelongsTo(uri: URI): RimWorldVersion[] {
     const res = RimWorldVersionArray.filter((ver) => ver !== 'default' && this.isBelongsToVersion(uri, ver))
 
@@ -87,96 +89,18 @@ export class LoadFolder {
   /**
    * @returns string posix-normalized relative path from Resource directory root
    * returns undefined if uri is not under resource directory, or not valid uri
+   * @deprecated access using getProjectWorkspace()
    */
   getResourcePath(uri: URI, version: RimWorldVersion): string | undefined {
-    const resourceDirectoryUri = this.getResourceDirectoryOf(uri, version)
-    if (resourceDirectoryUri) {
-      const relativePath = path.relative(resourceDirectoryUri.fsPath, uri.fsPath)
-      const normalized = normalize_path(relativePath)
-
-      return normalized
-    }
+    return this.getProjectWorkspace(version)?.getResourcePath(uri) ?? undefined
   }
 
-  // determine the file belongs to specific rimworld version.
-  private isBelongsToVersion(uri: URI, version: RimWorldVersion): boolean {
-    const root = this.rootDirectory.fsPath
-    const child = uri.fsPath
-
-    // check file is under project root directory
-    if (!isSubFileOf(root, child)) {
-      return false
-    }
-
-    // check file is under loadDirectory according to LoadFolders.xml
-    if (!this.isUnderResourceDirectory(uri, version)) {
-      return false
-    }
-
-    return true
-  }
-
-  isUnderResourceDirectory(uri: URI, version: RimWorldVersion) {
-    return !!this.getResourceDirectoryOf(uri, version)
-  }
-
-  getResourceDirectoryOf(uri: URI, version: RimWorldVersion) {
-    const loadDirs = this[version]
-    for (const dir of loadDirs) {
-      const resourcePaths = this.getResourceDirectories(dir)
-      for (const path of resourcePaths) {
-        if (isSubFileOf(path.fsPath, uri.fsPath)) {
-          return path
-        }
-      }
-    }
-  }
-
-  private getResourceDirectories(parent: URI) {
-    return AsEnumerable(this.resourceDirs)
-      .Select((resPath) => path.join(parent.fsPath, resPath))
-      .Select((p) => URI.file(p))
-      .ToArray()
-  }
-
-  private parseNewXML($: CheerioAPI) {
-    function predicate(tag: string) {
-      return function (_: number, node: Node): boolean {
-        return $(node).parent().prop('name') === tag
-      }
-    }
-
-    const data: Writable<Pick<LoadFolder, '1.0' | '1.1' | '1.2' | '1.3'>> = {
-      '1.0': $('li')
-        .filter(predicate('v1.0'))
-        .map((_, node) => $(node).text())
-        .map((_, p) => this.relativePathToAbsURI(p))
-        .toArray(),
-      '1.1': $('li')
-        .filter(predicate('v1.1'))
-        .map((_, node) => $(node).text())
-        .map((_, p) => this.relativePathToAbsURI(p))
-        .toArray(),
-      '1.2': $('li')
-        .filter(predicate('v1.2'))
-        .map((_, node) => $(node).text())
-        .map((_, p) => this.relativePathToAbsURI(p))
-        .toArray(),
-      '1.3': $('li')
-        .filter(predicate('v1.3'))
-        .map((_, node) => $(node).text())
-        .map((_, p) => this.relativePathToAbsURI(p))
-        .toArray(),
-    }
-
-    return data
-  }
-
-  private relativePathToAbsURI(relativePath: string) {
-    const root = this.rootDirectory.fsPath
-    const absPath = path.join(root, relativePath)
-
-    return URI.file(absPath)
+  /**
+   * determine the file belongs to specific rimworld version.
+   * @deprecated access using getProjectWorkspace()
+   */
+  private isBelongsToVersion(uri: URI, version: string): boolean {
+    return this.getProjectWorkspace(version)?.includes(uri) ?? false
   }
 
   listen(event: EventEmitter<NotificationEvents>) {
@@ -185,28 +109,102 @@ export class LoadFolder {
     event.on('fileDeleted', this.onFileDeleted.bind(this))
   }
 
-  private async onFileChanged(file: File) {
-    const uri = file.uri
-    if (file instanceof XMLFile && this.isLoadFolderFile(file.uri)) {
-      const baseDir = path.dirname(uri.fsPath)
-      const baseDirUri = URI.file(baseDir)
-      this.rootDirectory = baseDirUri
-      const xml = await file.read()
+  /**
+   * update() updates this instance, parsing the given text.
+   */
+  private update(text: string) {
+    this._rawXML = text
 
-      this.log.info('loadFolder.xml changed.')
-      this.updateLoadFolderXML(file.uri, xml)
+    this.projectWorkspaces.clear()
+
+    this.log.silly(`LoadFolder content below.\n${text}\n`)
+
+    const $ = xml.parse(this._rawXML)
+    const workspaces = this.parseLoadFolderXML($('loadFolders'))
+
+    for (const workspace of workspaces) {
+      // because loadfolder's item is v-prefixed.
+      this.projectWorkspaces.set(workspace.version, workspace)
+    }
+
+    for (const version of this.about.supportedVersions.filter((v) => !this.projectWorkspaces.has(v))) {
+      this.projectWorkspaces.set(version, new ProjectWorkspace(version, this.rootDirectory, ['.']))
+    }
+
+    this.log.debug(`updated workspaces: ${JSON.stringify([...this.projectWorkspaces.values()], null, 4)}`)
+    this.log.debug(`default workspace: ${JSON.stringify(this.getProjectWorkspace('default'), null, 4)}`)
+
+    this.event.emit('loadFolderChanged', this)
+  }
+
+  /**
+   * parse <loadFolders> node.
+   */
+  private parseLoadFolderXML(loadFolders: cheerio.Cheerio<cheerio.Element>): ProjectWorkspace[] {
+    return LINQ.from(loadFolders.children())
+      .Where((x) => !!x.tagName.match(/v[\d]\.[\d]/))
+      .Select((x) => this.parseVersion(x))
+      .Where((x) => x !== null)
+      .Cast<ProjectWorkspace>()
+      .ToArray()
+  }
+
+  /**
+   * parse<v1.0>, <v1.1>, ... nodes.
+   */
+  private parseVersion(versionNode: cheerio.Element): ProjectWorkspace | null {
+    let version = versionNode.tagName
+    if (!version.match(VERSION_REGEX)) {
+      return null
+    }
+
+    version = version.replace('v', '')
+
+    const $ = cheerio.load(versionNode)
+
+    const relativePaths = LINQ.from($('li'))
+      .Select((x) => cheerio.load(x).text())
+      .ToArray()
+
+    return new ProjectWorkspace(version, this.rootDirectory, relativePaths)
+  }
+
+  private async onFileChanged(file: File) {
+    if (file instanceof XMLFile && file.uri.toString() === this.filePath.toString()) {
+      this.update(await file.read())
     }
   }
 
   private onFileDeleted(uri: string) {
-    if (this.isLoadFolderFile(URI.parse(uri))) {
-      // TODO: implement this
-      throw new Error('onFileDeleted not implemented.')
+    if (uri === this.filePath.toString()) {
+      throw new Error('onFileDeleted is not implemented.')
     }
   }
 
-  private isLoadFolderFile(uri: URI) {
-    const basename = path.basename(uri.fsPath)
-    return basename.toLowerCase() === 'loadfolders.xml'
+  private onAboutChanged(about: About): void {
+    const newAboutMetadataFilePath = this.getAboutMetadataFilePathFromAbout(about)
+    if (newAboutMetadataFilePath.toString() === this.filePath.toString()) {
+      return
+    }
+
+    this.filePath = newAboutMetadataFilePath
+    this.log.debug(`reloading because About.xml path is changed. new source: ${newAboutMetadataFilePath.toString()}`)
+    this.reload()
+  }
+
+  private getAboutMetadataFilePathFromAbout(about: About): URI {
+    return URI.file(path.resolve(path.dirname(about.filePath.fsPath), '../', 'LoadFolders.xml'))
+  }
+
+  /**
+   * reload() reloads LoadFolders fetching text from fileStore.
+   */
+  private async reload(): Promise<void> {
+    const file = this.fileStore.get(this.filePath.toString())
+    if (!file || !(file instanceof XMLFile)) {
+      return this.update('')
+    }
+
+    this.update(await file.read())
   }
 }

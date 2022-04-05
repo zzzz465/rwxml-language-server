@@ -6,6 +6,8 @@ import { Provider } from './provider'
 import * as vscode from 'vscode'
 import { createProgress } from '../utils/progress'
 import * as mod from '../mod'
+import { ExtractionError } from '../typeInfo/error'
+import { serializeError } from 'serialize-error'
 
 @tsyringe.injectable()
 export class TypeInfoProvider implements Provider {
@@ -42,11 +44,9 @@ export class TypeInfoProvider implements Provider {
       const typeInfos = await extractTypeInfos(...dllPaths)
 
       res.data = typeInfos
-    } catch (err: unknown) {
-      // https://stackoverflow.com/questions/18391212/is-it-not-possible-to-stringify-an-error-using-json-stringify
-      const err2 = err as Error
-      res.error = JSON.stringify({ name: err2.name, message: err2.message, stack: err2.stack }, null, 2)
-      console.error(res.error)
+    } catch (err) {
+      res.error = err as Error
+      console.error(`failed to extract data. error: ${serializeError(err)}`)
     }
 
     this.requestCounter -= 1

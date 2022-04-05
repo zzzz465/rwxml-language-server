@@ -12,6 +12,7 @@ import { LogToken } from './log'
 import { Dependency, ModDependencyManager } from './mod/modDependencyManager'
 import _ from 'lodash'
 import { AsEnumerable } from 'linq-es2015'
+import { deserializeError } from 'serialize-error'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -96,7 +97,13 @@ export class ModDependencyResourceStore {
 
       for (const res of responses) {
         if (res.error) {
-          this.log.error(`error while requesting mod dependencies. error: ${res.error}`)
+          this.log.error(
+            `error while requesting mod dependency of "${res.packageId}". error: ${JSON.stringify(
+              deserializeError(res.error),
+              null,
+              4
+            )}`
+          )
           continue
         }
 
