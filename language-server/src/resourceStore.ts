@@ -12,8 +12,10 @@ import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
 import { LogToken } from './log'
 import { ModDependencyManager } from './mod/modDependencyManager'
+import { ProjectWorkspace } from './mod/projectWorkspace'
 
 interface Events {
+  workspaceChanged(): void
   dllChanged(uri: string): void
   dllDeleted(uri: string): void
   xmlChanged(uri: string): void
@@ -42,6 +44,8 @@ export class ResourceStore {
 
   readonly event: EventEmitter<Events> = new EventEmitter()
 
+  private projectWorkspace = new ProjectWorkspace(this.version, URI.parse(''), [])
+
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     private readonly loadFolder: LoadFolder,
@@ -50,6 +54,8 @@ export class ResourceStore {
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+
+    loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
   }
 
   listen(events: EventEmitter) {
@@ -76,7 +82,7 @@ export class ResourceStore {
       return
     }
 
-    this.log.silly(`file added: ${file}`)
+    this.log.silly(`file added: ${file.uri.toString()}`)
 
     this.files.set(file.uri.toString(), file)
 
@@ -290,5 +296,19 @@ export class ResourceStore {
     }
 
     return false
+  }
+
+  private onLoadFolderChanged(loadFolder: LoadFolder): void {
+    const newProjectWorkspace = loadFolder.getProjectWorkspace(this.version)
+    if (!newProjectWorkspace) {
+      this.log.error('loadfolder returns null projectWorkspace.')
+      return
+    }
+
+    if (!newProjectWorkspace.isEqual(this.projectWorkspace)) {
+      this.event.emit('workspaceChanged')
+    }
+
+    this.projectWorkspace = newProjectWorkspace
   }
 }

@@ -75,7 +75,7 @@ export class ProjectManager {
   }
 
   private onProjectFileAdded(file: File) {
-    this.log.silly(`file added: ${file.uri}`)
+    this.log.silly(`file added: ${file.uri.toString()}`)
 
     for (const proj of this.projects) {
       proj.resourceStore.fileAdded(file)
