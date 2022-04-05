@@ -6,7 +6,7 @@ import path from 'path'
  * normalize any path to unix path, and optimize relative paths
  */
 export function normalizePath(path: string) {
-  return path.normalize(normalize_path(path))
+  return normalize_path(path)
 }
 
 // determine child is inside parent
