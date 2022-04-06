@@ -13,9 +13,22 @@ import { Dependency, ModDependencyManager } from './mod/modDependencyManager'
 import _ from 'lodash'
 import { AsEnumerable } from 'linq-es2015'
 import { deserializeError } from 'serialize-error'
+import { About } from './mod'
+
+/**
+ * SubResourceStore is a resource store of a specific version.
+ * @todo impl this.
+ */
+class SubResourceStore {
+  constructor(public readonly version: string) {}
+}
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
+// TODO: project 별 class instance 만들어 관리하기
+/**
+ * @todo refactor this class.
+ */
 @tsyringe.singleton()
 export class ModDependencyResourceStore {
   private logFormat = winston.format.printf(
@@ -25,12 +38,12 @@ export class ModDependencyResourceStore {
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
-  // Map<packageId, File[]>
-  private readonly resourcesMap: Map<string, File[]> = new Map()
-
-  private readonly resources: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
+  // Map<version, Map<packageId, Map<uri, File>>>
+  private readonly resourcesMap: DefaultDictionary<string, DefaultDictionary<string, Map<string, File>>> =
+    new DefaultDictionary(() => new DefaultDictionary(() => new Map()))
 
   constructor(
+    private readonly about: About,
     modDependency: ModDependencyManager,
     @tsyringe.inject(ConnectionToken) private readonly connection: ls.Connection,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
@@ -39,18 +52,15 @@ export class ModDependencyResourceStore {
     modDependency.event.on('dependencyChanged', _.debounce(this.onModDependencyChanged.bind(this), 500))
   }
 
-  isDependencyFile(uri: string): boolean {
-    return this.resources.getValue(uri) > 0
-  }
-
-  private markFile(uri: string): void {
-    const next = this.resources.getValue(uri) + 1
-    this.resources.setValue(uri, next)
-  }
-
-  private unmarkFile(uri: string): void {
-    const next = this.resources.getValue(uri) - 1
-    this.resources.setValue(uri, next >= 0 ? next : 0) // it must be greater than zero
+  isDependencyFile(uri: string, version?: string): boolean {
+    if (version) {
+      return AsEnumerable(this.resourcesMap.getValue(version).values()).Any((x) => x.has(uri))
+    } else {
+      return AsEnumerable(this.about.supportedVersions)
+        .Select((x) => this.resourcesMap.getValue(x))
+        .SelectMany((x) => x.values())
+        .Any((x) => x.has(uri))
+    }
   }
 
   private onModDependencyChanged(modDependencyManager: ModDependencyManager) {
@@ -68,13 +78,24 @@ export class ModDependencyResourceStore {
   }
 
   private getModDiff(newDependencies: Dependency[]): [Dependency[], Dependency[]] {
-    const added = newDependencies.filter((dep) => !this.resourcesMap.has(dep.packageId))
+    const added: Dependency[] = []
+    const deleted: Dependency[] = []
 
-    // quite bad algorithm but expected list size is <= 10 so I'll ignore it.
-    const deleted: Dependency[] = AsEnumerable(this.resourcesMap.keys())
-      .Where((id) => !newDependencies.find((dep) => dep.packageId === id))
-      .Select((id) => ({ packageId: id }))
-      .ToArray()
+    for (const version of this.about.supportedVersions) {
+      for (const { packageId } of newDependencies) {
+        if (!this.resourcesMap.getValue(version).containsKey(packageId)) {
+          added.push({ packageId })
+        }
+      }
+
+      deleted.push(
+        ...AsEnumerable(this.resourcesMap.getValue(version).keys())
+          .Where((id) => !newDependencies.find((dep) => dep.packageId === id))
+          .Where((id) => !added.find((dep) => dep.packageId === id))
+          .Select((id) => ({ packageId: id }))
+          .ToArray()
+      )
+    }
 
     return [added, deleted]
   }
@@ -88,29 +109,31 @@ export class ModDependencyResourceStore {
       )}`
     )
 
-    const requests = deps.map((dep) =>
-      this.connection.sendRequest(DependencyRequest, { packageId: dep.packageId }, undefined)
-    )
-
-    try {
-      const responses = await Promise.all(requests)
-
-      for (const res of responses) {
-        if (res.error) {
-          this.log.error(
-            `error while requesting mod dependency of "${res.packageId}". error: ${JSON.stringify(
-              deserializeError(res.error),
-              null,
-              4
-            )}`
+    for (const version of this.about.supportedVersions) {
+      for (const dep of deps) {
+        try {
+          const res = await this.connection.sendRequest(
+            DependencyRequest,
+            { version, packageId: dep.packageId },
+            undefined
           )
-          continue
-        }
 
-        this.handleAddResponse(res)
+          if (res.error) {
+            this.log.error(
+              `failed requesting mod dependency of packageId: ${dep.packageId}. error: ${JSON.stringify(
+                deserializeError(res.error),
+                null,
+                4
+              )}`
+            )
+            continue
+          }
+
+          this.handleAddResponse(res)
+        } catch (e) {
+          this.log.error(`unexpected error: ${JSON.stringify(deserializeError(e), null, 4)}`)
+        }
       }
-    } catch (err) {
-      this.log.error(err)
     }
   }
 
@@ -121,10 +144,8 @@ export class ModDependencyResourceStore {
       File.create({ uri: URI.parse(uri), ownerPackageId: res.packageId, readonly: true })
     )
 
-    this.resourcesMap.set(res.packageId, files)
-
     for (const file of files) {
-      this.markFile(file.uri.toString())
+      this.resourcesMap.getValue(res.version).getValue(res.packageId).set(file.uri.toString(), file)
       this.event.emit('fileAdded', file)
     }
   }
@@ -138,27 +159,28 @@ export class ModDependencyResourceStore {
       )}`
     )
 
-    for (const dep of deps) {
-      const files = this.resourcesMap.get(dep.packageId)
-      if (!files) {
-        this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered.`)
-        continue
+    for (const version of this.about.supportedVersions) {
+      for (const dep of deps) {
+        const files = [...this.resourcesMap.getValue(version).getValue(dep.packageId).values()]
+        if (!files) {
+          this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered.`)
+          continue
+        }
+
+        for (const file of files) {
+          this.event.emit('fileDeleted', file.uri.toString())
+        }
+
+        this.resourcesMap.getValue(version).remove(dep.packageId)
+
+        this.log.silly(
+          `dependency file deleted: ${JSON.stringify(
+            files.map((file) => file.uri.toString()),
+            null,
+            4
+          )}`
+        )
       }
-
-      for (const file of files) {
-        this.unmarkFile(file.uri.toString())
-        this.event.emit('fileDeleted', file.uri.toString())
-      }
-
-      this.resourcesMap.delete(dep.packageId)
-
-      this.log.silly(
-        `dependency file deleted: ${JSON.stringify(
-          files.map((file) => file.uri.toString()),
-          null,
-          4
-        )}`
-      )
     }
   }
 }
