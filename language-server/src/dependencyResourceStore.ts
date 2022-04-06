@@ -27,7 +27,7 @@ type Events = Omit<NotificationEvents, 'fileChanged'>
 
 // TODO: project 별 class instance 만들어 관리하기
 /**
- * @todo refactor this class.
+ * @todo refactor this class. !PLEASE!
  */
 @tsyringe.singleton()
 export class ModDependencyResourceStore {
@@ -38,9 +38,10 @@ export class ModDependencyResourceStore {
 
   public readonly event: EventEmitter<Events> = new EventEmitter()
 
-  // Map<version, Map<packageId, Map<uri, File>>>
-  private readonly resourcesMap: DefaultDictionary<string, DefaultDictionary<string, Map<string, File>>> =
-    new DefaultDictionary(() => new DefaultDictionary(() => new Map()))
+  // DefaultDict<version, Map<packageId, Map<uri, File>>>
+  private readonly resourcesMap: DefaultDictionary<string, Map<string, Map<string, File>>> = new DefaultDictionary(
+    () => new Map()
+  )
 
   constructor(
     private readonly about: About,
@@ -83,7 +84,7 @@ export class ModDependencyResourceStore {
 
     for (const version of this.about.supportedVersions) {
       for (const { packageId } of newDependencies) {
-        if (!this.resourcesMap.getValue(version).containsKey(packageId)) {
+        if (!this.resourcesMap.getValue(version).has(packageId)) {
           added.push({ packageId })
         }
       }
@@ -93,11 +94,12 @@ export class ModDependencyResourceStore {
           .Where((id) => !newDependencies.find((dep) => dep.packageId === id))
           .Where((id) => !added.find((dep) => dep.packageId === id))
           .Select((id) => ({ packageId: id }))
+          .Distinct((dep) => dep.packageId)
           .ToArray()
       )
     }
 
-    return [added, deleted]
+    return [_.uniqBy(added, (x) => x.packageId), deleted]
   }
 
   private async handleAddedMods(deps: Dependency[]) {
@@ -138,14 +140,19 @@ export class ModDependencyResourceStore {
   }
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
-    this.log.silly(`dependency file added: ${JSON.stringify(res.uris, null, 4)}`)
+    this.log.silly(
+      `dependency file of "${res.packageId}", version: ${res.version} added: ${JSON.stringify(res.uris, null, 4)}`
+    )
+
+    const map = new Map()
+    this.resourcesMap.getValue(res.version).set(res.packageId, map)
 
     const files = res.uris.map((uri) =>
       File.create({ uri: URI.parse(uri), ownerPackageId: res.packageId, readonly: true })
     )
 
     for (const file of files) {
-      this.resourcesMap.getValue(res.version).getValue(res.packageId).set(file.uri.toString(), file)
+      map.set(file.uri.toString(), file)
       this.event.emit('fileAdded', file)
     }
   }
@@ -161,7 +168,15 @@ export class ModDependencyResourceStore {
 
     for (const version of this.about.supportedVersions) {
       for (const dep of deps) {
-        const files = [...this.resourcesMap.getValue(version).getValue(dep.packageId).values()]
+        const valuesIterator = this.resourcesMap.getValue(version).get(dep.packageId)?.values()
+        if (!valuesIterator) {
+          this.log.error(
+            `dependency: "${dep.packageId}" version: "${version}" is not registered but trying to be deleted.`
+          )
+          continue
+        }
+
+        const files = [...valuesIterator]
         if (!files) {
           this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered.`)
           continue
@@ -171,7 +186,7 @@ export class ModDependencyResourceStore {
           this.event.emit('fileDeleted', file.uri.toString())
         }
 
-        this.resourcesMap.getValue(version).remove(dep.packageId)
+        this.resourcesMap.getValue(version).delete(dep.packageId)
 
         this.log.silly(
           `dependency file deleted: ${JSON.stringify(
