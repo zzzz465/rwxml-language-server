@@ -73,8 +73,13 @@ export class LoadFolder {
 
   constructor(public readonly filePath: URI) {}
 
-  getProjectWorkspace(version: string): ProjectWorkspace | undefined {
-    return this.projectWorkspaces.get(version)
+  getProjectWorkspace(version: string): ProjectWorkspace {
+    let workspace = this.projectWorkspaces.get(version)
+    if (!workspace) {
+      workspace = new ProjectWorkspace(version, this.rootDirectory, ['.', version])
+    }
+
+    return workspace
   }
 
   load(data: string): void {
