@@ -42,6 +42,7 @@ export interface TypeInfoRequestResponse {
 
 export interface DependencyRequest {
   packageId: string
+  version: string
 }
 
 export interface DependencyRequestResponse {

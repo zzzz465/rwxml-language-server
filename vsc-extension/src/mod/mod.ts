@@ -3,6 +3,7 @@ import { About } from './about'
 import vscode from 'vscode'
 import { LoadFolder } from './loadFolders'
 import path from 'path'
+import { URI } from 'vscode-uri'
 
 export class Mod {
   static async create(rootDirectory: Uri) {
@@ -15,19 +16,23 @@ export class Mod {
     const aboutPath = vscode.Uri.file(path.resolve(rootDirectory.fsPath, 'About', 'About.xml'))
     const about = await About.load(aboutPath)
 
-    let loadFolder: LoadFolder | null = null
-    if (fileOrDirsOnRoot.find(([name, type]) => name.toLowerCase() === 'loadfolders.xml' && type === FileType.File)) {
-      const loadFolderPath = vscode.Uri.file(path.resolve(rootDirectory.fsPath, 'LoadFolders.xml'))
-      loadFolder = await LoadFolder.Load(loadFolderPath)
+    const loadFolderUri = URI.file(path.join(rootDirectory.fsPath, 'LoadFolders.xml'))
+
+    const loadFolder: LoadFolder = new LoadFolder(loadFolderUri)
+    try {
+      const byteArr = await vscode.workspace.fs.readFile(loadFolderUri)
+      loadFolder.load(Buffer.from(byteArr).toString())
+    } catch (e) {
+      // file not exists.
     }
 
-    return new Mod(rootDirectory, about, loadFolder ?? undefined)
+    return new Mod(rootDirectory, about, loadFolder)
   }
 
   constructor(
     public readonly rootDirectory: Uri,
     public readonly about: About,
-    public readonly loadFolder?: LoadFolder
+    public readonly loadFolder: LoadFolder
   ) {}
 
   isLudeonStudiosMod(): boolean {

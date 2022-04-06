@@ -25,7 +25,10 @@ export class DependencyResourceProvider implements Provider {
 
     const resources = (await mod.loadFolder.getProjectWorkspace(version)?.getResources(globPattern)) ?? []
 
-    console.log(`found ${resources.length} dependency files in packageId: ${packageId}, files: `, paths)
+    console.log(
+      `found ${resources.length} dependency files in packageId: ${packageId}, resources: `,
+      JSON.stringify(resources, null, 4)
+    )
 
     const uris = resources.map((path) => vscode.Uri.file(path).toString())
 
