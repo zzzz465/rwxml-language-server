@@ -47,6 +47,7 @@ export interface DependencyRequest {
 
 export interface DependencyRequestResponse {
   packageId: string
+  version: string
   uris: string[]
   error?: Error
 }

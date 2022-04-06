@@ -20,7 +20,7 @@ export class DependencyResourceProvider implements Provider {
 
     const mod = this.modManager.getMod(packageId)
     if (!mod) {
-      return { packageId, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
+      return { packageId, version, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
     }
 
     const resources = (await mod.loadFolder.getProjectWorkspace(version)?.getResources(globPattern)) ?? []
@@ -32,6 +32,6 @@ export class DependencyResourceProvider implements Provider {
 
     const uris = resources.map((path) => vscode.Uri.file(path).toString())
 
-    return { packageId, uris }
+    return { packageId, version, uris }
   }
 }
