@@ -49,14 +49,17 @@ export class FileStore {
   }
 
   private onFileAdded(file: File) {
+    this.log.silly(`file added: ${file.uri.toString()}`)
     this.files.set(file.uri.toString(), file)
   }
 
   private onFileChanged(file: File) {
+    this.log.silly(`file changed: ${file.uri.toString()}`)
     this.files.set(file.uri.toString(), file)
   }
 
   private onFileDeleted(uri: string) {
+    this.log.silly(`file deleted: ${uri}`)
     this.files.delete(uri)
   }
 }
