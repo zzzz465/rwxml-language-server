@@ -1,61 +1,109 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Uri } from 'vscode'
 import vscode from 'vscode'
-import { xml } from '../utils'
-import { CheerioAPI, Node } from 'cheerio'
-import { RimWorldVersion, RimWorldVersions } from './version'
+import * as cheerio from 'cheerio'
+import { URI } from 'vscode-uri'
+import * as LINQ from 'linq-es2015'
+import * as path from 'path'
+import glob from 'fast-glob'
 
-type LoadFolderData = {
-  [key in RimWorldVersion]: string[]
-}
+export class ProjectWorkspace {
+  public static readonly wellKnownResourceDirectories = ['Defs', 'Textures', 'Sounds', 'Assemblies']
 
-namespace LoadFolderData {
-  export function parse($: CheerioAPI): LoadFolderData {
-    function predicate(tag: string) {
-      return function (_: number, node: Node): boolean {
-        return $(node).parent().prop('name') === tag
-      }
-    }
+  constructor(
+    public readonly version: string,
+    public readonly rootDirectory: URI,
+    public readonly relativePaths: string[]
+  ) {}
 
-    const data: LoadFolderData = {
-      '1.0': $('li')
-        .filter(predicate('v1.0'))
-        .map((_, node) => $(node).text())
-        .toArray(),
-      '1.1': $('li')
-        .filter(predicate('v1.1'))
-        .map((_, node) => $(node).text())
-        .toArray(),
-      '1.2': $('li')
-        .filter(predicate('v1.2'))
-        .map((_, node) => $(node).text())
-        .toArray(),
-      '1.3': $('li')
-        .filter(predicate('v1.3'))
-        .map((_, node) => $(node).text())
-        .toArray(),
-      default: [],
-    }
+  async getResources(globPattern: string): Promise<string[]> {
+    const requests = LINQ.from(this.relativePaths)
+      .Select((x) => this.toAbsoluteUri(x))
+      .SelectMany((x) => this.getResourceDirectories(x))
+      .Select((x) =>
+        glob(globPattern, {
+          caseSensitiveMatch: false,
+          cwd: x.fsPath,
+          absolute: true,
+          onlyFiles: true,
+        })
+      )
+      .ToArray()
 
-    return data
+    return (await Promise.all(requests)).flat()
+  }
+
+  /**
+   * toAbsoluteUri() returns absolute uri based on root directory path.
+   */
+  private toAbsoluteUri(relativePath: string): URI {
+    const root = this.rootDirectory.fsPath
+
+    return URI.file(path.resolve(root, relativePath))
+  }
+
+  /**
+   * getResourceDirectories() returns
+   */
+  private getResourceDirectories(uri: URI): URI[] {
+    return LINQ.from(ProjectWorkspace.wellKnownResourceDirectories)
+      .Select((x) => path.resolve(uri.fsPath, x))
+      .Select((x) => URI.file(x))
+      .ToArray()
   }
 }
 
 export class LoadFolder {
-  static async Load(loadFoldersFileUri: Uri) {
+  static async Load(loadFoldersFileUri: Uri): Promise<LoadFolder> {
+    const loadFolder = new LoadFolder(loadFoldersFileUri)
+
     const raw = await vscode.workspace.fs.readFile(loadFoldersFileUri)
     const text = Buffer.from(raw).toString()
 
-    const $ = xml.parse(text)
-    const data = LoadFolderData.parse($)
+    loadFolder.load(text)
 
-    return new LoadFolder(data)
+    return loadFolder
   }
 
-  constructor(private data: LoadFolderData) {}
+  get rootDirectory(): URI {
+    return URI.file(path.dirname(this.filePath.fsPath))
+  }
 
-  getRequiredPaths(version: RimWorldVersion): string[] {
-    console.assert(RimWorldVersions.includes(version), `version: ${version} is not allowed.`)
-    return this.data[version] ?? []
+  private readonly projectWorkspaces: Map<string, ProjectWorkspace> = new Map()
+
+  constructor(public readonly filePath: URI) {}
+
+  getProjectWorkspace(version: string): ProjectWorkspace | undefined {
+    return this.projectWorkspaces.get(version)
+  }
+
+  load(data: string): void {
+    this.projectWorkspaces.clear()
+
+    const $ = cheerio.load(data)
+    const loadFolders = $('loadFolders')
+
+    const workspaces = LINQ.from(loadFolders.children())
+      .Where((x) => !!x.tagName.match(/v[\d]\.[\d]/))
+      .Select((x) => this.parseVersionNode(x))
+      .Where((x) => x !== null)
+      .Cast<ProjectWorkspace>()
+      .ToArray()
+
+    for (const workspace of workspaces) {
+      this.projectWorkspaces.set(workspace.version, workspace)
+    }
+  }
+
+  private parseVersionNode(node: cheerio.Element): ProjectWorkspace {
+    const $ = cheerio.load(node)
+
+    const version = node.tagName.replace('v', '')
+
+    const relativePaths = LINQ.from($('li'))
+      .Select((x) => cheerio.load(x).text())
+      .ToArray()
+
+    return new ProjectWorkspace(version, this.rootDirectory, relativePaths)
   }
 }
