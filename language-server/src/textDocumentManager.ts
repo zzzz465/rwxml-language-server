@@ -11,7 +11,6 @@ import { LogToken } from './log'
  * it's updated by two ways
  * 1. updated by fileChanged event
  * 2. updated by textDocuments.onDidChangeContent
- * @todo add onDelete()
  */
 @singleton()
 export class TextDocumentManager {
@@ -25,9 +24,9 @@ export class TextDocumentManager {
   }
 
   listen(events: EventEmitter<NotificationEvents>) {
-    events.on('fileAdded', this.onFileAdded.bind(this))
-    events.on('fileChanged', this.onFileChanged.bind(this))
-    // TODO: add fileDeleted event handler
+    events.on('fileAdded', (file) => this.onFileAdded(file))
+    events.on('fileChanged', (file) => this.onFileChanged(file))
+    events.on('fileDeleted', (uri) => this.onFileDeleted(uri))
   }
 
   get(uri: string) {
@@ -40,20 +39,20 @@ export class TextDocumentManager {
     this.documents.set(uri, document)
   }
 
-  private delete(uri: string) {
-    return this.documents.delete(uri)
-  }
-
-  private async onFileAdded(file: File) {
+  private async onFileAdded(file: File): Promise<void> {
     await this.onFileChanged(file)
   }
 
-  private async onFileChanged(file: File) {
+  private async onFileChanged(file: File): Promise<void> {
     if (file instanceof XMLFile) {
       this.log.silly(`TextFile changed, uri: ${file.uri.toString()}`)
 
       const data = await file.read()
       this.set(file.uri.toString(), data)
     }
+  }
+
+  private onFileDeleted(uri: string): void {
+    this.documents.delete(uri)
   }
 }
