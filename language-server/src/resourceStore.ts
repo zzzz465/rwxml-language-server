@@ -2,7 +2,6 @@ import { TextureFile, AudioFile, File, DependencyFile, DLLFile, XMLFile } from '
 import { LoadFolder } from './mod/loadfolders'
 import { Counter } from './utils/counter'
 import path from 'path'
-import { DefaultDictionary } from 'typescript-collections'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import EventEmitter from 'events'
 import assert from 'assert'
@@ -11,10 +10,8 @@ import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
 import { LogToken } from './log'
-import { ModDependencyManager } from './mod/modDependencyManager'
 import { ProjectWorkspace } from './mod/projectWorkspace'
 import { ModDependencyResourceStore } from './dependencyResourceStore'
-import { Disposable } from 'vscode-languageserver'
 import TypedEventEmitter from 'typed-emitter'
 
 type Events = {
@@ -37,7 +34,6 @@ export class ResourceStore {
   private readonly log: winston.Logger
 
   readonly files: Map<string, File> = new Map()
-  readonly depFiles: DefaultDictionary<string, Map<string, DependencyFile>> = new DefaultDictionary(() => new Map())
 
   readonly xmls: Map<string, string> = new Map()
   readonly dllFiles: Set<string> = new Set()
@@ -53,7 +49,6 @@ export class ResourceStore {
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
-    private readonly modDependencyManager: ModDependencyManager,
     private readonly modDependencyResourceStore: ModDependencyResourceStore,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -68,17 +63,8 @@ export class ResourceStore {
     events.on('fileDeleted', this.fileDeleted.bind(this))
   }
 
-  isDependencyFile(uri: string): boolean | null {
-    const file = this.files.get(uri)
-    if (!file) {
-      return null
-    }
-
-    if (DependencyFile.is(file)) {
-      return this.depFiles.getValue(file.ownerPackageId).has(uri)
-    }
-
-    return false
+  isDependencyFile(uri: string): boolean {
+    return this.files.has(uri) && this.modDependencyResourceStore.isDependencyFile(uri, this.version)
   }
 
   fileAdded(file: File) {
@@ -89,10 +75,6 @@ export class ResourceStore {
     this.log.silly(`file added: ${file.uri.toString()}`)
 
     this.files.set(file.uri.toString(), file)
-
-    if (DependencyFile.is(file)) {
-      this.depFiles.getValue(file.ownerPackageId).set(file.uri.toString(), file)
-    }
 
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
@@ -113,10 +95,6 @@ export class ResourceStore {
     this.log.silly(`file changed: ${file}`)
 
     this.files.set(file.uri.toString(), file)
-
-    if (DependencyFile.is(file)) {
-      this.depFiles.getValue(file.ownerPackageId).set(file.uri.toString(), file)
-    }
 
     if (file instanceof XMLFile) {
       this.onXMLFileChanged(file)
@@ -141,10 +119,6 @@ export class ResourceStore {
     const file = this.files.get(uri)
     if (!file) {
       throw new Error(`file ${uri} doesn't exists on file map.`)
-    }
-
-    if (DependencyFile.is(file)) {
-      this.depFiles.getValue(file.ownerPackageId).delete(file.uri.toString())
     }
 
     if (file instanceof XMLFile) {
@@ -292,6 +266,7 @@ export class ResourceStore {
       return true
     }
 
+    // 4. is the file registered as dependency according to modDependencyResourceStore?
     if (this.modDependencyResourceStore.isDependencyFile(file.uri.toString(), this.version)) {
       return true
     }
