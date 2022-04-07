@@ -49,6 +49,7 @@ export class ProjectManager {
     const deleted: string[] = [...this.projectContainers.keys()].filter((ver) => !versions.includes(ver))
 
     for (const ver of deleted) {
+      this.log.debug(`destroying project container of version: "${ver}"...`)
       const c = this.projectContainers.get(ver)
       c?.clearInstances()
 
