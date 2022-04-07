@@ -13,6 +13,7 @@ import { FileStore } from './fileStore'
 import { LogToken } from './log'
 import { ModDependencyManager } from './mod/modDependencyManager'
 import { ProjectWorkspace } from './mod/projectWorkspace'
+import { ModDependencyResourceStore } from './dependencyResourceStore'
 
 interface Events {
   workspaceChanged(): void
@@ -51,6 +52,7 @@ export class ResourceStore {
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
     private readonly modDependencyManager: ModDependencyManager,
+    private readonly modDependencyResourceStore: ModDependencyResourceStore,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
@@ -282,17 +284,14 @@ export class ResourceStore {
       return true
     }
 
-    const [required, optional] = this.modDependencyManager.getDependenciesOf(this.version)
-    if (DependencyFile.is(file)) {
-      // 3. is the file marked as current project's dependency?
-      if ([...required, ...optional].some((dep) => dep.packageId === file.ownerPackageId)) {
-        return true
-      }
+    // const [required, optional] = this.modDependencyManager.getDependenciesOf(this.version)
+    if (DependencyFile.is(file) && file.ownerPackageId === 'Ludeon.RimWorld') {
+      // 3. is the file from core?
+      return true
+    }
 
-      // 4. is the file from Ludeon.RimWorld? (aka Core)
-      if (file.ownerPackageId === 'Ludeon.RimWorld') {
-        return true
-      }
+    if (this.modDependencyResourceStore.isDependencyFile(file.uri.toString(), this.version)) {
+      return true
     }
 
     return false

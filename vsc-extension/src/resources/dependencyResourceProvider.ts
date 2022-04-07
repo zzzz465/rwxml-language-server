@@ -4,7 +4,6 @@ import { DependencyRequest, DependencyRequestResponse } from '../events'
 import { Provider } from './provider'
 import * as vscode from 'vscode'
 import { ModManager } from '../mod/modManager'
-import glob from 'fast-glob'
 import { globPattern } from '../projectWatcher'
 
 @injectable()
@@ -16,28 +15,23 @@ export class DependencyResourceProvider implements Provider {
     client.onRequest(DependencyRequest, this.onDependencyRequest.bind(this))
   }
 
-  private async onDependencyRequest({ packageId }: DependencyRequest): Promise<DependencyRequestResponse> {
-    console.log('received dependency request for packageId: ', packageId)
+  private async onDependencyRequest({ packageId, version }: DependencyRequest): Promise<DependencyRequestResponse> {
+    console.log('received dependency request for packageId: ', packageId, ' version: ', version)
 
     const mod = this.modManager.getMod(packageId)
     if (!mod) {
-      return { packageId, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
+      return { packageId, version, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
     }
 
-    // use fast-glob because vscode doesn't support findFiles for outside of workspace
-    const root = mod.rootDirectory.fsPath
-    const paths = await glob(globPattern, {
-      caseSensitiveMatch: false,
-      cwd: root,
-      absolute: true,
-      ignore: ['**/about.xml', '**/loadfolders.xml'],
-      onlyFiles: true,
-    })
+    const resources = (await mod.loadFolder.getProjectWorkspace(version)?.getResources(globPattern)) ?? []
 
-    console.log(`found ${paths.length} dependency files in packageId: ${packageId}, files: `, paths)
+    console.log(
+      `found ${resources.length} dependency files in packageId: ${packageId}, resources: `,
+      JSON.stringify(resources, null, 4)
+    )
 
-    const uris = paths.map((path) => vscode.Uri.file(path).toString())
+    const uris = resources.map((path) => vscode.Uri.file(path).toString())
 
-    return { packageId, uris }
+    return { packageId, version, uris }
   }
 }

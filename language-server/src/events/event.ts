@@ -42,10 +42,12 @@ export interface TypeInfoRequestResponse {
 
 export interface DependencyRequest {
   packageId: string
+  version: string
 }
 
 export interface DependencyRequestResponse {
   packageId: string
+  version: string
   uris: string[]
   error?: Error
 }
