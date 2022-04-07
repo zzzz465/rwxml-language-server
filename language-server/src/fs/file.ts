@@ -65,6 +65,9 @@ export interface DependencyFile extends File {
 }
 
 export namespace DependencyFile {
+  /**
+   * DependencyFile.is() checks file is dependency file
+   */
   export function is(file: File): file is DependencyFile {
     return 'ownerPackageId' in file && typeof (file as any)['ownerPackageId'] === 'string'
   }
