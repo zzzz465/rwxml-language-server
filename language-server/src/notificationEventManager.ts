@@ -6,9 +6,10 @@ import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './even
 import { File } from './fs'
 import * as winston from 'winston'
 import { LogToken } from './log'
+import TypedEventEmitter from 'typed-emitter'
 
 // events that this manager will emit
-export interface NotificationEvents {
+export type NotificationEvents = {
   fileAdded(file: File): void
   fileChanged(file: File): void
   fileDeleted(uri: string): void
@@ -25,11 +26,11 @@ export class NotificationEventManager {
   private readonly log: winston.Logger
 
   // pre-event stage emit
-  readonly preEvent: EventEmitter<NotificationEvents> = new EventEmitter()
+  readonly preEvent = new EventEmitter() as TypedEventEmitter<NotificationEvents>
   // event emit
-  readonly event: EventEmitter<NotificationEvents> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<NotificationEvents>
   // post-event emit?
-  readonly postEvent: EventEmitter<NotificationEvents> = new EventEmitter()
+  readonly postEvent = new EventEmitter() as TypedEventEmitter<NotificationEvents>
 
   constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
@@ -41,7 +42,7 @@ export class NotificationEventManager {
     connection.onNotification(ProjectFileDeleted, ({ uri }) => this.onFileDeleted(uri))
   }
 
-  listen(event: EventEmitter<NotificationEvents>): void {
+  listen(event: TypedEventEmitter<NotificationEvents>): void {
     event.on('fileAdded', this.onFileAdded.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))

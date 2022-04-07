@@ -1,10 +1,10 @@
-import EventEmitter from 'events'
 import { inject, singleton } from 'tsyringe'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { File, XMLFile } from './fs'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { LogToken } from './log'
+import TypedEventEmitter from 'typed-emitter'
 
 /**
  * TextDocumentManager manages all textDocuments
@@ -23,7 +23,7 @@ export class TextDocumentManager {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
   }
 
-  listen(events: EventEmitter<NotificationEvents>) {
+  listen(events: TypedEventEmitter<NotificationEvents>) {
     events.on('fileAdded', (file) => this.onFileAdded(file))
     events.on('fileChanged', (file) => this.onFileChanged(file))
     events.on('fileDeleted', (uri) => this.onFileDeleted(uri))

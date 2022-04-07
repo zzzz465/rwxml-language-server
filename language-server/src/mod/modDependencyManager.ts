@@ -2,6 +2,7 @@ import EventEmitter from 'events'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
+import TypedEventEmitter from 'typed-emitter'
 import winston from 'winston'
 import { LogToken } from '../log'
 import { About } from './about'
@@ -14,7 +15,7 @@ export interface Dependency {
   readonly downloadURL?: string
 }
 
-interface Events {
+type Events = {
   dependencyChanged(modDependencyManager: ModDependencyManager): void
 }
 
@@ -58,7 +59,7 @@ export class ModDependencyManager {
 
   private supportedVersions: string[] = []
 
-  readonly event: EventEmitter<Events> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(
     private readonly about: About,

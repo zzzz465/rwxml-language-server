@@ -17,8 +17,9 @@ import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 import * as documentWithNodeMap from './documentWithNodeMap'
 import { serializeError } from 'serialize-error'
+import TypedEventEmitter from 'typed-emitter'
 
-interface Events {
+type Events = {
   /**
    * defChanged event emitted when document is changed
    * @param updatedDocument the document that updated
@@ -40,7 +41,7 @@ export class Project {
   private xmls: Map<string, Document> = new Map()
   public defManager: DefManager
 
-  public readonly event: EventEmitter<Events> = new EventEmitter()
+  public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private isReloading = false
   private reloadDebounceTimeout = 3000 // ms

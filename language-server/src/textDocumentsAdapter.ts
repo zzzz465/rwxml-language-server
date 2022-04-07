@@ -8,8 +8,9 @@ import { ResourceExistsRequest } from './events'
 import { File, TextFile } from './fs'
 import * as winston from 'winston'
 import { LogToken } from './log'
+import TypedEventEmitter from 'typed-emitter'
 
-interface Events {
+type Events = {
   fileAdded(file: TextFile): void
   fileChanged(file: TextFile): void
   fileDeleted(uri: string): void
@@ -26,7 +27,7 @@ export class TextDocumentsAdapter {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentsAdapter.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  readonly event: EventEmitter<Events> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<Events>
   readonly textDocuments = new TextDocuments(TextDocument)
 
   constructor(
@@ -63,16 +64,6 @@ export class TextDocumentsAdapter {
     if (res.error) {
       this.log.error(`failed to check resource exists, resource: ${JSON.stringify(res, null, 2)}`)
       return
-    }
-
-    if (res.exists) {
-      const file = File.create({ uri: URI.parse(e.document.uri) })
-      if (file instanceof TextFile) {
-        Object.assign(file, { data: e.document.getText() })
-        this.event.emit('fileChanged', file)
-      }
-    } else {
-      this.event.emit('fileDeleted', e.document.uri)
     }
   }
 }

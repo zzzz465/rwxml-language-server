@@ -4,6 +4,7 @@ import { File } from './fs'
 import { NotificationEventManager, NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { LogToken } from './log'
+import TypedEventEmitter from 'typed-emitter'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -12,7 +13,7 @@ export class FileStore {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${FileStore.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  public readonly event: EventEmitter<Events> = new EventEmitter()
+  public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private readonly files: Map<string, File> = new Map()
 

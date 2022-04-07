@@ -9,8 +9,9 @@ import { About } from './mod'
 import { inject } from 'tsyringe'
 import { LogToken } from './log'
 import _ from 'lodash'
+import TypedEventEmitter from 'typed-emitter'
 
-interface Events {
+type Events = {
   onProjectInitialized(project: Project): void
 }
 
@@ -30,14 +31,14 @@ export class ProjectManager {
     return [...this.projectContainers.values()].map((c) => c.resolve(Project))
   }
 
-  public readonly events: EventEmitter<Events> = new EventEmitter()
+  public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(about: About, @inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 
-  listen(notiEvent: EventEmitter<NotificationEvents>): void {
+  listen(notiEvent: TypedEventEmitter<NotificationEvents>): void {
     notiEvent.on('fileAdded', this.onProjectFileAdded.bind(this))
     notiEvent.on('fileChanged', this.onProjectFileChanged.bind(this))
     notiEvent.on('fileDeleted', this.onProjectFileDeleted.bind(this))

@@ -14,8 +14,10 @@ import { LogToken } from './log'
 import { ModDependencyManager } from './mod/modDependencyManager'
 import { ProjectWorkspace } from './mod/projectWorkspace'
 import { ModDependencyResourceStore } from './dependencyResourceStore'
+import { Disposable } from 'vscode-languageserver'
+import TypedEventEmitter from 'typed-emitter'
 
-interface Events {
+type Events = {
   workspaceChanged(): void
   dllChanged(uri: string): void
   dllDeleted(uri: string): void
@@ -43,7 +45,7 @@ export class ResourceStore {
   readonly audios: Set<string> = new Set()
   readonly audioDirectories = new Counter<string>()
 
-  readonly event: EventEmitter<Events> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private projectWorkspace = new ProjectWorkspace(this.version, URI.parse(''), [])
 

@@ -14,6 +14,7 @@ import _ from 'lodash'
 import { AsEnumerable } from 'linq-es2015'
 import { deserializeError } from 'serialize-error'
 import { About } from './mod'
+import TypedEventEmitter from 'typed-emitter'
 
 /**
  * SubResourceStore is a resource store of a specific version.
@@ -36,7 +37,7 @@ export class ModDependencyResourceStore {
   )
   private readonly log: winston.Logger
 
-  public readonly event: EventEmitter<Events> = new EventEmitter()
+  public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   // DefaultDict<version, Map<packageId, Map<uri, File>>>
   private readonly resourcesMap: DefaultDictionary<string, Map<string, Map<string, File>>> = new DefaultDictionary(

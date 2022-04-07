@@ -10,8 +10,9 @@ import _ from 'lodash'
 import { LogToken } from '../log'
 import { Dependency } from './modDependencyManager'
 import { URI } from 'vscode-uri'
+import TypedEventEmitter from 'typed-emitter'
 
-export interface AboutEvents {
+export type AboutEvents = {
   aboutChanged(about: About): void
 }
 
@@ -20,7 +21,7 @@ export class About {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  readonly event: EventEmitter<AboutEvents> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<AboutEvents>
 
   private _filePath: URI = URI.parse('')
 
@@ -137,7 +138,7 @@ export class About {
     }
   }
 
-  listen(event: EventEmitter<NotificationEvents>) {
+  listen(event: TypedEventEmitter<NotificationEvents>) {
     event.on('fileAdded', this.onFileChanged.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     // TODO: implement handler for 'fileDeleted'
