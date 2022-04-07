@@ -2,7 +2,6 @@ import { EventEmitter } from 'events'
 import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
-import { DependencyFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { ResourceStore } from './resourceStore'
@@ -65,29 +64,6 @@ export class Project {
     resourceStore.event.on('workspaceChanged', () => this.reloadProject('project workspace is changed.'))
 
     this.reloadProject('project initialize')
-  }
-
-  /**
-   * @deprecated use resourceStore directly
-   * @param uri
-   * @returns
-   */
-  isDependencyFile(uri: string | URI): boolean {
-    if (uri instanceof URI) {
-      uri = uri.toString()
-    }
-
-    // does this file belongs to this project?
-    const file = this.resourceStore.files.get(uri)
-    if (!file) {
-      return false
-    }
-
-    if (DependencyFile.is(file)) {
-      this.resourceStore.depFiles.getValue(file.ownerPackageId).has(file.uri.toString())
-    }
-
-    return false
   }
 
   getXMLDocumentByUri(uri: string | URI): Document | undefined {
