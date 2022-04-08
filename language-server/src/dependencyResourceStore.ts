@@ -103,7 +103,7 @@ export class ModDependencyResourceStore {
       )
     }
 
-    return [_.uniqBy(added, (x) => x.packageId), deleted]
+    return [_.uniqBy(added, (x) => x.packageId), _.uniqBy(deleted, (x) => x.packageId)]
   }
 
   private async handleAddedMods(deps: Dependency[]) {
