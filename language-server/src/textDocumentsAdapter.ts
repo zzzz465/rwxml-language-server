@@ -47,6 +47,7 @@ export class TextDocumentsAdapter {
     const file = File.create({ uri: URI.parse(e.document.uri) })
     if (file instanceof TextFile) {
       Object.assign(file, { data: e.document.getText() })
+      this.log.silly(`file added: ${file.uri.toString()}`)
       this.event.emit('fileAdded', file)
     }
   }
@@ -55,6 +56,7 @@ export class TextDocumentsAdapter {
     const file = File.create({ uri: URI.parse(e.document.uri) })
     if (file instanceof TextFile) {
       Object.assign(file, { data: e.document.getText() })
+      this.log.silly(`file changed: ${file.uri.toString()}`)
       this.event.emit('fileChanged', file)
     }
   }
@@ -65,5 +67,7 @@ export class TextDocumentsAdapter {
       this.log.error(`failed to check resource exists, resource: ${JSON.stringify(res, null, 2)}`)
       return
     }
+
+    // TODO: 무언가 작업을 해야 할 것 같은데...
   }
 }

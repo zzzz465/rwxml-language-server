@@ -50,17 +50,27 @@ export class FileStore {
   }
 
   private onFileAdded(file: File) {
+    if (this.files.has(file.uri.toString())) {
+      this.log.warn(`trying to add file but it already exists. uri: ${file.uri.toString()}`)
+    }
+
     this.log.silly(`file added: ${file.uri.toString()}`)
     this.files.set(file.uri.toString(), file)
   }
 
   private onFileChanged(file: File) {
+    if (!this.files.has(file.uri.toString())) {
+      this.log.warn(`file changed but not registered. uri: ${file.uri.toString()}`)
+    }
+
     this.log.silly(`file changed: ${file.uri.toString()}`)
     this.files.set(file.uri.toString(), file)
   }
 
   private onFileDeleted(uri: string) {
     this.log.silly(`file deleted: ${uri}`)
-    this.files.delete(uri)
+    if (!this.files.delete(uri)) {
+      this.log.warn(`trying to delete file which doesn\'t exists. uri: ${uri}`)
+    }
   }
 }

@@ -146,7 +146,7 @@ export class ModDependencyResourceStore {
   }
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
-    this.log.silly(
+    this.log.debug(
       `dependency file of "${res.packageId}", version: ${res.version} added: ${JSON.stringify(res.uris, null, 4)}`
     )
 
