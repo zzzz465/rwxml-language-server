@@ -54,7 +54,7 @@ function buildExtractorArgs(dllPaths: string[], port: number = 9870): string[] {
 }
 
 function commandToString(cmd: string, args: string[]): string {
-  return `${cmd} ${args.map((v) => `"${v}`).join(' ')}`
+  return `${cmd} ${args.map((v) => `"${v}"`).join(' ')}`
 }
 
 function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
