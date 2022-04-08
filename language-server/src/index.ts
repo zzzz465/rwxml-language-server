@@ -1,5 +1,8 @@
 import 'reflect-metadata'
 
+import { install } from 'source-map-support'
+install()
+
 import * as ls from 'vscode-languageserver/node'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'

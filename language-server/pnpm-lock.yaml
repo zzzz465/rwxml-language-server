@@ -9,6 +9,7 @@ specifiers:
   '@types/lodash': ^4.14.159
   '@types/node': ^12.12.0
   '@types/normalize-path': ^3.0.0
+  '@types/source-map-support': ^0.5.4
   '@types/uuid': ^8.3.4
   '@typescript-eslint/eslint-plugin': ^4.31.1
   '@typescript-eslint/parser': ^4.31.1
@@ -33,6 +34,7 @@ specifiers:
   prettydiff: ^101.2.6
   reflect-metadata: ^0.1.13
   serialize-error: ^9.1.1
+  source-map-support: ^0.5.21
   ts-jest: ^26.1.4
   ts-loader: ^8.0.3
   ts-node: ^10.1.0
@@ -65,6 +67,7 @@ dependencies:
   prettydiff: 101.2.6
   reflect-metadata: 0.1.13
   serialize-error: 9.1.1
+  source-map-support: 0.5.21
   tsconfig-paths: 3.11.0
   tsyringe: 4.6.0
   typescript-collections: 1.3.3
@@ -82,6 +85,7 @@ devDependencies:
   '@types/lodash': 4.14.172
   '@types/node': 12.20.25
   '@types/normalize-path': 3.0.0
+  '@types/source-map-support': 0.5.4
   '@types/uuid': 8.3.4
   '@typescript-eslint/eslint-plugin': 4.31.1_e2d3c88d378335c4183365c112128ce9
   '@typescript-eslint/parser': 4.31.1_eslint@7.32.0+typescript@4.4.3
@@ -881,6 +885,12 @@ packages:
     resolution: {integrity: sha512-eI5Yrz3Qv4KPUa/nSIAi0h+qX0XyewOliug5F2QAtuRg6Kjg6jfmxe1GIwoIRhZspD1A0RP8ANrPwvEXXtRFog==}
     dev: true
 
+  /@types/source-map-support/0.5.4:
+    resolution: {integrity: sha512-9zGujX1sOPg32XLyfgEB/0G9ZnrjthL/Iv1ZfuAjj8LEilHZEpQSQs1scpRXPhHzGYgWiLz9ldF1cI8JhL+yMw==}
+    dependencies:
+      source-map: 0.6.1
+    dev: true
+
   /@types/stack-utils/2.0.1:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
     dev: true
@@ -1509,7 +1519,6 @@ packages:
 
   /buffer-from/1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
-    dev: true
 
   /cache-base/1.0.1:
     resolution: {integrity: sha512-AKcdTnFSWATd5/GCPRxr2ChwIJ85CeyrEyjRHlKxQ56d4XJMGym0uAiKn0xbLOGOl3+yRpOTi484dVCEc5AUzQ==}
@@ -3247,7 +3256,7 @@ packages:
       jest-runtime: 26.6.3_ts-node@10.2.1
       jest-util: 26.6.2
       jest-worker: 26.6.2
-      source-map-support: 0.5.20
+      source-map-support: 0.5.21
       throat: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -4464,12 +4473,11 @@ packages:
       urix: 0.1.0
     dev: true
 
-  /source-map-support/0.5.20:
-    resolution: {integrity: sha512-n1lZZ8Ve4ksRqizaBQgxXDgKwttHDhyfQjA6YZZn8+AroHbsIz+JjwxQDxbp+7y5OYCI8t1Yk7etjD9CRd2hIw==}
+  /source-map-support/0.5.21:
+    resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
     dependencies:
       buffer-from: 1.1.2
       source-map: 0.6.1
-    dev: true
 
   /source-map-url/0.4.1:
     resolution: {integrity: sha512-cPiFOTLUKvJFIg4SKVScy4ilPPW6rFgMgfuZJPNoDuMs3nC1HbMUycBoJw77xFIp6z1UJQJOfx6C9GMH80DiTw==}
@@ -4483,7 +4491,6 @@ packages:
   /source-map/0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /source-map/0.7.3:
     resolution: {integrity: sha512-CkCj6giN3S+n9qrYiBTX5gystlENnRW5jZeNLHpe6aue+SrHcG5VYwujhW9s4dY31mEGsxBDrHR6oI69fTXsaQ==}
@@ -4538,7 +4545,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       escape-string-regexp: 2.0.0
-      source-map-support: 0.5.20
+      source-map-support: 0.5.21
     dev: true
 
   /static-extend/0.1.2:
@@ -4698,7 +4705,7 @@ packages:
     dependencies:
       commander: 2.20.3
       source-map: 0.7.3
-      source-map-support: 0.5.20
+      source-map-support: 0.5.21
     dev: true
 
   /test-exclude/6.0.0:
