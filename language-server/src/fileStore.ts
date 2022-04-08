@@ -6,6 +6,7 @@ import * as winston from 'winston'
 import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
+import { Result } from './types/functional'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -47,11 +48,11 @@ export class FileStore {
     return this.files[Symbol.iterator]()
   }
 
-  load(params: FileCreateParameters): [File?, Error?] {
+  load(params: FileCreateParameters): Result<File, Error> {
     const file = File.create(params)
 
     if (this.files.has(file.uri.toString())) {
-      return [file, new Error(`trying to add file but it already exists. uri: ${file.uri.toString()}`)]
+      return [null, new Error(`trying to add file but it already exists. uri: ${file.uri.toString()}`)]
     }
 
     this.log.silly(`file added: ${file.uri.toString()}`)
@@ -61,22 +62,22 @@ export class FileStore {
     this.files.set(key, file)
     this.referenceCounter.setValue(key, this.referenceCounter.getValue(key) + 1)
 
-    return [file, undefined]
+    return [file, null]
   }
 
-  update(uri: string): [File?, Error?] {
+  update(uri: string): Result<File, Error> {
     const file = this.files.get(uri)
     if (!file) {
-      return [file, new Error(`file changed but not exists in fileStore. uri: ${uri}`)]
+      return [null, new Error(`file changed but not exists in fileStore. uri: ${uri}`)]
     }
 
     file.update()
     this.log.silly(`file updated: ${file.uri.toString()}`)
 
-    return [file, undefined]
+    return [file, null]
   }
 
-  delete(uri: string): Error | undefined {
+  delete(uri: string): Error | null {
     if (!this.files.delete(uri)) {
       return new Error(`trying to delete file but not exists in fileStore. uri: ${uri}`)
     }
@@ -87,5 +88,7 @@ export class FileStore {
     if (remaining && remaining <= 0) {
       this.referenceCounter.remove(uri)
     }
+
+    return null
   }
 }
