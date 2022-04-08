@@ -15,6 +15,7 @@ import { AsEnumerable } from 'linq-es2015'
 import { deserializeError } from 'serialize-error'
 import { About } from './mod'
 import TypedEventEmitter from 'typed-emitter'
+import AsyncLock from 'async-lock'
 
 /**
  * SubResourceStore is a resource store of a specific version.
@@ -43,6 +44,8 @@ export class ModDependencyResourceStore {
   private readonly resourcesMap: DefaultDictionary<string, Map<string, Map<string, File>>> = new DefaultDictionary(
     () => new Map()
   )
+
+  private readonly lock = new AsyncLock()
 
   constructor(
     private readonly about: About,
@@ -104,40 +107,42 @@ export class ModDependencyResourceStore {
   }
 
   private async handleAddedMods(deps: Dependency[]) {
-    this.log.info(
-      `added dependencies: ${JSON.stringify(
-        deps.map((dep) => dep.packageId),
-        null,
-        4
-      )}`
-    )
+    await this.lock.acquire('update', async () => {
+      this.log.info(
+        `added dependencies: ${JSON.stringify(
+          deps.map((dep) => dep.packageId),
+          null,
+          4
+        )}`
+      )
 
-    for (const version of this.about.supportedVersions) {
-      for (const dep of deps) {
-        try {
-          const res = await this.connection.sendRequest(
-            DependencyRequest,
-            { version, packageId: dep.packageId },
-            undefined
-          )
-
-          if (res.error) {
-            this.log.error(
-              `failed requesting mod dependency of packageId: ${dep.packageId}. error: ${JSON.stringify(
-                deserializeError(res.error),
-                null,
-                4
-              )}`
+      for (const version of this.about.supportedVersions) {
+        for (const dep of deps) {
+          try {
+            const res = await this.connection.sendRequest(
+              DependencyRequest,
+              { version, packageId: dep.packageId },
+              undefined
             )
-            continue
-          }
 
-          this.handleAddResponse(res)
-        } catch (e) {
-          this.log.error(`unexpected error: ${JSON.stringify(deserializeError(e), null, 4)}`)
+            if (res.error) {
+              this.log.error(
+                `failed requesting mod dependency of packageId: ${dep.packageId}. error: ${JSON.stringify(
+                  deserializeError(res.error),
+                  null,
+                  4
+                )}`
+              )
+              continue
+            }
+
+            this.handleAddResponse(res)
+          } catch (e) {
+            this.log.error(`unexpected error: ${JSON.stringify(deserializeError(e), null, 4)}`)
+          }
         }
       }
-    }
+    })
   }
 
   private async handleAddResponse(res: DependencyRequestResponse): Promise<void> {
@@ -154,49 +159,55 @@ export class ModDependencyResourceStore {
 
     for (const file of files) {
       map.set(file.uri.toString(), file)
-      this.event.emit('fileAdded', file)
+      try {
+        this.event.emit('fileAdded', file)
+      } catch (e) {
+        this.log.error(e)
+      }
     }
   }
 
-  private handleDeletedMods(deps: Dependency[]) {
-    this.log.info(
-      `deleted dependencies: ${JSON.stringify(
-        deps.map((dep) => dep.packageId),
-        null,
-        4
-      )}`
-    )
+  private async handleDeletedMods(deps: Dependency[]) {
+    await this.lock.acquire('update', () => {
+      this.log.info(
+        `deleted dependencies: ${JSON.stringify(
+          deps.map((dep) => dep.packageId),
+          null,
+          4
+        )}`
+      )
 
-    for (const version of this.about.supportedVersions) {
-      for (const dep of deps) {
-        const valuesIterator = this.resourcesMap.getValue(version).get(dep.packageId)?.values()
-        if (!valuesIterator) {
-          this.log.error(
-            `dependency: "${dep.packageId}" version: "${version}" is not registered but trying to be deleted.`
+      for (const version of this.about.supportedVersions) {
+        for (const dep of deps) {
+          const valuesIterator = this.resourcesMap.getValue(version).get(dep.packageId)?.values()
+          if (!valuesIterator) {
+            this.log.error(
+              `dependency: "${dep.packageId}" version: "${version}" is not registered but trying to be deleted.`
+            )
+            continue
+          }
+
+          const files = [...valuesIterator]
+          if (!files) {
+            this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered.`)
+            continue
+          }
+
+          for (const file of files) {
+            this.event.emit('fileDeleted', file.uri.toString())
+          }
+
+          this.resourcesMap.getValue(version).delete(dep.packageId)
+
+          this.log.silly(
+            `dependency file deleted: ${JSON.stringify(
+              files.map((file) => file.uri.toString()),
+              null,
+              4
+            )}`
           )
-          continue
         }
-
-        const files = [...valuesIterator]
-        if (!files) {
-          this.log.error(`trying to remove dependency ${dep.packageId}, which is not registered.`)
-          continue
-        }
-
-        for (const file of files) {
-          this.event.emit('fileDeleted', file.uri.toString())
-        }
-
-        this.resourcesMap.getValue(version).delete(dep.packageId)
-
-        this.log.silly(
-          `dependency file deleted: ${JSON.stringify(
-            files.map((file) => file.uri.toString()),
-            null,
-            4
-          )}`
-        )
       }
-    }
+    })
   }
 }
