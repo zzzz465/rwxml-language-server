@@ -1,10 +1,11 @@
 import EventEmitter from 'events'
 import { inject, singleton } from 'tsyringe'
-import { File } from './fs'
-import { NotificationEventManager, NotificationEvents } from './notificationEventManager'
+import { File, FileCreateParameters } from './fs'
+import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
+import { DefaultDictionary } from 'typescript-collections'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -16,13 +17,10 @@ export class FileStore {
   public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private readonly files: Map<string, File> = new Map()
+  private readonly referenceCounter: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
-  constructor(notiEventManager: NotificationEventManager, @inject(LogToken) baseLogger: winston.Logger) {
+  constructor(@inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-
-    notiEventManager.preEvent.on('fileAdded', this.onFileAdded.bind(this))
-    notiEventManager.preEvent.on('fileChanged', this.onFileChanged.bind(this))
-    notiEventManager.postEvent.on('fileDeleted', this.onFileDeleted.bind(this))
   }
 
   get(uri: string) {
@@ -49,28 +47,45 @@ export class FileStore {
     return this.files[Symbol.iterator]()
   }
 
-  private onFileAdded(file: File) {
+  load(params: FileCreateParameters): [File?, Error?] {
+    const file = File.create(params)
+
     if (this.files.has(file.uri.toString())) {
-      this.log.warn(`trying to add file but it already exists. uri: ${file.uri.toString()}`)
+      return [file, new Error(`trying to add file but it already exists. uri: ${file.uri.toString()}`)]
     }
 
     this.log.silly(`file added: ${file.uri.toString()}`)
-    this.files.set(file.uri.toString(), file)
+
+    const key = file.uri.toString()
+
+    this.files.set(key, file)
+    this.referenceCounter.setValue(key, this.referenceCounter.getValue(key) + 1)
+
+    return [file, undefined]
   }
 
-  private onFileChanged(file: File) {
-    if (!this.files.has(file.uri.toString())) {
-      this.log.warn(`file changed but not registered. uri: ${file.uri.toString()}`)
+  update(uri: string): [File?, Error?] {
+    const file = this.files.get(uri)
+    if (!file) {
+      return [file, new Error(`file changed but not exists in fileStore. uri: ${uri}`)]
     }
 
-    this.log.silly(`file changed: ${file.uri.toString()}`)
-    this.files.set(file.uri.toString(), file)
+    file.update()
+    this.log.silly(`file updated: ${file.uri.toString()}`)
+
+    return [file, undefined]
   }
 
-  private onFileDeleted(uri: string) {
-    this.log.silly(`file deleted: ${uri}`)
+  delete(uri: string): Error | undefined {
     if (!this.files.delete(uri)) {
-      this.log.warn(`trying to delete file which doesn\'t exists. uri: ${uri}`)
+      return new Error(`trying to delete file but not exists in fileStore. uri: ${uri}`)
+    }
+
+    this.referenceCounter.setValue(uri, this.referenceCounter.getValue(uri) - 1)
+    const remaining = this.referenceCounter.getValue(uri)
+
+    if (remaining && remaining <= 0) {
+      this.referenceCounter.remove(uri)
     }
   }
 }
