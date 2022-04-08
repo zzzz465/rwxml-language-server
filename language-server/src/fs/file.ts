@@ -52,9 +52,26 @@ export abstract class File {
     return file
   }
 
-  readonly metadataCreated = Date.now()
+  private _createdAt: number = Date.now()
+  private _updatedAt: number = Date.now()
+
+  get createdAt(): number {
+    return this._createdAt
+  }
+
+  get updatedAt(): number {
+    return this._updatedAt
+  }
 
   constructor(public readonly uri: URI) {}
+
+  /**
+   * update file to a newer state.
+   * @virtual
+   */
+  update(): void {
+    this._updatedAt = Date.now()
+  }
 
   abstract toString(): string
 }
@@ -97,15 +114,28 @@ export class TextFile extends File {
   // TODO: add error handling
   async read(): Promise<string> {
     if (!this.data) {
+      const updatedAt = this.createdAt
+
       if (!this.readPromise) {
         const xmlFileReader = container.resolve(TextReader)
         this.readPromise = xmlFileReader.read(this)
       }
 
-      this.data = await this.readPromise
+      if (this.updatedAt > updatedAt) {
+        return this.read()
+      } else {
+        this.data = await this.readPromise
+      }
     }
 
     return this.data
+  }
+
+  update(): void {
+    this.data = undefined
+    this.readPromise = undefined
+
+    super.update()
   }
 
   toString() {
