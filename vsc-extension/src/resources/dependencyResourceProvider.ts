@@ -18,8 +18,9 @@ export class DependencyResourceProvider implements Provider {
   private async onDependencyRequest({ packageId, version }: DependencyRequest): Promise<DependencyRequestResponse> {
     console.log('received dependency request for packageId: ', packageId, ' version: ', version)
 
+    // if pacakgeId "" is UB.
     const mod = this.modManager.getMod(packageId)
-    if (!mod) {
+    if (!packageId || !mod) {
       return { packageId, version, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
     }
 
