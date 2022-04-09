@@ -1,7 +1,17 @@
-import { TextureFile, AudioFile, File, DLLFile, XMLFile } from './fs'
+import {
+  TextureFile,
+  AudioFile,
+  File,
+  DLLFile,
+  XMLFile,
+  isXMLFile,
+  isImageFile as isTextureFile,
+  isSoundFile as isAudioFile,
+  isDLLFile,
+} from './fs'
 import { LoadFolder } from './mod/loadfolders'
 import { Counter } from './utils/counter'
-import path from 'path'
+import * as path from 'path'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import EventEmitter from 'events'
 import * as winston from 'winston'
@@ -99,44 +109,45 @@ export class ResourceStore {
     return this.modDependencyBags.isDependencyFile(this.version, uri)
   }
 
-  fileAdded(file: File): ono.ErrorLike | null {
+  fileAdded(file: File): void {
     if (!this.isProjectResource(file)) {
-      return null
+      return
     }
 
     const uri = file.uri.toString()
 
     if (this.files.has(uri)) {
-      return ono.ono(`file already exists. uri: ${uri}`)
+      this.log.error(`file already exists. uri: ${uri}`)
+      return
     }
 
     this.files.add(uri)
 
-    if (file instanceof XMLFile) {
-      this.onXMLFileAdded(file)
-    } else if (file instanceof TextureFile) {
-      this.onTextureFileAdded(file)
-    } else if (file instanceof AudioFile) {
-      this.onAudioFileAdded(file)
-    } else if (file instanceof DLLFile) {
-      this.onDLLFileAdded(file)
+    if (isXMLFile(file.ext)) {
+      this.onXMLFileAdded(file as XMLFile)
+    } else if (isTextureFile(file.ext)) {
+      this.onTextureFileAdded(file as TextureFile)
+    } else if (isAudioFile(file.ext)) {
+      this.onAudioFileAdded(file as AudioFile)
+    } else if (isDLLFile(file.ext)) {
+      this.onDLLFileAdded(file as DLLFile)
     }
-
-    return null
   }
 
-  fileChanged(uri: string): ono.ErrorLike | null {
+  fileChanged(uri: string): void {
     if (!this.isProjectResource(uri)) {
-      return null
+      return
     }
 
     if (!this.files.has(uri)) {
-      return ono.ono(`file is project resource but not registered. uri: ${uri}`)
+      this.log.error(`file is project resource but not registered. uri: ${uri}`)
+      return
     }
 
     const file = this.fileStore.get(uri)
     if (!file) {
-      return ono.ono(`file registered as project resource but not exists. uri: ${uri}`)
+      this.log.error(`file registered as project resource but not exists. uri: ${uri}`)
+      return
     }
 
     if (file instanceof XMLFile) {
@@ -148,37 +159,31 @@ export class ResourceStore {
     } else if (file instanceof DLLFile) {
       this.onDLLFileChanged(file)
     }
-
-    return null
   }
 
-  fileDeleted(uri: string): ono.ErrorLike | null {
+  fileDeleted(uri: string): void {
     if (!this.isProjectResource(uri)) {
-      return null
+      return
     }
 
-    const file = this.fileStore.get(uri)
-    if (!file) {
-      throw new Error(`file ${uri} doesn't exists on file map.`)
-    }
+    const ext = path.extname(uri)
 
-    if (file instanceof XMLFile) {
+    if (isXMLFile(ext)) {
       this.onXMLFileDeleted(uri)
-    } else if (file instanceof TextureFile) {
+    } else if (isTextureFile(ext)) {
       this.onTextureFileDeleted(uri)
-    } else if (file instanceof AudioFile) {
+    } else if (isAudioFile(ext)) {
       this.onAudioFileDeleted(uri)
-    } else if (file instanceof DLLFile) {
+    } else if (isDLLFile(ext)) {
       this.onDLLFileDeleted(uri)
-    }
-
-    if (!this.files.delete(uri)) {
-      this.log.warn(`trying to delete file ${uri} but not exists.`)
     }
 
     this.event.emit('xmlDeleted', uri)
 
-    return null
+    if (!this.files.delete(uri)) {
+      this.log.error(`trying to delete file but not exists. uri: ${uri}`)
+      return
+    }
   }
 
   /**
@@ -282,6 +287,8 @@ export class ResourceStore {
       this.log.error(`dll added but already exists. uri: ${uri}`)
       return
     }
+
+    this.dllFiles.add(uri)
 
     this.event.emit('dllChanged', uri)
   }
