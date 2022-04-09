@@ -124,7 +124,6 @@ export class Project {
     }
 
     cancelTokenSource.dispose()
-    global.gc()
     this.isReloading = false
   }, this.reloadDebounceTimeout)
 
