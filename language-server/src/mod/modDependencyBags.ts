@@ -219,19 +219,17 @@ export class ModDependencyBags {
     })
   }
 
-  private async update(): Promise<ono.ErrorLike | null> {
+  private async update(): Promise<void> {
     this.updateDependencyBagList()
 
     for (const version of this.supportedVersions) {
-      const err = this.updateVersion(version)
+      const err = await this.updateVersion(version)
       if (err) {
-        return err
+        this.log.error(`failed updating state. error: ${err}`)
       }
     }
 
     this.event.emit('dependencyChanged', this)
-
-    return null
   }
 
   private async updateVersion(version: string): Promise<ono.ErrorLike | null> {
@@ -272,12 +270,11 @@ export class ModDependencyBags {
         const bag = new DependencyResourceBag(version, this.connection, this.fileStore)
         this.dependencyBags.set(version, bag)
         addedBags.push(bag)
-      } else {
-        const bag = this.dependencyBags.get(version)
-        if (!bag) {
-          return [null, new Error(`dependency bag of version ${version} not exists.`)]
-        }
+      }
+    }
 
+    for (const [version, bag] of this.dependencyBags) {
+      if (!this.supportedVersions.some((ver) => ver === version)) {
         this.dependencyBags.delete(version)
         deletedBags.push(bag)
       }
