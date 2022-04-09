@@ -4,8 +4,8 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
-import { ModDependencyResourceStore } from '../../dependencyResourceStore'
 import { LogToken } from '../../log'
+import { ModDependencyBags } from '../../mod/modDependencyBags'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -34,7 +34,7 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
-    private readonly modDependencyResourceStore: ModDependencyResourceStore,
+    private readonly modDependencyBags: ModDependencyBags,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -100,7 +100,7 @@ export class DiagnosticsProvider implements Provider {
 
     const shouldDiagnosis =
       document.uri !== '' &&
-      !this.modDependencyResourceStore.isDependencyFile(document.uri) &&
+      !project.resourceStore.isDependencyFile(document.uri) &&
       getRootElement(document)?.tagName === 'Defs'
 
     if (!shouldDiagnosis) {
@@ -112,9 +112,8 @@ export class DiagnosticsProvider implements Provider {
     for (const dig of diagnosticsArr) {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
-        this.log.debug(
-          `[${project.version}] send diagnostics to uri: ${dig.uri}, data: ${JSON.stringify(dig.diagnostics, null, 4)}`
-        )
+        this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
+        this.log.silly(`${JSON.stringify(dig.diagnostics, null, 2)}`)
       } else {
         this.log.warn(
           `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`

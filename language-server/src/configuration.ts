@@ -1,8 +1,9 @@
 import EventEmitter from 'events'
 import * as tsyringe from 'tsyringe'
+import TypedEventEmitter from 'typed-emitter'
 import * as ls from 'vscode-languageserver'
 
-interface Events {
+type Events = {
   onConfigurationChanged(): void
 }
 
@@ -10,7 +11,7 @@ interface Events {
 export class Configuration {
   private connection?: ls.Connection
 
-  readonly events: EventEmitter<Events> = new EventEmitter()
+  readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
   private cache: Map<string, any> = new Map()
 

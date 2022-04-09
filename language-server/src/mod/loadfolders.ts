@@ -13,10 +13,11 @@ import { LogToken } from '../log'
 import { About } from './about'
 import { ProjectWorkspace } from './projectWorkspace'
 import { FileStore } from '../fileStore'
+import TypedEventEmitter from 'typed-emitter'
 
 const VERSION_REGEX = /v[\d]\.[\d]$/
 
-interface Events {
+type Events = {
   loadFolderChanged(loadFolder: LoadFolder): void
 }
 
@@ -44,7 +45,7 @@ export class LoadFolder {
 
   private projectWorkspaces: Map<string, ProjectWorkspace> = new Map()
 
-  readonly event: EventEmitter<Events> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(
     @tsyringe.inject(LogToken) baseLogger: winston.Logger,
@@ -103,7 +104,7 @@ export class LoadFolder {
     return this.getProjectWorkspace(version)?.includes(uri) ?? false
   }
 
-  listen(event: EventEmitter<NotificationEvents>) {
+  listen(event: TypedEventEmitter<NotificationEvents>) {
     event.on('fileAdded', this.onFileChanged.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))

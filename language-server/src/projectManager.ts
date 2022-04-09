@@ -9,8 +9,9 @@ import { About } from './mod'
 import { inject } from 'tsyringe'
 import { LogToken } from './log'
 import _ from 'lodash'
+import TypedEventEmitter from 'typed-emitter'
 
-interface Events {
+type Events = {
   onProjectInitialized(project: Project): void
 }
 
@@ -30,14 +31,14 @@ export class ProjectManager {
     return [...this.projectContainers.values()].map((c) => c.resolve(Project))
   }
 
-  public readonly events: EventEmitter<Events> = new EventEmitter()
+  public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(about: About, @inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 
-  listen(notiEvent: EventEmitter<NotificationEvents>): void {
+  listen(notiEvent: TypedEventEmitter<NotificationEvents>): void {
     notiEvent.on('fileAdded', this.onProjectFileAdded.bind(this))
     notiEvent.on('fileChanged', this.onProjectFileChanged.bind(this))
     notiEvent.on('fileDeleted', this.onProjectFileDeleted.bind(this))
@@ -48,6 +49,7 @@ export class ProjectManager {
     const deleted: string[] = [...this.projectContainers.keys()].filter((ver) => !versions.includes(ver))
 
     for (const ver of deleted) {
+      this.log.debug(`destroying project container of version: "${ver}"...`)
       const c = this.projectContainers.get(ver)
       c?.clearInstances()
 
@@ -75,24 +77,18 @@ export class ProjectManager {
   }
 
   private onProjectFileAdded(file: File) {
-    this.log.silly(`file added: ${file.uri.toString()}`)
-
     for (const proj of this.projects) {
       proj.resourceStore.fileAdded(file)
     }
   }
 
   private onProjectFileChanged(file: File) {
-    this.log.silly(`file changed: ${file.uri}`)
-
     for (const proj of this.projects) {
-      proj.resourceStore.fileChanged(file)
+      proj.resourceStore.fileChanged(file.uri.toString())
     }
   }
 
   private onProjectFileDeleted(uri: string) {
-    this.log.silly(`file deleted: ${uri}`)
-
     for (const proj of this.projects) {
       proj.resourceStore.fileDeleted(uri)
     }

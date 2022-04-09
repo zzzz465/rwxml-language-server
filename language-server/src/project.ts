@@ -2,7 +2,6 @@ import { EventEmitter } from 'events'
 import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
 import { URI } from 'vscode-uri'
 import { DefManager } from './defManager'
-import { DependencyFile } from './fs'
 import { TextDocumentManager } from './textDocumentManager'
 import { About } from './mod'
 import { ResourceStore } from './resourceStore'
@@ -17,8 +16,9 @@ import { v4 as uuid } from 'uuid'
 import { LogToken } from './log'
 import * as documentWithNodeMap from './documentWithNodeMap'
 import { serializeError } from 'serialize-error'
+import TypedEventEmitter from 'typed-emitter'
 
-interface Events {
+type Events = {
   /**
    * defChanged event emitted when document is changed
    * @param updatedDocument the document that updated
@@ -40,7 +40,7 @@ export class Project {
   private xmls: Map<string, Document> = new Map()
   public defManager: DefManager
 
-  public readonly event: EventEmitter<Events> = new EventEmitter()
+  public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private isReloading = false
   private reloadDebounceTimeout = 3000 // ms
@@ -61,32 +61,8 @@ export class Project {
     resourceStore.event.on('xmlDeleted', this.onXMLDeleted.bind(this))
     resourceStore.event.on('dllChanged', () => this.reloadProject('dll is changed.'))
     resourceStore.event.on('dllDeleted', () => this.reloadProject('dll is deleted.'))
-    resourceStore.event.on('workspaceChanged', () => this.reloadProject('project workspace is changed.'))
 
     this.reloadProject('project initialize')
-  }
-
-  /**
-   * @deprecated use resourceStore directly
-   * @param uri
-   * @returns
-   */
-  isDependencyFile(uri: string | URI): boolean {
-    if (uri instanceof URI) {
-      uri = uri.toString()
-    }
-
-    // does this file belongs to this project?
-    const file = this.resourceStore.files.get(uri)
-    if (!file) {
-      return false
-    }
-
-    if (DependencyFile.is(file)) {
-      this.resourceStore.depFiles.getValue(file.ownerPackageId).has(file.uri.toString())
-    }
-
-    return false
   }
 
   getXMLDocumentByUri(uri: string | URI): Document | undefined {
@@ -132,7 +108,7 @@ export class Project {
     const cancelToken = this.cancelTokenSource.token
 
     this.log.info(`[${requestId}] loading project resources...`)
-    this.resourceStore.reload()
+    this.resourceStore.fetchFiles()
 
     this.log.info(`[${requestId}] clear project...`)
     await this.reset(requestId, cancelToken)

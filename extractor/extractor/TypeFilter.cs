@@ -60,6 +60,19 @@ namespace extractor
 
         public static bool IsBannedType(Type T)
         {
+            try
+            {
+                return IsBannedType0(T);
+            }
+            catch (Exception)
+            {
+                return true;
+            }
+        }
+
+
+        private static bool IsBannedType0(Type T)
+        {
             if (T.IsGenericTypeDefinition)
             {
                 return true;
@@ -93,8 +106,19 @@ namespace extractor
 
             return false;
         }
-
         public static bool IsBannedField(FieldInfo T)
+        {
+            try
+            {
+                return IsBannedField0(T);
+            }
+            catch (Exception)
+            {
+                return true;
+            }
+        }
+
+        private static bool IsBannedField0(FieldInfo T)
         {
             var name = T.DeclaringType.Name;
             var namespaceName = T.DeclaringType.Namespace;

@@ -114,7 +114,7 @@ async function createServer() {
       module,
       transport: TransportKind.ipc,
       options: {
-        execArgv: ['--nolazy', '--inspect=6009'],
+        execArgv: ['--nolazy', '--inspect=6009', '--expose-gc'],
       },
     },
   }

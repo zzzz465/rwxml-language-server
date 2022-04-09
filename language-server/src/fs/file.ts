@@ -1,3 +1,4 @@
+import AsyncLock from 'async-lock'
 import * as path from 'path'
 import { container } from 'tsyringe'
 import { URI } from 'vscode-uri'
@@ -7,6 +8,36 @@ export interface FileCreateParameters {
   uri: URI
   readonly?: boolean
   ownerPackageId?: string
+}
+
+export function isXMLFile(ext: string): boolean {
+  return ext === '.xml'
+}
+
+export function isImageFile(ext: string): boolean {
+  switch (ext) {
+    case '.bmp':
+    case '.jpeg':
+    case '.jpg':
+    case '.png':
+      return true
+  }
+
+  return false
+}
+
+export function isSoundFile(ext: string): boolean {
+  switch (ext) {
+    case '.wav':
+    case '.mp3':
+      return true
+  }
+
+  return false
+}
+
+export function isDLLFile(ext: string): boolean {
+  return ext === '.dll'
 }
 
 export abstract class File {
@@ -52,19 +83,53 @@ export abstract class File {
     return file
   }
 
-  readonly metadataCreated = Date.now()
+  private _createdAt: number = Date.now()
+  private _updatedAt: number = Date.now()
+
+  get createdAt(): number {
+    return this._createdAt
+  }
+
+  get updatedAt(): number {
+    return this._updatedAt
+  }
+
+  get ext(): string {
+    return path.extname(this.uri.fsPath)
+  }
 
   constructor(public readonly uri: URI) {}
+
+  /**
+   * update file to a newer state.
+   * @virtual
+   */
+  update(): void {
+    this._updatedAt = Date.now()
+  }
 
   abstract toString(): string
 }
 
+/**
+ * @deprecated
+ */
 export interface DependencyFile extends File {
-  // packageId of this File's owner.
+  /**
+   * packageId of this File's owner.
+   * @deprecated
+   */
   readonly ownerPackageId: string
 }
 
+/**
+ * @deprecated
+ */
 export namespace DependencyFile {
+  /**
+   * DependencyFile.is() checks file is dependency file
+   * @deprecated
+   */
   export function is(file: File): file is DependencyFile {
     return 'ownerPackageId' in file && typeof (file as any)['ownerPackageId'] === 'string'
   }
@@ -85,7 +150,8 @@ export class OtherFile extends File {
  */
 export class TextFile extends File {
   private data?: string = undefined
-  private readPromise?: Promise<string> = undefined
+
+  private readonly lock = new AsyncLock()
 
   constructor(uri: URI, public readonly readonly?: boolean) {
     super(uri)
@@ -93,16 +159,30 @@ export class TextFile extends File {
 
   // TODO: add error handling
   async read(): Promise<string> {
-    if (!this.data) {
-      if (!this.readPromise) {
-        const xmlFileReader = container.resolve(TextReader)
-        this.readPromise = xmlFileReader.read(this)
+    return await this.lock.acquire(this.read.name, async () => {
+      if (this.data) {
+        return this.data
       }
 
-      this.data = await this.readPromise
-    }
+      const lastUpdatedAt = this.updatedAt
 
-    return this.data
+      const xmlFileReader = container.resolve(TextReader)
+      const res = await xmlFileReader.read(this)
+
+      if (lastUpdatedAt !== this.updatedAt) {
+        return await this.read()
+      }
+
+      this.data = res
+
+      return this.data
+    })
+  }
+
+  update(): void {
+    this.data = undefined
+
+    super.update()
   }
 
   toString() {

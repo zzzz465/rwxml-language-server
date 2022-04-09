@@ -11,6 +11,7 @@ import * as cheerio from 'cheerio'
 import { AsEnumerable } from 'linq-es2015'
 import { URI } from 'vscode-uri'
 import { FileStore } from '../fileStore'
+import TypedEventEmitter from 'typed-emitter'
 
 /**
  * MetadataItem holds various data of a specific version.
@@ -24,7 +25,7 @@ export interface MetadataItem {
   }
 }
 
-interface Events {
+type Events = {
   aboutMetadataChanged(data: AboutMetadata): void
 }
 
@@ -66,7 +67,7 @@ export class AboutMetadata {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${AboutMetadata.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  readonly event: EventEmitter<Events> = new EventEmitter()
+  readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private filePath: URI = URI.parse('')
   private rawXML = ''
@@ -112,7 +113,7 @@ export class AboutMetadata {
   private parseXML(): void {
     this.itemMap.clear()
 
-    this.log.silly(`aboutMetadata content below.\n${this.rawXML}\n`)
+    this.log.silly(`aboutMetadata content below.\n${this.rawXML}`)
     const $ = xml.parse(this.rawXML)
 
     const items = AsEnumerable($('Metadata > versions').children())
