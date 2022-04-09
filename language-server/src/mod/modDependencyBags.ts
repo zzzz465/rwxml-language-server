@@ -206,11 +206,17 @@ export class ModDependencyBags {
       }
     }
 
-    this.lock.acquire(this.update.name, () => this.update())
+    this.lock.acquire(this.update.name, () => {
+      this.log.debug('updating state because about.xml is changed.')
+      this.update()
+    })
   }
 
   private onAboutMetadataChanged(): void {
-    this.lock.acquire(this.update.name, () => this.update())
+    this.lock.acquire(this.update.name, () => {
+      this.log.debug('updating state because AboutMetadata is changed.')
+      this.update()
+    })
   }
 
   private async update(): Promise<ono.ErrorLike | null> {
@@ -254,7 +260,7 @@ export class ModDependencyBags {
   }
 
   private isSupportedVersionChanged(about: About): boolean {
-    return _.isEqual(this.supportedVersions, about.supportedVersions)
+    return !_.isEqual(this.supportedVersions, about.supportedVersions)
   }
 
   private updateDependencyBagList(): Result<[DependencyResourceBag[], DependencyResourceBag[]], Error> {
