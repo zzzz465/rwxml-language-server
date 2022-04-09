@@ -76,14 +76,24 @@ export abstract class File {
   abstract toString(): string
 }
 
+/**
+ * @deprecated
+ */
 export interface DependencyFile extends File {
-  // packageId of this File's owner.
+  /**
+   * packageId of this File's owner.
+   * @deprecated
+   */
   readonly ownerPackageId: string
 }
 
+/**
+ * @deprecated
+ */
 export namespace DependencyFile {
   /**
    * DependencyFile.is() checks file is dependency file
+   * @deprecated
    */
   export function is(file: File): file is DependencyFile {
     return 'ownerPackageId' in file && typeof (file as any)['ownerPackageId'] === 'string'
