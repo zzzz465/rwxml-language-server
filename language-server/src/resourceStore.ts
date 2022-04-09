@@ -1,10 +1,9 @@
-import { TextureFile, AudioFile, File, DependencyFile, DLLFile, XMLFile } from './fs'
+import { TextureFile, AudioFile, File, DLLFile, XMLFile } from './fs'
 import { LoadFolder } from './mod/loadfolders'
 import { Counter } from './utils/counter'
 import path from 'path'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import EventEmitter from 'events'
-import assert from 'assert'
 import * as winston from 'winston'
 import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
@@ -54,6 +53,7 @@ export class ResourceStore {
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
 
+    modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
   }
 
@@ -183,9 +183,8 @@ export class ResourceStore {
 
   /**
    * compare project files against fileStore, and add/delete files
-   * NOTE: this might cause performance issue.
    */
-  reload() {
+  fetchFiles() {
     for (const [uri, file] of this.fileStore) {
       if (this.isProjectResource(uri) && !this.files.has(uri)) {
         this.fileAdded(file)
@@ -320,6 +319,11 @@ export class ResourceStore {
     }
 
     this.projectWorkspace = newProjectWorkspace
-    this.event.emit('workspaceChanged')
+
+    this.fetchFiles()
+  }
+
+  private onDependencyChanged(): void {
+    this.fetchFiles()
   }
 }

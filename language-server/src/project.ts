@@ -61,7 +61,6 @@ export class Project {
     resourceStore.event.on('xmlDeleted', this.onXMLDeleted.bind(this))
     resourceStore.event.on('dllChanged', () => this.reloadProject('dll is changed.'))
     resourceStore.event.on('dllDeleted', () => this.reloadProject('dll is deleted.'))
-    resourceStore.event.on('workspaceChanged', () => this.reloadProject('project workspace is changed.'))
 
     this.reloadProject('project initialize')
   }
@@ -109,7 +108,7 @@ export class Project {
     const cancelToken = this.cancelTokenSource.token
 
     this.log.info(`[${requestId}] loading project resources...`)
-    this.resourceStore.reload()
+    this.resourceStore.fetchFiles()
 
     this.log.info(`[${requestId}] clear project...`)
     await this.reset(requestId, cancelToken)
