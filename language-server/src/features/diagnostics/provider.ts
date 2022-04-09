@@ -34,7 +34,6 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
-    private readonly modDependencyBags: ModDependencyBags,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -56,6 +55,7 @@ export class DiagnosticsProvider implements Provider {
   private subscribeProject(project: Project): void {
     project.event.on('projectReloaded', () => this.evaluateAllDocuments(project))
     project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
+    project.event.on('xmlDeleted', (uri) => this.clearDiagnostics(uri))
   }
 
   private async evaluateAllDocuments(project: Project): Promise<void> {
