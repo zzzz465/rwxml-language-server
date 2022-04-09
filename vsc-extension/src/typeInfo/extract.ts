@@ -49,7 +49,7 @@ const extractorCmd = (() => {
   }
 })()
 
-function buildExtractorArgs(dllPaths: string[], port: number = 9870): string[] {
+function buildExtractorArgs(dllPaths: string[], port = 9870): string[] {
   return [...dllPaths, '--output-mode=TCP', `--port=${port}`]
 }
 
@@ -73,7 +73,7 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   return p
 }
 
-const timeout = 30000 // 30 second
+const timeout = 60000 // 60 second
 export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
   const server = createServer()
   const port = _.random(10000, 20000)
