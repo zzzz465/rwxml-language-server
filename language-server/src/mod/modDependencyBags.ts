@@ -73,29 +73,49 @@ class DependencyResourceBag {
   async update(requiredDependencies: Dependency[], optionalDependencies: Dependency[]): Promise<ono.ErrorLike | null> {
     const oldDeps = [...this.dependencies]
 
-    const [added0] = this.getDepDiff(this.requiredDependencies, requiredDependencies)
-    const [added1] = this.getDepDiff(this.optionalDependencies, optionalDependencies)
-
-    this._requiredDependencies = added0
-    this._optionalDependencies = added1
+    this._requiredDependencies = requiredDependencies
+    this._optionalDependencies = optionalDependencies
 
     const [added, deleted] = this.getDepDiff(oldDeps, this.dependencies)
+
+    const errors: ono.ErrorLike[] = []
 
     for (const dep of added) {
       const [uris, err] = await this.fetchDependencyResources(dep)
       if (err) {
-        return ono.ono(err)
+        errors.push(err)
+        continue
       }
 
       this._resources.set(dep.packageId, new Set(uris))
 
       for (const uri of uris) {
-        this.fileStore.load({ uri: URI.parse(uri) })
+        const [, err] = this.fileStore.load({ uri: URI.parse(uri) })
+        if (err) {
+          errors.push(err)
+        }
       }
     }
 
     for (const dep of deleted) {
+      const uris = this._resources.get(dep.packageId)
+      if (!uris) {
+        errors.push(ono.ono(`cannot delete dependency because packageId ${dep.packageId} not registered.`))
+        continue
+      }
+
+      for (const uri of uris) {
+        const err = this.fileStore.delete(uri)
+        if (err) {
+          errors.push(err)
+        }
+      }
+
       this._resources.delete(dep.packageId)
+    }
+
+    if (errors.length > 0) {
+      return ono.ono(errors)
     }
 
     return null
