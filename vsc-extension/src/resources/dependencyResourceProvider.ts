@@ -5,6 +5,7 @@ import { Provider } from './provider'
 import * as vscode from 'vscode'
 import { ModManager } from '../mod/modManager'
 import { globPattern } from '../projectWatcher'
+import { serializeError } from 'serialize-error'
 
 @injectable()
 export class DependencyResourceProvider implements Provider {
@@ -21,7 +22,12 @@ export class DependencyResourceProvider implements Provider {
     // if pacakgeId "" is UB.
     const mod = this.modManager.getMod(packageId)
     if (!packageId || !mod) {
-      return { packageId, version, uris: [], error: new Error(`mod for ${packageId} does not exists`) }
+      return {
+        packageId,
+        version,
+        uris: [],
+        error: serializeError(new Error(`mod for ${packageId} does not exists`)) as Error,
+      }
     }
 
     const resources = (await mod.loadFolder.getProjectWorkspace(version)?.getResources(globPattern)) ?? []
