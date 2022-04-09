@@ -88,9 +88,9 @@ export class ResourceStore {
     }
 
     // 2. is the file already registered as project resource?
-    // if (this.files.has(uri)) {
-    // return true
-    // }
+    if (this.files.has(uri)) {
+      return true
+    }
 
     // 3. is the file registered as dependency?
     if (this.isDependencyFile(uri)) {
