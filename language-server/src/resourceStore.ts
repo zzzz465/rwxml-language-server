@@ -300,8 +300,6 @@ export class ResourceStore {
       return
     }
 
-    this.dllFiles.add(uri)
-
     this.event.emit('dllChanged', uri)
   }
 
