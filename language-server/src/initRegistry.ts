@@ -1,6 +1,7 @@
 import * as tsyringe from 'tsyringe'
 import { DelayedConstructor } from 'tsyringe/dist/typings/lazy-helpers'
 import { constructor } from 'tsyringe/dist/typings/types'
+import { ClientFileEventListener } from './clientFileEventListener'
 import { Configuration } from './configuration'
 import { LanguageFeature } from './features'
 import { FileStore } from './fileStore'
@@ -34,7 +35,8 @@ function items(...classes: (constructor<any> | DelayedConstructor<any>)[]): Retu
     ModManager,
     FileStore,
     // TextDocumentsAdapter,
-    AboutMetadata
+    AboutMetadata,
+    ClientFileEventListener
   )
 )
 export class InitRegistry {
