@@ -7,6 +7,7 @@ import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
 import { Result } from './types/functional'
+import * as ono from 'ono'
 
 type Events = Omit<NotificationEvents, 'fileChanged'>
 
@@ -48,19 +49,23 @@ export class FileStore {
     return this.files[Symbol.iterator]()
   }
 
-  load(params: FileCreateParameters): Result<File, Error> {
-    const file = File.create(params)
+  load(params: FileCreateParameters): Result<File, ono.ErrorLike> {
+    const uri = params.uri.toString()
 
-    if (this.files.has(file.uri.toString())) {
-      return [null, new Error(`trying to add file but it already exists. uri: ${file.uri.toString()}`)]
+    if (this.files.has(uri)) {
+      const file = this.files.get(uri)
+      if (!file) {
+        return [null, ono.ono('(panic) file not exists.')]
+      }
+
+      this.incrRef(uri)
+      return [file, null]
     }
 
-    this.log.silly(`file added: ${file.uri.toString()}`)
+    const file = File.create(params)
 
-    const key = file.uri.toString()
-
-    this.files.set(key, file)
-    this.referenceCounter.setValue(key, this.referenceCounter.getValue(key) + 1)
+    this.files.set(uri, file)
+    this.incrRef(uri)
 
     return [file, null]
   }
@@ -72,7 +77,6 @@ export class FileStore {
     }
 
     file.update()
-    this.log.silly(`file updated: ${file.uri.toString()}`)
 
     return [file, null]
   }
@@ -82,13 +86,19 @@ export class FileStore {
       return new Error(`trying to delete file but not exists in fileStore. uri: ${uri}`)
     }
 
-    this.referenceCounter.setValue(uri, this.referenceCounter.getValue(uri) - 1)
-    const remaining = this.referenceCounter.getValue(uri)
-
-    if (remaining && remaining <= 0) {
-      this.referenceCounter.remove(uri)
-    }
+    this.decrRef(uri)
 
     return null
+  }
+
+  private incrRef(uri: string): void {
+    this.referenceCounter.setValue(uri, this.referenceCounter.getValue(uri) + 1)
+  }
+
+  private decrRef(uri: string): void {
+    const before = this.referenceCounter.setValue(uri, this.referenceCounter.getValue(uri) - 1)
+    if (before === 1) {
+      this.referenceCounter.remove(uri)
+    }
   }
 }
