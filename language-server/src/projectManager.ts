@@ -77,24 +77,18 @@ export class ProjectManager {
   }
 
   private onProjectFileAdded(file: File) {
-    this.log.silly(`file added: ${file.uri.toString()}`)
-
     for (const proj of this.projects) {
       proj.resourceStore.fileAdded(file)
     }
   }
 
   private onProjectFileChanged(file: File) {
-    this.log.silly(`file changed: ${file.uri}`)
-
     for (const proj of this.projects) {
-      proj.resourceStore.fileChanged(file)
+      proj.resourceStore.fileChanged(file.uri.toString())
     }
   }
 
   private onProjectFileDeleted(uri: string) {
-    this.log.silly(`file deleted: ${uri}`)
-
     for (const proj of this.projects) {
       proj.resourceStore.fileDeleted(uri)
     }
