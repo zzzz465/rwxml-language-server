@@ -183,6 +183,7 @@ export class Project {
 
   private async onXMLDeleted(uri: string): Promise<void> {
     this.parseXML(uri, '')
+    this.xmls.delete(uri)
 
     this.event.emit('xmlDeleted', uri)
   }
