@@ -9,7 +9,7 @@ import { DefaultDictionary } from 'typescript-collections'
 import { Result } from './types/functional'
 import * as ono from 'ono'
 
-type Events = Omit<NotificationEvents, 'fileChanged'>
+type Events = NotificationEvents
 
 @singleton()
 export class FileStore {
@@ -67,6 +67,8 @@ export class FileStore {
     this.files.set(uri, file)
     this.incrRef(uri)
 
+    this.event.emit('fileAdded', file)
+
     return [file, null]
   }
 
@@ -78,6 +80,8 @@ export class FileStore {
 
     file.update()
 
+    this.event.emit('fileChanged', file)
+
     return [file, null]
   }
 
@@ -87,6 +91,8 @@ export class FileStore {
     }
 
     this.decrRef(uri)
+
+    this.event.emit('fileDeleted', uri)
 
     return null
   }
