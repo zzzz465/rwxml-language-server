@@ -1,3 +1,4 @@
+import AsyncLock from 'async-lock'
 import * as path from 'path'
 import { container } from 'tsyringe'
 import { URI } from 'vscode-uri'
@@ -115,7 +116,8 @@ export class OtherFile extends File {
  */
 export class TextFile extends File {
   private data?: string = undefined
-  private readPromise?: Promise<string> = undefined
+
+  private readonly lock = new AsyncLock()
 
   constructor(uri: URI, public readonly readonly?: boolean) {
     super(uri)
@@ -123,27 +125,28 @@ export class TextFile extends File {
 
   // TODO: add error handling
   async read(): Promise<string> {
-    if (!this.data) {
-      const updatedAt = this.createdAt
-
-      if (!this.readPromise) {
-        const xmlFileReader = container.resolve(TextReader)
-        this.readPromise = xmlFileReader.read(this)
+    return await this.lock.acquire(this.read.name, async () => {
+      if (this.data) {
+        return this.data
       }
 
-      if (this.updatedAt > updatedAt) {
-        return this.read()
-      } else {
-        this.data = await this.readPromise
-      }
-    }
+      const lastUpdatedAt = this.updatedAt
 
-    return this.data
+      const xmlFileReader = container.resolve(TextReader)
+      const res = await xmlFileReader.read(this)
+
+      if (lastUpdatedAt !== this.updatedAt) {
+        return await this.read()
+      }
+
+      this.data = res
+
+      return this.data
+    })
   }
 
   update(): void {
     this.data = undefined
-    this.readPromise = undefined
 
     super.update()
   }
