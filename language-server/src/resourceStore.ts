@@ -196,7 +196,7 @@ export class ResourceStore {
       }
     }
 
-    for (const [uri] of [...this.files]) {
+    for (const uri of [...this.files.values()]) {
       if (!this.isProjectResource(uri)) {
         this.fileDeleted(uri)
       }
