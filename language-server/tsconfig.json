@@ -8,6 +8,7 @@
         "rootDir": "src",
         "sourceMap": true,
         "strict": true,
+        "strictNullChecks": true,
         "resolveJsonModule": true,
         "moduleResolution": "Node",
         "skipLibCheck": true,
