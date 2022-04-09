@@ -37,18 +37,18 @@ dependencyBag 는 누가 업데이트 해주는가?
 class DependencyResourceBag {
   private _requiredDependencies: Dependency[] = []
 
-  get requiredDependencies() {
+  get requiredDependencies(): Dependency[] {
     return this._requiredDependencies
   }
 
   private _optionalDependencies: Dependency[] = []
 
-  get optionalDependencies() {
+  get optionalDependencies(): Dependency[] {
     return this._optionalDependencies
   }
 
-  get dependencies() {
-    return [...this.requiredDependencies, ...this.optionalDependencies]
+  get dependencies(): Dependency[] {
+    return _.uniqBy([...this.requiredDependencies, ...this.optionalDependencies], (x) => x.packageId)
   }
 
   // Map<packageId, Set<uri>>
@@ -71,14 +71,15 @@ class DependencyResourceBag {
   }
 
   async update(requiredDependencies: Dependency[], optionalDependencies: Dependency[]): Promise<ono.ErrorLike | null> {
-    const [added0, deleted0] = this.getDepDiff(this.requiredDependencies, requiredDependencies)
-    const [added1, deleted1] = this.getDepDiff(this.optionalDependencies, optionalDependencies)
+    const oldDeps = [...this.dependencies]
 
-    this._requiredDependencies = requiredDependencies
-    this._optionalDependencies = optionalDependencies
+    const [added0] = this.getDepDiff(this.requiredDependencies, requiredDependencies)
+    const [added1] = this.getDepDiff(this.optionalDependencies, optionalDependencies)
 
-    const added = [...added0, ...added1]
-    const deleted = [...deleted0, ...deleted1]
+    this._requiredDependencies = added0
+    this._optionalDependencies = added1
+
+    const [added, deleted] = this.getDepDiff(oldDeps, this.dependencies)
 
     for (const dep of added) {
       const [uris, err] = await this.fetchDependencyResources(dep)
@@ -250,7 +251,7 @@ export class ModDependencyBags {
   }
 
   private getRequiredDependencies(): Dependency[] {
-    return this.about.modDependencies
+    return [...this.about.modDependencies, { packageId: 'Ludeon.RimWorld' }]
   }
 
   private getOptionalDependenciesOf(version: string): Dependency[] | null {

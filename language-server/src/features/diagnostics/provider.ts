@@ -112,9 +112,8 @@ export class DiagnosticsProvider implements Provider {
     for (const dig of diagnosticsArr) {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
-        this.log.debug(
-          `[${project.version}] send diagnostics to uri: ${dig.uri}, data: ${JSON.stringify(dig.diagnostics, null, 4)}`
-        )
+        this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
+        this.log.silly(`${JSON.stringify(dig.diagnostics, null, 2)}`)
       } else {
         this.log.warn(
           `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`
