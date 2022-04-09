@@ -8,7 +8,7 @@ import { RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import _ from 'lodash'
 import { LogToken } from '../log'
-import { Dependency } from './modDependencyManager'
+import { Dependency } from './modDependencyBags'
 import { URI } from 'vscode-uri'
 import TypedEventEmitter from 'typed-emitter'
 
