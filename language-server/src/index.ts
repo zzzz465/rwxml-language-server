@@ -44,10 +44,11 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
   const languageFeature = container.resolve(features.LanguageFeature)
   const modManager = container.resolve(ModManager)
   const fileStore = container.resolve(FileStore)
-  const textDocumentsAdapter = container.resolve(TextDocumentsAdapter)
+  // const textDocumentsAdapter = container.resolve(TextDocumentsAdapter)
 
   configuration.init(connection)
-  notificationEventManager.listen(textDocumentsAdapter.event)
+  notificationEventManager.listen(fileStore.event)
+  // notificationEventManager.listen(textDocumentsAdapter.event)
   loadFolder.listen(notificationEventManager.preEvent)
   notificationEventManager.listenConnection(connection)
   textDocumentManager.listen(notificationEventManager.preEvent)
