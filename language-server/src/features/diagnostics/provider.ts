@@ -34,7 +34,6 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
-    private readonly modDependencyBags: ModDependencyBags,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -56,6 +55,7 @@ export class DiagnosticsProvider implements Provider {
   private subscribeProject(project: Project): void {
     project.event.on('projectReloaded', () => this.evaluateAllDocuments(project))
     project.event.on('defChanged', (document, nodes) => this.onDefChanged(project, document, nodes))
+    project.event.on('xmlDeleted', (uri) => this.clearDiagnostics(uri))
   }
 
   private async evaluateAllDocuments(project: Project): Promise<void> {
@@ -122,6 +122,10 @@ export class DiagnosticsProvider implements Provider {
     }
   }
 
+  clearDiagnostics(uri: string): void {
+    this.connection?.sendDiagnostics({ uri, diagnostics: [] })
+  }
+
   private diagnoseDocument(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]) {
     return AsEnumerable(this.contributors)
       .Select((contributor) => contributor.getDiagnostics(project, document, dirtyNodes))
@@ -162,13 +166,13 @@ export class DiagnosticsProvider implements Provider {
 
   private clearAllDiagnostics(): void {
     for (const project of this.projectManager.projects) {
-      this.clearDiagnostics(project)
+      this.clearDiagnosticsOfProject(project)
     }
   }
 
-  private clearDiagnostics(project: Project): void {
+  private clearDiagnosticsOfProject(project: Project): void {
     for (const [uri] of project.resourceStore.xmls) {
-      this.connection?.sendDiagnostics({ uri, diagnostics: [] })
+      this.clearDiagnostics(uri)
     }
   }
 }

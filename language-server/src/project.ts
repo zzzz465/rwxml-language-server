@@ -26,6 +26,11 @@ type Events = {
    */
   defChanged(updatedDocument: Document, dirtyNodes: (Injectable | Def)[]): void
 
+  /**
+   * @example listen this event to remove any diagnostics.
+   */
+  xmlDeleted(uri: string): void
+
   projectReloaded(): void
 }
 
@@ -178,6 +183,9 @@ export class Project {
 
   private async onXMLDeleted(uri: string): Promise<void> {
     this.parseXML(uri, '')
+    this.xmls.delete(uri)
+
+    this.event.emit('xmlDeleted', uri)
   }
 
   /**
