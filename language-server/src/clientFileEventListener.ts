@@ -23,11 +23,12 @@ export class ClientFileEventListener {
   public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(
-    @tsyringe.inject(ConnectionToken) private readonly connection: Connection,
+    @tsyringe.inject(ConnectionToken) connection: Connection,
     private readonly fileStore: FileStore,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log.info('ClientFileEventListener initialized')
 
     connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(uri))
     connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(uri))

@@ -1,8 +1,6 @@
 import EventEmitter from 'events'
 import * as tsyringe from 'tsyringe'
-import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import { File } from './fs'
 import * as winston from 'winston'
 import { LogToken } from './log'
@@ -34,12 +32,6 @@ export class NotificationEventManager {
 
   constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-  }
-
-  listenConnection(connection: Connection): void {
-    connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(this.toFile(uri)))
-    connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(this.toFile(uri)))
-    connection.onNotification(ProjectFileDeleted, ({ uri }) => this.onFileDeleted(uri))
   }
 
   listen(event: TypedEventEmitter<NotificationEvents>): void {

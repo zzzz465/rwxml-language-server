@@ -14,7 +14,6 @@ import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
 import { FileStore } from './fileStore'
-import { TextDocumentsAdapter } from './textDocumentsAdapter'
 import * as logs from './log'
 import * as winston from 'winston'
 import { Configuration } from './configuration'
@@ -44,13 +43,10 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
   const languageFeature = container.resolve(features.LanguageFeature)
   const modManager = container.resolve(ModManager)
   const fileStore = container.resolve(FileStore)
-  // const textDocumentsAdapter = container.resolve(TextDocumentsAdapter)
 
   configuration.init(connection)
   notificationEventManager.listen(fileStore.event)
-  // notificationEventManager.listen(textDocumentsAdapter.event)
   loadFolder.listen(notificationEventManager.preEvent)
-  notificationEventManager.listenConnection(connection)
   textDocumentManager.listen(notificationEventManager.preEvent)
   projectManager.listen(notificationEventManager.event)
   languageFeature.listen(connection)
