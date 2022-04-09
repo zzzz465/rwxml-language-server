@@ -4,8 +4,8 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
-import { ModDependencyResourceStore } from '../../dependencyResourceStore'
 import { LogToken } from '../../log'
+import { ModDependencyBags } from '../../mod/modDependencyBags'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -34,7 +34,7 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
-    private readonly modDependencyResourceStore: ModDependencyResourceStore,
+    private readonly modDependencyBags: ModDependencyBags,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
@@ -100,7 +100,7 @@ export class DiagnosticsProvider implements Provider {
 
     const shouldDiagnosis =
       document.uri !== '' &&
-      !this.modDependencyResourceStore.isDependencyFile(document.uri) &&
+      !project.resourceStore.isDependencyFile(document.uri) &&
       getRootElement(document)?.tagName === 'Defs'
 
     if (!shouldDiagnosis) {

@@ -184,6 +184,18 @@ export class ModDependencyBags {
     return [null, ono.ono(`dependencyBag of version ${version} is not exists.`)]
   }
 
+  /**
+   * isDependencyFile() checks given file is marked as dependency.
+   * @param version if version is specified, check file exists in that version. otherwise, search in every version.
+   */
+  isDependencyFile(version: string | null, uri: string): boolean {
+    if (version) {
+      return !!this.dependencyBags.get(version)?.has(uri)
+    } else {
+      return LINQ.from(this.dependencyBags).Any(([, v]) => v.has(uri))
+    }
+  }
+
   private onAboutChanged(about: About): void {
     if (this.isSupportedVersionChanged(about)) {
       this.supportedVersions = [...about.supportedVersions]

@@ -11,8 +11,8 @@ import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
 import { LogToken } from './log'
 import { ProjectWorkspace } from './mod/projectWorkspace'
-import { ModDependencyResourceStore } from './dependencyResourceStore'
 import TypedEventEmitter from 'typed-emitter'
+import { ModDependencyBags } from './mod/modDependencyBags'
 
 type Events = {
   workspaceChanged(): void
@@ -49,7 +49,7 @@ export class ResourceStore {
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
-    private readonly modDependencyResourceStore: ModDependencyResourceStore,
+    private readonly modDependencyBags: ModDependencyBags,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
@@ -64,7 +64,7 @@ export class ResourceStore {
   }
 
   isDependencyFile(uri: string): boolean {
-    return this.files.has(uri) && this.modDependencyResourceStore.isDependencyFile(uri, this.version)
+    return this.modDependencyBags.isDependencyFile(this.version, uri)
   }
 
   fileAdded(file: File) {
@@ -266,8 +266,8 @@ export class ResourceStore {
       return true
     }
 
-    // 4. is the file registered as dependency according to modDependencyResourceStore?
-    if (this.modDependencyResourceStore.isDependencyFile(file.uri.toString(), this.version)) {
+    // 4. is the file registered as dependency?
+    if (this.isDependencyFile(uri)) {
       return true
     }
 
