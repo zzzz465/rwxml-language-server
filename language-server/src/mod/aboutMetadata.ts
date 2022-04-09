@@ -113,7 +113,7 @@ export class AboutMetadata {
   private parseXML(): void {
     this.itemMap.clear()
 
-    this.log.silly(`aboutMetadata content below.\n${this.rawXML}\n`)
+    this.log.silly(`aboutMetadata content below.\n${this.rawXML}`)
     const $ = xml.parse(this.rawXML)
 
     const items = AsEnumerable($('Metadata > versions').children())
