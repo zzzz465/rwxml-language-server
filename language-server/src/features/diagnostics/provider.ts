@@ -122,6 +122,10 @@ export class DiagnosticsProvider implements Provider {
     }
   }
 
+  clearDiagnostics(uri: string): void {
+    this.connection?.sendDiagnostics({ uri, diagnostics: [] })
+  }
+
   private diagnoseDocument(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]) {
     return AsEnumerable(this.contributors)
       .Select((contributor) => contributor.getDiagnostics(project, document, dirtyNodes))
@@ -162,13 +166,13 @@ export class DiagnosticsProvider implements Provider {
 
   private clearAllDiagnostics(): void {
     for (const project of this.projectManager.projects) {
-      this.clearDiagnostics(project)
+      this.clearDiagnosticsOfProject(project)
     }
   }
 
-  private clearDiagnostics(project: Project): void {
+  private clearDiagnosticsOfProject(project: Project): void {
     for (const [uri] of project.resourceStore.xmls) {
-      this.connection?.sendDiagnostics({ uri, diagnostics: [] })
+      this.clearDiagnostics(uri)
     }
   }
 }
