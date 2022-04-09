@@ -28,7 +28,6 @@ export class ClientFileEventListener {
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
-    this.log.info('ClientFileEventListener initialized')
 
     connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(uri))
     connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(uri))
@@ -36,23 +35,32 @@ export class ClientFileEventListener {
   }
 
   private onFileAdded(uri: string) {
-    const [, err] = this.fileStore.load({ uri: URI.parse(uri) })
+    const [file, err] = this.fileStore.load({ uri: URI.parse(uri) })
     if (err) {
       this.log.error(`cannot add file. error: ${err.message}`)
+      return
     }
+
+    this.event.emit('fileAdded', file)
   }
 
   private onFileChanged(uri: string) {
-    const [, err] = this.fileStore.update(uri)
+    const [file, err] = this.fileStore.update(uri)
     if (err) {
       this.log.error(`cannot add file. error: ${err.message}`)
+      return
     }
+
+    this.event.emit('fileChanged', file)
   }
 
   private onFileDeleted(uri: string) {
     const err = this.fileStore.delete(uri)
     if (err) {
       this.log.error(`cannot add file. error: ${err.message}`)
+      return
     }
+
+    this.event.emit('fileDeleted', uri)
   }
 }
