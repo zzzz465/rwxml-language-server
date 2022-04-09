@@ -10,6 +10,36 @@ export interface FileCreateParameters {
   ownerPackageId?: string
 }
 
+export function isXMLFile(ext: string): boolean {
+  return ext === '.xml'
+}
+
+export function isImageFile(ext: string): boolean {
+  switch (ext) {
+    case '.bmp':
+    case '.jpeg':
+    case '.jpg':
+    case '.png':
+      return true
+  }
+
+  return false
+}
+
+export function isSoundFile(ext: string): boolean {
+  switch (ext) {
+    case '.wav':
+    case '.mp3':
+      return true
+  }
+
+  return false
+}
+
+export function isDLLFile(ext: string): boolean {
+  return ext === '.dll'
+}
+
 export abstract class File {
   static create(params: FileCreateParameters): File {
     const uri = params.uri
@@ -62,6 +92,10 @@ export abstract class File {
 
   get updatedAt(): number {
     return this._updatedAt
+  }
+
+  get ext(): string {
+    return path.extname(this.uri.fsPath)
   }
 
   constructor(public readonly uri: URI) {}
