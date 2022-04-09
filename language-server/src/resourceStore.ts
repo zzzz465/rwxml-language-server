@@ -80,12 +80,6 @@ export class ResourceStore {
    */
   isProjectResource(fileOrUri: File | string): boolean {
     const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
-    const file = this.fileStore.get(uri)
-
-    // 1. is the file registered in fileStore?
-    if (!file) {
-      return false
-    }
 
     // 2. is the file already registered as project resource?
     if (this.files.has(uri)) {
