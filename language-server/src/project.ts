@@ -128,6 +128,10 @@ export class Project {
     }
 
     cancelTokenSource.dispose()
+    if (global.gc) {
+      this.log.debug('trigger gc (project reloaded)')
+      global.gc()
+    }
     this.isReloading = false
   }, this.reloadDebounceTimeout)
 
