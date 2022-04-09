@@ -86,25 +86,30 @@ export class FileStore {
   }
 
   delete(uri: string): Error | null {
-    if (!this.files.delete(uri)) {
-      return new Error(`trying to delete file but not exists in fileStore. uri: ${uri}`)
+    if (this.decrRef(uri) === 0) {
+      if (!this.files.delete(uri)) {
+        return ono.ono(`trying to delete file that is not exists. uri: ${uri}`)
+      }
     }
-
-    this.decrRef(uri)
 
     this.event.emit('fileDeleted', uri)
 
     return null
   }
 
-  private incrRef(uri: string): void {
+  private incrRef(uri: string): number {
     this.referenceCounter.setValue(uri, this.referenceCounter.getValue(uri) + 1)
+
+    return this.referenceCounter.getValue(uri)
   }
 
-  private decrRef(uri: string): void {
+  private decrRef(uri: string): number {
     const before = this.referenceCounter.setValue(uri, this.referenceCounter.getValue(uri) - 1)
     if (before === 1) {
       this.referenceCounter.remove(uri)
+      return 0
     }
+
+    return this.referenceCounter.getValue(uri)
   }
 }
