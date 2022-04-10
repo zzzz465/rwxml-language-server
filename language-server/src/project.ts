@@ -51,7 +51,7 @@ export class Project {
   private reloadDebounceTimeout = 3000 // ms
   private cancelTokenSource = new CancellationTokenSource()
 
-  private _state: 'ready' | 'reloading' | 'invalid' = 'ready'
+  private _state: 'ready' | 'reloading' | 'invalid' = 'invalid'
   get state() {
     return this._state
   }
