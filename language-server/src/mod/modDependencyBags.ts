@@ -115,7 +115,7 @@ class DependencyResourceBag {
     }
 
     if (errors.length > 0) {
-      return ono.ono(errors)
+      return ono.ono('one or more errors while updating bag.', errors)
     }
 
     return null
@@ -264,7 +264,7 @@ export class ModDependencyBags {
 
     const err = await bag.update(requiredDeps, optionalDeps)
     if (err) {
-      return err
+      return ono.ono(err, 'cannot update bag.')
     }
 
     return null
