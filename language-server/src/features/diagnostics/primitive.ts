@@ -19,7 +19,7 @@ export class PrimitiveValue implements DiagnosticsContributor {
   private readonly log: winston.Logger
 
   constructor(private readonly rangeConverter: RangeConverter, @tsyringe.inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   getDiagnostics(_: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {

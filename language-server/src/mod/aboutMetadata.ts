@@ -80,7 +80,7 @@ export class AboutMetadata {
     @tsyringe.inject(tsyringe.delay(() => About)) private readonly about: About,
     private readonly fileStore: FileStore
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))

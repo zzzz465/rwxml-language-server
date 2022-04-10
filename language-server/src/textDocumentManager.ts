@@ -20,7 +20,7 @@ export class TextDocumentManager {
   private documents: Map<string, TextDocument> = new Map()
 
   constructor(@inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   listen(events: TypedEventEmitter<NotificationEvents>) {

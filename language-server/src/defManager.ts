@@ -31,7 +31,7 @@ export class DefManager {
     baseLogger: winston.Logger,
     public readonly version?: RimWorldVersion
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {

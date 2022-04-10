@@ -19,7 +19,7 @@ export class ClientFileEventListener {
     private readonly fileStore: FileStore,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(uri))
     connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(uri))

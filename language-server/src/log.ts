@@ -5,6 +5,7 @@ export const LogToken = Symbol('LogToken')
 
 export function initializeLogger(level: string) {
   const log = winston.createLogger({
+    // transports: [],
     transports: [new winston.transports.Console({ level })],
     format: winston.format.printf((info) => `[${info.level}] ${info.message}`),
   })

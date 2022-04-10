@@ -34,7 +34,7 @@ export class ProjectManager {
   public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(about: About, @inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 

@@ -61,7 +61,7 @@ export class ResourceStore {
     private readonly modDependencyBags: ModDependencyBags,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))

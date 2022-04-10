@@ -58,7 +58,7 @@ export class Project {
     private readonly typeInfoMapProvider: TypeInfoMapProvider,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap(), this.log, this.version)
 

@@ -53,7 +53,7 @@ export class LoadFolder {
     notiEventManager: NotificationEventManager,
     private readonly about: About
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))

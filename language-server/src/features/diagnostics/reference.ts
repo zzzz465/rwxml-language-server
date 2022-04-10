@@ -20,7 +20,7 @@ export class Reference implements DiagnosticsContributor {
     private readonly definition: Definition,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   getDiagnostics(project: Project, document: DocumentWithNodeMap): { uri: string; diagnostics: ls.Diagnostic[] } {

@@ -22,7 +22,7 @@ export class FileStore {
   private readonly referenceCounter: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
   constructor(@inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   get(uri: string) {
