@@ -58,7 +58,7 @@ export class Project {
     private readonly typeInfoMapProvider: TypeInfoMapProvider,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap(), this.log, this.version)
 
@@ -128,6 +128,10 @@ export class Project {
     }
 
     cancelTokenSource.dispose()
+    if (global.gc) {
+      this.log.debug('trigger gc (project reloaded)')
+      global.gc()
+    }
     this.isReloading = false
   }, this.reloadDebounceTimeout)
 

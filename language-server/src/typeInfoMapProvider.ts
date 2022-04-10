@@ -23,7 +23,7 @@ export class TypeInfoMapProvider {
     @inject(delay(() => Project)) private readonly project: Project,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   async get(requestId: string = uuid()): Promise<[TypeInfoMap, Error?]> {

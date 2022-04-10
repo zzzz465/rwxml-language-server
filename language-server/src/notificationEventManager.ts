@@ -31,7 +31,7 @@ export class NotificationEventManager {
   readonly postEvent = new EventEmitter() as TypedEventEmitter<NotificationEvents>
 
   constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   listen(event: TypedEventEmitter<NotificationEvents>): void {

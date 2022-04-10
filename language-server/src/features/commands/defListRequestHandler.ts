@@ -21,7 +21,7 @@ export class DefListRequestHandler implements Provider {
     private readonly projectHelper: ProjectHelper,
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   init(connection: Connection): void {

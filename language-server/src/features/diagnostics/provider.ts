@@ -37,7 +37,7 @@ export class DiagnosticsProvider implements Provider {
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
     @tsyringe.inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
 
     projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
     configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))

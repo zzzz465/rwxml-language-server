@@ -74,7 +74,7 @@ export class About {
   }
 
   constructor(@inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   updateAboutXML(text: string) {

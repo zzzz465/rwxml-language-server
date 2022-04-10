@@ -15,7 +15,7 @@ export class TextReader {
     @inject(ConnectionToken) private readonly connection: Connection,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   async read(file: File): Promise<string> {

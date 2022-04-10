@@ -12,7 +12,7 @@ export class DefHoverProvider {
   private readonly log: winston.Logger
 
   constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
-    this.log = winston.createLogger({ transports: baseLogger.transports, format: this.logFormat })
+    this.log = baseLogger.child({ format: this.logFormat })
   }
 
   onDefHover(node: Def, offset: number): ls.Hover | null {
