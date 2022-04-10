@@ -101,7 +101,8 @@ export class DiagnosticsProvider implements Provider {
     const shouldDiagnosis =
       document.uri !== '' &&
       !project.resourceStore.isDependencyFile(document.uri) &&
-      getRootElement(document)?.tagName === 'Defs'
+      getRootElement(document)?.tagName === 'Defs' &&
+      project.state === 'ready'
 
     if (!shouldDiagnosis) {
       return

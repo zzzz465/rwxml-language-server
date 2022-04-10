@@ -17,6 +17,7 @@ import { LogToken } from './log'
 import * as documentWithNodeMap from './documentWithNodeMap'
 import { serializeError } from 'serialize-error'
 import TypedEventEmitter from 'typed-emitter'
+import * as ono from 'ono'
 
 type Events = {
   /**
@@ -47,9 +48,13 @@ export class Project {
 
   public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
-  private isReloading = false
   private reloadDebounceTimeout = 3000 // ms
   private cancelTokenSource = new CancellationTokenSource()
+
+  private _state: 'ready' | 'reloading' | 'invalid' = 'invalid'
+  get state() {
+    return this._state
+  }
 
   constructor(
     public readonly about: About,
@@ -99,13 +104,13 @@ export class Project {
    */
   private reloadProject = _.debounce(async (reason = '') => {
     const requestId = uuid()
-    if (this.isReloading) {
+    if (this.state === 'reloading') {
       this.reloadProject(reason)
       return
     }
 
     this.log.info(`[${requestId}] reloading project... reason: ${reason}`)
-    this.isReloading = true
+    this._state = 'reloading'
 
     this.cancelTokenSource.cancel()
     const cancelTokenSource = new CancellationTokenSource()
@@ -116,15 +121,22 @@ export class Project {
     this.resourceStore.fetchFiles()
 
     this.log.info(`[${requestId}] clear project...`)
-    await this.reset(requestId, cancelToken)
+    const err = await this.reset(requestId, cancelToken)
 
-    if (!cancelToken.isCancellationRequested) {
+    if (cancelToken.isCancellationRequested) {
+      this.log.info(`[${requestId}] project evluation canceled.`)
+      cancelTokenSource.dispose()
+      return
+    }
+
+    if (err) {
+      this.log.error(`failed reset project. err: ${err}`)
+    } else {
       this.log.info(`[${requestId}] project cleared.`)
       this.evaluteProject()
+      this._state = 'ready'
       this.event.emit('projectReloaded')
       this.log.info(`[${requestId}] project evaluated.`)
-    } else {
-      this.log.info(`[${requestId}] project evluation canceled.`)
     }
 
     cancelTokenSource.dispose()
@@ -132,13 +144,12 @@ export class Project {
       this.log.debug('trigger gc (project reloaded)')
       global.gc()
     }
-    this.isReloading = false
   }, this.reloadDebounceTimeout)
 
   /**
    * reset project to initial state
    */
-  private async reset(requestId: string = uuid(), cancelToken?: CancellationToken) {
+  private async reset(requestId: string = uuid(), cancelToken?: CancellationToken): Promise<ono.ErrorLike | null> {
     this.log.debug(
       // TODO: put uuid as log format
       `[${requestId}] current project file dlls: ${JSON.stringify(
@@ -149,17 +160,19 @@ export class Project {
     )
     const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
-      return
+      return ono.ono(`[${requestId}] request canceled.`)
     }
 
     if (err0) {
-      this.log.error(
+      return ono.ono(
         `[${requestId}] failed fetching typeInfoMap. error: ${JSON.stringify(serializeError(err0), null, 4)}`
       )
     }
 
     this.xmls = new Map()
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeInfoMap, this.log, this.version)
+
+    return null
   }
 
   async getTypeInfo(requestId: string = uuid()) {
@@ -203,7 +216,7 @@ export class Project {
     this.xmls.set(uri, document)
 
     const dirtyDefs = this.defManager.update(document)
-    if (!this.isReloading) {
+    if (this.state === 'ready') {
       this.event.emit('defChanged', document, dirtyDefs)
     }
   }
