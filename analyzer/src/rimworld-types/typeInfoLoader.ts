@@ -17,6 +17,14 @@ export class TypeInfoLoader {
     const typeInfoMap: Map<string, TypeInfo> = new Map()
 
     for (const [fullname, rawTypeInfo] of rawTypeInfoMap) {
+      // TODO: move this to somewhere.
+      const fields = Object.fromEntries(
+        Object.entries(rawTypeInfo.fields ?? {}).map(([k, v]) => [
+          k,
+          new FieldInfo({}, v.declaringType, v.fieldType, v.attributes ?? {}, v.isPublic, v.isPrivate, v.name),
+        ])
+      )
+
       if (fullname) {
         typeInfoMap.set(
           fullname,
@@ -26,7 +34,7 @@ export class TypeInfoLoader {
             rawTypeInfo.namespaceName ?? '',
             rawTypeInfo.className ?? '',
             rawTypeInfo.attributes ?? {},
-            rawTypeInfo.fields ?? {},
+            fields,
             rawTypeInfo.genericArguments ?? [],
             rawTypeInfo.baseClass,
             rawTypeInfo.methods ?? [],

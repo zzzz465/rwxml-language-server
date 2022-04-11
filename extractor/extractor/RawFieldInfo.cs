@@ -14,11 +14,34 @@ namespace extractor
 
         }
 
+        public struct RawAttribute
+        {
+            public struct CtorArg
+            {
+                public string type, value;
+
+                public CtorArg(CustomAttributeTypedArgument arg)
+                {
+                    this.type = NameUtility.GetTypeIdentifier(arg.ArgumentType);
+                    this.value = arg.Value?.ToString() ?? string.Empty;
+                }
+            }
+
+            public string attributeType;
+            public List<CtorArg> ctorArgs;
+
+            public RawAttribute(CustomAttributeData data)
+            {
+                this.attributeType = NameUtility.GetTypeIdentifier(data.AttributeType);
+                this.ctorArgs = data.ConstructorArguments.Select(a => new CtorArg(a)).ToList();
+            }
+        }
+
         public RawFieldMetadata fieldMetadata;
         public string name;
         public string declaringType;
         public string fieldType;
-        public Dictionary<string, string> attributes = new Dictionary<string, string>();
+        public Dictionary<string, RawAttribute> attributes = new Dictionary<string, RawAttribute>();
         public bool isPublic, isPrivate;
 
         public RawFieldInfo(FieldInfo fieldInfo)
@@ -33,8 +56,7 @@ namespace extractor
             {
                 if (!attrib.AttributeType.IsSpecialName)
                 {
-                    var attribType = attrib.AttributeType;
-                    attributes.Add(attribType.Name, NameUtility.GetTypeIdentifier(attribType));
+                    attributes[attrib.AttributeType.Name] = new RawAttribute(attrib);
                 }
             }
         }
