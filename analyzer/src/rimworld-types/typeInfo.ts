@@ -182,7 +182,10 @@ export class TypeInfo {
     }
 
     if (inherited && this.baseClass) {
-      return this.baseClass.getField(name, inherited)
+      const field = this.baseClass.getField(name, inherited)
+      if (field) {
+        return field
+      }
     }
 
     if (includeAlias) {
