@@ -176,13 +176,20 @@ export class TypeInfo {
    * @param name name of the field
    * @param inherited search including base classes, recursively.
    */
-  getField(name: string, inherited = true): FieldInfo | null {
+  getField(name: string, inherited = true, includeAlias = true): FieldInfo | null {
     if (this.fields[name]) {
       return this.fields[name]
     }
 
     if (inherited && this.baseClass) {
       return this.baseClass.getField(name, inherited)
+    }
+
+    if (includeAlias) {
+      const aliased = this.getFields().find((x) => x.getFieldAliasName() === name)
+      if (aliased) {
+        return aliased
+      }
     }
 
     return null
@@ -211,9 +218,9 @@ export class TypeInfo {
     return fields.reduce((acc, v) => {
       acc.push(v.name)
 
-      const loadAliasAttr = v.attributes['LoadAliasAttribute']
-      if (loadAliasAttr && loadAliasAttr.ctorArgs.length === 1) {
-        acc.push(loadAliasAttr.ctorArgs[0].value)
+      const alias = v.getFieldAliasName()
+      if (alias) {
+        acc.push(alias)
       }
 
       return acc

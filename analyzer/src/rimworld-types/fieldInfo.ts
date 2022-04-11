@@ -20,4 +20,13 @@ export class FieldInfo {
     public readonly isPrivate: boolean,
     public readonly name: string
   ) {}
+
+  getFieldAliasName(): string | null {
+    const attr = this.attributes['LoadAliasAttribute']
+    if (attr && attr.ctorArgs.length === 1) {
+      return attr.ctorArgs[0].value
+    }
+
+    return null
+  }
 }
