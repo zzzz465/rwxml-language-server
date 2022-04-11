@@ -196,6 +196,30 @@ export class TypeInfo {
     return inherited ? this._getFields() : this._getFieldsWithBase()
   }
 
+  /**
+   * getFieldNames() returns all field name.
+   * @param inherited see getFields()
+   * @param includeAlias add LoadAliasAttribute names.
+   */
+  getFieldNames(inherited = true, includeAlias = true): string[] {
+    if (!includeAlias) {
+      return this.getFields(inherited).map((x) => x.name)
+    }
+
+    const fields = this.getFields(inherited)
+
+    return fields.reduce((acc, v) => {
+      acc.push(v.name)
+
+      const loadAliasAttr = v.attributes['LoadAliasAttribute']
+      if (loadAliasAttr && loadAliasAttr.ctorArgs.length === 1) {
+        acc.push(loadAliasAttr.ctorArgs[0].value)
+      }
+
+      return acc
+    }, [] as string[])
+  }
+
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   private _getFields(): FieldInfo[] {
     return _.uniqWith(Object.values(this.fields), (x, y) => x.name === y.name)
