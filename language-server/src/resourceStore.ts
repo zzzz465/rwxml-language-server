@@ -69,12 +69,6 @@ export class ResourceStore {
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
   }
 
-  listen(events: EventEmitter) {
-    events.on('fileAdded', this.fileAdded.bind(this))
-    events.on('fileChanged', this.fileChanged.bind(this))
-    events.on('fileDeleted', this.fileDeleted.bind(this))
-  }
-
   /**
    * isProjectResource determines given arg is a part of this project.
    * @param fileOrUri file or uri to test.
