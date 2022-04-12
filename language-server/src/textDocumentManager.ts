@@ -1,6 +1,6 @@
-import { inject, singleton } from 'tsyringe'
+import * as tsyringe from 'tsyringe'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { File, TextFile, XMLFile } from './fs'
+import { File, TextFile } from './fs'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
 import { LogToken } from './log'
@@ -16,7 +16,7 @@ import { TextDocumentsAdapter } from './textDocumentsAdapter'
  * 1. updated by fileChanged event
  * 2. updated by textDocuments.onDidChangeContent
  */
-@singleton()
+@tsyringe.singleton()
 export class TextDocumentManager {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentManager.name}] ${info.message}`)
   private readonly log: winston.Logger
@@ -24,7 +24,7 @@ export class TextDocumentManager {
   private documents: Map<string, TextDocument> = new Map()
 
   constructor(
-    @inject(LogToken) baseLogger: winston.Logger,
+    @tsyringe.inject(LogToken) baseLogger: winston.Logger,
     private readonly fileStore: FileStore,
     textDocumentAdapter: TextDocumentsAdapter
   ) {
