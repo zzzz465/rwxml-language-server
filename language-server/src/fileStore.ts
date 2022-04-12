@@ -65,9 +65,10 @@ export class FileStore {
     const file = File.create(params)
 
     this.files.set(uri, file)
-    this.incrRef(uri)
-
-    this.event.emit('fileAdded', file)
+    const ref = this.incrRef(uri)
+    if (ref === 1) {
+      this.event.emit('fileAdded', file)
+    }
 
     return [file, null]
   }
