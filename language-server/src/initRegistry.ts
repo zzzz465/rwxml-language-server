@@ -13,6 +13,7 @@ import { NotificationEventManager } from './notificationEventManager'
 import { ProjectManager } from './projectManager'
 import { TextDocumentManager } from './textDocumentManager'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
+import { TextStore } from './textStore'
 
 type ReturnType0 = Parameters<typeof tsyringe.registry>[0]
 
@@ -36,7 +37,8 @@ function items(...classes: (constructor<any> | DelayedConstructor<any>)[]): Retu
     FileStore,
     // TextDocumentsAdapter,
     AboutMetadata,
-    ClientFileEventListener
+    ClientFileEventListener,
+    TextStore
   )
 )
 export class InitRegistry {
