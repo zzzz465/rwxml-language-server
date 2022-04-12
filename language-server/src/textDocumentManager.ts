@@ -61,6 +61,10 @@ export class TextDocumentManager {
     return [doc, null]
   }
 
+  getSync(uri: string): TextDocument | null {
+    return this.documents.get(uri) ?? null
+  }
+
   async getText(uri: string): Promise<Result<string, Error>> {
     const [doc, err] = await this.get(uri)
     if (err) {
