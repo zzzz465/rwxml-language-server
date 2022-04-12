@@ -28,7 +28,7 @@ export class TextDocumentsAdapter {
   readonly textDocuments = new TextDocuments(TextDocument)
 
   constructor(
-    @inject(ConnectionToken) private readonly connection: Connection,
+    @inject(ConnectionToken) connection: Connection,
     @inject(LogToken) baseLogger: winston.Logger,
     private readonly fileStore: FileStore
   ) {
