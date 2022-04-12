@@ -8,6 +8,7 @@ import TypedEventEmitter from 'typed-emitter'
 import { FileStore } from './fileStore'
 import { Result } from './types/functional'
 import ono from 'ono'
+import { TextDocumentsAdapter } from './textDocumentsAdapter'
 
 /**
  * TextDocumentManager manages all textDocuments
@@ -22,8 +23,14 @@ export class TextDocumentManager {
 
   private documents: Map<string, TextDocument> = new Map()
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger, private readonly fileStore: FileStore) {
+  constructor(
+    @inject(LogToken) baseLogger: winston.Logger,
+    private readonly fileStore: FileStore,
+    textDocumentAdapter: TextDocumentsAdapter
+  ) {
     this.log = baseLogger.child({ format: this.logFormat })
+
+    textDocumentAdapter.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
   }
 
   listen(events: TypedEventEmitter<NotificationEvents>) {
@@ -117,5 +124,14 @@ export class TextDocumentManager {
 
   private onFileDeleted(uri: string): void {
     this.documents.delete(uri)
+  }
+
+  private onTextDocumentChanged(doc: TextDocument): void {
+    if (!this.has(doc.uri)) {
+      this.log.error(ono(`document is not registered. uri: ${doc.uri}`))
+      return
+    }
+
+    this.set(doc.uri, doc.getText(), Date.now())
   }
 }
