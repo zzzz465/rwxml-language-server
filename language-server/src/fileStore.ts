@@ -86,7 +86,7 @@ export class FileStore {
     return [file, null]
   }
 
-  delete(uri: string): Error | null {
+  unload(uri: string): Error | null {
     if (this.decrRef(uri) === 0) {
       if (!this.files.delete(uri)) {
         return ono.ono(`trying to delete file that is not exists. uri: ${uri}`)
