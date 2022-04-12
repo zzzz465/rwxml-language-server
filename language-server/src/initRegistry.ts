@@ -35,10 +35,10 @@ function items(...classes: (constructor<any> | DelayedConstructor<any>)[]): Retu
     LanguageFeature,
     ModManager,
     FileStore,
-    // TextDocumentsAdapter,
+    TextDocumentsAdapter,
     AboutMetadata,
-    ClientFileEventListener,
-    TextStore
+    ClientFileEventListener
+    // TextStore
   )
 )
 export class InitRegistry {
