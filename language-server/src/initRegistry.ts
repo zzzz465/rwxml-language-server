@@ -1,4 +1,5 @@
 import * as tsyringe from 'tsyringe'
+import { InjectionToken } from 'tsyringe'
 import { DelayedConstructor } from 'tsyringe/dist/typings/lazy-helpers'
 import { constructor } from 'tsyringe/dist/typings/types'
 import { ClientFileEventListener } from './clientFileEventListener'
@@ -13,19 +14,9 @@ import { NotificationEventManager } from './notificationEventManager'
 import { ProjectManager } from './projectManager'
 import { TextDocumentManager } from './textDocumentManager'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
-import { TextStore } from './textStore'
 
-type ReturnType0 = Parameters<typeof tsyringe.registry>[0]
-
-function items(...classes: (constructor<any> | DelayedConstructor<any>)[]): ReturnType0 {
-  return classes.map((cls) => ({
-    token: InitRegistry.token,
-    useClass: cls,
-  }))
-}
-
-@tsyringe.registry(
-  items(
+export class InitRegistry {
+  static readonly InitItems = [
     Configuration,
     About,
     LoadFolder,
@@ -37,14 +28,13 @@ function items(...classes: (constructor<any> | DelayedConstructor<any>)[]): Retu
     FileStore,
     TextDocumentsAdapter,
     AboutMetadata,
-    ClientFileEventListener
+    ClientFileEventListener,
     // TextStore
-  )
-)
-export class InitRegistry {
-  static readonly token = Symbol(InitRegistry.name)
+  ]
 
   static init(c = tsyringe.container): void {
-    c.resolveAll(InitRegistry.token)
+    for (const token of this.InitItems) {
+      c.resolve(token as InjectionToken<any>)
+    }
   }
 }
