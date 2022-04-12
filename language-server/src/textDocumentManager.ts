@@ -9,6 +9,11 @@ import { FileStore } from './fileStore'
 import { Result } from './types/functional'
 import ono from 'ono'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
+import EventEmitter from 'events'
+
+type Events = {
+  textDocumentChanged(document: TextDocument): void
+}
 
 /**
  * TextDocumentManager manages all textDocuments
@@ -22,6 +27,8 @@ export class TextDocumentManager {
   private readonly log: winston.Logger
 
   private documents: Map<string, TextDocument> = new Map()
+
+  readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(
     @tsyringe.inject(LogToken) baseLogger: winston.Logger,
@@ -136,6 +143,8 @@ export class TextDocumentManager {
       return
     }
 
-    this.set(doc.uri, doc.getText(), Date.now())
+    const doc2 = this.set(doc.uri, doc.getText(), Date.now())
+
+    this.event.emit('textDocumentChanged', doc2)
   }
 }

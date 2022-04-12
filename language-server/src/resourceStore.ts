@@ -24,6 +24,7 @@ import TypedEventEmitter from 'typed-emitter'
 import { ModDependencyBags } from './mod/modDependencyBags'
 import * as ono from 'ono'
 import { TextDocumentManager } from './textDocumentManager'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 type Events = {
   workspaceChanged(): void
@@ -67,6 +68,7 @@ export class ResourceStore {
 
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
+    textDocumentManager.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
   }
 
   /**
@@ -97,6 +99,24 @@ export class ResourceStore {
 
   isDependencyFile(uri: string): boolean {
     return this.modDependencyBags.isDependencyFile(this.version, uri)
+  }
+
+  private onTextDocumentChanged(doc: TextDocument): void {
+    const uri = doc.uri
+
+    if (!this.isProjectResource(uri)) {
+      return
+    }
+
+    if (!isXMLFile(path.extname(uri))) {
+      return
+    }
+
+    const data = doc.getText()
+
+    this.xmls.set(uri, data)
+
+    this.event.emit('xmlChanged', uri)
   }
 
   fileAdded(file: File): void {
