@@ -23,6 +23,7 @@ import { ProjectWorkspace } from './mod/projectWorkspace'
 import TypedEventEmitter from 'typed-emitter'
 import { ModDependencyBags } from './mod/modDependencyBags'
 import * as ono from 'ono'
+import { TextDocumentManager } from './textDocumentManager'
 
 type Events = {
   workspaceChanged(): void
@@ -59,6 +60,7 @@ export class ResourceStore {
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
     private readonly modDependencyBags: ModDependencyBags,
+    private readonly textDocumentManager: TextDocumentManager,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = baseLogger.child({ format: this.logFormat })
@@ -203,7 +205,12 @@ export class ResourceStore {
 
   private async onXMLFileChanged(file: XMLFile) {
     const uri = file.uri.toString()
-    const data = await file.read()
+    const [data, err] = await this.textDocumentManager.getText(uri)
+    if (err) {
+      this.log.error(`failed retrieving textDocument. err: ${err}`)
+      return
+    }
+
     this.xmls.set(uri, data)
 
     this.event.emit('xmlChanged', uri)
