@@ -61,6 +61,7 @@ export class Project {
     @inject(RimWorldVersionToken) public readonly version: RimWorldVersion,
     public readonly resourceStore: ResourceStore,
     private readonly typeInfoMapProvider: TypeInfoMapProvider,
+    private readonly textDocumentManager: TextDocumentManager,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = baseLogger.child({ format: this.logFormat })
@@ -83,15 +84,22 @@ export class Project {
     return this.xmls.get(uri)
   }
 
-  getTextDocumentByUri(uri: string | URI): TextDocument | undefined {
+  async getTextDocumentByUri(uri: string | URI): Promise<TextDocument | undefined> {
     if (uri instanceof URI) {
       uri = uri.toString()
     }
 
-    // NOTE: does this create perf issue?
-    const textDocumentManager = container.resolve(TextDocumentManager)
+    if (!this.textDocumentManager.has(uri)) {
+      return
+    }
 
-    return textDocumentManager.get(uri)
+    const [doc, err] = await this.textDocumentManager.get(uri)
+    if (err) {
+      this.log.error(`failed retrieving textDocument. err: ${err}`)
+      return
+    }
+
+    return doc
   }
 
   getXMLDocuments(): Document[] {
