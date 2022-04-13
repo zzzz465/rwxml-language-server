@@ -58,7 +58,10 @@ export class FileStore {
         return [null, ono.ono('(panic) file not exists.')]
       }
 
-      this.incrRef(uri)
+      const ref = this.incrRef(uri)
+
+      this.log.silly(`file loaded. count: ${ref}, uri: ${uri}`)
+
       return [file, null]
     }
 
@@ -69,6 +72,8 @@ export class FileStore {
     if (ref === 1) {
       this.event.emit('fileAdded', file)
     }
+
+    this.log.silly(`file loaded. count: ${ref}, uri: ${uri}`)
 
     return [file, null]
   }

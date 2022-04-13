@@ -142,6 +142,8 @@ export class ResourceStore {
     } else if (isDLLFile(file.ext)) {
       this.onDLLFileAdded(file as DLLFile)
     }
+
+    this.log.silly(`resource added. uri: ${file.uri.toString()}`)
   }
 
   fileChanged(uri: string): void {
@@ -194,6 +196,8 @@ export class ResourceStore {
       this.log.error(`trying to delete file but not exists. uri: ${uri}`)
       return
     }
+
+    this.log.silly(`resource deleted. uri: ${uri.toString()}`)
   }
 
   /**
