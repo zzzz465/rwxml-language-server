@@ -43,7 +43,7 @@ export class ClientFileEventListener {
   }
 
   private onFileDeleted(uri: string) {
-    const err = this.fileStore.delete(uri)
+    const err = this.fileStore.unload(uri)
     if (err) {
       this.log.error(`cannot add file. error: ${err.message}`)
       return

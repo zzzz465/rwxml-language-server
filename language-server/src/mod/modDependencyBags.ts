@@ -105,7 +105,7 @@ class DependencyResourceBag {
       }
 
       for (const uri of uris) {
-        const err = this.fileStore.delete(uri)
+        const err = this.fileStore.unload(uri)
         if (err) {
           errors.push(err)
         }

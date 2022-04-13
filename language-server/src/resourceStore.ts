@@ -23,6 +23,8 @@ import { ProjectWorkspace } from './mod/projectWorkspace'
 import TypedEventEmitter from 'typed-emitter'
 import { ModDependencyBags } from './mod/modDependencyBags'
 import * as ono from 'ono'
+import { TextDocumentManager } from './textDocumentManager'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 type Events = {
   workspaceChanged(): void
@@ -59,18 +61,14 @@ export class ResourceStore {
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
     private readonly modDependencyBags: ModDependencyBags,
+    private readonly textDocumentManager: TextDocumentManager,
     @inject(LogToken) baseLogger: winston.Logger
   ) {
     this.log = baseLogger.child({ format: this.logFormat })
 
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
-  }
-
-  listen(events: EventEmitter) {
-    events.on('fileAdded', this.fileAdded.bind(this))
-    events.on('fileChanged', this.fileChanged.bind(this))
-    events.on('fileDeleted', this.fileDeleted.bind(this))
+    textDocumentManager.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
   }
 
   /**
@@ -101,6 +99,24 @@ export class ResourceStore {
 
   isDependencyFile(uri: string): boolean {
     return this.modDependencyBags.isDependencyFile(this.version, uri)
+  }
+
+  private onTextDocumentChanged(doc: TextDocument): void {
+    const uri = doc.uri
+
+    if (!this.isProjectResource(uri)) {
+      return
+    }
+
+    if (!isXMLFile(path.extname(uri))) {
+      return
+    }
+
+    const data = doc.getText()
+
+    this.xmls.set(uri, data)
+
+    this.event.emit('xmlChanged', uri)
   }
 
   fileAdded(file: File): void {
@@ -203,7 +219,12 @@ export class ResourceStore {
 
   private async onXMLFileChanged(file: XMLFile) {
     const uri = file.uri.toString()
-    const data = await file.read()
+    const [data, err] = await this.textDocumentManager.getText(uri)
+    if (err) {
+      this.log.error(`failed retrieving textDocument. err: ${err}`)
+      return
+    }
+
     this.xmls.set(uri, data)
 
     this.event.emit('xmlChanged', uri)

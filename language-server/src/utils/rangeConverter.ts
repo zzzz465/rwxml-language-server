@@ -12,7 +12,7 @@ export class RangeConverter {
       return
     }
 
-    const textDocument = this.textDocumentManager.get(uri)
+    const textDocument = this.textDocumentManager.getSync(uri)
 
     if (!textDocument) {
       return
@@ -25,7 +25,7 @@ export class RangeConverter {
   }
 
   toRange(range: Range, uri: string): rwxml.Range | undefined {
-    const textDocument = this.textDocumentManager.get(uri)
+    const textDocument = this.textDocumentManager.getSync(uri)
 
     if (!textDocument) {
       return
@@ -38,7 +38,7 @@ export class RangeConverter {
   }
 
   toOffset(position: Position, uri: string): number | undefined {
-    const textDocument = this.textDocumentManager.get(uri)
+    const textDocument = this.textDocumentManager.getSync(uri)
 
     if (!textDocument) {
       return
