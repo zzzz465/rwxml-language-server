@@ -240,10 +240,17 @@ export class ResourceStore {
     }
   }
 
-  private onTextureFileAdded(file: TextureFile) {
-    const resourcePath = this.loadFolder.getProjectWorkspace(this.version)?.getResourcePath(file.uri) // .getResourcePath(file.uri, this.version)
+  private onTextureFileAdded(file: TextureFile): void {
+    const workspace = this.loadFolder.getProjectWorkspace(this.version)
+    if (!workspace) {
+      this.log.error(`cannot find workspace of version "${this.version}"`)
+      return
+    }
+
+    const resourcePath = workspace.getResourcePath(file.uri) // .getResourcePath(file.uri, this.version)
     if (!resourcePath) {
-      this.log.error(`texture added but cannot find resourcePath. uri: ${file.uri.toString()}`)
+      // 1. the image is from dependency file
+      // 2. the image is not under Textures/
       return
     }
 
