@@ -19,7 +19,7 @@ export class TextReader {
   }
 
   async read(file: File): Promise<string> {
-    this.log.silly(`read file: ${file.toString()}`)
+    this.log.silly(`read file: ${file.uri.toString()}`)
 
     const { data, error } = await this.connection.sendRequest(TextRequest, {
       uri: file.uri.toString(),
