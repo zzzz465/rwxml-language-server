@@ -92,13 +92,17 @@ export class FileStore {
   }
 
   unload(uri: string): Error | null {
-    if (this.decrRef(uri) === 0) {
+    const ref = this.decrRef(uri)
+
+    if (ref === 0) {
       if (!this.files.delete(uri)) {
         return ono.ono(`trying to delete file that is not exists. uri: ${uri}`)
       }
+
+      this.event.emit('fileDeleted', uri)
     }
 
-    this.event.emit('fileDeleted', uri)
+    this.log.silly(`file unloaded. refCount: ${ref}, uri: ${uri}`)
 
     return null
   }
