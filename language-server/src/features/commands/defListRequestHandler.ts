@@ -2,13 +2,11 @@ import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { Provider } from '../provider'
 import winston from 'winston'
-import { LogToken } from '../../log'
 import { ProjectHelper } from '../utils/project'
 import { ProjectManager } from '../../projectManager'
 import { DefListRequest, DefListRequestResponse } from '../../events'
 import { Def } from '@rwxml/analyzer'
 import { PlainObject } from '../../types/plainObject'
-import _ from 'lodash'
 import { AsEnumerable } from 'linq-es2015'
 
 @tsyringe.injectable()
@@ -16,12 +14,11 @@ export class DefListRequestHandler implements Provider {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${DefListRequestHandler.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  constructor(
-    private readonly projectManager: ProjectManager,
-    private readonly projectHelper: ProjectHelper,
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger
-  ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   init(connection: Connection): void {

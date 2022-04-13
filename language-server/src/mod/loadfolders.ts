@@ -9,7 +9,6 @@ import * as LINQ from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
-import { LogToken } from '../log'
 import { About } from './about'
 import { ProjectWorkspace } from './projectWorkspace'
 import { FileStore } from '../fileStore'
@@ -48,12 +47,14 @@ export class LoadFolder {
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger,
     private readonly fileStore: FileStore,
     notiEventManager: NotificationEventManager,
     private readonly about: About
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))

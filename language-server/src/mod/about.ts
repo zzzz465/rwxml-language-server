@@ -3,11 +3,10 @@ import path from 'path'
 import { xml } from '../utils'
 import { File, XMLFile } from '../fs'
 import { NotificationEvents } from '../notificationEventManager'
-import { inject, singleton } from 'tsyringe'
+import { singleton } from 'tsyringe'
 import { RimWorldVersionArray } from '../RimWorldVersion'
 import * as winston from 'winston'
 import _ from 'lodash'
-import { LogToken } from '../log'
 import { Dependency } from './modDependencyBags'
 import { URI } from 'vscode-uri'
 import TypedEventEmitter from 'typed-emitter'
@@ -73,8 +72,11 @@ export class About {
     return this._rawXML
   }
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor() {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   updateAboutXML(text: string) {

@@ -18,11 +18,9 @@ import * as winston from 'winston'
 import { URI } from 'vscode-uri'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { FileStore } from './fileStore'
-import { LogToken } from './log'
 import { ProjectWorkspace } from './mod/projectWorkspace'
 import TypedEventEmitter from 'typed-emitter'
 import { ModDependencyBags } from './mod/modDependencyBags'
-import * as ono from 'ono'
 import { TextDocumentManager } from './textDocumentManager'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 
@@ -61,10 +59,12 @@ export class ResourceStore {
     private readonly loadFolder: LoadFolder,
     private readonly fileStore: FileStore,
     private readonly modDependencyBags: ModDependencyBags,
-    private readonly textDocumentManager: TextDocumentManager,
-    @inject(LogToken) baseLogger: winston.Logger
+    private readonly textDocumentManager: TextDocumentManager
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))

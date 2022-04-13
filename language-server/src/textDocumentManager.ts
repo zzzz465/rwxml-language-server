@@ -3,7 +3,6 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { File, TextFile } from './fs'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
-import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
 import { FileStore } from './fileStore'
 import { Result } from './types/functional'
@@ -30,12 +29,11 @@ export class TextDocumentManager {
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
-  constructor(
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger,
-    private readonly fileStore: FileStore,
-    textDocumentAdapter: TextDocumentsAdapter
-  ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(private readonly fileStore: FileStore, textDocumentAdapter: TextDocumentsAdapter) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     textDocumentAdapter.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
   }

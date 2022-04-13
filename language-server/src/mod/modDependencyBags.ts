@@ -3,7 +3,6 @@ import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
 import winston from 'winston'
-import { LogToken } from '../log'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
 import * as LINQ from 'linq-es2015'
@@ -183,10 +182,12 @@ export class ModDependencyBags {
     private readonly about: About,
     private readonly aboutMetadata: AboutMetadata,
     private readonly fileStore: FileStore,
-    @tsyringe.inject(ConnectionToken) private readonly connection: Connection,
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger
+    @tsyringe.inject(ConnectionToken) private readonly connection: Connection
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
     aboutMetadata.event.on('aboutMetadataChanged', this.onAboutMetadataChanged.bind(this))

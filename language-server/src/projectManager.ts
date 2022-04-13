@@ -6,8 +6,6 @@ import { Project } from './project'
 import { RimWorldVersionToken } from './RimWorldVersion'
 import * as winston from 'winston'
 import { About } from './mod'
-import { inject } from 'tsyringe'
-import { LogToken } from './log'
 import _ from 'lodash'
 import TypedEventEmitter from 'typed-emitter'
 
@@ -33,8 +31,12 @@ export class ProjectManager {
 
   public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
-  constructor(about: About, @inject(LogToken) baseLogger: winston.Logger) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(about: About) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
+
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 

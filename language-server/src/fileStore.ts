@@ -1,9 +1,8 @@
 import EventEmitter from 'events'
-import { inject, singleton } from 'tsyringe'
+import { singleton } from 'tsyringe'
 import { File, FileCreateParameters } from './fs'
 import { NotificationEvents } from './notificationEventManager'
 import * as winston from 'winston'
-import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
 import { Result } from './types/functional'
@@ -21,8 +20,11 @@ export class FileStore {
   private readonly files: Map<string, File> = new Map()
   private readonly referenceCounter: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
-  constructor(@inject(LogToken) baseLogger: winston.Logger) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor() {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   get(uri: string) {

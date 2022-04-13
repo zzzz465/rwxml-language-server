@@ -5,7 +5,6 @@ import { DiagnosticsContributor } from './contributor'
 import { Document } from '@rwxml/analyzer'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { LogToken } from '../../log'
 import { DocumentWithNodeMap } from '../../documentWithNodeMap'
 import { Definition } from '../definition'
 import { isGeneratedDef } from '../utils/def'
@@ -15,12 +14,11 @@ export class Reference implements DiagnosticsContributor {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${Reference.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  constructor(
-    private readonly rangeConverter: RangeConverter,
-    private readonly definition: Definition,
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger
-  ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(private readonly rangeConverter: RangeConverter, private readonly definition: Definition) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   getDiagnostics(project: Project, document: DocumentWithNodeMap): { uri: string; diagnostics: ls.Diagnostic[] } {

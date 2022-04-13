@@ -3,7 +3,6 @@ import * as tsyringe from 'tsyringe'
 import { URI } from 'vscode-uri'
 import { File } from './fs'
 import * as winston from 'winston'
-import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
 
 // events that this manager will emit
@@ -30,8 +29,11 @@ export class NotificationEventManager {
   // post-event emit?
   readonly postEvent = new EventEmitter() as TypedEventEmitter<NotificationEvents>
 
-  constructor(@tsyringe.inject(LogToken) baseLogger: winston.Logger) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor() {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   listen(event: TypedEventEmitter<NotificationEvents>): void {

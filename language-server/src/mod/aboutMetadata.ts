@@ -1,7 +1,6 @@
 import EventEmitter from 'events'
 import * as tsyringe from 'tsyringe'
 import winston from 'winston'
-import { LogToken } from '../log'
 import { About } from './about'
 import { NotificationEventManager } from '../notificationEventManager'
 import { File, XMLFile } from '../fs'
@@ -76,11 +75,13 @@ export class AboutMetadata {
 
   constructor(
     notiEventManager: NotificationEventManager,
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger,
     @tsyringe.inject(tsyringe.delay(() => About)) private readonly about: About,
     private readonly fileStore: FileStore
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))

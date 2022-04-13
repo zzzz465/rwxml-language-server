@@ -5,7 +5,6 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { ConnectionToken } from './connection'
 import * as winston from 'winston'
-import { LogToken } from './log'
 import TypedEventEmitter from 'typed-emitter'
 import { FileStore } from './fileStore'
 
@@ -27,12 +26,11 @@ export class TextDocumentsAdapter {
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
   readonly textDocuments = new TextDocuments(TextDocument)
 
-  constructor(
-    @inject(ConnectionToken) connection: Connection,
-    @inject(LogToken) baseLogger: winston.Logger,
-    private readonly fileStore: FileStore
-  ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(@inject(ConnectionToken) connection: Connection, private readonly fileStore: FileStore) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     this.textDocuments.listen(connection)
 

@@ -4,7 +4,6 @@ import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
 import { DiagnosticsContributor } from './contributor'
 import winston from 'winston'
-import { LogToken } from '../../log'
 import { AsEnumerable } from 'linq-es2015'
 import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
 import { RangeConverter } from '../../utils/rangeConverter'
@@ -18,8 +17,11 @@ export class PrimitiveValue implements DiagnosticsContributor {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${PrimitiveValue.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  constructor(private readonly rangeConverter: RangeConverter, @tsyringe.inject(LogToken) baseLogger: winston.Logger) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(private readonly rangeConverter: RangeConverter) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   getDiagnostics(_: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {

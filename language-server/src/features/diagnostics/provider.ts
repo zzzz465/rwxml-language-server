@@ -4,8 +4,6 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
-import { LogToken } from '../../log'
-import { ModDependencyBags } from '../../mod/modDependencyBags'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -34,10 +32,12 @@ export class DiagnosticsProvider implements Provider {
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
-    @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[],
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger
+    @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[]
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
     configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))

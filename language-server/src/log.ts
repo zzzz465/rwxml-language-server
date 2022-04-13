@@ -1,6 +1,7 @@
 import { container } from 'tsyringe'
 import * as winston from 'winston'
 
+/*
 export const LogToken = Symbol('LogToken')
 
 export function initializeLogger(level: string) {
@@ -12,3 +13,4 @@ export function initializeLogger(level: string) {
 
   container.register(LogToken, { useValue: log })
 }
+*/

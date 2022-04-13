@@ -28,10 +28,12 @@ export class DefManager {
     public readonly defDatabase: DefDatabase,
     public readonly nameDatabase: NameDatabase,
     public readonly typeInfoMap: TypeInfoMap,
-    baseLogger: winston.Logger,
     public readonly version?: RimWorldVersion
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
 
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {

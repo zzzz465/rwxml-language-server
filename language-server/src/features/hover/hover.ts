@@ -1,11 +1,10 @@
-import { inject, injectable } from 'tsyringe'
+import { injectable } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { Provider } from '../provider'
 import * as winston from 'winston'
 import * as ls from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
-import { LogToken } from '../../log'
 import { DefReferenceHover } from './defReference'
 import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
 import { RangeConverter } from '../../utils/rangeConverter'
@@ -66,10 +65,12 @@ export class HoverProvider implements Provider {
     private readonly parentNameAttribValueHover: ParentNameAttribValueHover,
     private readonly tagHoverProvider: TagHoverProvider,
     private readonly defHoverProvider: DefHoverProvider,
-    private readonly projectHelper: ProjectHelper,
-    @inject(LogToken) baseLogger: winston.Logger
+    private readonly projectHelper: ProjectHelper
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   protected getLogger(): winston.Logger {

@@ -14,8 +14,6 @@ import { container } from 'tsyringe'
 import { ConnectionToken } from './connection'
 import { ModManager } from './mod/modManager'
 import { FileStore } from './fileStore'
-import * as logs from './log'
-import * as winston from 'winston'
 import { Configuration } from './configuration'
 import { InitRegistry } from './initRegistry'
 
@@ -25,12 +23,7 @@ container.register(ConnectionToken, { useValue: connection })
 connection.onInitialize(async (params: ls.InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
   console.log(`current log level: ${logLevel}`)
-
-  logs.initializeLogger(logLevel)
-
-  const log = container.resolve<winston.Logger>(logs.LogToken)
-
-  log.info('hello world! initializing @rwxml-language-server/language-server ...')
+  console.log('hello world! initializing @rwxml-language-server/language-server ...')
 
   InitRegistry.init()
 
@@ -76,7 +69,7 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
     },
   }
 
-  log.info('initialization completed!')
+  console.log('initialization completed!')
 
   return initializeResult
 })

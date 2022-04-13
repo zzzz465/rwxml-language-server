@@ -5,7 +5,6 @@ import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
 import * as winston from 'winston'
 import * as tsyringe from 'tsyringe'
-import { LogToken } from '../../log'
 import { ProjectHelper } from '../utils/project'
 
 @tsyringe.injectable()
@@ -15,12 +14,11 @@ export class ParsedTypeInfoRequestHandler implements Provider {
   )
   private readonly log: winston.Logger
 
-  constructor(
-    private readonly projectManager: ProjectManager,
-    private readonly projectHelper: ProjectHelper,
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger
-  ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   init(connection: Connection): void {

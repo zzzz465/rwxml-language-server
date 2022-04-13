@@ -5,7 +5,6 @@ import { Connection } from 'vscode-languageserver'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
 import * as winston from 'winston'
-import { LogToken } from '../log'
 import { DocumentTokenRequest, DocumentTokenRequestResponse } from '../events'
 import { DocumentToken } from '../types/documentToken'
 import { Definition } from './definition'
@@ -22,10 +21,12 @@ export class DecoProvider implements Provider {
   constructor(
     private readonly projectHelper: ProjectHelper,
     private readonly rangeConverter: RangeConverter,
-    private readonly defProvider: Definition,
-    @tsyringe.inject(LogToken) baseLogger: winston.Logger
+    private readonly defProvider: Definition
   ) {
-    this.log = baseLogger.child({ format: this.logFormat })
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   init(connection: Connection): void {

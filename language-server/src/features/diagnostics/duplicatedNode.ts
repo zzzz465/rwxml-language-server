@@ -7,7 +7,6 @@ import { DiagnosticsContributor } from './contributor'
 import { getNodesBFS } from '../utils/node'
 import { AsEnumerable } from 'linq-es2015'
 import winston from 'winston'
-import { LogToken } from '../../log'
 
 /**
  * DuplicatedNode provides diagnostics against duplicated nodes
@@ -17,8 +16,11 @@ export class DuplicatedNode implements DiagnosticsContributor {
   private logFormat = winston.format.printf((info) => `[${info.level}] [${DuplicatedNode.name}] ${info.message}`)
   private readonly log: winston.Logger
 
-  constructor(private readonly rangeConverter: RangeConverter, @tsyringe.inject(LogToken) baseLogger: winston.Logger) {
-    this.log = baseLogger.child({ format: this.logFormat })
+  constructor(private readonly rangeConverter: RangeConverter) {
+    this.log = winston.createLogger({
+      transports: [new winston.transports.Console()],
+      format: this.logFormat,
+    })
   }
 
   getDiagnostics(project: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {
