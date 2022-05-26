@@ -23,7 +23,7 @@
     "purge": "pnpx rimraf ./*/node_modules",
     "reinstall": "pnpm run clear && pnpm run purge && pnpm install",
     "postinstall": "pnpm run install/analyzer && pnpm run install/extractor && pnpm run install/language-server && pnpm run install/vsc-extension && pnpm run build/analyzer && pnpm run build/extractor",
-    "watch": "pnpm run watch -r --parallel"
+    "watch": "pnpm run -r --parallel watch"
   },
   "dependencies": {
     "rimraf": "^3.0.2"
