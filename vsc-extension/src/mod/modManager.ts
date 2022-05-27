@@ -5,9 +5,18 @@ import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
 import { inject, singleton } from 'tsyringe'
 import { PathStore } from './pathStore'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
+import { ProjectWatcher } from '../projectWatcher'
+import jsonStr from '../utils/json'
 
 @singleton()
 export class ModManager {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ProjectWatcher), logFormat),
+    transports: [defaultLogger()],
+  })
+
   private readonly _mods: Map<string, Mod> = new Map()
   get mods() {
     return [...this._mods.values()]
@@ -23,7 +32,7 @@ export class ModManager {
   }
 
   constructor(@inject(PathStore.token) private readonly pathStore: PathStore) {
-    console.log(`ModManager watching directories: ${JSON.stringify(this.directoryUris, null, 4)}`)
+    this.log.debug(`ModManager watching directories: ${jsonStr(this.directoryUris)}`)
   }
 
   async init() {
@@ -38,9 +47,9 @@ export class ModManager {
       }
 
       if (errors.length > 0) {
-        console.error(`cannot create ${errors.length} Mod from directory ${decodeURIComponent(uri.toString())}`)
+        this.log.error(`cannot create ${errors.length} Mod from directory ${decodeURIComponent(uri.toString())}`)
         for (const err of errors) {
-          console.error(err)
+          this.log.error(err)
         }
       }
     }
