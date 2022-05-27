@@ -25,10 +25,10 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
   const logManager = container.resolve(LogManager)
   await logManager.init()
+  
+  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
   const log = defaultLogger()
-
-  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
   log.debug(`current log level: ${logLevel}`)
   log.info('hello world! initializing @rwxml-language-server/server ...')
