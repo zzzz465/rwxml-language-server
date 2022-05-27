@@ -6,9 +6,17 @@ import * as vscode from 'vscode'
 import { ModManager } from '../mod/modManager'
 import { globPattern } from '../projectWatcher'
 import { serializeError } from 'serialize-error'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
+import jsonStr from '../utils/json'
 
 @injectable()
 export class DependencyResourceProvider implements Provider {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(DependencyResourceProvider), logFormat),
+    transports: [defaultLogger()],
+  })
+
   constructor(private readonly modManager: ModManager) {}
 
   async listen(client: LanguageClient): Promise<void> {
@@ -17,7 +25,7 @@ export class DependencyResourceProvider implements Provider {
   }
 
   private async onDependencyRequest({ packageId, version }: DependencyRequest): Promise<DependencyRequestResponse> {
-    console.log('received dependency request for packageId: ', packageId, ' version: ', version)
+    this.log.debug(`received dependency request for packageId: ${packageId}, version: ${version}`)
 
     // if pacakgeId "" is UB.
     const mod = this.modManager.getMod(packageId)
@@ -32,10 +40,8 @@ export class DependencyResourceProvider implements Provider {
 
     const resources = (await mod.loadFolder.getProjectWorkspace(version)?.getResources(globPattern)) ?? []
 
-    console.log(
-      `found ${resources.length} dependency files in packageId: ${packageId}, resources: `,
-      JSON.stringify(resources, null, 4)
-    )
+    this.log.debug(`found ${resources.length} dependency files in packageId: ${packageId}`)
+    this.log.silly(`items: ${jsonStr(resources)}`)
 
     const uris = resources.map((path) => vscode.Uri.file(path).toString())
 
