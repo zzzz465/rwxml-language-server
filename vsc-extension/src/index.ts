@@ -16,6 +16,7 @@ import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
 import { SemanticTokenProvider } from './features/semanticTokenProvider'
 import log, { DefaultLogToken, LogManager } from './log'
+import { ExtensionLog } from './extensionLog'
 
 const disposables: vscode.Disposable[] = []
 
@@ -33,6 +34,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
   const log = logManager.defaultLogger
+  log.add(new ExtensionLog())
 
   // check insider version exists (main / insider cannot co-exists)
   await checkInsider()
