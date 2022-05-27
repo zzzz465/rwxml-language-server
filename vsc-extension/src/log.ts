@@ -1,7 +1,7 @@
 import * as tsyringe from 'tsyringe'
 import vscode, { ConfigurationChangeEvent } from 'vscode'
 import { Disposable } from 'vscode-languageclient'
-import * as winston from 'winston'
+import winston, { format } from 'winston'
 
 const KEY_SCOPE = 'rwxml.logs'
 const KEY_LOG_LEVEL = 'level'
@@ -12,7 +12,7 @@ export const DefaultLogToken = Symbol('DefaultLogToken')
 @tsyringe.singleton()
 export class LogManager {
   readonly defaultLogger = winston.createLogger({
-    format: winston.format.cli({ all: true }),
+    format: format.combine(format.colorize({ all: true }), logFormat),
     level: DEFAULT_LOG_LEVEL,
     transports: [new winston.transports.Console()],
   })
@@ -40,14 +40,14 @@ export class LogManager {
   }
 }
 
-export const className = winston.format((info, classType?: new (...p: any[]) => any) => {
+export const className = format((info, classType?: new (...p: any[]) => any) => {
   info.className = classType?.name ?? 'NONTYPE'
 
   return info
 })
 
-export const logFormat = winston.format.printf(({ level, className, id, message }) =>
-  id ? `[${level}] [${className}] (${id}): ${message}` : `[${level}] [${className}] : ${message}`
+export const logFormat = format.printf(({ level, className, id, message }) =>
+  id ? `[${level}]\t[${className}]\t(${id}):\t${message}` : `[${level}]\t[${className}]:\t${message}`
 )
 
 export default function defaultLogger() {
