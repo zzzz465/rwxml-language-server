@@ -114,7 +114,7 @@ export class Project {
       return
     }
 
-    this.log.info(`[${requestId}] reloading project... reason: ${reason}`)
+    this.log.info(`reloading project... reason: ${reason}`, { id: requestId })
     this._state = 'reloading'
 
     this.cancelTokenSource.cancel()
@@ -122,14 +122,14 @@ export class Project {
     this.cancelTokenSource = cancelTokenSource
     const cancelToken = this.cancelTokenSource.token
 
-    this.log.info(`[${requestId}] loading project resources...`)
+    this.log.info(`loading project resources...`, { id: requestId })
     this.resourceStore.fetchFiles()
 
-    this.log.info(`[${requestId}] clear project...`)
+    this.log.info(`clear project...`, { id: requestId })
     const err = await this.reset(requestId, cancelToken)
 
     if (cancelToken.isCancellationRequested) {
-      this.log.info(`[${requestId}] project evluation canceled.`)
+      this.log.info(`project evluation canceled.`, { id: requestId })
       cancelTokenSource.dispose()
       return
     }
@@ -137,11 +137,11 @@ export class Project {
     if (err) {
       this.log.error(`failed reset project. err: ${err}`)
     } else {
-      this.log.info(`[${requestId}] project cleared.`)
+      this.log.info(`project cleared.`, { id: requestId })
       this.evaluteProject()
       this._state = 'ready'
       this.event.emit('projectReloaded')
-      this.log.info(`[${requestId}] project evaluated.`)
+      this.log.info(`project evaluated.`, { id: requestId })
     }
 
     cancelTokenSource.dispose()
@@ -157,11 +157,11 @@ export class Project {
   private async reset(requestId: string = uuid(), cancelToken?: CancellationToken): Promise<ono.ErrorLike | null> {
     this.log.debug(
       // TODO: put uuid as log format
-      `[${requestId}] current project file dlls: ${JSON.stringify(
+      `current project file dlls: ${JSON.stringify(
         [...this.resourceStore.dllFiles.values()].map((uri) => decodeURIComponent(uri)),
         null,
         2
-      )}`
+      )}`, { id: requestId }
     )
     const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
