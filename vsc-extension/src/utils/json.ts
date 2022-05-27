@@ -1,6 +1,9 @@
 import stringify from 'fast-safe-stringify'
 
-export default function json<T>(
+/**
+ * jsonStr serializes any object to pretty-formatted json string.
+ */
+export default function jsonStr<T>(
   object: T,
   replacer?: (key: string, value: any) => any,
   space?: string | number,
