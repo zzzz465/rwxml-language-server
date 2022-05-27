@@ -19,7 +19,7 @@ export class LogManager {
   constructor(private readonly conf: Configuration) {
     // NOTE: most logger will use the defaultLogger as transport target. so I increase the max limit.
     // NOTE: possible memory leak?
-    this.defaultLogger.setMaxListeners(1000)
+    this.defaultLogger.setMaxListeners(999999)
   }
 
   async init(): Promise<void> {
