@@ -46,12 +46,8 @@ export const className = winston.format((info, classType?: new (...p: any[]) => 
   return info
 })
 
-export const logFormat = winston.format.printf(
-  ({ level, className, message }) => `[${level}] [${className}]: ${message}`
-)
-
-export const logIdFormat = winston.format.printf(
-  ({ level, className, uuid: id, message }) => `[${level}] [${className}] (${id}): ${message}`
+export const logFormat = winston.format.printf(({ level, className, id, message }) =>
+  id ? `[${level}] [${className}] (${id}): ${message}` : `[${level}] [${className}] : ${message}`
 )
 
 export default function defaultLogger() {
