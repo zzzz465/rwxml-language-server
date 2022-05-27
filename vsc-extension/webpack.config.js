@@ -4,7 +4,6 @@
 
 const path = require('path')
 const webpack = require('webpack')
-const tsconfig = require('./tsconfig.json')
 const TerserPlugin = require('terser-webpack-plugin')
 
 /**@type {import('webpack').Configuration}*/
