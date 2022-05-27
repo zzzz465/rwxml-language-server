@@ -29,7 +29,7 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
 
   const logManager = container.resolve(LogManager)
   await logManager.init(logLevel)
-  
+
   container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
   const log = defaultLogger()
