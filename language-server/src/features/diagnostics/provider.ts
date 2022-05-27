@@ -7,6 +7,7 @@ import { Configuration } from '../../configuration'
 import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
+import jsonStr from '../../utils/json'
 import { Provider } from '../provider'
 import { getRootElement } from '../utils'
 import { DiagnosticsContributor } from './contributor'
@@ -112,7 +113,7 @@ export class DiagnosticsProvider implements Provider {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
         this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
-        this.log.silly(`${JSON.stringify(dig.diagnostics, null, 2)}`)
+        this.log.silly(`${jsonStr(dig.diagnostics)}`)
       } else {
         this.log.warn(
           `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`

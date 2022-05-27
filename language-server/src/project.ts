@@ -18,6 +18,7 @@ import { serializeError } from 'serialize-error'
 import TypedEventEmitter from 'typed-emitter'
 import * as ono from 'ono'
 import defaultLogger, { className, logFormat } from './log'
+import jsonStr from './utils/json'
 
 type Events = {
   /**
@@ -157,11 +158,10 @@ export class Project {
   private async reset(requestId: string = uuid(), cancelToken?: CancellationToken): Promise<ono.ErrorLike | null> {
     this.log.debug(
       // TODO: put uuid as log format
-      `current project file dlls: ${JSON.stringify(
-        [...this.resourceStore.dllFiles.values()].map((uri) => decodeURIComponent(uri)),
-        null,
-        2
-      )}`, { id: requestId }
+      `current project file dlls: ${jsonStr(
+        [...this.resourceStore.dllFiles.values()].map((uri) => decodeURIComponent(uri))
+      )}`,
+      { id: requestId }
     )
     const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
@@ -170,7 +170,7 @@ export class Project {
 
     if (err0) {
       return ono.ono(
-        `[${requestId}] failed fetching typeInfoMap. error: ${JSON.stringify(serializeError(err0), null, 4)}`
+        `[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`
       )
     }
 

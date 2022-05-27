@@ -14,6 +14,7 @@ import { ProjectWorkspace } from './projectWorkspace'
 import { FileStore } from '../fileStore'
 import TypedEventEmitter from 'typed-emitter'
 import defaultLogger, { className, logFormat } from '../log'
+import jsonStr from '../utils/json'
 
 const VERSION_REGEX = /v[\d]\.[\d]$/
 
@@ -131,8 +132,8 @@ export class LoadFolder {
       this.projectWorkspaces.set(version, new ProjectWorkspace(version, this.rootDirectory, ['.']))
     }
 
-    this.log.debug(`updated workspaces: ${JSON.stringify([...this.projectWorkspaces.values()], null, 4)}`)
-    this.log.debug(`default workspace: ${JSON.stringify(this.getProjectWorkspace('default'), null, 4)}`)
+    this.log.debug(`updated workspaces: ${jsonStr([...this.projectWorkspaces.values()])}`)
+    this.log.debug(`default workspace: ${jsonStr(this.getProjectWorkspace('default'))}`)
 
     this.event.emit('loadFolderChanged', this)
   }

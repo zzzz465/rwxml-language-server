@@ -9,6 +9,7 @@ import { About } from './mod'
 import _ from 'lodash'
 import TypedEventEmitter from 'typed-emitter'
 import defaultLogger, { className, logFormat } from './log'
+import jsonStr from './utils/json'
 
 type Events = {
   onProjectInitialized(project: Project): void
@@ -60,8 +61,8 @@ export class ProjectManager {
       this.getOrCreateContainer(ver)
     }
 
-    this.log.info(`supportedVersions added: ${JSON.stringify(added, null, 2)}`)
-    this.log.info(`supportedVersions deleted: ${JSON.stringify(deleted, null, 2)}`)
+    this.log.info(`supportedVersions added: ${jsonStr(added)}`)
+    this.log.info(`supportedVersions deleted: ${jsonStr(deleted)}`)
   }
 
   getProject(version: string): Project {

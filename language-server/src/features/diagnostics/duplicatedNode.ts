@@ -8,6 +8,7 @@ import { getNodesBFS } from '../utils/node'
 import { AsEnumerable } from 'linq-es2015'
 import winston from 'winston'
 import defaultLogger, { className, logFormat } from '../../log'
+import jsonStr from '../../utils/json'
 
 /**
  * DuplicatedNode provides diagnostics against duplicated nodes
@@ -83,7 +84,7 @@ export class DuplicatedNode implements DiagnosticsContributor {
       const range = this.rangeConverter.toLanguageServerRange(node.nodeRange, node.document.uri)
       if (!range) {
         this.log.warn(
-          `cannot convert range to ls.range. range: ${JSON.stringify(node.nodeRange)}, document: ${node.document.uri}`
+          `cannot convert range to ls.range. range: ${jsonStr(node.nodeRange)}, document: ${node.document.uri}`
         )
         continue
       }

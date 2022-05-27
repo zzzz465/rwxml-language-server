@@ -9,6 +9,7 @@ import * as winston from 'winston'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { v4 as uuid } from 'uuid'
 import defaultLogger, { className, logFormat } from './log'
+import jsonStr from './utils/json'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
@@ -27,7 +28,7 @@ export class TypeInfoMapProvider {
     try {
       const dllUris = this.getTargetDLLUris()
 
-      this.log.debug(`[${requestId}] requesting typeInfo, uris: ${JSON.stringify(dllUris, null, 2)}`)
+      this.log.debug(`[${requestId}] requesting typeInfo, uris: ${jsonStr(dllUris)}`)
       const typeInfos = await this.requestTypeInfos(dllUris)
       this.log.debug(`[${requestId}] received typeInfo from client, length: ${typeInfos.length}`)
 
