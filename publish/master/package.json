@@ -7,9 +7,9 @@
   "module": "node",
   "main": "dist/client/index.js",
   "scripts": {
-    "vsc-extension:build": "pnpx webpack --config client.webpack.config.js --mode production",
+    "vsc-extension:build": "pnpx webpack-cli --config client.webpack.config.js --mode production",
     "extractor:build": "pnpm build --dir ../../extractor -- /p:OutputPath=./../../publish/master/dist/extractor",
-    "language-server:build": "pnpx webpack --config server.webpack.config.js --mode production",
+    "language-server:build": "pnpx webpack-cli --config server.webpack.config.js --mode production",
     "clear-build": "pnpx rimraf dist",
     "build": "pnpm run clear-build && pnpm run vsc-extension:build && pnpm run extractor:build && pnpm run language-server:build"
   },
@@ -98,7 +98,6 @@
               "set log level. warning: this might affect performance."
             ]
           },
-
           "rwxml.paths.rimWorld": {
             "type": "string",
             "scope": "machine-overridable",
@@ -148,7 +147,7 @@
   },
   "devDependencies": {
     "rimraf": "^3.0.2",
-    "webpack": "^5.11.0",
-    "webpack-cli": "^4.8.0"
+    "webpack": "^5.72.1",
+    "webpack-cli": "^4.9.2"
   }
 }

@@ -36,12 +36,12 @@ jobs:
       - name: install project
         shell: bash
         run: |
-          npm install
+          pnpm install
       - name: run build
         working-directory: ./publish/master
         run: |
-          npm install
-          npm run build
+          pnpm install
+          pnpm run build
       - name: publish master version
         working-directory: ./publish/master
         if: contains(steps.var.outputs.tag, 'nopublish') == false
