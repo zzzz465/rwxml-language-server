@@ -23,8 +23,12 @@ container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: ls.InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
+
+  const configuration = container.resolve(Configuration)
+  configuration.init(connection)
+
   const logManager = container.resolve(LogManager)
-  await logManager.init()
+  await logManager.init(logLevel)
   
   container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
@@ -35,7 +39,6 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
 
   InitRegistry.init()
 
-  const configuration = container.resolve(Configuration)
   const about = container.resolve(About)
   const loadFolder = container.resolve(LoadFolder)
   const textDocumentManager = container.resolve(TextDocumentManager)
@@ -45,7 +48,6 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
   const modManager = container.resolve(ModManager)
   const fileStore = container.resolve(FileStore)
 
-  configuration.init(connection)
   notificationEventManager.listen(fileStore.event)
   loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(notificationEventManager.preEvent)
