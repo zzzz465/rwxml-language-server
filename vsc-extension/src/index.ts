@@ -30,7 +30,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // init logger
   const logManager = container.resolve(LogManager)
   disposables.push(logManager.init())
-  container.register(DefaultLogToken, logManager.defaultLogger)
+  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
   const log = logManager.defaultLogger
 
