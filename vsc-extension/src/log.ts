@@ -47,3 +47,7 @@ export const logFormat = winston.format.printf(
 export const logIdFormat = winston.format.printf(
   ({ level, className, uuid: id, message }) => `[${level}] [${className}] (${id}): ${message}`
 )
+
+export default function defaultLogger() {
+  return tsyringe.container.resolve<winston.Logger>(DefaultLogToken)
+}
