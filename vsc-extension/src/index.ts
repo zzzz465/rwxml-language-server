@@ -17,6 +17,7 @@ import checkInsider from './insiderCheck'
 import { SemanticTokenProvider } from './features/semanticTokenProvider'
 import log, { DefaultLogToken, LogManager } from './log'
 import { ExtensionLog } from './extensionLog'
+import winston from 'winston'
 
 const disposables: vscode.Disposable[] = []
 
@@ -35,6 +36,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const log = logManager.defaultLogger
   log.add(new ExtensionLog())
+  // log.add(new winston.transports.File({ dirname: context.logUri.fsPath, filename: 'client.log', level: 'silly' }))
+  // console.log(`writing logs to ${context.logUri.fsPath}`)
 
   // check insider version exists (main / insider cannot co-exists)
   await checkInsider()
