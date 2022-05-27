@@ -16,7 +16,11 @@ export class LogManager {
     transports: [new winston.transports.Console()],
   })
 
-  constructor(private readonly conf: Configuration) {}
+  constructor(private readonly conf: Configuration) {
+    // NOTE: most logger will use the defaultLogger as transport target. so I increase the max limit.
+    // NOTE: possible memory leak?
+    this.defaultLogger.setMaxListeners(50)
+  }
 
   async init(): Promise<void> {
     this.setLoggerLevel(await this.level())
