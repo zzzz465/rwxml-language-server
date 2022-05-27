@@ -7,6 +7,8 @@ const KEY_SCOPE = 'rwxml.logs'
 const KEY_LOG_LEVEL = 'level'
 const DEFAULT_LOG_LEVEL = 'info'
 
+export const DefaultLogToken = Symbol('DefaultLogToken')
+
 @tsyringe.singleton()
 export class LogManager {
   readonly defaultLogger = winston.createLogger({

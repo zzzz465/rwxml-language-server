@@ -15,7 +15,7 @@ import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
 import { SemanticTokenProvider } from './features/semanticTokenProvider'
-import { LogManager } from './log'
+import { DefaultLogToken, LogManager } from './log'
 
 const disposables: vscode.Disposable[] = []
 
@@ -30,6 +30,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // init logger
   const logManager = container.resolve(LogManager)
   disposables.push(logManager.init())
+  container.register(DefaultLogToken, logManager.defaultLogger)
 
   const log = logManager.defaultLogger
 
