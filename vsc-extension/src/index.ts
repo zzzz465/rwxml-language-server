@@ -15,7 +15,7 @@ import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
 import { SemanticTokenProvider } from './features/semanticTokenProvider'
-import { DefaultLogToken, LogManager } from './log'
+import log, { DefaultLogToken, LogManager } from './log'
 
 const disposables: vscode.Disposable[] = []
 
@@ -44,15 +44,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // 2. initialize containers (set values)
 
   // 2-2. register commands
-  console.log('register commands...')
+  log.info('registering commands...')
   disposables.push(...commands.initialize())
 
   // 3. initialize language server
-  console.log('initializing Language Server...')
+  log.info('initializing Language Server...')
   const client = await createServer()
 
   // 4. init resourceProvider
-  console.log('initializing resourceProviders...')
+  log.info('initializing resourceProviders...')
   const resourceProviders = container.resolveAll<resources.Provider>(resources.Provider.token)
   resourceProviders.forEach((resource) => resource.listen(client))
 
@@ -73,22 +73,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // )
 
   // 6. initialize && wait Runtime TypeInfo Extractor
-  console.log('checking Runtime TypeInfo Extractor available...')
-  checkTypeInfoAnalyzeAvailable()
+  log.info('checking Runtime TypeInfo Extractor available...')
+  if (!checkTypeInfoAnalyzeAvailable()) {
+    log.error('extractor is not available. extension might not work...')
+  }
 
   // 7. send mod list to language server
   // TODO: this feature is moved to projectWatcher
   // it sends all watched file on init (before watching)
 
   // 8. add decorate update
-  console.log('register lsp features...')
+  log.info('register lsp features...')
   disposables.push(...features.registerFeatures())
 
   // 9. set project watcher
-  console.log('initialize Project Watcher...')
+  log.info('initialize Project Watcher...')
   container.resolve(ProjectWatcher).start()
 
-  console.log('initialization completed.')
+  log.info('initialization completed.')
 }
 
 export function deactivate() {
@@ -105,8 +107,7 @@ async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
   const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
-  const logManager = container.resolve(LogManager)
-  console.log(`server module absolute path: ${module}`)
+  log().debug(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {
     run: { module, transport: TransportKind.ipc },
@@ -127,7 +128,7 @@ async function createServer() {
     ],
     initializationOptions: {
       logs: {
-        level: logManager.level(),
+        level: container.resolve(LogManager).level(),
       },
     },
   }
