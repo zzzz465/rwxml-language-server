@@ -19,13 +19,15 @@ function getDotnetName() {
   return
 }
 
-export function checkTypeInfoAnalyzeAvailable() {
-  if (!dotnetAvailable()) {
+export function checkTypeInfoAnalyzeAvailable(): boolean {
+  const available = dotnetAvailable()
+  container.register('DOTNET_AVAILABLE', { useValue: available })
+
+  if (!available) {
     promptDotnetInstall()
-    container.register('DOTNET_AVAILABLE', { useValue: false })
-  } else {
-    container.register('DOTNET_AVAILABLE', { useValue: true })
   }
+
+  return available
 }
 
 async function promptDotnetInstall() {
