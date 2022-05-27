@@ -6,20 +6,16 @@ import { Provider } from '../provider'
 import * as winston from 'winston'
 import * as tsyringe from 'tsyringe'
 import { ProjectHelper } from '../utils/project'
+import defaultLogger, { className, logFormat } from '../../log'
 
 @tsyringe.injectable()
 export class ParsedTypeInfoRequestHandler implements Provider {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${ParsedTypeInfoRequestHandler.name}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ParsedTypeInfoRequestHandler), logFormat),
+    transports: [defaultLogger()],
+  })
 
-  constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {}
 
   init(connection: Connection): void {
     connection.onRequest(ParsedTypeInfoRequest, this.projectHelper.wrapExceptionStackTraces(this.onRequest.bind(this)))

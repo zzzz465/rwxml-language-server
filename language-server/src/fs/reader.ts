@@ -4,18 +4,16 @@ import { TextRequest } from '../events'
 import { File } from './file'
 import * as winston from 'winston'
 import { ConnectionToken } from '../connection'
+import defaultLogger, { className, logFormat } from '../log'
 
 @injectable()
 export class TextReader {
-  private logFormat = winston.format.printf((info) => `[${TextReader.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(TextReader), logFormat),
+    transports: [defaultLogger()],
+  })
 
-  constructor(@inject(ConnectionToken) private readonly connection: Connection) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  constructor(@inject(ConnectionToken) private readonly connection: Connection) {}
 
   async read(file: File): Promise<string> {
     this.log.silly(`read file: ${file.uri.toString()}`)

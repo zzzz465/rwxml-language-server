@@ -15,9 +15,14 @@ export class Configuration {
 
   private cache: Map<string, any> = new Map()
 
+  private initialized = false
+
   init(connection: ls.Connection): void {
-    this.connection = connection
-    connection.onDidChangeConfiguration(this.onConfigurationChanged.bind(this))
+    if (!this.initialized) {
+      this.connection = connection
+      connection.onDidChangeConfiguration(this.onConfigurationChanged.bind(this))
+      this.initialized = true
+    }
   }
 
   async get<T>(item: ls.ConfigurationItem): Promise<T | undefined> {

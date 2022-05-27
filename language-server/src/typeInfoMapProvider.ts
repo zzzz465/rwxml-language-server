@@ -8,32 +8,30 @@ import { Project } from './project'
 import * as winston from 'winston'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import { v4 as uuid } from 'uuid'
+import defaultLogger, { className, logFormat } from './log'
+import jsonStr from './utils/json'
 
 @scoped(Lifecycle.ContainerScoped)
 export class TypeInfoMapProvider {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${TypeInfoMapProvider.name}] [${this.version}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(TypeInfoMapProvider), logFormat),
+    transports: [defaultLogger()],
+  })
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
     @inject(ConnectionToken) private readonly connection: Connection,
     @inject(delay(() => Project)) private readonly project: Project
-  ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  ) {}
 
   async get(requestId: string = uuid()): Promise<[TypeInfoMap, Error?]> {
     try {
       const dllUris = this.getTargetDLLUris()
 
-      this.log.debug(`[${requestId}] requesting typeInfo, uris: ${JSON.stringify(dllUris, null, 2)}`)
+      this.log.debug(`requesting typeInfo. count: ${dllUris.length}`, { id: requestId })
+      this.log.silly(`uris: ${jsonStr(dllUris)}`)
       const typeInfos = await this.requestTypeInfos(dllUris)
-      this.log.debug(`[${requestId}] received typeInfo from client, length: ${typeInfos.length}`)
+      this.log.debug(`received typeInfo from client, length: ${typeInfos.length}`, { id: requestId })
 
       const typeInfoMap = TypeInfoLoader.load(typeInfos)
 

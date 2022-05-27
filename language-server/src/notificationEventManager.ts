@@ -4,6 +4,7 @@ import { URI } from 'vscode-uri'
 import { File } from './fs'
 import * as winston from 'winston'
 import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from './log'
 
 // events that this manager will emit
 export type NotificationEvents = {
@@ -17,10 +18,10 @@ export type NotificationEvents = {
  */
 @tsyringe.singleton()
 export class NotificationEventManager {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${NotificationEventManager.name}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(NotificationEventManager), logFormat),
+    transports: [defaultLogger()],
+  })
 
   // pre-event stage emit
   readonly preEvent = new EventEmitter() as TypedEventEmitter<NotificationEvents>
@@ -28,13 +29,6 @@ export class NotificationEventManager {
   readonly event = new EventEmitter() as TypedEventEmitter<NotificationEvents>
   // post-event emit?
   readonly postEvent = new EventEmitter() as TypedEventEmitter<NotificationEvents>
-
-  constructor() {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
 
   listen(event: TypedEventEmitter<NotificationEvents>): void {
     event.on('fileAdded', this.onFileAdded.bind(this))

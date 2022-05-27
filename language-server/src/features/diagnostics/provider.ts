@@ -4,8 +4,10 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
+import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
+import jsonStr from '../../utils/json'
 import { Provider } from '../provider'
 import { getRootElement } from '../utils'
 import { DiagnosticsContributor } from './contributor'
@@ -26,19 +28,16 @@ import { DiagnosticsContributor } from './contributor'
 export class DiagnosticsProvider implements Provider {
   private connection?: ls.Connection = undefined
 
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${DiagnosticsProvider.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(DiagnosticsProvider), logFormat),
+    transports: [defaultLogger()],
+  })
 
   constructor(
     private readonly projectManager: ProjectManager,
     private readonly configuration: Configuration,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[]
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
     configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))
   }
@@ -114,7 +113,7 @@ export class DiagnosticsProvider implements Provider {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
         this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
-        this.log.silly(`${JSON.stringify(dig.diagnostics, null, 2)}`)
+        this.log.silly(`${jsonStr(dig.diagnostics)}`)
       } else {
         this.log.warn(
           `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`

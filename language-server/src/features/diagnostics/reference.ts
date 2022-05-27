@@ -8,18 +8,16 @@ import { RangeConverter } from '../../utils/rangeConverter'
 import { DocumentWithNodeMap } from '../../documentWithNodeMap'
 import { Definition } from '../definition'
 import { isGeneratedDef } from '../utils/def'
+import defaultLogger, { className, logFormat } from '../../log'
 
 @tsyringe.injectable()
 export class Reference implements DiagnosticsContributor {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${Reference.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(Reference), logFormat),
+    transports: [defaultLogger()],
+  })
 
-  constructor(private readonly rangeConverter: RangeConverter, private readonly definition: Definition) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  constructor(private readonly rangeConverter: RangeConverter, private readonly definition: Definition) {}
 
   getDiagnostics(project: Project, document: DocumentWithNodeMap): { uri: string; diagnostics: ls.Diagnostic[] } {
     // 1. grab all def from document

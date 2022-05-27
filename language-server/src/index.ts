@@ -16,18 +16,28 @@ import { ModManager } from './mod/modManager'
 import { FileStore } from './fileStore'
 import { Configuration } from './configuration'
 import { InitRegistry } from './initRegistry'
+import defaultLogger, { DefaultLogToken, LogManager } from './log'
 
 const connection = ls.createConnection(ls.ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: ls.InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
-  console.log(`current log level: ${logLevel}`)
-  console.log('hello world! initializing @rwxml-language-server/language-server ...')
+
+  const configuration = container.resolve(Configuration)
+  configuration.init(connection)
+
+  const logManager = container.resolve(LogManager)
+  await logManager.init(logLevel)
+  
+  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
+
+  const log = defaultLogger()
+
+  log.info('hello world! initializing @rwxml-language-server/server ...')
 
   InitRegistry.init()
 
-  const configuration = container.resolve(Configuration)
   const about = container.resolve(About)
   const loadFolder = container.resolve(LoadFolder)
   const textDocumentManager = container.resolve(TextDocumentManager)
@@ -37,7 +47,6 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
   const modManager = container.resolve(ModManager)
   const fileStore = container.resolve(FileStore)
 
-  configuration.init(connection)
   notificationEventManager.listen(fileStore.event)
   loadFolder.listen(notificationEventManager.preEvent)
   textDocumentManager.listen(notificationEventManager.preEvent)
@@ -69,7 +78,7 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
     },
   }
 
-  console.log('initialization completed!')
+  log.info('initialization completed!')
 
   return initializeResult
 })

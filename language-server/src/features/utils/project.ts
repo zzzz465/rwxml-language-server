@@ -4,6 +4,7 @@ import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { LoadFolder } from '../../mod/loadfolders'
 import { ProjectManager } from '../../projectManager'
+import jsonStr from '../../utils/json'
 
 /**
  * ProjectHelper is a utility class that helps finding projects and versions for a given URI
@@ -36,7 +37,7 @@ export class ProjectHelper {
       try {
         return await func(arg)
       } catch (e: unknown) {
-        log?.error(JSON.stringify(e, null, 2))
+        log?.error(jsonStr(e))
       }
     }
   }

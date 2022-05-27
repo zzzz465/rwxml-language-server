@@ -5,19 +5,16 @@ import winston from 'winston'
 import { ConnectionToken } from './connection'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import { FileStore } from './fileStore'
+import defaultLogger, { className, logFormat } from './log'
 
 @tsyringe.singleton()
 export class ClientFileEventListener {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${ClientFileEventListener.name}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ClientFileEventListener), logFormat),
+    transports: [defaultLogger()],
+  })
 
   constructor(@tsyringe.inject(ConnectionToken) connection: Connection, private readonly fileStore: FileStore) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
 
     connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(uri))
     connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(uri))

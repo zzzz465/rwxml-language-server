@@ -4,6 +4,8 @@ import _ from 'lodash'
 import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
@@ -19,6 +21,11 @@ import { Rename } from './rename'
  */
 @singleton()
 export class LanguageFeature {
+  private readonly log = winston.createLogger({
+    format: winston.format.combine(className(LanguageFeature), logFormat),
+    transports: [defaultLogger()],
+  })
+
   constructor(
     private readonly loadFolder: LoadFolder,
     private readonly projectManager: ProjectManager,
@@ -112,9 +119,9 @@ export class LanguageFeature {
   private handleError(errors: any[], message?: string) {
     if (errors.length > 0) {
       if (message) {
-        console.error(message)
+        this.log.error(message)
       }
-      console.error(errors)
+      this.log.error(errors)
     }
   }
 
@@ -126,7 +133,7 @@ export class LanguageFeature {
       try {
         return await func(arg)
       } catch (e: unknown) {
-        console.error(e)
+        this.log.error(e)
         throw e
       }
     }

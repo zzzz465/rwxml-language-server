@@ -3,19 +3,15 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
 import * as winston from 'winston'
+import defaultLogger, { className, logFormat } from '../../log'
 import { getClassNameCodeBlock } from '../utils/markdown'
 
 @tsyringe.injectable()
 export class DefHoverProvider {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${DefHoverProvider.name}] ${info.message}`)
-  private readonly log: winston.Logger
-
-  constructor() {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  private log = winston.createLogger({
+    format: winston.format.combine(className(DefHoverProvider), logFormat),
+    transports: [defaultLogger()],
+  })
 
   onDefHover(node: Def, offset: number): ls.Hover | null {
     const value = getClassNameCodeBlock(node as Element as Injectable)

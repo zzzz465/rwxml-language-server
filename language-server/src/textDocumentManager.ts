@@ -9,6 +9,7 @@ import { Result } from './types/functional'
 import ono from 'ono'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
 import EventEmitter from 'events'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = {
   textDocumentChanged(document: TextDocument): void
@@ -22,19 +23,16 @@ type Events = {
  */
 @tsyringe.singleton()
 export class TextDocumentManager {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentManager.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(TextDocumentManager), logFormat),
+    transports: [defaultLogger()],
+  })
 
   private documents: Map<string, TextDocument> = new Map()
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(private readonly fileStore: FileStore, textDocumentAdapter: TextDocumentsAdapter) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     textDocumentAdapter.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
   }
 

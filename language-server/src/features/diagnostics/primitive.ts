@@ -7,6 +7,7 @@ import winston from 'winston'
 import { AsEnumerable } from 'linq-es2015'
 import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
 import { RangeConverter } from '../../utils/rangeConverter'
+import defaultLogger, { className, logFormat } from '../../log'
 
 /**
  * PrimitiveValue provides diagnosis for primitive nodes like integer, string, boolean, etc.
@@ -14,15 +15,12 @@ import { RangeConverter } from '../../utils/rangeConverter'
  */
 @tsyringe.injectable()
 export class PrimitiveValue implements DiagnosticsContributor {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${PrimitiveValue.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(PrimitiveValue), logFormat),
+    transports: [defaultLogger()],
+  })
 
-  constructor(private readonly rangeConverter: RangeConverter) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  constructor(private readonly rangeConverter: RangeConverter) {}
 
   getDiagnostics(_: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {
     // 1. find all Injectable leaf nodes

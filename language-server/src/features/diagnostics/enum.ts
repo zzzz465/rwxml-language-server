@@ -5,6 +5,7 @@ import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
+import jsonStr from '../../utils/json'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { getNodesBFS, isLeafNode } from '../utils'
 import { DiagnosticsContributor } from './contributor'
@@ -54,7 +55,7 @@ export class Enum implements DiagnosticsContributor {
     if (invalidEnums.length > 0) {
       return [
         {
-          message: `Unknown enum value ${JSON.stringify(invalidEnums)}`,
+          message: `Unknown enum value ${jsonStr(invalidEnums)}`,
           range,
           severity: ls.DiagnosticSeverity.Error,
         },

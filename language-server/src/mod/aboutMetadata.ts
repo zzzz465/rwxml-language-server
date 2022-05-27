@@ -11,6 +11,8 @@ import { AsEnumerable } from 'linq-es2015'
 import { URI } from 'vscode-uri'
 import { FileStore } from '../fileStore'
 import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from '../log'
+import jsonStr from '../utils/json'
 
 /**
  * MetadataItem holds various data of a specific version.
@@ -63,8 +65,10 @@ export class AboutMetadata {
   static readonly relativePathFromRoot = './About/metadata_rwxml.xml'
   static readonly fileName = 'metadata_rwxml.xml'
 
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${AboutMetadata.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(AboutMetadata), logFormat),
+    transports: [defaultLogger()],
+  })
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
@@ -78,11 +82,6 @@ export class AboutMetadata {
     @tsyringe.inject(tsyringe.delay(() => About)) private readonly about: About,
     private readonly fileStore: FileStore
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))
     notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))
@@ -102,8 +101,8 @@ export class AboutMetadata {
     this.parseXML()
 
     this.log.debug('aboutMetadata updated.')
-    this.log.debug(`items: ${JSON.stringify(this.itemMap, null, 4)}`)
-    this.log.debug(`default: ${JSON.stringify(this.defaultItem, null, 4)}`)
+    this.log.debug(`items: ${jsonStr(this.itemMap)}`)
+    this.log.debug(`default: ${jsonStr(this.defaultItem)}`)
 
     this.event.emit('aboutMetadataChanged', this)
   }
@@ -123,7 +122,7 @@ export class AboutMetadata {
       .Cast<MetadataItem>()
       .ToArray()
 
-    this.log.silly(`aboutMetadata parsed items: ${JSON.stringify(items, null, 4)}`)
+    this.log.silly(`aboutMetadata parsed items: ${jsonStr(items)}`)
 
     for (const item of items) {
       this.itemMap.set(item.version, item)
@@ -135,7 +134,7 @@ export class AboutMetadata {
       this.defaultItem = undefined
     }
 
-    this.log.silly(`aboutMetadata parsed default: ${JSON.stringify(this.defaultItem, null, 4)}`)
+    this.log.silly(`aboutMetadata parsed default: ${jsonStr(this.defaultItem)}`)
   }
 
   /**
