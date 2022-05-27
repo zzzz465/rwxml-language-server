@@ -16,6 +16,9 @@ import * as vscode from 'vscode'
 import * as os from 'os'
 import * as cp from 'child_process'
 import * as semver from 'semver'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
+import { ProjectWatcher } from '../projectWatcher'
 
 interface Cache {
   extractorVersion: string // semver
@@ -30,6 +33,11 @@ interface Cache {
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ProjectWatcher), logFormat),
+    transports: [defaultLogger()],
+  })
+
   private static readonly extractorVersion = new semver.SemVer('0.7.0')
 
   get dllCacheDirectory(): string {
@@ -64,7 +72,7 @@ export class CachedTypeInfoProvider implements Provider {
 
   private async clearCache() {
     const caches = await fs.readdir(this.dllCacheDirectory)
-    console.log(`deleting ${caches.length} caches: ${JSON.stringify(caches, null, 4)}`)
+    this.log.debug(`deleting ${caches.length} caches: ${JSON.stringify(caches, null, 4)}`)
     await Promise.all(caches.map((c) => fs.rm(path.join(this.dllCacheDirectory, c))))
 
     vscode.window.showInformationMessage(`RWXML: Cleared ${caches.length} caches.`, 'OK')
@@ -88,8 +96,9 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheName = this.getCacheName(uris).slice(0, 12)
     const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', `${cacheName}.json`)
 
-    console.log(`[${requestId}] requested uris: ${JSON.stringify(uris, null, 4)}`)
-    console.log(`[${requestId}] cache path: ${uris}`)
+    this.log.info('handling typeInfo request.')
+    this.log.silly(`[${requestId}] requested uris: ${JSON.stringify(uris, null, 4)}`)
+    this.log.silly(`[${requestId}] cache path: ${uris}`)
 
     const checkCacheValid = async () => {
       // https://nodejs.org/api/fs.html#file-system-flags
@@ -104,7 +113,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        console.error(`[${requestId}] failed opening cache. file: ${cachePath}, err: `, e)
+        this.log.error(`[${requestId}] failed opening cache. file: ${cachePath}, err: `, e)
       } finally {
         await file?.close()
       }
