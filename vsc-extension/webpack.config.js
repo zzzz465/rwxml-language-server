@@ -5,7 +5,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const tsconfig = require('./tsconfig.json')
-const { ESBuildMinifyPlugin } = require('esbuild-loader')
+const TerserPlugin = require('terser-webpack-plugin')
 
 /**@type {import('webpack').Configuration}*/
 const config = {
@@ -42,18 +42,17 @@ const config = {
       {
         test: /\.ts$/,
         exclude: /node_modules/,
-        loader: 'esbuild-loader',
-        options: {
-          loader: 'tsx',
-          target: tsconfig.compilerOptions.target,
-        },
+        loader: 'ts-loader',
       },
     ],
   },
   optimization: {
     minimizer: [
-      new ESBuildMinifyPlugin({
-        keepNames: true,
+      new TerserPlugin({
+        terserOptions: {
+          keep_classnames: true,
+          keep_fnames: true,
+        },
       }),
     ],
   },
