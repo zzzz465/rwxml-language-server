@@ -31,6 +31,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const logManager = container.resolve(LogManager)
   disposables.push(logManager.init())
 
+  const log = logManager.defaultLogger
+
   // check insider version exists (main / insider cannot co-exists)
   await checkInsider()
 
@@ -102,7 +104,7 @@ async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
   const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
-  const logLevel = container.resolve<string>(LogLevelToken)
+  const logManager = container.resolve(LogManager)
   console.log(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {
@@ -124,7 +126,7 @@ async function createServer() {
     ],
     initializationOptions: {
       logs: {
-        level: logLevel,
+        level: logManager.level(),
       },
     },
   }
