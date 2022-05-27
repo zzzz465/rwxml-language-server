@@ -37,3 +37,11 @@ export class LogManager {
     this.setLoggerLevel(this.level())
   }
 }
+
+export const logFormat = winston.format.printf(
+  ({ level, className, message }) => `[${level}] [${className}]: ${message}`
+)
+
+export const logIdFormat = winston.format.printf(
+  ({ level, className, uuid: id, message }) => `[${level}] [${className}] (${id}): ${message}`
+)
