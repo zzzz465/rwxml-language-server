@@ -16,12 +16,18 @@ import { ModManager } from './mod/modManager'
 import { FileStore } from './fileStore'
 import { Configuration } from './configuration'
 import { InitRegistry } from './initRegistry'
+import { DefaultLogToken, LogManager } from './log'
 
 const connection = ls.createConnection(ls.ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
 
 connection.onInitialize(async (params: ls.InitializeParams) => {
   const logLevel = params.initializationOptions?.logs?.level
+  const logManager = container.resolve(LogManager)
+  await logManager.init()
+
+  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
+
   console.log(`current log level: ${logLevel}`)
   console.log('hello world! initializing @rwxml-language-server/language-server ...')
 
