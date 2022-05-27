@@ -40,6 +40,12 @@ export class LogManager {
   }
 }
 
+export const className = winston.format((info, classType: new (...p: any[]) => any) => {
+  info.className = classType.name
+
+  return info
+})
+
 export const logFormat = winston.format.printf(
   ({ level, className, message }) => `[${level}] [${className}]: ${message}`
 )
