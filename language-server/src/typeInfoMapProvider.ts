@@ -28,9 +28,10 @@ export class TypeInfoMapProvider {
     try {
       const dllUris = this.getTargetDLLUris()
 
-      this.log.debug(`[${requestId}] requesting typeInfo, uris: ${jsonStr(dllUris)}`)
+      this.log.debug(`requesting typeInfo. count: ${dllUris.length}`, { id: requestId })
+      this.log.silly(`uris: ${jsonStr(dllUris)}`)
       const typeInfos = await this.requestTypeInfos(dllUris)
-      this.log.debug(`[${requestId}] received typeInfo from client, length: ${typeInfos.length}`)
+      this.log.debug(`received typeInfo from client, length: ${typeInfos.length}`, { id: requestId })
 
       const typeInfoMap = TypeInfoLoader.load(typeInfos)
 

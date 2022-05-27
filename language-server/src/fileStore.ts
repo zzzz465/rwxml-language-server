@@ -58,7 +58,7 @@ export class FileStore {
 
       const ref = this.incrRef(uri)
 
-      this.log.silly(`file loaded. count: ${ref}, uri: ${uri}`)
+      this.log.silly(`file loaded. refCount: ${ref}, uri: ${uri}`)
 
       return [file, null]
     }
@@ -71,7 +71,7 @@ export class FileStore {
       this.event.emit('fileAdded', file)
     }
 
-    this.log.silly(`file loaded. count: ${ref}, uri: ${uri}`)
+    this.log.silly(`file loaded. refCount: ${ref}, uri: ${uri}`)
 
     return [file, null]
   }

@@ -158,11 +158,11 @@ export class Project {
   private async reset(requestId: string = uuid(), cancelToken?: CancellationToken): Promise<ono.ErrorLike | null> {
     this.log.debug(
       // TODO: put uuid as log format
-      `current project file dlls: ${jsonStr(
-        [...this.resourceStore.dllFiles.values()].map((uri) => decodeURIComponent(uri))
-      )}`,
+      `current project file dll count: ${this.resourceStore.dllFiles.size}`,
       { id: requestId }
     )
+    this.log.silly(`dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`)
+
     const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
       return ono.ono(`[${requestId}] request canceled.`)

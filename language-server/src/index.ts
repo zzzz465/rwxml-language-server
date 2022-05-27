@@ -34,7 +34,6 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
 
   const log = defaultLogger()
 
-  log.debug(`current log level: ${logLevel}`)
   log.info('hello world! initializing @rwxml-language-server/server ...')
 
   InitRegistry.init()
