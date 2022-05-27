@@ -20,10 +20,11 @@ export class Configuration {
     connection.onDidChangeConfiguration(this.onConfigurationChanged.bind(this))
   }
 
-  async get<T>(item: ls.ConfigurationItem): Promise<T | undefined> {
+  async get<T>(item: ls.ConfigurationItem, defalutValue: T): Promise<T>
+  async get<T>(item: ls.ConfigurationItem, defalutValue?: T): Promise<T | undefined> {
     if (!this.connection) {
       // TODO: add warning
-      return
+      return defalutValue
     }
 
     const key = `${item.scopeUri}#${item.section}`
@@ -33,7 +34,7 @@ export class Configuration {
       this.cache.set(key, value)
     }
 
-    return this.cache.get(key)
+    return this.cache.get(key) ?? defalutValue
   }
 
   private onConfigurationChanged(): void {
