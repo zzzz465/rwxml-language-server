@@ -40,8 +40,8 @@ export class LogManager {
   }
 }
 
-export const className = winston.format((info, classType: new (...p: any[]) => any) => {
-  info.className = classType.name
+export const className = winston.format((info, classType?: new (...p: any[]) => any) => {
+  info.className = classType?.name ?? 'NONTYPE'
 
   return info
 })
