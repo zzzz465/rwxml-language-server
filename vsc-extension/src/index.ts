@@ -14,24 +14,30 @@ import { ExtensionVersionToken } from './version'
 import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
-import { LogLevelToken } from './log'
 import { SemanticTokenProvider } from './features/semanticTokenProvider'
+import log, { DefaultLogToken, LogManager } from './log'
+import { ExtensionLog } from './extensionLog'
+import winston from 'winston'
 
 const disposables: vscode.Disposable[] = []
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  let logLevel = vscode.workspace.getConfiguration('rwxml.logs').get<string>('level')
-  if (!logLevel) {
-    logLevel = 'info'
-  }
-
   // 1. reset container && set extensionContext
   console.log('initializing @rwxml/vsc-extension...')
   container.clearInstances()
 
-  container.register(LogLevelToken, { useValue: logLevel })
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
   container.register(ExtensionContextToken, { useValue: context })
+
+  // init logger
+  const logManager = container.resolve(LogManager)
+  disposables.push(logManager.init())
+  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
+
+  const log = logManager.defaultLogger
+  log.add(new ExtensionLog())
+  // log.add(new winston.transports.File({ dirname: context.logUri.fsPath, filename: 'client.log', level: 'silly' }))
+  // console.log(`writing logs to ${context.logUri.fsPath}`)
 
   // check insider version exists (main / insider cannot co-exists)
   await checkInsider()
@@ -41,18 +47,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   updateNotification.checkFirstRunThisVersion()
 
   // 2. initialize containers (set values)
-  // automatically moved to pathStore
 
   // 2-2. register commands
-  console.log('register commands...')
+  log.info('registering commands...')
   disposables.push(...commands.initialize())
 
   // 3. initialize language server
-  console.log('initializing Language Server...')
+  log.info('initializing Language Server...')
   const client = await createServer()
 
   // 4. init resourceProvider
-  console.log('initializing resourceProviders...')
+  log.info('initializing resourceProviders...')
   const resourceProviders = container.resolveAll<resources.Provider>(resources.Provider.token)
   resourceProviders.forEach((resource) => resource.listen(client))
 
@@ -73,22 +78,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // )
 
   // 6. initialize && wait Runtime TypeInfo Extractor
-  console.log('checking Runtime TypeInfo Extractor available...')
-  checkTypeInfoAnalyzeAvailable()
+  log.info('checking Runtime TypeInfo Extractor available...')
+  if (!checkTypeInfoAnalyzeAvailable()) {
+    log.error('extractor is not available. extension might not work...')
+  }
 
   // 7. send mod list to language server
   // TODO: this feature is moved to projectWatcher
   // it sends all watched file on init (before watching)
 
   // 8. add decorate update
-  console.log('register lsp features...')
+  log.info('register lsp features...')
   disposables.push(...features.registerFeatures())
 
   // 9. set project watcher
-  console.log('initialize Project Watcher...')
+  log.info('initialize Project Watcher...')
   container.resolve(ProjectWatcher).start()
 
-  console.log('initialization completed.')
+  log.info('initialization completed.')
 }
 
 export function deactivate() {
@@ -105,8 +112,7 @@ async function createServer() {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
   const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
-  const logLevel = container.resolve<string>(LogLevelToken)
-  console.log(`server module absolute path: ${module}`)
+  log().debug(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {
     run: { module, transport: TransportKind.ipc },
@@ -127,7 +133,7 @@ async function createServer() {
     ],
     initializationOptions: {
       logs: {
-        level: logLevel,
+        level: container.resolve(LogManager).level(),
       },
     },
   }

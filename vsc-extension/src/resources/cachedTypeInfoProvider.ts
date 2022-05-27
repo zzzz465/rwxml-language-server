@@ -16,6 +16,9 @@ import * as vscode from 'vscode'
 import * as os from 'os'
 import * as cp from 'child_process'
 import * as semver from 'semver'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
+import jsonStr from '../utils/json'
 
 interface Cache {
   extractorVersion: string // semver
@@ -30,6 +33,11 @@ interface Cache {
 
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(CachedTypeInfoProvider), logFormat),
+    transports: [defaultLogger()],
+  })
+
   private static readonly extractorVersion = new semver.SemVer('0.7.0')
 
   get dllCacheDirectory(): string {
@@ -64,7 +72,7 @@ export class CachedTypeInfoProvider implements Provider {
 
   private async clearCache() {
     const caches = await fs.readdir(this.dllCacheDirectory)
-    console.log(`deleting ${caches.length} caches: ${JSON.stringify(caches, null, 4)}`)
+    this.log.debug(`deleting ${caches.length} caches: ${jsonStr(caches)}`)
     await Promise.all(caches.map((c) => fs.rm(path.join(this.dllCacheDirectory, c))))
 
     vscode.window.showInformationMessage(`RWXML: Cleared ${caches.length} caches.`, 'OK')
@@ -88,8 +96,8 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheName = this.getCacheName(uris).slice(0, 12)
     const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', `${cacheName}.json`)
 
-    console.log(`[${requestId}] requested uris: ${JSON.stringify(uris, null, 4)}`)
-    console.log(`[${requestId}] cache path: ${uris}`)
+    this.log.debug(`received typeInfo request. uris count: ${uris.length}`)
+    this.log.silly(`uris: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
 
     const checkCacheValid = async () => {
       // https://nodejs.org/api/fs.html#file-system-flags
@@ -104,7 +112,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        console.error(`[${requestId}] failed opening cache. file: ${cachePath}, err: `, e)
+        this.log.error(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
       } finally {
         await file?.close()
       }
@@ -118,7 +126,7 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheData = await checkCacheValid()
     let data = cacheData.data
     if (!cacheData.valid) {
-      console.log(`[${requestId}] checksum invalid, updating cache.`)
+      this.log.debug('checksum invalid, updating cache.', { id: requestId })
 
       const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
       if (res.error) {
@@ -129,7 +137,7 @@ export class CachedTypeInfoProvider implements Provider {
 
       await this.updateCache(cachePath, uris, data, requestId)
     } else {
-      console.log(`cache hit! uris: ${JSON.stringify(uris, null, 4)}`)
+      this.log.silly(`cache hit! uris: ${jsonStr(uris)}`)
     }
 
     return { data }
@@ -182,12 +190,12 @@ export class CachedTypeInfoProvider implements Provider {
         requestedFileUris: files,
       }
 
-      const raw = JSON.stringify(cache, null, 4)
+      const raw = jsonStr(cache)
 
       await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
-      console.log(`[${requestId}] write cache to file: `, cachePath)
+      this.log.debug(`write cache to file: ${jsonStr(cachePath)}`, { id: requestId })
     } catch (err) {
-      console.error(`[${requestId}] failed to write cache to file: ${cachePath}, err: `, err)
+      this.log.error(`failed to write cache to file: ${cachePath}, err: ${jsonStr(err)}`, { id: requestId })
     }
   }
 }

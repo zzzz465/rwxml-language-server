@@ -37,7 +37,6 @@ export abstract class PathStore {
   protected abstract defaultLanguageServerModulePath(): string
 
   constructor() {
-    console.log('PathStore initialized')
     vscode.workspace.onDidChangeConfiguration(this.onConfigurationChanges.bind(this))
   }
 

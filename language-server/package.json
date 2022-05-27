@@ -59,6 +59,7 @@
     "cache-decorator": "^0.1.6",
     "cheerio": "^1.0.0-rc.10",
     "double-ended-queue": "^2.1.0-0",
+    "esbuild-loader": "^2.19.0",
     "events": "^3.3.0",
     "fast-deep-equal": "^3.1.3",
     "flatted": "^3.2.5",
