@@ -4,6 +4,8 @@
 
 const path = require('path')
 const webpack = require('webpack')
+const tsconfig = require('./tsconfig.json')
+const { ESBuildMinifyPlugin } = require('esbuild-loader')
 
 /**@type {import('webpack').Configuration}*/
 const config = {
@@ -40,15 +42,19 @@ const config = {
       {
         test: /\.ts$/,
         exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              projectReferences: true,
-            },
-          },
-        ],
+        loader: 'esbuild-loader',
+        options: {
+          loader: 'tsx',
+          target: tsconfig.compilerOptions.target,
+        },
       },
+    ],
+  },
+  optimization: {
+    minimizer: [
+      new ESBuildMinifyPlugin({
+        keepNames: true,
+      }),
     ],
   },
 }
