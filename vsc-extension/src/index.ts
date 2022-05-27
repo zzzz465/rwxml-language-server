@@ -14,24 +14,22 @@ import { ExtensionVersionToken } from './version'
 import { ExtensionContextToken } from './extension'
 import { UpdateNotification } from './notification/updateNotification'
 import checkInsider from './insiderCheck'
-import { LogLevelToken } from './log'
 import { SemanticTokenProvider } from './features/semanticTokenProvider'
+import { LogManager } from './log'
 
 const disposables: vscode.Disposable[] = []
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  let logLevel = vscode.workspace.getConfiguration('rwxml.logs').get<string>('level')
-  if (!logLevel) {
-    logLevel = 'info'
-  }
-
   // 1. reset container && set extensionContext
   console.log('initializing @rwxml/vsc-extension...')
   container.clearInstances()
 
-  container.register(LogLevelToken, { useValue: logLevel })
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })
   container.register(ExtensionContextToken, { useValue: context })
+
+  // init logger
+  const logManager = container.resolve(LogManager)
+  disposables.push(logManager.init())
 
   // check insider version exists (main / insider cannot co-exists)
   await checkInsider()
@@ -41,7 +39,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   updateNotification.checkFirstRunThisVersion()
 
   // 2. initialize containers (set values)
-  // automatically moved to pathStore
 
   // 2-2. register commands
   console.log('register commands...')
