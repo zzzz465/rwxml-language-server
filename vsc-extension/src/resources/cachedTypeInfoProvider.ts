@@ -19,6 +19,7 @@ import * as semver from 'semver'
 import winston from 'winston'
 import defaultLogger, { className, logFormat } from '../log'
 import { ProjectWatcher } from '../projectWatcher'
+import jsonStr from '../utils/json'
 
 interface Cache {
   extractorVersion: string // semver
@@ -72,7 +73,7 @@ export class CachedTypeInfoProvider implements Provider {
 
   private async clearCache() {
     const caches = await fs.readdir(this.dllCacheDirectory)
-    this.log.debug(`deleting ${caches.length} caches: ${JSON.stringify(caches, null, 4)}`)
+    this.log.debug(`deleting ${caches.length} caches: ${jsonStr(caches)}`)
     await Promise.all(caches.map((c) => fs.rm(path.join(this.dllCacheDirectory, c))))
 
     vscode.window.showInformationMessage(`RWXML: Cleared ${caches.length} caches.`, 'OK')
@@ -97,8 +98,8 @@ export class CachedTypeInfoProvider implements Provider {
     const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', `${cacheName}.json`)
 
     this.log.info('handling typeInfo request.')
-    this.log.silly(`[${requestId}] requested uris: ${JSON.stringify(uris, null, 4)}`)
-    this.log.silly(`[${requestId}] cache path: ${uris}`)
+    this.log.debug(`requested uris: ${jsonStr(uris)}`, { id: requestId })
+    this.log.debug(`cache path: ${jsonStr(uris)}`, { id: requestId })
 
     const checkCacheValid = async () => {
       // https://nodejs.org/api/fs.html#file-system-flags
@@ -113,7 +114,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        this.log.error(`[${requestId}] failed opening cache. file: ${cachePath}, err: `, e)
+        this.log.error(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
       } finally {
         await file?.close()
       }
@@ -127,7 +128,7 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheData = await checkCacheValid()
     let data = cacheData.data
     if (!cacheData.valid) {
-      console.log(`[${requestId}] checksum invalid, updating cache.`)
+      this.log.debug('checksum invalid, updating cache.', { id: requestId })
 
       const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
       if (res.error) {
@@ -138,7 +139,7 @@ export class CachedTypeInfoProvider implements Provider {
 
       await this.updateCache(cachePath, uris, data, requestId)
     } else {
-      console.log(`cache hit! uris: ${JSON.stringify(uris, null, 4)}`)
+      this.log.silly(`cache hit! uris: ${jsonStr(uris)}`)
     }
 
     return { data }
@@ -191,12 +192,12 @@ export class CachedTypeInfoProvider implements Provider {
         requestedFileUris: files,
       }
 
-      const raw = JSON.stringify(cache, null, 4)
+      const raw = jsonStr(cache)
 
       await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
-      console.log(`[${requestId}] write cache to file: `, cachePath)
+      this.log.debug(`write cache to file: ${jsonStr(cachePath)}`, { id: requestId })
     } catch (err) {
-      console.error(`[${requestId}] failed to write cache to file: ${cachePath}, err: `, err)
+      this.log.error(`failed to write cache to file: ${cachePath}, err: ${jsonStr(err)}`, { id: requestId })
     }
   }
 }
