@@ -13,6 +13,7 @@ import { About } from './about'
 import { ProjectWorkspace } from './projectWorkspace'
 import { FileStore } from '../fileStore'
 import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from '../log'
 
 const VERSION_REGEX = /v[\d]\.[\d]$/
 
@@ -23,8 +24,10 @@ type Events = {
 // TODO: support on LoadFolder changes.
 @tsyringe.singleton()
 export class LoadFolder {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${LoadFolder.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(LoadFolder), logFormat),
+    transports: [defaultLogger()],
+  })
 
   private _rawXML = ''
   private readonly versionRegex = /.*v{0,1}([\d]\.[\d]).*/
@@ -51,11 +54,6 @@ export class LoadFolder {
     notiEventManager: NotificationEventManager,
     private readonly about: About
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))
     notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))

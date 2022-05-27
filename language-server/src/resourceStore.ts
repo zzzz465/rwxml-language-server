@@ -23,6 +23,7 @@ import TypedEventEmitter from 'typed-emitter'
 import { ModDependencyBags } from './mod/modDependencyBags'
 import { TextDocumentManager } from './textDocumentManager'
 import { TextDocument } from 'vscode-languageserver-textdocument'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = {
   workspaceChanged(): void
@@ -38,10 +39,10 @@ type Events = {
  */
 @scoped(Lifecycle.ContainerScoped)
 export class ResourceStore {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${ResourceStore.name}] [${this.version}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ResourceStore), logFormat),
+    transports: [defaultLogger()],
+  })
 
   readonly files: Set<string> = new Set()
   readonly xmls: Map<string, string> = new Map()
@@ -61,11 +62,6 @@ export class ResourceStore {
     private readonly modDependencyBags: ModDependencyBags,
     private readonly textDocumentManager: TextDocumentManager
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
     textDocumentManager.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))

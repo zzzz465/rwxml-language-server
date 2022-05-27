@@ -17,6 +17,7 @@ import * as documentWithNodeMap from './documentWithNodeMap'
 import { serializeError } from 'serialize-error'
 import TypedEventEmitter from 'typed-emitter'
 import * as ono from 'ono'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = {
   /**
@@ -37,10 +38,10 @@ type Events = {
 // TODO: impl disposable() for ContainerScoped classes.
 @scoped(Lifecycle.ContainerScoped)
 export class Project {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${Project.name}] [${this.version}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(Project), logFormat),
+    transports: [defaultLogger()],
+  })
 
   private xmls: Map<string, Document> = new Map()
   public defManager: DefManager
@@ -62,11 +63,6 @@ export class Project {
     private readonly typeInfoMapProvider: TypeInfoMapProvider,
     private readonly textDocumentManager: TextDocumentManager
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     this.defManager = new DefManager(new DefDatabase(), new NameDatabase(), new TypeInfoMap(), this.version)
 
     resourceStore.event.on('xmlChanged', this.onXMLChanged.bind(this))

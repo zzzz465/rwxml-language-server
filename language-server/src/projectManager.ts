@@ -8,6 +8,7 @@ import * as winston from 'winston'
 import { About } from './mod'
 import _ from 'lodash'
 import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = {
   onProjectInitialized(project: Project): void
@@ -19,8 +20,10 @@ type Events = {
  */
 @tsyringe.singleton()
 export class ProjectManager {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${ProjectManager.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ProjectManager), logFormat),
+    transports: [defaultLogger()],
+  })
 
   private supportedVersions: string[] = []
   private readonly projectContainers: Map<string, tsyringe.DependencyContainer> = new Map()
@@ -32,11 +35,6 @@ export class ProjectManager {
   public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
   constructor(about: About) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 

@@ -10,6 +10,7 @@ import _ from 'lodash'
 import { Dependency } from './modDependencyBags'
 import { URI } from 'vscode-uri'
 import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from '../log'
 
 export type AboutEvents = {
   aboutChanged(about: About): void
@@ -17,8 +18,10 @@ export type AboutEvents = {
 
 @singleton()
 export class About {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${About.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(About), logFormat),
+    transports: [defaultLogger()],
+  })
 
   readonly event = new EventEmitter() as TypedEventEmitter<AboutEvents>
 
@@ -70,13 +73,6 @@ export class About {
   }
   get rawXML() {
     return this._rawXML
-  }
-
-  constructor() {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
   }
 
   updateAboutXML(text: string) {

@@ -7,6 +7,7 @@ import { ConnectionToken } from './connection'
 import * as winston from 'winston'
 import TypedEventEmitter from 'typed-emitter'
 import { FileStore } from './fileStore'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = {
   textDocumentChanged(document: TextDocument): void
@@ -20,18 +21,15 @@ type Events = {
  */
 @singleton()
 export class TextDocumentsAdapter {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${TextDocumentsAdapter.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(TextDocumentsAdapter), logFormat),
+    transports: [defaultLogger()],
+  })
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
   readonly textDocuments = new TextDocuments(TextDocument)
 
   constructor(@inject(ConnectionToken) connection: Connection, private readonly fileStore: FileStore) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     this.textDocuments.listen(connection)
 
     this.textDocuments.onDidOpen(this.onOpen.bind(this))

@@ -13,6 +13,7 @@ import { ParentNameAttribValueHover } from './parentNameAttribValue'
 import { TagHoverProvider } from './tag'
 import { DefHoverProvider } from './def'
 import { ProjectHelper } from '../utils/project'
+import defaultLogger, { className, logFormat } from '../../log'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -56,8 +57,10 @@ type HoverType = 'parentNameValue' | 'defReference' | 'tag' | 'content' | 'def' 
  */
 @injectable()
 export class HoverProvider implements Provider {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${HoverProvider.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(HoverProvider), logFormat),
+    transports: [defaultLogger()],
+  })
 
   constructor(
     private readonly rangeConverter: RangeConverter,
@@ -66,12 +69,7 @@ export class HoverProvider implements Provider {
     private readonly tagHoverProvider: TagHoverProvider,
     private readonly defHoverProvider: DefHoverProvider,
     private readonly projectHelper: ProjectHelper
-  ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  ) {}
 
   protected getLogger(): winston.Logger {
     return this.log

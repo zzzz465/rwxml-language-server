@@ -3,19 +3,15 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
 import * as winston from 'winston'
+import defaultLogger, { className, logFormat } from '../../log'
 import { getGenericClassNameToString, getCsharpFieldCodeBlock, getClassNameCodeBlock } from '../utils/markdown'
 
 @tsyringe.injectable()
 export class TagHoverProvider {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${TagHoverProvider.name}] ${info.message}`)
-  private readonly log: winston.Logger
-
-  constructor() {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  private log = winston.createLogger({
+    format: winston.format.combine(className(TagHoverProvider), logFormat),
+    transports: [defaultLogger()],
+  })
 
   onTagHover(node: Injectable, offset: number): ls.Hover | null {
     if (!this.isPointingInjectableTagName(node, offset)) {

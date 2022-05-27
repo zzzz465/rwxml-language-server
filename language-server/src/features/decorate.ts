@@ -12,22 +12,20 @@ import { Project } from '../project'
 import { URI } from 'vscode-uri'
 import { ProjectHelper } from './utils/project'
 import { getNodesBFS, getRootElement } from './utils/node'
+import defaultLogger, { className, logFormat } from '../log'
 
 @tsyringe.injectable()
 export class DecoProvider implements Provider {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${DecoProvider.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(DecoProvider), logFormat),
+    transports: [defaultLogger()],
+  })
 
   constructor(
     private readonly projectHelper: ProjectHelper,
     private readonly rangeConverter: RangeConverter,
     private readonly defProvider: Definition
-  ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  ) {}
 
   init(connection: Connection): void {
     connection.onRequest(

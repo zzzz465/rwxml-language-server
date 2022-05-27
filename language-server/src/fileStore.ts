@@ -7,25 +7,21 @@ import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
 import { Result } from './types/functional'
 import * as ono from 'ono'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = NotificationEvents
 
 @singleton()
 export class FileStore {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${FileStore.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(FileStore), logFormat),
+    transports: [defaultLogger()],
+  })
 
   public readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
   private readonly files: Map<string, File> = new Map()
   private readonly referenceCounter: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
-
-  constructor() {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
 
   get(uri: string) {
     return this.files.get(uri)

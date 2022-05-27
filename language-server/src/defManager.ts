@@ -13,12 +13,13 @@ import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { RimWorldVersion } from './RimWorldVersion'
 import { DocumentWithNodeMap } from './documentWithNodeMap'
+import defaultLogger, { className, logFormat } from './log'
 
 export class DefManager {
-  private logFormat = winston.format.printf(
-    (info) => `[${info.level}] [${DefManager.name}] [${this.version}] ${info.message}`
-  )
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(DefManager), logFormat),
+    transports: [defaultLogger()],
+  })
 
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
   private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
@@ -30,10 +31,6 @@ export class DefManager {
     public readonly typeInfoMap: TypeInfoMap,
     public readonly version?: RimWorldVersion
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
 
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {

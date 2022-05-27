@@ -8,18 +8,16 @@ import { DefListRequest, DefListRequestResponse } from '../../events'
 import { Def } from '@rwxml/analyzer'
 import { PlainObject } from '../../types/plainObject'
 import { AsEnumerable } from 'linq-es2015'
+import defaultLogger, { className, logFormat } from '../../log'
 
 @tsyringe.injectable()
 export class DefListRequestHandler implements Provider {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${DefListRequestHandler.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(DefListRequestHandler), logFormat),
+    transports: [defaultLogger()],
+  })
 
-  constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-  }
+  constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {}
 
   init(connection: Connection): void {
     connection.onRequest(DefListRequest, this.projectHelper.wrapExceptionStackTraces(this.onRequest.bind(this)))

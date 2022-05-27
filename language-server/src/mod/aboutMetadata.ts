@@ -11,6 +11,7 @@ import { AsEnumerable } from 'linq-es2015'
 import { URI } from 'vscode-uri'
 import { FileStore } from '../fileStore'
 import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from '../log'
 
 /**
  * MetadataItem holds various data of a specific version.
@@ -63,8 +64,10 @@ export class AboutMetadata {
   static readonly relativePathFromRoot = './About/metadata_rwxml.xml'
   static readonly fileName = 'metadata_rwxml.xml'
 
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${AboutMetadata.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(AboutMetadata), logFormat),
+    transports: [defaultLogger()],
+  })
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
@@ -78,11 +81,6 @@ export class AboutMetadata {
     @tsyringe.inject(tsyringe.delay(() => About)) private readonly about: About,
     private readonly fileStore: FileStore
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     about.event.on('aboutChanged', (about) => this.onAboutChanged(about))
     notiEventManager.preEvent.on('fileAdded', (file) => this.onFileChanged(file))
     notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))

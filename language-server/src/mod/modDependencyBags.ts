@@ -14,6 +14,7 @@ import AsyncLock from 'async-lock'
 import { ConnectionToken } from '../connection'
 import { FileStore } from '../fileStore'
 import { URI } from 'vscode-uri'
+import defaultLogger, { className, logFormat } from '../log'
 
 /**
 무엇을 하려고 하는가?
@@ -167,8 +168,10 @@ type Events = {
  */
 @tsyringe.singleton()
 export class ModDependencyBags {
-  private logFormat = winston.format.printf((info) => `[${info.level}] [${ModDependencyBags.name}] ${info.message}`)
-  private readonly log: winston.Logger
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ModDependencyBags), logFormat),
+    transports: [defaultLogger()],
+  })
 
   private readonly dependencyBags: Map<string, DependencyResourceBag> = new Map()
 
@@ -184,11 +187,6 @@ export class ModDependencyBags {
     private readonly fileStore: FileStore,
     @tsyringe.inject(ConnectionToken) private readonly connection: Connection
   ) {
-    this.log = winston.createLogger({
-      transports: [new winston.transports.Console()],
-      format: this.logFormat,
-    })
-
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
     aboutMetadata.event.on('aboutMetadataChanged', this.onAboutMetadataChanged.bind(this))
   }
