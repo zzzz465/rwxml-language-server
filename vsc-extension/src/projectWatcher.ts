@@ -1,13 +1,20 @@
 import { injectable } from 'tsyringe'
 import vscode, { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
+import winston, { format } from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
+import defaultLogger, { className, logFormat } from './log'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
 export const globPattern = `**/*.{${watchedExts.join(',')}}`
 
 @injectable()
 export class ProjectWatcher {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ProjectWatcher), logFormat),
+    transports: [defaultLogger()],
+  })
+
   private readonly fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
 
   private watching = false
@@ -39,7 +46,7 @@ export class ProjectWatcher {
     const uris = await vscode.workspace.findFiles(globPattern)
 
     for (const uri of uris) {
-      console.log('init sending file: ', uri.toString())
+      this.log.debug('init sending file: ', uri.toString())
       this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
     }
   }
