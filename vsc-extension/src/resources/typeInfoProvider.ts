@@ -6,11 +6,18 @@ import { Provider } from './provider'
 import * as vscode from 'vscode'
 import { createProgress } from '../utils/progress'
 import * as mod from '../mod'
-import { ExtractionError } from '../typeInfo/error'
 import { serializeError } from 'serialize-error'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
+import jsonStr from '../utils/json'
 
 @tsyringe.injectable()
 export class TypeInfoProvider implements Provider {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(TypeInfoProvider), logFormat),
+    transports: [defaultLogger()],
+  })
+
   constructor(@tsyringe.inject(mod.PathStore.token) private readonly pathStore: mod.PathStore) {}
 
   async listen(client: LanguageClient): Promise<void> {
@@ -26,7 +33,7 @@ export class TypeInfoProvider implements Provider {
     const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
 
     const managedDirectory = this.pathStore.RimWorldManagedDirectory
-    console.log('managed directory: ', managedDirectory)
+    this.log.debug('managed directory: ', managedDirectory)
     dllPaths.push(managedDirectory)
 
     if (!this.clearProgress) {
@@ -40,13 +47,13 @@ export class TypeInfoProvider implements Provider {
     this.requestCounter += 1
 
     try {
-      console.log('requesting dll extraction. paths: ', JSON.stringify(dllPaths, null, 2))
+      this.log.silly(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
       const typeInfos = await extractTypeInfos(...dllPaths)
 
       res.data = typeInfos
     } catch (err) {
       res.error = err as Error
-      console.error(`failed to extract data. error: ${serializeError(err)}`)
+      this.log.error(`failed to extract data. error: ${serializeError(err)}`)
     }
 
     this.requestCounter -= 1
