@@ -18,7 +18,6 @@ import * as cp from 'child_process'
 import * as semver from 'semver'
 import winston from 'winston'
 import defaultLogger, { className, logFormat } from '../log'
-import { ProjectWatcher } from '../projectWatcher'
 import jsonStr from '../utils/json'
 
 interface Cache {
@@ -35,7 +34,7 @@ interface Cache {
 @injectable()
 export class CachedTypeInfoProvider implements Provider {
   private log = winston.createLogger({
-    format: winston.format.combine(className(ProjectWatcher), logFormat),
+    format: winston.format.combine(className(CachedTypeInfoProvider), logFormat),
     transports: [defaultLogger()],
   })
 
@@ -97,9 +96,8 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheName = this.getCacheName(uris).slice(0, 12)
     const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', `${cacheName}.json`)
 
-    this.log.info('handling typeInfo request.')
-    this.log.debug(`requested uris: ${jsonStr(uris)}`, { id: requestId })
-    this.log.debug(`cache path: ${jsonStr(uris)}`, { id: requestId })
+    this.log.debug(`received typeInfo request. uris count: ${uris.length}`)
+    this.log.silly(`uris: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
 
     const checkCacheValid = async () => {
       // https://nodejs.org/api/fs.html#file-system-flags

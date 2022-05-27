@@ -4,6 +4,7 @@ import { LanguageClient } from 'vscode-languageclient'
 import winston, { format } from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import defaultLogger, { className, logFormat } from './log'
+import jsonStr from './utils/json'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
 export const globPattern = `**/*.{${watchedExts.join(',')}}`
@@ -44,9 +45,10 @@ export class ProjectWatcher {
    */
   private async initLoading() {
     const uris = await vscode.workspace.findFiles(globPattern)
+    this.log.debug(`sending initial load files. count: ${uris.length}`)
+    this.log.silly(`initial load files: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
 
     for (const uri of uris) {
-      this.log.debug('init sending file: ', uri.toString())
       this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
     }
   }

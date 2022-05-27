@@ -1,10 +1,10 @@
-import { compareDocumentPosition } from '.pnpm/domutils@2.8.0/node_modules/domutils'
 import { execFile } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
 import * as tsyringe from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { ExtensionContextToken } from '../extension'
+import defaultLogger from '../log'
 import { ExtractionError } from './error'
 
 // TODO: refactor this code.
@@ -62,7 +62,7 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const port = options?.port ?? 9870
 
   const args = buildExtractorArgs(dllPaths, port)
-  console.log(`executing process: ${commandToString(extractorCmd, args)}`)
+  defaultLogger().silly(`executing process: ${commandToString(extractorCmd, args)}`)
 
   const p = execFile(extractorCmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
@@ -77,7 +77,7 @@ const timeout = 60000 // 60 second
 export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
   const server = createServer()
   const port = _.random(10000, 20000)
-  console.log(`server listening on 127.0.0.1:${port}`)
+  defaultLogger().silly(`server listening on 127.0.0.1:${port}`)
   server.listen(port, '127.0.0.1')
 
   const process = initExtractorProcess(dllPaths, { port })

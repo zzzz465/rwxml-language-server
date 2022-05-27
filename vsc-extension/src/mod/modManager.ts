@@ -32,7 +32,7 @@ export class ModManager {
   }
 
   constructor(@inject(PathStore.token) private readonly pathStore: PathStore) {
-    this.log.debug(`ModManager watching directories: ${jsonStr(this.directoryUris)}`)
+    this.log.debug(`ModManager watching directories: ${jsonStr(this.directoryUris.map((data) => data.fsPath))}`)
   }
 
   async init() {
