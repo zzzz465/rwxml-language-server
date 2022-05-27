@@ -4,6 +4,7 @@
 
 const path = require('path')
 const webpack = require('webpack')
+const tsconfig = require('./tsconfig.json')
 const { ESBuildMinifyPlugin } = require('esbuild-loader')
 
 /**@type {import('webpack').Configuration}*/
