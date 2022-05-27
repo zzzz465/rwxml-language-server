@@ -16,11 +16,17 @@ export class LogManager {
   })
 
   init(): Disposable {
-    this.defaultLogger.level = vscode.workspace
-      .getConfiguration(KEY_SCOPE)
-      .get<string>(KEY_LOG_LEVEL, DEFAULT_LOG_LEVEL)
+    this.setLoggerLevel(this.level())
 
     return vscode.workspace.onDidChangeConfiguration(this.onConfigurationChanged)
+  }
+
+  level(): string {
+    return vscode.workspace.getConfiguration(KEY_SCOPE).get<string>(KEY_LOG_LEVEL, DEFAULT_LOG_LEVEL)
+  }
+
+  private setLoggerLevel(level: string): void {
+    this.defaultLogger.level = level
   }
 
   private onConfigurationChanged(e: ConfigurationChangeEvent): void {
@@ -28,8 +34,6 @@ export class LogManager {
       return
     }
 
-    this.defaultLogger.level = vscode.workspace
-      .getConfiguration(KEY_SCOPE)
-      .get<string>(KEY_LOG_LEVEL, DEFAULT_LOG_LEVEL)
+    this.setLoggerLevel(this.level())
   }
 }
