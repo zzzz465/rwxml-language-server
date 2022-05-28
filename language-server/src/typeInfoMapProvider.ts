@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { TypeInfoMap, TypeInfoLoader, TypeInfo } from '@rwxml/analyzer'
+import { TypeInfo, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
 import { delay, inject, Lifecycle, scoped } from 'tsyringe'
+import { v4 as uuid } from 'uuid'
 import { Connection } from 'vscode-languageserver'
+import * as winston from 'winston'
 import { ConnectionToken } from './connection'
 import { TypeInfoRequest } from './events'
-import { Project } from './project'
-import * as winston from 'winston'
-import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
-import { v4 as uuid } from 'uuid'
 import defaultLogger, { className, logFormat } from './log'
+import { Project } from './project'
+import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import jsonStr from './utils/json'
 
 @scoped(Lifecycle.ContainerScoped)

@@ -1,10 +1,10 @@
 import { inject, injectable } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
-import { TextRequest } from '../events'
-import { File } from './file'
 import * as winston from 'winston'
 import { ConnectionToken } from '../connection'
+import { TextRequest } from '../events'
 import defaultLogger, { className, logFormat } from '../log'
+import { File } from './file'
 
 @injectable()
 export class TextReader {

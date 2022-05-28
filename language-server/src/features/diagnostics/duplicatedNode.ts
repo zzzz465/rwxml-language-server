@@ -1,14 +1,14 @@
 import { Def, Document, Element, Injectable } from '@rwxml/analyzer'
-import * as ls from 'vscode-languageserver'
-import * as tsyringe from 'tsyringe'
-import { Project } from '../../project'
-import { RangeConverter } from '../../utils/rangeConverter'
-import { DiagnosticsContributor } from './contributor'
-import { getNodesBFS } from '../utils/node'
 import { AsEnumerable } from 'linq-es2015'
+import * as tsyringe from 'tsyringe'
+import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import defaultLogger, { className, logFormat } from '../../log'
+import { Project } from '../../project'
 import jsonStr from '../../utils/json'
+import { RangeConverter } from '../../utils/rangeConverter'
+import { getNodesBFS } from '../utils/node'
+import { DiagnosticsContributor } from './contributor'
 
 /**
  * DuplicatedNode provides diagnostics against duplicated nodes

@@ -1,13 +1,13 @@
 import { Document, Injectable } from '@rwxml/analyzer'
+import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
-import { Project } from '../../project'
-import { DiagnosticsContributor } from './contributor'
 import winston from 'winston'
-import { AsEnumerable } from 'linq-es2015'
-import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
-import { RangeConverter } from '../../utils/rangeConverter'
 import defaultLogger, { className, logFormat } from '../../log'
+import { Project } from '../../project'
+import { RangeConverter } from '../../utils/rangeConverter'
+import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
+import { DiagnosticsContributor } from './contributor'
 
 /**
  * PrimitiveValue provides diagnosis for primitive nodes like integer, string, boolean, etc.

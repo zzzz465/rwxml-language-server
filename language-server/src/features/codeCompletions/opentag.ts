@@ -1,14 +1,13 @@
-import { Def, Document, Element, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Def, Document, Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
-import { Range } from '@rwxml/analyzer'
+import { injectable } from 'tsyringe'
 import { MultiDictionary } from 'typescript-collections'
-import { CompletionItem, CompletionItemKind, TextEdit, Command, CompletionList } from 'vscode-languageserver'
+import { Command, CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
-import { isPointingOpenTagName, makeTagNode } from '../utils/node'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { injectable } from 'tsyringe'
+import { isPointingOpenTagName, makeTagNode } from '../utils/node'
 import { CodeCompletionContributor } from './contributor'
 
 @injectable()

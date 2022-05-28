@@ -1,14 +1,14 @@
+import { Def } from '@rwxml/analyzer'
+import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
-import { Provider } from '../provider'
 import winston from 'winston'
-import { ProjectHelper } from '../utils/project'
-import { ProjectManager } from '../../projectManager'
 import { DefListRequest, DefListRequestResponse } from '../../events'
-import { Def } from '@rwxml/analyzer'
-import { PlainObject } from '../../types/plainObject'
-import { AsEnumerable } from 'linq-es2015'
 import defaultLogger, { className, logFormat } from '../../log'
+import { ProjectManager } from '../../projectManager'
+import { PlainObject } from '../../types/plainObject'
+import { Provider } from '../provider'
+import { ProjectHelper } from '../utils/project'
 
 @tsyringe.injectable()
 export class DefListRequestHandler implements Provider {
