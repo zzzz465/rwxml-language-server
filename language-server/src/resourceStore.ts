@@ -62,9 +62,10 @@ export class ResourceStore {
     private readonly modDependencyBags: ModDependencyBags,
     private readonly textDocumentManager: TextDocumentManager
   ) {
-    const workspace = loadFolder.getProjectWorkspace(this.version)
+    let workspace = loadFolder.getProjectWorkspace(this.version)
     if (!workspace) {
-      throw new Error(`projectWorkspace for version ${this.version} is not exists.`)
+      this.log.warn('projectWorkspace not found.')
+      workspace = new ProjectWorkspace(this.version, URI.parse(''), [])
     }
 
     this.projectWorkspace = workspace
