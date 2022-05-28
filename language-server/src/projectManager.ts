@@ -100,6 +100,8 @@ export class ProjectManager {
     if (!projectContainer) {
       projectContainer = this.newContainer(version)
       this.projectContainers.set(version, projectContainer)
+
+      this.log.silly(`project ver: ${version} created.`)
       this.events.emit('onProjectInitialized', projectContainer.resolve(Project))
     }
 

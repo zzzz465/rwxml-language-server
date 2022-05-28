@@ -110,6 +110,12 @@ export class LoadFolder {
     event.on('fileDeleted', this.onFileDeleted.bind(this))
   }
 
+  private newProjectWorkspace(version: string, rootDirectory: URI, relatives?: string[]): ProjectWorkspace {
+    relatives = relatives ?? ['.', version]
+
+    return new ProjectWorkspace(version, rootDirectory, relatives)
+  }
+
   /**
    * update() updates this instance, parsing the given text.
    */
@@ -129,7 +135,7 @@ export class LoadFolder {
     }
 
     for (const version of this.about.supportedVersions.filter((v) => !this.projectWorkspaces.has(v))) {
-      this.projectWorkspaces.set(version, new ProjectWorkspace(version, this.rootDirectory, ['.']))
+      this.projectWorkspaces.set(version, this.newProjectWorkspace(version, this.rootDirectory))
     }
 
     this.log.debug(`updated workspaces: ${jsonStr([...this.projectWorkspaces.values()])}`)
@@ -178,7 +184,7 @@ export class LoadFolder {
 
   private onFileDeleted(uri: string) {
     if (uri === this.filePath.toString()) {
-      throw new Error('onFileDeleted is not implemented.')
+      this.update('')
     }
   }
 

@@ -53,7 +53,7 @@ export class ResourceStore {
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
-  private projectWorkspace = new ProjectWorkspace(this.version, URI.parse(''), [])
+  private projectWorkspace: ProjectWorkspace
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
@@ -62,6 +62,14 @@ export class ResourceStore {
     private readonly modDependencyBags: ModDependencyBags,
     private readonly textDocumentManager: TextDocumentManager
   ) {
+    let workspace = loadFolder.getProjectWorkspace(this.version)
+    if (!workspace) {
+      this.log.warn('projectWorkspace not found.')
+      workspace = new ProjectWorkspace(this.version, URI.parse(''), [])
+    }
+
+    this.projectWorkspace = workspace
+
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
     textDocumentManager.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
@@ -75,17 +83,18 @@ export class ResourceStore {
   isProjectResource(fileOrUri: File | string): boolean {
     const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
 
-    // 2. is the file already registered as project resource?
-    if (this.files.has(uri)) {
-      return true
-    }
+    // is the file already registered as project resource?
+    // NOTE: Why this is required?
+    // if (this.files.has(uri)) {
+    //   return true
+    // }
 
-    // 3. is the file registered as dependency?
+    // is the file registered as dependency?
     if (this.isDependencyFile(uri)) {
       return true
     }
 
-    // 4. is the file comes from current workspace?
+    // is the file comes from current workspace?
     if (this.projectWorkspace.includes(URI.parse(uri))) {
       return true
     }
@@ -170,10 +179,6 @@ export class ResourceStore {
   }
 
   fileDeleted(uri: string): void {
-    if (!this.isProjectResource(uri)) {
-      return
-    }
-
     const ext = path.extname(uri)
 
     if (isXMLFile(ext)) {
@@ -190,7 +195,6 @@ export class ResourceStore {
 
     if (!this.files.delete(uri)) {
       this.log.error(`trying to delete file but not exists. uri: ${uri}`)
-      return
     }
 
     this.log.silly(`resource deleted. uri: ${uri.toString()}`)
@@ -199,7 +203,8 @@ export class ResourceStore {
   /**
    * compare project files against fileStore, and add/delete files
    */
-  fetchFiles() {
+  reload(reason?: string) {
+    this.log.debug(`reload resourceStore. reason: ${reason}`)
     for (const [uri, file] of this.fileStore) {
       if (this.isProjectResource(uri) && !this.files.has(uri)) {
         this.fileAdded(file)
@@ -347,10 +352,10 @@ export class ResourceStore {
 
     this.projectWorkspace = newProjectWorkspace
 
-    this.fetchFiles()
+    this.reload('loadFolderChanged')
   }
 
   private onDependencyChanged(): void {
-    this.fetchFiles()
+    this.reload('dependencyChanged')
   }
 }

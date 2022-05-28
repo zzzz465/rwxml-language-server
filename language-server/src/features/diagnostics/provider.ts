@@ -12,17 +12,9 @@ import { Provider } from '../provider'
 import { getRootElement } from '../utils'
 import { DiagnosticsContributor } from './contributor'
 
-/*
-무엇이 필요할지 생각해보자.
-
-- project 초기화(생성) 시 이벤트 등록하기 + 전체 검증하기 (debounce 필요)
-- 변경점 많을 경우, diagnostics 대기한다음 첨부터 다시하기? (필요한가? 나중에?)
-- 일단 defChanged 되면 그거 기반으로... 이것저것 해야하나?
-- 그냥 파일 단위로 validation 을 하면 안되나? -> 문제 생길 수도 있지않나?
-*/
-
 /**
  * DiagnosticsProvider provides code diganostics.
+ * TODO: add clear(document) when file removed from pool.
  */
 @tsyringe.injectable()
 export class DiagnosticsProvider implements Provider {

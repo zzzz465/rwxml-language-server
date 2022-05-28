@@ -46,6 +46,7 @@ specifiers:
   typed-emitter: ^2.1.0
   typescript: ^4.6.3
   typescript-collections: ^1.3.3
+  utility-types: ^3.10.0
   uuid: ^8.3.2
   vscode-languageserver: ^7.0.0
   vscode-languageserver-textdocument: ^1.0.4
@@ -107,6 +108,7 @@ devDependencies:
   ts-node: 10.7.0_52efxrzidnucw2w35vvobhxasa
   typed-emitter: 2.1.0
   typescript: 4.6.3
+  utility-types: 3.10.0
   webpack: 5.72.0_webpack-cli@4.9.2
   webpack-cli: 4.9.2_webpack@5.72.0
 
@@ -4045,6 +4047,11 @@ packages:
   /util-deprecate/1.0.2:
     resolution: {integrity: sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=}
     dev: false
+
+  /utility-types/3.10.0:
+    resolution: {integrity: sha512-O11mqxmi7wMKCo6HKFt5AhO4BwY3VV68YU07tgxfz8zJTIxr4BpsezN49Ffwy9j3ZpwwJp4fkRwjRzq3uWE6Rg==}
+    engines: {node: '>= 4'}
+    dev: true
 
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}

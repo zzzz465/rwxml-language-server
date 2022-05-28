@@ -1,16 +1,35 @@
 import { Def, Element, Injectable, Range } from '@rwxml/analyzer'
-import { container, injectable } from 'tsyringe'
+import { from } from 'linq-es2015'
+import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
+import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
+import { Provider } from './provider'
 import { toLocation } from './utils/node'
 
-@injectable()
-export class CodeLens {
-  onCodeLens(project: Project, uri: URI): lsp.CodeLens[] {
+// TODO: add clear(document) when file removed from pool.
+@tsyringe.singleton()
+export class CodeLens implements Provider {
+  constructor(private readonly projectManager: ProjectManager, private readonly rangeConverter: RangeConverter) {}
+
+  init(connection: lsp.Connection): void {
+    connection.onCodeLens((p, t) => this.onCodeLensRequest(p, t))
+  }
+
+  // (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
+  private async onCodeLensRequest(
+    params: lsp.CodeLensParams,
+    token: lsp.CancellationToken
+  ): Promise<lsp.CodeLens[] | null> {
+    return from(this.projectManager.projects)
+      .SelectMany((proj) => this.codeLens(proj, URI.parse(params.textDocument.uri)))
+      .ToArray()
+  }
+
+  private codeLens(project: Project, uri: URI): lsp.CodeLens[] {
     const document = project.getXMLDocumentByUri(uri)
-    const rangeConverter = container.resolve(RangeConverter)
     const root = document?.children.find((node) => node instanceof Element) as Element | undefined
 
     if (!root || !(root.name === 'Defs')) {
@@ -24,7 +43,7 @@ export class CodeLens {
         continue
       }
 
-      const range = rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+      const range = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 
       if (!range) {
         continue
@@ -33,7 +52,7 @@ export class CodeLens {
       const defName = def.getDefName()
       const defNameContentRange =
         def.ChildElementNodes.find((node) => node.name === 'defName')?.contentRange ?? new Range()
-      const position = rangeConverter.toLanguageServerRange(defNameContentRange, uri.toString())?.start
+      const position = this.rangeConverter.toLanguageServerRange(defNameContentRange, uri.toString())?.start
       if (defName && defNameContentRange && position) {
         const injectables = project.defManager.getReferenceResolveWanters(defName)
 
