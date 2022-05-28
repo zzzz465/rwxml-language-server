@@ -1,39 +1,15 @@
 import * as tsyringe from 'tsyringe'
+import * as ls from 'vscode-languageserver'
+import { registrations } from '../utils/tsyringe'
+import { DefListRequestHandler } from './commands/defListRequestHandler'
+import { ParsedTypeInfoRequestHandler } from './commands/parsedTypeInfoRequest'
+import { DecoProvider } from './decorate'
+import { DiagnosticsProvider } from './diagnostics/provider'
 import { HoverProvider } from './hover/hover'
 import { Provider } from './provider'
-import * as ls from 'vscode-languageserver'
-import { DecoProvider } from './decorate'
-import { ParsedTypeInfoRequestHandler } from './commands/parsedTypeInfoRequest'
-import { DiagnosticsProvider } from './diagnostics/provider'
-import { DefListRequestHandler } from './commands/defListRequestHandler'
 
-@tsyringe.registry([
-  {
-    token: ProviderRegistry.token,
-    useClass: HoverProvider,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-  {
-    token: ProviderRegistry.token,
-    useClass: DecoProvider,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-  {
-    token: ProviderRegistry.token,
-    useClass: ParsedTypeInfoRequestHandler,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-  {
-    token: ProviderRegistry.token,
-    useClass: DiagnosticsProvider,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-  {
-    token: ProviderRegistry.token,
-    useClass: DefListRequestHandler,
-    options: { lifecycle: tsyringe.Lifecycle.Singleton },
-  },
-])
+const cls = [HoverProvider, DecoProvider, ParsedTypeInfoRequestHandler, DiagnosticsProvider, DefListRequestHandler]
+@tsyringe.registry(registrations<Provider>(ProviderRegistry.token, cls, { lifecycle: tsyringe.Lifecycle.Singleton }))
 export abstract class ProviderRegistry {
   static readonly token = Symbol('LanguageFeatureProviderToken')
 
