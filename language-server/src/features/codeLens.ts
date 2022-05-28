@@ -6,6 +6,7 @@ import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { toLocation } from './utils/node'
 
+// TODO: add clear(document) when file removed from pool.
 @injectable()
 export class CodeLens {
   onCodeLens(project: Project, uri: URI): lsp.CodeLens[] {

@@ -14,6 +14,7 @@ import { Provider } from './provider'
 import { getNodesBFS, getRootElement } from './utils/node'
 import { ProjectHelper } from './utils/project'
 
+// // TODO: add clear(document) when file removed from pool.
 @tsyringe.injectable()
 export class DecoProvider implements Provider {
   private log = winston.createLogger({
