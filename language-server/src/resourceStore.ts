@@ -208,7 +208,8 @@ export class ResourceStore {
   /**
    * compare project files against fileStore, and add/delete files
    */
-  fetchFiles() {
+  reload(reason?: string) {
+    this.log.debug(`reload resourceStore. reason: ${reason}`)
     for (const [uri, file] of this.fileStore) {
       if (this.isProjectResource(uri) && !this.files.has(uri)) {
         this.fileAdded(file)
@@ -356,10 +357,10 @@ export class ResourceStore {
 
     this.projectWorkspace = newProjectWorkspace
 
-    this.fetchFiles()
+    this.reload('loadFolderChanged')
   }
 
   private onDependencyChanged(): void {
-    this.fetchFiles()
+    this.reload('dependencyChanged')
   }
 }

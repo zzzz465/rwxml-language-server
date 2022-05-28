@@ -124,7 +124,7 @@ export class Project {
     const cancelToken = this.cancelTokenSource.token
 
     this.log.info(`loading project resources...`, { id: requestId })
-    this.resourceStore.fetchFiles()
+    this.resourceStore.reload('project reload')
 
     this.log.info(`clear project...`, { id: requestId })
     const err = await this.reset(requestId, cancelToken)
