@@ -179,10 +179,6 @@ export class ResourceStore {
   }
 
   fileDeleted(uri: string): void {
-    if (!this.isProjectResource(uri)) {
-      return
-    }
-
     const ext = path.extname(uri)
 
     if (isXMLFile(ext)) {
@@ -199,7 +195,6 @@ export class ResourceStore {
 
     if (!this.files.delete(uri)) {
       this.log.error(`trying to delete file but not exists. uri: ${uri}`)
-      return
     }
 
     this.log.silly(`resource deleted. uri: ${uri.toString()}`)
