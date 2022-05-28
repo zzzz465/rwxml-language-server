@@ -1,7 +1,5 @@
 import { Document, Injectable } from '@rwxml/analyzer'
-import { stringify } from 'flatted'
 import { AsEnumerable } from 'linq-es2015'
-import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'

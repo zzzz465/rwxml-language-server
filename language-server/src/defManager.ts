@@ -1,19 +1,19 @@
+import {
+  Def,
+  DefDatabase,
+  Injectable,
+  isDerivedType,
+  NameDatabase,
+  TypeInfoInjector,
+  TypeInfoMap,
+} from '@rwxml/analyzer'
 import Deque from 'double-ended-queue'
 import _ from 'lodash'
-import {
-  DefDatabase,
-  TypeInfoInjector,
-  Def,
-  NameDatabase,
-  Injectable,
-  TypeInfoMap,
-  isDerivedType,
-} from '@rwxml/analyzer'
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
-import { RimWorldVersion } from './RimWorldVersion'
 import { DocumentWithNodeMap } from './documentWithNodeMap'
 import defaultLogger, { className, logFormat } from './log'
+import { RimWorldVersion } from './RimWorldVersion'
 
 export class DefManager {
   private log = winston.createLogger({
@@ -31,7 +31,6 @@ export class DefManager {
     public readonly typeInfoMap: TypeInfoMap,
     public readonly version?: RimWorldVersion
   ) {
-
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {
       // eslint-disable-next-line quotes
@@ -166,7 +165,7 @@ export class DefManager {
     const queue: Deque<Def | Injectable> = new Deque([def])
 
     let injectable: Def | Injectable | undefined = undefined
-    while (!!(injectable = queue.dequeue())) {
+    while ((injectable = queue.dequeue())) {
       // Def should not added because only Injectables (not Def) wants reference to be resolved.
       if (injectable instanceof Injectable) {
         injectables.push(injectable)

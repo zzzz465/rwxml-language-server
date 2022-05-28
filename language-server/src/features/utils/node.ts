@@ -1,11 +1,11 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
+import { AsEnumerable } from 'linq-es2015'
+import { container } from 'tsyringe'
+import { Queue } from 'typescript-collections'
+import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
-import * as lsp from 'vscode-languageserver'
-import { container } from 'tsyringe'
-import { Queue } from 'typescript-collections'
-import { AsEnumerable } from 'linq-es2015'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
   if (node instanceof Text && node.parent instanceof Element) {

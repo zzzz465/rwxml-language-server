@@ -1,29 +1,29 @@
-import {
-  TextureFile,
-  AudioFile,
-  File,
-  DLLFile,
-  XMLFile,
-  isXMLFile,
-  isImageFile as isTextureFile,
-  isSoundFile as isAudioFile,
-  isDLLFile,
-} from './fs'
-import { LoadFolder } from './mod/loadfolders'
-import { Counter } from './utils/counter'
+import EventEmitter from 'events'
 import * as path from 'path'
 import { inject, Lifecycle, scoped } from 'tsyringe'
-import EventEmitter from 'events'
-import * as winston from 'winston'
-import { URI } from 'vscode-uri'
-import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
-import { FileStore } from './fileStore'
-import { ProjectWorkspace } from './mod/projectWorkspace'
 import TypedEventEmitter from 'typed-emitter'
-import { ModDependencyBags } from './mod/modDependencyBags'
-import { TextDocumentManager } from './textDocumentManager'
 import { TextDocument } from 'vscode-languageserver-textdocument'
+import { URI } from 'vscode-uri'
+import * as winston from 'winston'
+import { FileStore } from './fileStore'
+import {
+  AudioFile,
+  DLLFile,
+  File,
+  isDLLFile,
+  isImageFile as isTextureFile,
+  isSoundFile as isAudioFile,
+  isXMLFile,
+  TextureFile,
+  XMLFile,
+} from './fs'
 import defaultLogger, { className, logFormat } from './log'
+import { LoadFolder } from './mod/loadfolders'
+import { ModDependencyBags } from './mod/modDependencyBags'
+import { ProjectWorkspace } from './mod/projectWorkspace'
+import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
+import { TextDocumentManager } from './textDocumentManager'
+import { Counter } from './utils/counter'
 
 type Events = {
   workspaceChanged(): void

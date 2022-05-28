@@ -1,11 +1,10 @@
-import 'reflect-metadata'
-
-import { mockVsCode } from '../../utils'
-mockVsCode()
-
-import { URI } from 'vscode-uri'
 import path from 'path'
+import 'reflect-metadata'
+import { URI } from 'vscode-uri'
 import { LoadFolder } from '../../../mod'
+import { mockVsCode } from '../../utils'
+
+mockVsCode()
 
 const loadFileUri = URI.file(path.resolve(__dirname, 'LoadFolders.xml'))
 

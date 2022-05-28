@@ -1,14 +1,14 @@
+import { serializeError } from 'serialize-error'
 import { injectable } from 'tsyringe'
-import { LanguageClient } from 'vscode-languageclient'
-import { DependencyRequest, DependencyRequestResponse } from '../events'
-import { Provider } from './provider'
 import * as vscode from 'vscode'
+import { LanguageClient } from 'vscode-languageclient'
+import winston from 'winston'
+import { DependencyRequest, DependencyRequestResponse } from '../events'
+import defaultLogger, { className, logFormat } from '../log'
 import { ModManager } from '../mod/modManager'
 import { globPattern } from '../projectWatcher'
-import { serializeError } from 'serialize-error'
-import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../log'
 import jsonStr from '../utils/json'
+import { Provider } from './provider'
 
 @injectable()
 export class DependencyResourceProvider implements Provider {

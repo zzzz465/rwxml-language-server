@@ -1,11 +1,11 @@
 jest.mock('vscode', () => ({}), { virtual: true })
 
-import { URI } from 'vscode-uri'
 import path from 'path'
+import { URI } from 'vscode-uri'
 import { About, ModDependency } from '../../../mod'
-
-import exampleAboutFile from './About.xml'
 import { xml } from '../../../utils'
+import exampleAboutFile from './About.xml'
+
 const exampleAboutFileUri = URI.file(path.resolve(__dirname, 'About.xml'))
 
 describe('About test', () => {

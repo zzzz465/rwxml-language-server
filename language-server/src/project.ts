@@ -1,23 +1,23 @@
-import { EventEmitter } from 'events'
 import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
+import { EventEmitter } from 'events'
+import _ from 'lodash'
+import * as ono from 'ono'
+import { serializeError } from 'serialize-error'
+import { inject, Lifecycle, scoped } from 'tsyringe'
+import TypedEventEmitter from 'typed-emitter'
+import { v4 as uuid } from 'uuid'
+import { CancellationToken, CancellationTokenSource } from 'vscode-languageserver'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
+import * as winston from 'winston'
 import { DefManager } from './defManager'
-import { TextDocumentManager } from './textDocumentManager'
+import * as documentWithNodeMap from './documentWithNodeMap'
+import defaultLogger, { className, logFormat } from './log'
 import { About } from './mod'
 import { ResourceStore } from './resourceStore'
-import { inject, Lifecycle, scoped } from 'tsyringe'
-import * as winston from 'winston'
-import { TextDocument } from 'vscode-languageserver-textdocument'
-import _ from 'lodash'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
+import { TextDocumentManager } from './textDocumentManager'
 import { TypeInfoMapProvider } from './typeInfoMapProvider'
-import { CancellationToken, CancellationTokenSource } from 'vscode-languageserver'
-import { v4 as uuid } from 'uuid'
-import * as documentWithNodeMap from './documentWithNodeMap'
-import { serializeError } from 'serialize-error'
-import TypedEventEmitter from 'typed-emitter'
-import * as ono from 'ono'
-import defaultLogger, { className, logFormat } from './log'
 import jsonStr from './utils/json'
 
 type Events = {
@@ -161,7 +161,9 @@ export class Project {
       `current project file dll count: ${this.resourceStore.dllFiles.size}`,
       { id: requestId }
     )
-    this.log.silly(`dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`)
+    this.log.silly(
+      `dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`
+    )
 
     const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
@@ -169,9 +171,7 @@ export class Project {
     }
 
     if (err0) {
-      return ono.ono(
-        `[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`
-      )
+      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`)
     }
 
     this.xmls = new Map()

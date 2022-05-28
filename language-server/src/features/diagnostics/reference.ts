@@ -1,14 +1,14 @@
-import * as ls from 'vscode-languageserver'
-import * as tsyringe from 'tsyringe'
-import * as winston from 'winston'
-import { DiagnosticsContributor } from './contributor'
 import { Document } from '@rwxml/analyzer'
+import * as tsyringe from 'tsyringe'
+import * as ls from 'vscode-languageserver'
+import * as winston from 'winston'
+import { DocumentWithNodeMap } from '../../documentWithNodeMap'
+import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { DocumentWithNodeMap } from '../../documentWithNodeMap'
 import { Definition } from '../definition'
 import { isGeneratedDef } from '../utils/def'
-import defaultLogger, { className, logFormat } from '../../log'
+import { DiagnosticsContributor } from './contributor'
 
 @tsyringe.injectable()
 export class Reference implements DiagnosticsContributor {

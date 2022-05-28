@@ -1,13 +1,13 @@
 import { Def, Document, Injectable } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
-import { Project } from '../../project'
 import * as ls from 'vscode-languageserver'
+import { Project } from '../../project'
 import { DuplicatedNode } from './duplicatedNode'
-import { Reference } from './reference'
-import { PrimitiveValue } from './primitive'
-import { Type } from './type'
 import { Enum } from './enum'
+import { PrimitiveValue } from './primitive'
 import { Property } from './property'
+import { Reference } from './reference'
+import { Type } from './type'
 
 /**
  * DiagnosticsContributor is a interface that provides diagnostics

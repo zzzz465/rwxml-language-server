@@ -1,8 +1,8 @@
-import * as vscode from 'vscode'
+import yaml from 'js-yaml'
 import * as tsyringe from 'tsyringe'
+import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { DefListRequest } from '../events'
-import yaml from 'js-yaml'
 
 export function registerFeature() {
   const instance = tsyringe.container.resolve(DisplayDefs)

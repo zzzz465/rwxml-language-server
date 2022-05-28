@@ -1,9 +1,8 @@
-import { FileType, Uri } from 'vscode'
-import { About } from './about'
-import vscode from 'vscode'
-import { LoadFolder } from './loadFolders'
 import path from 'path'
+import vscode, { FileType, Uri } from 'vscode'
 import { URI } from 'vscode-uri'
+import { About } from './about'
+import { LoadFolder } from './loadFolders'
 
 export class Mod {
   static async create(rootDirectory: Uri) {

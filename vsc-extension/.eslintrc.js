@@ -1,26 +1,25 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: 'tsconfig.json',
-    sourceType: 'module',
-  },
-  plugins: ['@typescript-eslint/eslint-plugin'],
-  extends: ['plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
-  root: true,
+  extends: ['typescript', 'prettier'],
   env: {
-    node: true,
-    jest: true,
+    'node': true,
+    'jest': true,
   },
-  ignorePatterns: ['.eslintrc.js'],
+  settings: {
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts', '.tsx'],
+    },
+  },
   rules: {
+    // A temporary hack related to IDE not resolving correct package.json
+    'import/no-extraneous-dependencies': 'off',
     '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
-    indent: ['error', 2, { SwitchCase: 1 }],
-    'linebreak-style': ['error', 'unix'],
-    quotes: ['error', 'single'],
-    semi: ['error', 'never'],
     'no-case-declarations': 'error',
+    'no-underscore-dangle': 'off',
+    'no-restricted-syntax': ['off'],
+    '@typescript-eslint/no-namespace': ['off'],
+    'func-names': ['off'],
+    'class-methods-use-this': 'off',
+    'import/prefer-default-export': 'off',
   },
 }

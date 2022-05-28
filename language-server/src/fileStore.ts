@@ -1,13 +1,13 @@
 import EventEmitter from 'events'
+import * as ono from 'ono'
 import { singleton } from 'tsyringe'
-import { File, FileCreateParameters } from './fs'
-import { NotificationEvents } from './notificationEventManager'
-import * as winston from 'winston'
 import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
-import { Result } from './types/functional'
-import * as ono from 'ono'
+import * as winston from 'winston'
+import { File, FileCreateParameters } from './fs'
 import defaultLogger, { className, logFormat } from './log'
+import { NotificationEvents } from './notificationEventManager'
+import { Result } from './types/functional'
 
 type Events = NotificationEvents
 

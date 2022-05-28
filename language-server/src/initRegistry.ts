@@ -1,7 +1,5 @@
 import * as tsyringe from 'tsyringe'
 import { InjectionToken } from 'tsyringe'
-import { DelayedConstructor } from 'tsyringe/dist/typings/lazy-helpers'
-import { constructor } from 'tsyringe/dist/typings/types'
 import { ClientFileEventListener } from './clientFileEventListener'
 import { Configuration } from './configuration'
 import { LanguageFeature } from './features'

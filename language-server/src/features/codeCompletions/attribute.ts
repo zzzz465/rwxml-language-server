@@ -1,17 +1,16 @@
-/* eslint-disable prettier/prettier */
 import { Attribute, Element, Node, TypeInfo } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { injectable } from 'tsyringe'
 import { MultiDictionary } from 'typescript-collections'
 import { CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
+import { ModManager } from '../../mod/modManager'
 import { Project } from '../../project'
+import { RimWorldVersion } from '../../RimWorldVersion'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { expandUntil, isAllowedCharForClass } from '../../utils/strings'
-import { ModManager } from '../../mod/modManager'
-import { RimWorldVersion } from '../../RimWorldVersion'
-import { CodeCompletionContributor } from './contributor'
 import { getTypeReferenceName } from '../utils/type'
+import { CodeCompletionContributor } from './contributor'
 
 const knownAttributeNames = ['Name', 'ParentName', 'Class', 'Abstract', 'Inherit', 'MayRequire']
 const ClassValueRegex = [
@@ -42,28 +41,41 @@ export class CompleteAttribute implements CodeCompletionContributor {
     const attribs = node.attribs
     const items: CompletionItem[] = []
     const currentAttribute = findCurrentAttribute(node, offset)
-    const currentPointingText = expandUntil(node.document.rawText, offset, (c) => isAllowedCharForClass(c), (c) => isAllowedCharForClass(c))
+    const currentPointingText = expandUntil(
+      node.document.rawText,
+      offset,
+      (c) => isAllowedCharForClass(c),
+      (c) => isAllowedCharForClass(c)
+    )
     const textRange = this.rangeConverter.toLanguageServerRange(currentPointingText.range, node.document.uri)
 
     if (!textRange) {
       return null
     }
 
-    if ((currentAttribute && isPointingAttributeName(currentAttribute, offset)) || (!currentAttribute && offset > 0 && node.document.getCharAt(offset - 1) === ' ')) {
-    // selecting attribute name, or selecting whitespace inside starting tag
+    if (
+      (currentAttribute && isPointingAttributeName(currentAttribute, offset)) ||
+      (!currentAttribute && offset > 0 && node.document.getCharAt(offset - 1) === ' ')
+    ) {
+      // selecting attribute name, or selecting whitespace inside starting tag
       const attrNameCandidates = AsEnumerable(knownAttributeNames)
         .Where((name) => !attribs[name])
         .ToArray()
       const completions = getMatchingText(attrNameCandidates, currentPointingText.text)
 
-      items.push(...completions.map((label) => ({
-        label,
-        kind: CompletionItemKind.Enum,
-        textEdit: label.length > 0 ? TextEdit.replace(textRange, `${label}=""`) : undefined
-      }) as CompletionItem))
+      items.push(
+        ...completions.map(
+          (label) =>
+            ({
+              label,
+              kind: CompletionItemKind.Enum,
+              textEdit: label.length > 0 ? TextEdit.replace(textRange, `${label}=""`) : undefined,
+            } as CompletionItem)
+        )
+      )
     } else if (currentAttribute && isPointingAttributeValue(currentAttribute, offset)) {
-    // selecting attribute values
-      switch(currentAttribute.name) {
+      // selecting attribute values
+      switch (currentAttribute.name) {
         case 'ParentName': {
           const defs = project.defManager.nameDatabase.getDef(node.name)
           const candidates = AsEnumerable(defs)
@@ -71,43 +83,70 @@ export class CompleteAttribute implements CodeCompletionContributor {
             .Where((value) => !!value)
             .Distinct() // why this is even needed? need investigation
             .ToArray() as string[]
-        
+
           const completions = getMatchingText(candidates, currentPointingText.text)
 
-          items.push(...completions.map((label) => ({
-            label,
-            kind: CompletionItemKind.EnumMember,
-            textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
-          } as CompletionItem)))
-        } break
+          items.push(
+            ...completions.map(
+              (label) =>
+                ({
+                  label,
+                  kind: CompletionItemKind.EnumMember,
+                  textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined,
+                } as CompletionItem)
+            )
+          )
+          break
+        }
 
         case 'Class': {
           const classValues = this.getClassValues(project)
           const completions = getMatchingText(classValues, currentPointingText.text)
 
-          items.push(...completions.map((label) => ({
-            label,
-            kind: CompletionItemKind.EnumMember,
-            textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
-          } as CompletionItem)))
-        } break
+          items.push(
+            ...completions.map(
+              (label) =>
+                ({
+                  label,
+                  kind: CompletionItemKind.EnumMember,
+                  textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined,
+                } as CompletionItem)
+            )
+          )
+          break
+        }
 
         case 'MayRequire': {
           const packageIds = this.modManager.packageIds
           const completions = getMatchingText(packageIds, currentPointingText.text)
 
-          items.push(...completions.map((label) => ({
-            label,
-            kind: CompletionItemKind.EnumMember,
-            textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined
-          } as CompletionItem)))
-        } break
-      
-        case 'Abstract':
-        case 'Inherit':
-          items.push({ label: 'true', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'true') })
-          items.push({ label: 'false', kind: CompletionItemKind.EnumMember, textEdit:TextEdit.replace(textRange, 'false') })
+          items.push(
+            ...completions.map(
+              (label) =>
+                ({
+                  label,
+                  kind: CompletionItemKind.EnumMember,
+                  textEdit: label.length > 0 ? TextEdit.replace(textRange, label) : undefined,
+                } as CompletionItem)
+            )
+          )
           break
+        }
+
+        case 'Abstract':
+        case 'Inherit': {
+          items.push({
+            label: 'true',
+            kind: CompletionItemKind.EnumMember,
+            textEdit: TextEdit.replace(textRange, 'true'),
+          })
+          items.push({
+            label: 'false',
+            kind: CompletionItemKind.EnumMember,
+            textEdit: TextEdit.replace(textRange, 'false'),
+          })
+          break
+        }
       }
     }
 
@@ -122,7 +161,7 @@ export class CompleteAttribute implements CodeCompletionContributor {
         .Where((t) => !!ClassValueRegex.find((reg) => reg.test(t.fullName)))
         .Select((t) => this.toClassValue(t))
         .ToArray()
-      
+
       for (const value of values) {
         this.classValue.setValue(project.version, value)
       }

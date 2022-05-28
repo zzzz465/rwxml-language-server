@@ -1,12 +1,12 @@
+import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
+import * as winston from 'winston'
 import { Logger } from 'winston'
 import { ParsedTypeInfoRequest, ParsedTypeInfoRequestResponse } from '../../events'
+import defaultLogger, { className, logFormat } from '../../log'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
-import * as winston from 'winston'
-import * as tsyringe from 'tsyringe'
 import { ProjectHelper } from '../utils/project'
-import defaultLogger, { className, logFormat } from '../../log'
 
 @tsyringe.injectable()
 export class ParsedTypeInfoRequestHandler implements Provider {

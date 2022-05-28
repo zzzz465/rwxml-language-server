@@ -1,22 +1,21 @@
 import 'reflect-metadata'
-
 import { install } from 'source-map-support'
-install()
-
-import * as ls from 'vscode-languageserver/node'
-import { TextDocumentManager } from './textDocumentManager'
-import { About } from './mod'
-import { ProjectManager } from './projectManager'
-import { LoadFolder } from './mod/loadfolders'
-import { NotificationEventManager } from './notificationEventManager'
-import * as features from './features'
 import { container } from 'tsyringe'
-import { ConnectionToken } from './connection'
-import { ModManager } from './mod/modManager'
-import { FileStore } from './fileStore'
+import * as ls from 'vscode-languageserver/node'
 import { Configuration } from './configuration'
+import { ConnectionToken } from './connection'
+import * as features from './features'
+import { FileStore } from './fileStore'
 import { InitRegistry } from './initRegistry'
 import defaultLogger, { DefaultLogToken, LogManager } from './log'
+import { About } from './mod'
+import { LoadFolder } from './mod/loadfolders'
+import { ModManager } from './mod/modManager'
+import { NotificationEventManager } from './notificationEventManager'
+import { ProjectManager } from './projectManager'
+import { TextDocumentManager } from './textDocumentManager'
+
+install()
 
 const connection = ls.createConnection(ls.ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })

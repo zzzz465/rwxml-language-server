@@ -1,15 +1,15 @@
-import * as tsyringe from 'tsyringe'
-import { LanguageClient } from 'vscode-languageclient'
-import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
-import { extractTypeInfos } from '../typeInfo'
-import { Provider } from './provider'
-import * as vscode from 'vscode'
-import { createProgress } from '../utils/progress'
-import * as mod from '../mod'
 import { serializeError } from 'serialize-error'
+import * as tsyringe from 'tsyringe'
+import * as vscode from 'vscode'
+import { LanguageClient } from 'vscode-languageclient'
 import winston from 'winston'
+import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
 import defaultLogger, { className, logFormat } from '../log'
+import * as mod from '../mod'
+import { extractTypeInfos } from '../typeInfo'
 import jsonStr from '../utils/json'
+import { createProgress } from '../utils/progress'
+import { Provider } from './provider'
 
 @tsyringe.injectable()
 export class TypeInfoProvider implements Provider {

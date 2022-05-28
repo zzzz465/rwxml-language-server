@@ -112,11 +112,11 @@ export class Definition {
     if (node.parent.parent.typeInfo.isList() && node.parent.typeInfo.isDef()) {
       const defType = node.parent.typeInfo.getDefType() ?? null
 
-      return !!defType ? { value: defType, li: true } : null
+      return defType ? { value: defType, li: true } : null
     } else if (node.parent.fieldInfo?.fieldType.isDef()) {
       const defType = node.parent.typeInfo.getDefType() ?? null
 
-      return !!defType ? { value: defType } : null
+      return defType ? { value: defType } : null
     }
 
     return null

@@ -1,8 +1,8 @@
 import { injectable } from 'tsyringe'
+import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { TextRequest, TextRequestResponse } from '../events'
 import { Provider } from './provider'
-import * as vscode from 'vscode'
 
 @injectable()
 export class TextProvider implements Provider {

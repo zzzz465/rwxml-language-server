@@ -1,7 +1,7 @@
-import vscode from 'vscode'
-import Transport from 'winston-transport'
-import { format } from 'winston'
 import { MESSAGE } from 'triple-beam'
+import vscode from 'vscode'
+import { format } from 'winston'
+import Transport from 'winston-transport'
 
 export class ExtensionLog extends Transport {
   private outputchannel = vscode.window.createOutputChannel('RWXML Language Server (Client)', 'log')

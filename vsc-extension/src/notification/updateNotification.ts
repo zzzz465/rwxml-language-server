@@ -1,8 +1,8 @@
-import { inject, injectable, singleton } from 'tsyringe'
+import * as semver from 'semver'
+import { inject, singleton } from 'tsyringe'
 import * as vscode from 'vscode'
 import { ExtensionContextToken } from '../extension'
 import { ExtensionVersionToken } from '../version'
-import * as semver from 'semver'
 
 @singleton()
 export class UpdateNotification {

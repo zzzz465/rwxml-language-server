@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import normalize_path from 'normalize-path'
 import path from 'path'
 
