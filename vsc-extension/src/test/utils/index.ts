@@ -1,6 +1,6 @@
-import { URI } from 'vscode-uri'
 import fs from 'fs/promises'
 import path from 'path'
+import { URI } from 'vscode-uri'
 import { FileSystem, FileType } from './types'
 
 export function mockVsCode() {

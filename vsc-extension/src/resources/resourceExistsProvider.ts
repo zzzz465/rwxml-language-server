@@ -1,9 +1,9 @@
-import { injectable } from 'tsyringe'
-import { LanguageClient } from 'vscode-languageclient'
-import { Provider } from './provider'
-import * as vscode from 'vscode'
-import { ResourceExistsRequest, ResourceExistsRequestResponse } from '../events'
 import * as fs from 'fs'
+import { injectable } from 'tsyringe'
+import * as vscode from 'vscode'
+import { LanguageClient } from 'vscode-languageclient'
+import { ResourceExistsRequest, ResourceExistsRequestResponse } from '../events'
+import { Provider } from './provider'
 
 @injectable()
 export class ResourceExistsProvider implements Provider {

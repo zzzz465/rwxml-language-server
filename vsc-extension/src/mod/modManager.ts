@@ -1,14 +1,13 @@
-import { FileType, Uri } from 'vscode'
-import { Mod } from './mod'
-import vscode from 'vscode'
-import path from 'path'
 import { AsEnumerable } from 'linq-es2015'
+import path from 'path'
 import { inject, singleton } from 'tsyringe'
-import { PathStore } from './pathStore'
+import vscode, { FileType, Uri } from 'vscode'
 import winston from 'winston'
 import defaultLogger, { className, logFormat } from '../log'
 import { ProjectWatcher } from '../projectWatcher'
 import jsonStr from '../utils/json'
+import { Mod } from './mod'
+import { PathStore } from './pathStore'
 
 @singleton()
 export class ModManager {

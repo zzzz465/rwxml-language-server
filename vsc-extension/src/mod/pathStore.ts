@@ -1,7 +1,7 @@
 import _ from 'lodash'
+import * as path from 'path'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
-import * as path from 'path'
 
 /**
  * PathStore manages various paths used by program.

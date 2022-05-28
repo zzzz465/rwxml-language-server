@@ -1,10 +1,9 @@
-import { Disposable, window } from 'vscode'
-import vscode from 'vscode'
-import * as ls from 'vscode-languageclient'
+import { AsEnumerable } from 'linq-es2015'
 import { container } from 'tsyringe'
+import vscode, { Disposable, window } from 'vscode'
+import * as ls from 'vscode-languageclient'
 import { DocumentTokenRequest } from '../events'
 import { DocumentToken, TokenType } from '../types/documentToken'
-import { AsEnumerable } from 'linq-es2015'
 import { rangeJSONToRange } from '../utils/range'
 
 let timeout: NodeJS.Timeout | undefined = undefined

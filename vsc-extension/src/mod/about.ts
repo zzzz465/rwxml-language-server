@@ -1,7 +1,6 @@
-import { Uri } from 'vscode'
-import vscode from 'vscode'
-import { Writable } from '../types/writable'
 import { CheerioAPI } from 'cheerio'
+import vscode, { Uri } from 'vscode'
+import { Writable } from '../types/writable'
 import { xml } from '../utils'
 
 export interface SerializedAbout {

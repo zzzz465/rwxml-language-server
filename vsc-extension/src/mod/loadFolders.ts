@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { Uri } from 'vscode'
-import vscode from 'vscode'
 import * as cheerio from 'cheerio'
-import { URI } from 'vscode-uri'
+import glob from 'fast-glob'
 import * as LINQ from 'linq-es2015'
 import * as path from 'path'
-import glob from 'fast-glob'
+import vscode, { Uri } from 'vscode'
+import { URI } from 'vscode-uri'
 
 export class ProjectWorkspace {
   public static readonly wellKnownResourceDirectories = ['Defs', 'Textures', 'Sounds', 'Assemblies']

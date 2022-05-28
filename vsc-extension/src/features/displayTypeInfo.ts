@@ -1,5 +1,5 @@
-import * as vscode from 'vscode'
 import * as tsyringe from 'tsyringe'
+import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { ParsedTypeInfoRequest } from '../events'
 

@@ -1,7 +1,6 @@
-import { ExtensionContext } from 'vscode'
+import vscode, { ExtensionContext } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { SerializedXMLDocumentRequest } from '../events'
-import vscode from 'vscode'
 
 export function printXMLDocumentObjectHandler(context: ExtensionContext, client: LanguageClient) {
   return async function () {

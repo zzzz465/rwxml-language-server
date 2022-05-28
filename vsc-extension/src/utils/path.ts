@@ -1,5 +1,5 @@
-import { URI } from 'vscode-uri'
 import * as path from 'path'
+import { URI } from 'vscode-uri'
 
 export function ext(uri: URI) {
   const str = uri.fsPath

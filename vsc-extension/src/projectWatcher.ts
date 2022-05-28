@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe'
 import vscode, { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
-import winston, { format } from 'winston'
+import winston from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import defaultLogger, { className, logFormat } from './log'
 import jsonStr from './utils/json'
