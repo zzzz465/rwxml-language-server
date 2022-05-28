@@ -53,7 +53,7 @@ export class ResourceStore {
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>
 
-  private projectWorkspace = new ProjectWorkspace(this.version, URI.parse(''), [])
+  private projectWorkspace: ProjectWorkspace
 
   constructor(
     @inject(RimWorldVersionToken) private readonly version: RimWorldVersion,
@@ -62,6 +62,13 @@ export class ResourceStore {
     private readonly modDependencyBags: ModDependencyBags,
     private readonly textDocumentManager: TextDocumentManager
   ) {
+    const workspace = loadFolder.getProjectWorkspace(this.version)
+    if (!workspace) {
+      throw new Error(`projectWorkspace for version ${this.version} is not exists.`)
+    }
+
+    this.projectWorkspace = workspace
+
     modDependencyBags.event.on('dependencyChanged', () => this.onDependencyChanged())
     loadFolder.event.on('loadFolderChanged', (loadFolder) => this.onLoadFolderChanged(loadFolder))
     textDocumentManager.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
@@ -75,17 +82,18 @@ export class ResourceStore {
   isProjectResource(fileOrUri: File | string): boolean {
     const uri = fileOrUri instanceof File ? fileOrUri.uri.toString() : fileOrUri
 
-    // 2. is the file already registered as project resource?
-    if (this.files.has(uri)) {
-      return true
-    }
+    // is the file already registered as project resource?
+    // NOTE: Why this is required?
+    // if (this.files.has(uri)) {
+    //   return true
+    // }
 
-    // 3. is the file registered as dependency?
+    // is the file registered as dependency?
     if (this.isDependencyFile(uri)) {
       return true
     }
 
-    // 4. is the file comes from current workspace?
+    // is the file comes from current workspace?
     if (this.projectWorkspace.includes(URI.parse(uri))) {
       return true
     }
