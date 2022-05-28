@@ -10,7 +10,6 @@ import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
 import { CodeCompletion } from './codeCompletions'
-import { CodeLens } from './codeLens'
 import { Definition } from './definition'
 import { Reference } from './reference'
 import { Rename } from './rename'
@@ -31,7 +30,6 @@ export class LanguageFeature {
     private readonly projectManager: ProjectManager,
     private readonly definition: Definition,
     private readonly codeCompletion: CodeCompletion,
-    private readonly codeLens: CodeLens,
     private readonly reference: Reference,
     private readonly rename: Rename
   ) {}
@@ -39,7 +37,6 @@ export class LanguageFeature {
   listen(connection: lsp.Connection) {
     connection.onDefinition(this.wrapExceptionStackTraces(this.onDefinition.bind(this)))
     connection.onCompletion(this.wrapExceptionStackTraces(this.onCompletion.bind(this)))
-    connection.onCodeLens(this.wrapExceptionStackTraces(this.onCodeLens.bind(this)))
     connection.onReferences(this.wrapExceptionStackTraces(this.onReference.bind(this)))
     connection.onRenameRequest(this.wrapExceptionStackTraces(this.onRenameRequest.bind(this)))
   }
@@ -70,20 +67,6 @@ export class LanguageFeature {
 
       this.handleError(errors)
       result.push(...definitionLinks)
-    }
-
-    return result
-  }
-
-  private async onCodeLens({ textDocument: { uri: uriStr } }: lsp.CodeLensParams) {
-    const uri = URI.parse(uriStr)
-    const versions = this.loadFolder.isBelongsTo(uri)
-    const result: lsp.CodeLens[] = []
-
-    for (const version of versions) {
-      const project = this.projectManager.getProject(version)
-      const res = this.codeLens.onCodeLens(project, uri)
-      result.push(...res)
     }
 
     return result
