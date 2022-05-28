@@ -31,7 +31,6 @@ export class DefManager {
     public readonly typeInfoMap: TypeInfoMap,
     public readonly version?: RimWorldVersion
   ) {
-
     const defType = typeInfoMap.getTypeInfoByName('Def')
     if (!defType) {
       // eslint-disable-next-line quotes
@@ -166,7 +165,7 @@ export class DefManager {
     const queue: Deque<Def | Injectable> = new Deque([def])
 
     let injectable: Def | Injectable | undefined = undefined
-    while (injectable = queue.dequeue()) {
+    while ((injectable = queue.dequeue())) {
       // Def should not added because only Injectables (not Def) wants reference to be resolved.
       if (injectable instanceof Injectable) {
         injectables.push(injectable)

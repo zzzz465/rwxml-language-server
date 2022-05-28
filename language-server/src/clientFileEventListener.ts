@@ -15,7 +15,6 @@ export class ClientFileEventListener {
   })
 
   constructor(@tsyringe.inject(ConnectionToken) connection: Connection, private readonly fileStore: FileStore) {
-
     connection.onNotification(ProjectFileAdded, ({ uri }) => this.onFileAdded(uri))
     connection.onNotification(ProjectFileChanged, ({ uri }) => this.onFileChanged(uri))
     connection.onNotification(ProjectFileDeleted, ({ uri }) => this.onFileDeleted(uri))

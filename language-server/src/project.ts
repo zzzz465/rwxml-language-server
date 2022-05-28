@@ -161,7 +161,9 @@ export class Project {
       `current project file dll count: ${this.resourceStore.dllFiles.size}`,
       { id: requestId }
     )
-    this.log.silly(`dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`)
+    this.log.silly(
+      `dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`
+    )
 
     const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
     if (cancelToken?.isCancellationRequested) {
@@ -169,9 +171,7 @@ export class Project {
     }
 
     if (err0) {
-      return ono.ono(
-        `[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`
-      )
+      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`)
     }
 
     this.xmls = new Map()
