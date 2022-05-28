@@ -4,6 +4,7 @@
 
 const path = require('path')
 const webpack = require('webpack')
+const TerserPlugin = require('terser-webpack-plugin')
 
 /**@type {import('webpack').Configuration}*/
 const config = {
@@ -40,15 +41,18 @@ const config = {
       {
         test: /\.ts$/,
         exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              projectReferences: true,
-            },
-          },
-        ],
+        loader: 'ts-loader',
       },
+    ],
+  },
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          keep_classnames: true,
+          keep_fnames: true,
+        },
+      }),
     ],
   },
 }
