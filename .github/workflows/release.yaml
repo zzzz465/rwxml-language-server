@@ -35,13 +35,13 @@ jobs:
           echo "::set-output name=semver::$semver"
       - name: install project
         shell: bash
-        run: |
-          pnpm install
+        run: | # pnpm is not compatible with vsce
+          npm install
       - name: run build
         working-directory: ./publish/master
-        run: |
-          pnpm install
-          pnpm run build
+        run: | # pnpm is not compatible with vsce
+          npm install
+          npm run build
       - name: publish master version
         working-directory: ./publish/master
         if: contains(steps.var.outputs.tag, 'nopublish') == false
