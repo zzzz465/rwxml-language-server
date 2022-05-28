@@ -129,7 +129,7 @@ export class LoadFolder {
     }
 
     for (const version of this.about.supportedVersions.filter((v) => !this.projectWorkspaces.has(v))) {
-      this.projectWorkspaces.set(version, new ProjectWorkspace(version, this.rootDirectory, ['.']))
+      this.projectWorkspaces.set(version, new ProjectWorkspace(version, this.rootDirectory, ['.', version]))
     }
 
     this.log.debug(`updated workspaces: ${jsonStr([...this.projectWorkspaces.values()])}`)
