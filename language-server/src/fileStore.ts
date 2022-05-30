@@ -7,7 +7,7 @@ import * as winston from 'winston'
 import { File, FileCreateParameters } from './fs'
 import defaultLogger, { className, logFormat } from './log'
 import { NotificationEvents } from './notificationEventManager'
-import { Result } from './utils/functional'
+import { Result } from './utils/functional/result'
 
 type Events = NotificationEvents
 
