@@ -12,7 +12,7 @@ import { ConnectionToken } from '../connection'
 import { DependencyRequest, DependencyRequestResponse } from '../events'
 import { FileStore } from '../fileStore'
 import defaultLogger, { className, logFormat } from '../log'
-import { Result } from '../types/functional'
+import { Result } from '../utils/functional'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
 

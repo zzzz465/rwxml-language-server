@@ -9,7 +9,7 @@ import { File, TextFile } from './fs'
 import defaultLogger, { className, logFormat } from './log'
 import { NotificationEvents } from './notificationEventManager'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
-import { Result } from './types/functional'
+import { Result } from './utils/functional'
 
 type Events = {
   textDocumentChanged(document: TextDocument): void
