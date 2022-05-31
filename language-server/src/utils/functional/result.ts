@@ -1,5 +1,5 @@
-import _, { curryRight } from 'lodash'
-import { ErrorLike } from 'ono'
+import { curryRight, isNil } from 'lodash'
+import ono, { ErrorLike } from 'ono'
 import { AnyFunction, AtLeastOneFunctionsFlow, reduce } from 'ramda'
 
 export type Result<T, E extends ErrorLike> = Value<T> | Error<E>
@@ -10,19 +10,7 @@ interface IResult<T, E> {
 }
 
 export namespace Result {
-  export function ok<T = unknown, E = unknown>(value: T): Result<T, E> {
-    return new Value(value)
-  }
-
-  /**
-   * return Value.
-   * return null if value is null of undefined.
-   */
-  export function nilOk<T, E>(value: T | null | undefined): Result<T, E> | null {
-    if (_.isNil(value)) {
-      return null
-    }
-
+  export function ok<T = unknown, E = ErrorLike>(value: T): Result<T, E> {
     return new Value(value)
   }
 
@@ -30,9 +18,29 @@ export namespace Result {
     return new Error(error)
   }
 
-  export function is<T, E>(value: unknown): value is Result<T, E> {
+  export function is(value: unknown): value is Result<unknown, ErrorLike> {
     return value instanceof Value || value instanceof Error
   }
+
+  // name from: https://stackoverflow.com/a/57312083
+  export function checkNil<T>(arg: T): Result<Result.Not<T>, ErrorLike> {
+    if (Result.is(arg)) {
+      if (arg.ok()) {
+        return Result.checkNil(arg) as Result<Result.Not<T>, ErrorLike>
+      } else {
+        return arg
+      }
+    } else {
+      if (isNil(arg)) {
+        return Result.err(ono('argument is nil'))
+      } else {
+        return Result.ok(arg as NonNullable<T> & Result.Not<T>)
+      }
+    }
+  }
+
+  export type Not<T> = T extends Result<T, ErrorLike> ? never : T
+  export type UnWrap<T> = T extends Result<infer R, ErrorLike> ? UnWrap<R> : T
 }
 
 export class Value<T> implements IResult<T, null> {
@@ -59,9 +67,6 @@ export class Error<E> implements IResult<null, E> {
   }
 }
 
-// name from: https://stackoverflow.com/a/57312083
-export const checkNil = <T>(value: T) => Result.nilOk(value) ?? Result.err('argument is null or undefined.')
-
 export const transformer = (res: unknown, f: AnyFunction): Result<unknown, ErrorLike> => {
   if (!Result.is(res)) {
     return Result.ok(f(res))
@@ -79,15 +84,22 @@ export const transformer = (res: unknown, f: AnyFunction): Result<unknown, Error
   }
 }
 
-// array types
+// // array types
 // type Length<T extends any[]> = T['length']
 // type Head<T extends any[]> = T extends [] ? never : T[0]
-// type Tail<T extends any[]> = Length<T> extends 1 ? T[0] : Tail<_Tail<T>>
-// type _Tail<T extends any[]> = T extends [head: any, ...tail: infer Tail_] ? Tail_ : never
-//
-// type _4 = Tail<[1, 2, 3, 4]>
-// TS: 4.0^
+// type Last<T extends any[]> = Length<T> extends 1 ? T[0] : Last<Tail<T>>
+// type Tail<T extends any[]> = T extends [head: any, ...tail: infer Tail_] ? Tail_ : never
+// //
+// // type _4 = Tail<[1, 2, 3, 4]>
+// // TS: 4.0^
 
-export const pipeWithError: <TArgs extends unknown[], TResult>(
-  fns: AtLeastOneFunctionsFlow<TArgs, TResult>
+// type Transformer = <R>(
+//   res: unknown,
+//   f: (...args: unknown[]) => R
+// ) => R extends Result<infer Return, ErrorLike>
+//   ? Result<Return, ErrorLike> //
+//   : Result<R, ErrorLike>
+
+export const pipeWithError: <TArgs extends unknown[], TResult extends Result.Not<unknown>>(
+  fns: AtLeastOneFunctionsFlow<TArgs, Result<Result.Not<TResult>, ErrorLike>>
 ) => (...args: TArgs) => Result<TResult, ErrorLike> = curryRight(reduce(transformer))
