@@ -108,9 +108,9 @@ export type PipeReturn<T extends Fn[]> = Last<T> extends Fn
     ? Result<Result.UnWrap<R>, ErrorLike>
     : ReturnType<Last<T>>
   : never
-export type FirstParameterOf<T extends Fn[]> = Head<T> extends Fn ? Head<Parameters<Head<T>>> : never
+export type FirstParameterOf<T extends Fn[]> = Head<T> extends Fn ? Parameters<Head<T>> : never
 
-type Fn = (arg: any) => any
+type Fn = (...args: any[]) => any
 
 export type Allowed<T extends Fn[], Cache extends Fn[] = []> = T extends []
   ? Cache //
@@ -138,12 +138,12 @@ export function pipeWithResult<
   T extends Fn,
   Fns extends T[],
   Allow extends {
-    0: [never]
-    1: [FirstParameterOf<Fns>]
+    0: never
+    1: FirstParameterOf<Fns>
   }[Allowed<Fns> extends never ? 0 : 1]
 >(
   ...args: [...Fns]
-): (...data: Allow) => PipeReturn<Fns> extends Result<infer R, ErrorLike>
+): (...data: Allow) => PipeReturn<Fns> extends Result<unknown, ErrorLike>
   ? PipeReturn<Fns> //
   : Result<PipeReturn<Fns>, ErrorLike>
 export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unknown[]>(...args: [...Fns]) {
@@ -167,11 +167,11 @@ export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unkn
 // const strToNum = (arg: string) => 50
 // const numToStr = (arg: number) => 'foo'
 
-// const check1 = pipeWithError(retOk, retOk2)(10)
-// const check2 = pipeWithError(retOk, retOk2, numToNum)(10) // type err
-// const check3 = pipeWithError(strToNum, retOk, strToStr)('10')
-// const check4 = pipeWithError(numToStr, retErr, numToNum)(30) // type error
-// const check5 = pipeWithError(numToStr, retErr)(10) // no type err but always err
+// const check1 = pipeWithResult(retOk, retOk2)(10)
+// const check2 = pipeWithResult(retOk, retOk2, numToNum)(10) // type err
+// const check3 = pipeWithResult(strToNum, retOk, strToStr)('10')
+// const check4 = pipeWithResult(numToStr, retErr, numToNum)(30) // type error
+// const check5 = pipeWithResult(numToStr, retErr)(10) // no type err but always err
 
 // const x = (any: NodeWithChildren) => [] as Element[]
 // const y = (any: any) => find<Element>(any)
