@@ -178,23 +178,28 @@ export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unkn
 // const z = (el: Element) => Result.checkNil(el)
 
 // type allowed = Allowed<[typeof x, typeof y, typeof y]>
-type UnWrapped<T> = Exclude<T, null | undefined | ErrorLike | never>
+// end of test
+
 type UnWrapArray<T extends Result<any, ErrorLike>[], Cache extends any[] = []> = T extends []
   ? Cache //
   : T extends [infer H]
   ? H extends Value<infer R>
-    ? [...Cache, UnWrapped<R>]
+    ? [...Cache, R]
     : never
   : T extends [infer H, ...infer Lst]
   ? H extends Value<infer R>
     ? Lst extends Result<any, ErrorLike>[]
-      ? UnWrapArray<Lst, [...Cache, UnWrapped<R>]>
+      ? UnWrapArray<Lst, [...Cache, R]>
       : never
     : never
   : never
 
+// test
 // it should return type [string, number]
 // type Test = UnWrapArray<[Result<string, ErrorLike>, Result<number, ErrorLike>]>
+// it should return type [Document, Element]
+// type Test2 = UnWrapArray<[Result<Element, ErrorLike>]>
+// end of test
 
 export const castErr = pipe(
   filter((arg: Result) => arg.err()),
@@ -203,8 +208,8 @@ export const castErr = pipe(
 
 export const mergeErrs = (errors: ErrorLike[]) => ono(errors)
 
-export const mergeResult = <T extends Result<any, ErrorLike>, TArgs extends T[]>(
-  args: TArgs
+export const mergeResult = <TArgs extends Result<unknown, ErrorLike>[]>(
+  ...args: TArgs
 ): Result<UnWrapArray<TArgs>, ErrorLike> => {
   const [res, errs] = args.reduce(
     (prev, val) => {
