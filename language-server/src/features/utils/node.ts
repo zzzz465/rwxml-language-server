@@ -239,5 +239,12 @@ export const getRootDefs = (doc: Document) =>
   pipeWithResult(
     childElements, //
     find<Element>((el) => el.name === 'Defs'),
-    (el: unknown) => Result.checkNil<Element>(el)
+    checkNilElement
   )(doc)
+
+export const getDefs = pipeWithResult(
+  getRootDefs, //
+  childElements,
+  find<Element>(isDef),
+  checkNilElement
+)
