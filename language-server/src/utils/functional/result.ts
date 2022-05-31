@@ -164,7 +164,7 @@ export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unkn
         return res
       }
 
-      return Result.ok(fn(acc)) as any
+      return Result.ok(fn(res)) as any
     }, data)
 }
 

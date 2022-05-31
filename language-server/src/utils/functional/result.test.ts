@@ -1,3 +1,4 @@
+import ono from 'ono'
 import { add, always, unary } from 'ramda'
 import { Error, pipeWithResult, Result, Value } from './result'
 
@@ -14,13 +15,13 @@ describe('pipeWithError test', () => {
     // }
 
     expect(res).toBeInstanceOf(Value)
-    expect(res.value).toBe(30)
+    expect(res.value).toBe(35)
   })
 
   test('it should return error', () => {
     const add20 = pipeWithResult(
       add(10), //
-      unary(always(Result.err<number>(10))),
+      unary(always(Result.err<number>(ono('foobar')))),
       add(20)
     )
 
