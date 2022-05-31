@@ -1,13 +1,9 @@
-import { add, always } from 'ramda'
-import { Error, pipeWithError, Result, Value } from './result'
+import { add, always, unary } from 'ramda'
+import { Error, pipeWithResult, Result, Value } from './result'
 
 describe('pipeWithError test', () => {
   test('result should be Result<T, E>', () => {
-    const add20 = pipeWithError([
-      add(10), //
-      add(5),
-      add(5),
-    ])
+    const add20 = pipeWithResult(add(10), add(5), add(10))
 
     const res = add20(10) // Result<T, E> ??
 
@@ -22,11 +18,11 @@ describe('pipeWithError test', () => {
   })
 
   test('it should return error', () => {
-    const add20 = pipeWithError([
+    const add20 = pipeWithResult(
       add(10), //
-      always(Result.err('')),
-      add(20),
-    ])
+      unary(always(Result.err<number>(10))),
+      add(20)
+    )
 
     const res = add20(10)
 
