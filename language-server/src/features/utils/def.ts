@@ -1,6 +1,5 @@
-import { Def, Document, Element } from '@rwxml/analyzer'
-import ono from 'ono'
-import { find, pipe } from 'ramda'
+import { Element } from '@rwxml/analyzer'
+import { find } from 'ramda'
 import { pipeWithResult, Result } from '../../utils/functional/result'
 import { childElements, isDef } from './node'
 
@@ -23,30 +22,5 @@ export function getDefNameOfGeneratedDef(defName: string): string | null {
 export const getDefInDocument = pipeWithResult(
   childElements, //
   find<Element>(isDef),
-  (el: Element | undefined) => Result.checkNil(el)
+  (el: Element | undefined) => Result.checkNil<Element>(el)
 )
-
-const res = getDefInDocument('')
-if (res.ok()) {
-  res.value
-} else {
-  res.value
-}
-
-/**
- * find root <Defs> node in document.
- */
-export const Defs = (document: Document | null | undefined): Result<Def, Error> => {
-  getDefInDocument(document)
-
-  if (!document) {
-    return Result.err(ono('document is undefined'))
-  }
-
-  const root = pipe(childElements, find(isDef))(document)
-  if (!root) {
-    return [null, ono('no Defs found in document')]
-  }
-
-  return [root, null]
-}

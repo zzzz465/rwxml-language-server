@@ -1,10 +1,12 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
+import { find } from 'ramda'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
+import { pipeWithResult, Result } from '../../utils/functional/result'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
@@ -221,3 +223,21 @@ export function getRootElement(node: Node): Element | undefined {
 
   return AsEnumerable(doc.childNodes).FirstOrDefault((x) => x instanceof Element) as Element | undefined
 }
+
+export const isElement = (node: Node): node is Element => node instanceof Element || node instanceof Def
+
+export const isDef = (node: Node) => node instanceof Def
+
+export const childElements = (node: NodeWithChildren) => node.childNodes.filter(isElement)
+
+export const checkNilElement = (el: unknown) => Result.checkNil<Element>(el)
+
+/**
+ * getRootDefs returns <Defs> node in top of node tree.
+ */
+export const getRootDefs = (doc: Document) =>
+  pipeWithResult(
+    childElements, //
+    find<Element>((el) => el.name === 'Defs'),
+    (el: unknown) => Result.checkNil<Element>(el)
+  )(doc)
