@@ -2,6 +2,7 @@ import { isNil } from 'lodash'
 import ono, { ErrorLike } from 'ono'
 import { AnyFunction } from 'ramda'
 import { Head, Last } from 'ts-toolbelt/out/List/_api'
+import { Nullish } from '../../types'
 
 export type Result<T, E extends ErrorLike> = Value<T> | Error<E>
 export type Unary<T, R> = (arg: T) => Result<R, ErrorLike>
@@ -37,11 +38,11 @@ export namespace Result {
   }
 
   // name from: https://stackoverflow.com/a/57312083
-  export function checkNil<T>(arg: unknown): Result<T, ErrorLike> {
+  export function checkNil<T>(arg: Nullish<T>): Result<NonNullable<T>, ErrorLike> {
     if (isNil(arg)) {
       return Result.err(ono('argument is nil'))
     } else {
-      return Result.ok(arg) as Result<T, ErrorLike>
+      return Result.ok(arg) as Result<NonNullable<T>, ErrorLike>
     }
   }
 

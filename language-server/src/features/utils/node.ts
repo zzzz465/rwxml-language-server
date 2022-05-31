@@ -6,6 +6,7 @@ import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
+import { Nullish } from '../../types'
 import { pipeWithResult, Result } from '../../utils/functional/result'
 import { RangeConverter } from '../../utils/rangeConverter'
 
@@ -230,7 +231,7 @@ export const isDef = (node: Node) => node instanceof Def
 
 export const childElements = (node: NodeWithChildren) => node.childNodes.filter(isElement)
 
-export const checkNilElement = (el: unknown) => Result.checkNil<Element>(el)
+export const checkNilElement = (el: Nullish<Element>) => Result.checkNil(el)
 
 /**
  * getRootDefs returns <Defs> node in top of node tree.
