@@ -3,6 +3,7 @@ import ono, { ErrorLike } from 'ono'
 import { AnyFunction } from 'ramda'
 
 export type Result<T, E extends ErrorLike> = Value<T> | Error<E>
+export type Unary<T, R> = (arg: T) => Result<R, ErrorLike>
 
 interface IResult<T, E> {
   ok(): this is Value<T>
@@ -35,19 +36,11 @@ export namespace Result {
   }
 
   // name from: https://stackoverflow.com/a/57312083
-  export function checkNil<T>(arg: T): Result<Result.Not<T>, ErrorLike> {
-    if (Result.is(arg)) {
-      if (arg.ok()) {
-        return Result.checkNil(arg) as Result<Result.Not<T>, ErrorLike>
-      } else {
-        return arg
-      }
+  export function checkNil<T>(arg: Not<T>): Result<T, ErrorLike> {
+    if (isNil(arg)) {
+      return Result.err(ono('argument is nil'))
     } else {
-      if (isNil(arg)) {
-        return Result.err(ono('argument is nil'))
-      } else {
-        return Result.ok(arg as NonNullable<T> & Result.Not<T>)
-      }
+      return Result.ok(arg)
     }
   }
 
@@ -115,10 +108,14 @@ export const transformer = (res: unknown, f: AnyFunction): Result<unknown, Error
 //   ? Result<Return, ErrorLike> //
 //   : Result<R, ErrorLike>
 
-type Head<T extends any[]> = T extends [infer H, ...infer _] ? H : never
-type Last<T extends any[]> = T extends [infer _] ? never : T extends [...infer _, infer L] ? L : never
-type Return<T extends Fn[]> = Last<T> extends Fn ? ReturnType<Last<T>> : never
-type FirstParameterOf<T extends Fn[]> = Head<T> extends Fn ? Head<Parameters<Head<T>>> : never
+export type Head<T extends any[]> = T extends [infer H, ...infer _] ? H : never
+export type Last<T extends any[]> = T extends [infer _] ? never : T extends [...infer _, infer L] ? L : never
+export type PipeReturn<T extends Fn[]> = Last<T> extends Fn
+  ? ReturnType<Last<T>> extends Result<infer R, ErrorLike>
+    ? Result<Result.UnWrap<R>, ErrorLike>
+    : ReturnType<Last<T>>
+  : never
+export type FirstParameterOf<T extends Fn[]> = Head<T> extends Fn ? Head<Parameters<Head<T>>> : never
 
 // export const pipeWithError: <TArgs extends unknown[], TResult extends Result.Not<unknown>>(
 //   fns: AtLeastOneFunctionsFlow<TArgs, Result<Result.Not<TResult>, ErrorLike>>
@@ -155,7 +152,11 @@ export function pipeWithResult<
     0: [never]
     1: [FirstParameterOf<Fns>]
   }[Allowed<Fns> extends never ? 0 : 1]
->(...args: [...Fns]): (...data: Allow) => Result<Return<Fns>, ErrorLike>
+>(
+  ...args: [...Fns]
+): (...data: Allow) => PipeReturn<Fns> extends Result<infer R, ErrorLike>
+  ? PipeReturn<Fns> //
+  : Result<PipeReturn<Fns>, ErrorLike>
 export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unknown[]>(...args: [...Fns]) {
   return (...data: Allow) =>
     args.reduce((acc, fn) => {
