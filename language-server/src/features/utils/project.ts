@@ -1,11 +1,13 @@
+import { juxt } from 'ramda'
 import * as tsyringe from 'tsyringe'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { LoadFolder } from '../../mod/loadfolders'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
-import { Result } from '../../utils/functional/result'
+import { mergeResult, pipeWithResult, Result } from '../../utils/functional/result'
 import jsonStr from '../../utils/json'
+import { getRootDefs } from './node'
 
 /**
  * ProjectHelper is a utility class that helps finding projects and versions for a given URI
@@ -45,3 +47,7 @@ export class ProjectHelper {
 }
 
 export const getDocument = (project: Project, uri: URI) => Result.checkNil(project.getXMLDocumentByUri(uri))
+
+export const getRoot = pipeWithResult(getDocument, getRootDefs)
+
+export const getResources = (project: Project, uri: URI) => mergeResult(...juxt([getDocument, getRoot])(project, uri))
