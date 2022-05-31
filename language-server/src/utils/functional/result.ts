@@ -1,10 +1,10 @@
 import { isNil } from 'lodash'
 import ono, { ErrorLike } from 'ono'
-import { AnyFunction } from 'ramda'
+import { AnyFunction, filter, map, pipe } from 'ramda'
 import { Head, Last } from 'ts-toolbelt/out/List/_api'
 import { Nullish } from '../../types'
 
-export type Result<T, E extends ErrorLike> = Value<T> | Error<E>
+export type Result<T = unknown, E extends ErrorLike = ErrorLike> = Value<T> | Error<E>
 export type Unary<T, R> = (arg: T) => Result<R, ErrorLike>
 
 interface IResult<T, E> {
@@ -50,7 +50,7 @@ export namespace Result {
   export type UnWrap<T> = T extends Result<infer R, ErrorLike> ? UnWrap<R> : T
 }
 
-export class Value<T> implements IResult<T, null> {
+export class Value<T = unknown> implements IResult<T, null> {
   constructor(public readonly value: T) {}
 
   ok(): this is Value<T> {
@@ -62,7 +62,7 @@ export class Value<T> implements IResult<T, null> {
   }
 }
 
-export class Error<E> implements IResult<null, E> {
+export class Error<E = ErrorLike> implements IResult<null, E> {
   constructor(public readonly value: E) {}
 
   ok(): this is Value<null> {
@@ -178,3 +178,50 @@ export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unkn
 // const z = (el: Element) => Result.checkNil(el)
 
 // type allowed = Allowed<[typeof x, typeof y, typeof y]>
+type UnWrapped<T> = Exclude<T, null | undefined | ErrorLike | never>
+type UnWrapArray<T extends Result<any, ErrorLike>[], Cache extends any[] = []> = T extends []
+  ? Cache //
+  : T extends [infer H]
+  ? H extends Value<infer R>
+    ? [...Cache, UnWrapped<R>]
+    : never
+  : T extends [infer H, ...infer Lst]
+  ? H extends Value<infer R>
+    ? Lst extends Result<any, ErrorLike>[]
+      ? UnWrapArray<Lst, [...Cache, UnWrapped<R>]>
+      : never
+    : never
+  : never
+
+// it should return type [string, number]
+// type Test = UnWrapArray<[Result<string, ErrorLike>, Result<number, ErrorLike>]>
+
+export const castErr = pipe(
+  filter((arg: Result) => arg.err()),
+  map((arg: Error) => arg.value)
+)
+
+export const mergeErrs = (errors: ErrorLike[]) => ono(errors)
+
+export const mergeResult = <T extends Result<any, ErrorLike>, TArgs extends T[]>(
+  args: TArgs
+): Result<UnWrapArray<TArgs>, ErrorLike> => {
+  const [res, errs] = args.reduce(
+    (prev, val) => {
+      if (val.ok()) {
+        prev[0].push(val.value)
+      } else {
+        prev[1].push(val.value)
+      }
+
+      return prev
+    },
+    [[], []] as [unknown[], ErrorLike[]]
+  )
+
+  if (errs.length > 0) {
+    return Result.err(mergeErrs(errs))
+  } else {
+    return Result.ok(res) as Result<UnWrapArray<TArgs>, ErrorLike>
+  }
+}
