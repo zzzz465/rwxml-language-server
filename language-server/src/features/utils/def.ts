@@ -1,7 +1,7 @@
 import { Def, Document, Element } from '@rwxml/analyzer'
 import ono from 'ono'
 import { find, pipe } from 'ramda'
-import { pipeWithResult, Result, Unary } from '../../utils/functional/result'
+import { pipeWithResult, Result } from '../../utils/functional/result'
 import { childElements, isDef } from './node'
 
 export const defGeneratorPrefixes = ['Meat_', 'Building_', 'Corpse_', 'Techprint_'] as const
@@ -22,9 +22,9 @@ export function getDefNameOfGeneratedDef(defName: string): string | null {
 
 export const getDefInDocument = pipeWithResult(
   childElements, //
-  find(isDef),
-  Result.checkNil // FIXME: how to fix checkNil to typed?
-) as Unary<Document, Element>
+  find<Element>(isDef),
+  (el: Element | undefined) => Result.checkNil(el)
+)
 
 const res = getDefInDocument('')
 if (res.ok()) {

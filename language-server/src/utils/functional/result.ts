@@ -1,6 +1,7 @@
 import { isNil } from 'lodash'
 import ono, { ErrorLike } from 'ono'
 import { AnyFunction } from 'ramda'
+import { Head, Last } from 'ts-toolbelt/out/List/_api'
 
 export type Result<T, E extends ErrorLike> = Value<T> | Error<E>
 export type Unary<T, R> = (arg: T) => Result<R, ErrorLike>
@@ -108,8 +109,6 @@ export const transformer = (res: unknown, f: AnyFunction): Result<unknown, Error
 //   ? Result<Return, ErrorLike> //
 //   : Result<R, ErrorLike>
 
-export type Head<T extends any[]> = T extends [infer H, ...infer _] ? H : never
-export type Last<T extends any[]> = T extends [infer _] ? never : T extends [...infer _, infer L] ? L : never
 export type PipeReturn<T extends Fn[]> = Last<T> extends Fn
   ? ReturnType<Last<T>> extends Result<infer R, ErrorLike>
     ? Result<Result.UnWrap<R>, ErrorLike>
@@ -123,7 +122,7 @@ export type FirstParameterOf<T extends Fn[]> = Head<T> extends Fn ? Head<Paramet
 
 type Fn = (arg: any) => any
 
-type Allowed<T extends Fn[], Cache extends Fn[] = []> = T extends []
+export type Allowed<T extends Fn[], Cache extends Fn[] = []> = T extends []
   ? Cache //
   : T extends [infer Lst]
   ? Lst extends Fn
@@ -183,3 +182,9 @@ export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unkn
 // const check3 = pipeWithError(strToNum, retOk, strToStr)('10')
 // const check4 = pipeWithError(numToStr, retErr, numToNum)(30) // type error
 // const check5 = pipeWithError(numToStr, retErr)(10) // no type err but always err
+
+// const x = (any: NodeWithChildren) => [] as Element[]
+// const y = (any: any) => find<Element>(any)
+// const z = (el: Element) => Result.checkNil(el)
+
+// type allowed = Allowed<[typeof x, typeof y, typeof y]>
