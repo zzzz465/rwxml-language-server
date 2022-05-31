@@ -1,9 +1,10 @@
 import * as tsyringe from 'tsyringe'
-import * as ls from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { LoadFolder } from '../../mod/loadfolders'
+import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
+import { Result } from '../../utils/functional/result'
 import jsonStr from '../../utils/json'
 
 /**
@@ -42,3 +43,5 @@ export class ProjectHelper {
     }
   }
 }
+
+export const getDocument = (project: Project, uri: URI) => Result.checkNil(project.getXMLDocumentByUri(uri))
