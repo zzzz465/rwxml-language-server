@@ -46,8 +46,23 @@ export class ProjectHelper {
   }
 }
 
+/*
+// purpose
+
+getDocument :: (proj, uri) -> Result<Document, ErrorLike>
+
+getRoot :: (doc) -> Result<Element, ErrorLike>
+
+juxt([getDocument, getRoot]) :: (proj, uri) => (Result<document, ErrorLike>, Result<element, ErrorLike>)
+
+mergeResult :: (args: [Result<A, ErrorLike>, Result<B, ErrorLike>, Result<C, ErrorLike>, ..., Result<Z, ErrorLike>]) -> Result<[A, B, C, ..., Z], ErrorLike>
+
+getResources :: (proj, uri) -> Result<[document, uri], ErrorLike>
+*/
+
 export const getDocument = (project: Project, uri: URI) => Result.checkNil(project.getXMLDocumentByUri(uri))
 
-export const getRoot = pipeWithResult(getDocument, getRootDefs)
+export const getRootInDocument = pipeWithResult(getDocument, getRootDefs)
 
-export const getResources = (project: Project, uri: URI) => mergeResult(...juxt([getDocument, getRoot])(project, uri))
+export const getDocumentAndRoot = (project: Project, uri: URI) =>
+  mergeResult(...juxt([getDocument, getRootInDocument])(project, uri))
