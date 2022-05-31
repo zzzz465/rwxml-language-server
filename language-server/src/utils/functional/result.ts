@@ -37,11 +37,11 @@ export namespace Result {
   }
 
   // name from: https://stackoverflow.com/a/57312083
-  export function checkNil<T>(arg: Not<T>): Result<T, ErrorLike> {
+  export function checkNil<T>(arg: unknown): Result<T, ErrorLike> {
     if (isNil(arg)) {
       return Result.err(ono('argument is nil'))
     } else {
-      return Result.ok(arg)
+      return Result.ok(arg) as Result<T, ErrorLike>
     }
   }
 
@@ -102,23 +102,12 @@ export const transformer = (res: unknown, f: AnyFunction): Result<unknown, Error
 // // type _4 = Tail<[1, 2, 3, 4]>
 // // TS: 4.0^
 
-// type Transformer = <R>(
-//   res: unknown,
-//   f: (...args: unknown[]) => R
-// ) => R extends Result<infer Return, ErrorLike>
-//   ? Result<Return, ErrorLike> //
-//   : Result<R, ErrorLike>
-
 export type PipeReturn<T extends Fn[]> = Last<T> extends Fn
   ? ReturnType<Last<T>> extends Result<infer R, ErrorLike>
     ? Result<Result.UnWrap<R>, ErrorLike>
     : ReturnType<Last<T>>
   : never
 export type FirstParameterOf<T extends Fn[]> = Head<T> extends Fn ? Head<Parameters<Head<T>>> : never
-
-// export const pipeWithError: <TArgs extends unknown[], TResult extends Result.Not<unknown>>(
-//   fns: AtLeastOneFunctionsFlow<TArgs, Result<Result.Not<TResult>, ErrorLike>>
-// ) => (...args: TArgs) => Result<TResult, ErrorLike> = curryRight(reduce(transformer))
 
 type Fn = (arg: any) => any
 
