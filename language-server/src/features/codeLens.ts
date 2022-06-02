@@ -43,18 +43,26 @@ export class CodeLens implements Provider {
       return []
     }
 
-    const doc = result.value
-    const map2 = map<Def, Result<Range>>(this._toRange as any)
-    const ranges = pipeWithResult(getDefs, map2)
+    const defs = res.right
 
-    for (const def of root.ChildElementNodes) {
-      if (!(def instanceof Def)) {
-        continue
-      }
+    // 작은 함수를 합성해서 새로운 함수를 만들어내야 한다.
 
-      const res = this._toRange(def)
+    // 1. isDef? (이미 구현, 내장되어 있음)
+    // 2. range 변환 성공하였는가?
+    // 3. defName, defNameContentRange, position 구할 수 있는가?
+    // 4. resolve wanters 구할 수 있는가?
 
-      const range = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
+    // 이제 합성 어떻게 하는거지?
+    // object 형식으로도 가능하고, 배열의 형태로도 가능하다.
+    // 배열은 juxt 를 쓰면 될태고, object 는... 머리아프당 히히
+    // 필요한 데이터들
+    // def -> 문제없음
+    // nodeRange -> element 필요
+    // defNameRange -> def 필요
+    // defName -> def 필요
+    // resolveWanters -> 간단하니 안에서 구할수도 있겠다.
+    // 데이터 완성을 위해 -> defName, range, resolveWanters length
+    // uri -> closure 에서 끌어옴
 
       if (!range) {
         continue
