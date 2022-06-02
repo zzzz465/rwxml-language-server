@@ -1,9 +1,7 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
 import fp from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
-import { fromNullable } from 'fp-ts/lib/Option'
 import { AsEnumerable } from 'linq-es2015'
-import _ from 'lodash'
 import ono from 'ono'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
@@ -247,7 +245,3 @@ export const getDefsNode = fp.function.flow(
  * getDefs returns Defs in document. like <ThingDef>, <DamageDef>, etc...
  */
 export const getDefs = fp.function.flow(getDefsNode, fp.either.map(childElements), fp.either.map(filter(isDef)))
-
-export const toRange = _.curry((converter: RangeConverter, el: Element) =>
-  fromNullable(converter.toLanguageServerRange(el.nodeRange, el.document.uri))
-)
