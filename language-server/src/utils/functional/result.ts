@@ -8,8 +8,8 @@ export namespace R {
 
   export const fromNullable =
     (err: ErrorLike) =>
-    <T>(x: T | null): Result<T> =>
-      x !== null ? E.right(x) : E.left(err)
+    <T>(x: T | null | undefined): Result<T> =>
+      x !== null ? E.right(x as T) : E.left(err)
 
   export const fromOption = (err: ErrorLike) => flow(toNullable, fromNullable(err))
 }
