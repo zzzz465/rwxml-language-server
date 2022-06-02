@@ -3,9 +3,9 @@ import { flow } from 'fp-ts/lib/function'
 import O, { toNullable } from 'fp-ts/Option'
 import { ErrorLike } from 'ono'
 
-export namespace R {
-  export type Result<T, E extends ErrorLike = ErrorLike> = E.Either<E, T>
+export type Result<T = any, E extends ErrorLike = ErrorLike> = E.Either<E, T>
 
+export namespace Result {
   export const fromNullable =
     (err: ErrorLike) =>
     <T>(x: T | null | undefined): Result<T> =>

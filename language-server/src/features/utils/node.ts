@@ -10,7 +10,7 @@ import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
-import { R } from '../../utils/functional/result'
+import { Result } from '../../utils/functional/result'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
@@ -240,7 +240,7 @@ export const childElements = (node: NodeWithChildren) => node.childNodes.filter(
 export const getDefsNode = fp.function.flow(
   childElements,
   findFirst((el) => el.name === 'Defs'),
-  R.fromOption(ono('cannot found <Defs> in document.'))
+  Result.fromOption(ono('cannot found <Defs> in document.'))
 )
 
 /**

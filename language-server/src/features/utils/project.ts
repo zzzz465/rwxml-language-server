@@ -1,13 +1,16 @@
-import { juxt } from 'ramda'
+import fp from 'fp-ts'
+import { sequenceT } from 'fp-ts/lib/Apply'
+import ono from 'ono'
+import R, { juxt } from 'ramda'
 import * as tsyringe from 'tsyringe'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { LoadFolder } from '../../mod/loadfolders'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
-import { mergeResult, pipeWithResult, Result } from '../../utils/functional/result'
+import { Result } from '../../utils/functional/result'
 import jsonStr from '../../utils/json'
-import { getRootDefs } from './node'
+import { getDefsNode } from './node'
 
 /**
  * ProjectHelper is a utility class that helps finding projects and versions for a given URI
@@ -60,9 +63,20 @@ mergeResult :: (args: [Result<A, ErrorLike>, Result<B, ErrorLike>, Result<C, Err
 getResources :: (proj, uri) -> Result<[document, uri], ErrorLike>
 */
 
-export const getDocument = (project: Project, uri: URI) => Result.checkNil(project.getXMLDocumentByUri(uri))
+const _getDocument = (project: Project, uri: URI) => project.getXMLDocumentByUri(uri)
+export const getDocument = (project: Project, uri: URI) =>
+  fp.function.pipe(
+    _getDocument(project, uri), //
+    Result.fromNullable(ono(`cannot find document of uri ${uri}`))
+  )
 
-export const getRootInProject = pipeWithResult(getDocument, getRootDefs)
+export const getRootInProject = fp.function.flow(getDocument, fp.either.chain(getDefsNode))
 
-export const getDocumentAndRoot = (project: Project, uri: URI) =>
-  mergeResult(...juxt([getDocument, getRootInProject])(project, uri))
+export const concat = <A, B>(a: Result<A>, b: Result<B>) => [a, b]
+
+export const getDocumentAndRoot = R.curry((project: Project, uri: URI) =>
+  sequenceT(fp.either.Apply)(...juxt([getDocument, getRootInProject])(project, uri))
+)
+
+// const res2 = sequenceT(fp.either.Apply)
+// const res2 = sequenceT(fp.either.getApplicativeValidation())(...res)
