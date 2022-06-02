@@ -1,8 +1,9 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
+import fp from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
-import * as E from 'fp-ts/lib/Either'
-import { flow } from 'fp-ts/lib/function'
+import { fromNullable } from 'fp-ts/lib/Option'
 import { AsEnumerable } from 'linq-es2015'
+import _ from 'lodash'
 import ono from 'ono'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
@@ -236,7 +237,7 @@ export const childElements = (node: NodeWithChildren) => node.childNodes.filter(
 /**
  * getDefsNode returns <Defs> node in document.
  */
-export const getDefsNode = flow(
+export const getDefsNode = fp.function.flow(
   childElements,
   findFirst((el) => el.name === 'Defs'),
   R.fromOption(ono('cannot found <Defs> in document.'))
@@ -245,10 +246,8 @@ export const getDefsNode = flow(
 /**
  * getDefs returns Defs in document. like <ThingDef>, <DamageDef>, etc...
  */
-export const getDefs = flow(getDefsNode, E.map(childElements), E.map(filter(isDef)))
+export const getDefs = fp.function.flow(getDefsNode, fp.either.map(childElements), fp.either.map(filter(isDef)))
 
-// export const toRange = (converter: RangeConverter) =>
-//   pipe(
-//     (el: Element) => converter.toLanguageServerRange(el.nodeRange, el.document.uri), //
-//     Result.checkNil
-//   )
+export const toRange = _.curry((converter: RangeConverter, el: Element) =>
+  fromNullable(converter.toLanguageServerRange(el.nodeRange, el.document.uri))
+)
