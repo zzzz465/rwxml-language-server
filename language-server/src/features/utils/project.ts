@@ -1,7 +1,7 @@
 import fp from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
 import ono from 'ono'
-import R, { juxt } from 'ramda'
+import { juxt } from 'ramda'
 import * as tsyringe from 'tsyringe'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
@@ -10,7 +10,7 @@ import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Result } from '../../utils/functional/result'
 import jsonStr from '../../utils/json'
-import { getDefsNode } from './node'
+import { getDefs, getDefsNode } from './node'
 
 /**
  * ProjectHelper is a utility class that helps finding projects and versions for a given URI
@@ -72,11 +72,10 @@ export const getDocument = (project: Project, uri: URI) =>
 
 export const getRootInProject = fp.function.flow(getDocument, fp.either.chain(getDefsNode))
 
-export const concat = <A, B>(a: Result<A>, b: Result<B>) => [a, b]
-
-export const getDocumentAndRoot = R.curry((project: Project, uri: URI) =>
+export const getDocumentAndRoot = (project: Project, uri: URI) =>
   sequenceT(fp.either.Apply)(...juxt([getDocument, getRootInProject])(project, uri))
-)
+
+export const getDefsOfUri = fp.function.flow(getDocument, fp.either.chain(getDefs))
 
 // const res2 = sequenceT(fp.either.Apply)
 // const res2 = sequenceT(fp.either.getApplicativeValidation())(...res)
