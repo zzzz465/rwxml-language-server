@@ -1,18 +1,27 @@
-import { Def, Element, Injectable, Range } from '@rwxml/analyzer'
+import { Def, Injectable, Range } from '@rwxml/analyzer'
 import { from } from 'linq-es2015'
+import { map } from 'ramda'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
+import { mergeResult, pipeWithResult, Result } from '../utils/functional/result'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
-import { toLocation } from './utils/node'
+import { getDocument } from './utils'
+import { getDefs, toLocation, toRange } from './utils/node'
+
+type CodeLensType = 'reference'
 
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
 export class CodeLens implements Provider {
-  constructor(private readonly projectManager: ProjectManager, private readonly rangeConverter: RangeConverter) {}
+  private readonly _toRange: ReturnType<typeof toRange>
+
+  constructor(private readonly projectManager: ProjectManager, rangeConverter: RangeConverter) {
+    this._toRange = toRange(rangeConverter)
+  }
 
   init(connection: lsp.Connection): void {
     connection.onCodeLens((p, t) => this.onCodeLensRequest(p, t))
@@ -29,19 +38,21 @@ export class CodeLens implements Provider {
   }
 
   private codeLens(project: Project, uri: URI): lsp.CodeLens[] {
-    const document = project.getXMLDocumentByUri(uri)
-    const root = document?.children.find((node) => node instanceof Element) as Element | undefined
-
-    if (!root || !(root.name === 'Defs')) {
+    const result = getDocument(project, uri)
+    if (result.err()) {
       return []
     }
 
-    const res: lsp.CodeLens[] = []
+    const doc = result.value
+    const map2 = map<Def, Result<Range>>(this._toRange as any)
+    const ranges = pipeWithResult(getDefs, map2)
 
     for (const def of root.ChildElementNodes) {
       if (!(def instanceof Def)) {
         continue
       }
+
+      const res = this._toRange(def)
 
       const range = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
 

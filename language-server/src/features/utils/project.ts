@@ -62,7 +62,7 @@ getResources :: (proj, uri) -> Result<[document, uri], ErrorLike>
 
 export const getDocument = (project: Project, uri: URI) => Result.checkNil(project.getXMLDocumentByUri(uri))
 
-export const getRootInDocument = pipeWithResult(getDocument, getRootDefs)
+export const getRootInProject = pipeWithResult(getDocument, getRootDefs)
 
 export const getDocumentAndRoot = (project: Project, uri: URI) =>
-  mergeResult(...juxt([getDocument, getRootInDocument])(project, uri))
+  mergeResult(...juxt([getDocument, getRootInProject])(project, uri))

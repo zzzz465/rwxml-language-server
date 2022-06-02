@@ -1,6 +1,6 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
-import { find } from 'ramda'
+import { filter, find, pipe } from 'ramda'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
@@ -227,7 +227,7 @@ export function getRootElement(node: Node): Element | undefined {
 
 export const isElement = (node: Node): node is Element => node instanceof Element || node instanceof Def
 
-export const isDef = (node: Node) => node instanceof Def
+export const isDef = (node: Node): node is Def => node instanceof Def
 
 export const childElements = (node: NodeWithChildren) => node.childNodes.filter(isElement)
 
@@ -246,6 +246,11 @@ export const getRootDefs = (doc: Document) =>
 export const getDefs = pipeWithResult(
   getRootDefs, //
   childElements,
-  find<Element>(isDef),
-  checkNilElement
+  filter<Element, Def>(isDef) as (li: Element[]) => Def[]
 )
+
+export const toRange = (converter: RangeConverter) =>
+  pipe(
+    (el: Element) => converter.toLanguageServerRange(el.nodeRange, el.document.uri), //
+    Result.checkNil
+  )

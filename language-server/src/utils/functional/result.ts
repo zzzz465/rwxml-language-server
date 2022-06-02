@@ -2,6 +2,7 @@ import { isNil } from 'lodash'
 import ono, { ErrorLike } from 'ono'
 import { AnyFunction, filter, map, pipe } from 'ramda'
 import { Head, Last } from 'ts-toolbelt/out/List/_api'
+import { Range } from 'vscode-languageserver'
 import { Nullish } from '../../types'
 
 export type Result<T = unknown, E extends ErrorLike = ErrorLike> = Value<T> | Error<E>
@@ -143,7 +144,7 @@ export function pipeWithResult<
   }[Allowed<Fns> extends never ? 0 : 1]
 >(
   ...args: [...Fns]
-): (...data: Allow) => PipeReturn<Fns> extends Result<unknown, ErrorLike>
+): (...data: Allow) => PipeReturn<Fns> extends Result<unknown>
   ? PipeReturn<Fns> //
   : Result<PipeReturn<Fns>, ErrorLike>
 export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unknown[]>(...args: [...Fns]) {
@@ -180,7 +181,7 @@ export function pipeWithResult<T extends Fn, Fns extends T[], Allow extends unkn
 // type allowed = Allowed<[typeof x, typeof y, typeof y]>
 // end of test
 
-type UnWrapArray<T extends Result<any, ErrorLike>[], Cache extends any[] = []> = T extends []
+type UnWrapArray<T, Cache extends any[] = []> = T extends []
   ? Cache //
   : T extends [infer H]
   ? H extends Value<infer R>
@@ -199,6 +200,8 @@ type UnWrapArray<T extends Result<any, ErrorLike>[], Cache extends any[] = []> =
 // type Test = UnWrapArray<[Result<string, ErrorLike>, Result<number, ErrorLike>]>
 // it should return type [Document, Element]
 // type Test2 = UnWrapArray<[Result<Element, ErrorLike>]>
+
+type Test3 = UnWrapArray<[Result<Range, ErrorLike>[]]>
 // end of test
 
 export const castErr = pipe(
