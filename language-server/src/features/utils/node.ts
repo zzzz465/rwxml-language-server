@@ -255,4 +255,4 @@ export const getDefNameNode = (def: Def) =>
 
 export const getContent = (el: Element) => fp.function.pipe(el.content ?? null, fp.option.fromNullable)
 
-export const getDefNameStr = fp.function.flow(getDefNameNode, fp.option.map(getContent))
+export const getDefNameStr = fp.function.flow(getDefNameNode, fp.option.chain(getContent))
