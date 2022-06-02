@@ -1,13 +1,15 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
+import { findFirst } from 'fp-ts/lib/Array'
+import { flow } from 'fp-ts/lib/function'
 import { AsEnumerable } from 'linq-es2015'
-import { filter, find, pipe } from 'ramda'
+import ono from 'ono'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
 import { Nullish } from '../../types'
-import { pipeWithResult, Result } from '../../utils/functional/result'
+import * as R from '../../utils/functional/result'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
@@ -233,24 +235,31 @@ export const childElements = (node: NodeWithChildren) => node.childNodes.filter(
 
 export const checkNilElement = (el: Nullish<Element>) => Result.checkNil(el)
 
+// const x = findFirst<Element>((e) => true)(childElements(0 as unknown as any))
+const getRootDefs = flow(
+  childElements,
+  findFirst((el) => el.name === 'Defs'),
+  R.fromOption(ono('cannot found <Defs> in document.'))
+)
+
 /**
  * getRootDefs returns <Defs> node in top of node tree.
  */
-export const getRootDefs = (doc: Document) =>
-  pipeWithResult(
-    childElements, //
-    find<Element>((el) => el.name === 'Defs'),
-    checkNilElement
-  )(doc)
+// export const getRootDefs = (doc: Document) =>
+//   pipeWithResult(
+//     childElements, //
+//     find<Element>((el) => el.name === 'Defs'),
+//     checkNilElement
+//   )(doc)
 
-export const getDefs = pipeWithResult(
-  getRootDefs, //
-  childElements,
-  filter<Element, Def>(isDef) as (li: Element[]) => Def[]
-)
+// export const getDefs = pipeWithResult(
+//   getRootDefs, //
+//   childElements,
+//   filter<Element, Def>(isDef) as (li: Element[]) => Def[]
+// )
 
-export const toRange = (converter: RangeConverter) =>
-  pipe(
-    (el: Element) => converter.toLanguageServerRange(el.nodeRange, el.document.uri), //
-    Result.checkNil
-  )
+// export const toRange = (converter: RangeConverter) =>
+//   pipe(
+//     (el: Element) => converter.toLanguageServerRange(el.nodeRange, el.document.uri), //
+//     Result.checkNil
+//   )
