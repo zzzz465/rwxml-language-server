@@ -1,6 +1,6 @@
 import E from 'fp-ts/Either'
 import { flow } from 'fp-ts/lib/function'
-import { toNullable } from 'fp-ts/Option'
+import O, { toNullable } from 'fp-ts/Option'
 import { ErrorLike } from 'ono'
 
 export namespace R {
@@ -11,5 +11,5 @@ export namespace R {
     <T>(x: T | null | undefined): Result<T> =>
       x !== null ? E.right(x as T) : E.left(err)
 
-  export const fromOption = (err: ErrorLike) => flow(toNullable, fromNullable(err))
+  export const fromOption = (err: ErrorLike): (<A>(ma: O.Option<A>) => Result<A>) => flow(toNullable, fromNullable(err))
 }
