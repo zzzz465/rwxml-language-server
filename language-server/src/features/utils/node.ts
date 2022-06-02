@@ -1,5 +1,6 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
-import { findFirst } from 'fp-ts/lib/Array'
+import { filter, findFirst } from 'fp-ts/lib/Array'
+import * as E from 'fp-ts/lib/Either'
 import { flow } from 'fp-ts/lib/function'
 import { AsEnumerable } from 'linq-es2015'
 import ono from 'ono'
@@ -8,8 +9,7 @@ import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
-import { Nullish } from '../../types'
-import * as R from '../../utils/functional/result'
+import { R } from '../../utils/functional/result'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
@@ -233,30 +233,19 @@ export const isDef = (node: Node): node is Def => node instanceof Def
 
 export const childElements = (node: NodeWithChildren) => node.childNodes.filter(isElement)
 
-export const checkNilElement = (el: Nullish<Element>) => Result.checkNil(el)
-
-// const x = findFirst<Element>((e) => true)(childElements(0 as unknown as any))
-const getRootDefs = flow(
+/**
+ * getDefsNode returns <Defs> node in document.
+ */
+export const getDefsNode = flow(
   childElements,
   findFirst((el) => el.name === 'Defs'),
   R.fromOption(ono('cannot found <Defs> in document.'))
 )
 
 /**
- * getRootDefs returns <Defs> node in top of node tree.
+ * getDefs returns Defs in document. like <ThingDef>, <DamageDef>, etc...
  */
-// export const getRootDefs = (doc: Document) =>
-//   pipeWithResult(
-//     childElements, //
-//     find<Element>((el) => el.name === 'Defs'),
-//     checkNilElement
-//   )(doc)
-
-// export const getDefs = pipeWithResult(
-//   getRootDefs, //
-//   childElements,
-//   filter<Element, Def>(isDef) as (li: Element[]) => Def[]
-// )
+export const getDefs = flow(getDefsNode, E.map(childElements), E.map(filter(isDef)))
 
 // export const toRange = (converter: RangeConverter) =>
 //   pipe(
