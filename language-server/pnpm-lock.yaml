@@ -26,6 +26,7 @@ specifiers:
   fast-deep-equal: ^3.1.3
   fast-safe-stringify: ^2.1.1
   flatted: ^3.2.5
+  fp-ts: ^2.12.1
   jest: ^27.5.1
   json-loader: ^0.5.7
   linq-es2015: ^2.5.1
@@ -69,6 +70,7 @@ dependencies:
   fast-deep-equal: 3.1.3
   fast-safe-stringify: 2.1.1
   flatted: 3.2.5
+  fp-ts: 2.12.1
   linq-es2015: 2.5.1
   lodash: 4.17.21
   normalize-path: 3.0.0
@@ -2177,6 +2179,10 @@ packages:
       combined-stream: 1.0.8
       mime-types: 2.1.35
     dev: true
+
+  /fp-ts/2.12.1:
+    resolution: {integrity: sha512-oxvgqUYR6O9VkKXrxkJ0NOyU0FrE705MeqgBUMEPWyTu6Pwn768cJbHChw2XOBlgFLKfIHxjr2OOBFpv2mUGZw==}
+    dev: false
 
   /fs.realpath/1.0.0:
     resolution: {integrity: sha1-FQStJSMVjKpA20onh8sBQRmU6k8=}
