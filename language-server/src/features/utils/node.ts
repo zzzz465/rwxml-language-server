@@ -245,3 +245,14 @@ export const getDefsNode = fp.function.flow(
  * getDefs returns Defs in document. like <ThingDef>, <DamageDef>, etc...
  */
 export const getDefs = fp.function.flow(getDefsNode, fp.either.map(childElements), fp.either.map(filter(isDef)))
+
+export const getDefNameNode = (def: Def) =>
+  fp.function.pipe(
+    def,
+    childElements,
+    fp.array.findFirst((el) => el.name === 'defName')
+  )
+
+export const getContent = (el: Element) => fp.function.pipe(el.content ?? null, fp.option.fromNullable)
+
+export const getDefNameStr = fp.function.flow(getDefNameNode, fp.option.map(getContent))
