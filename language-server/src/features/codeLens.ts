@@ -11,7 +11,7 @@ import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
 import { getDefNameStr, getDefsOfUri } from './utils'
-import { getDefNameRange, nodeRange as getNodeRange, toRange as getToRange, ToRange } from './utils/range'
+import { getDefNameRange, nodeRange as getNodeRange, toRange as getToRange, toRange, ToRange } from './utils/range'
 
 type CodeLensType = 'reference'
 
@@ -27,10 +27,12 @@ const resultConcat = semigroup.struct<Result>({
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
 export class CodeLens implements Provider {
+  private readonly _toRange: ReturnType<typeof toRange>
   private readonly nodeRange: ToRange<Element>
 
   constructor(private readonly projectManager: ProjectManager, rangeConverter: RangeConverter) {
-    this.nodeRange = getNodeRange(getToRange(rangeConverter))
+    this._toRange = getToRange(rangeConverter)
+    this.nodeRange = getNodeRange(this._toRange)
   }
 
   init(connection: lsp.Connection): void {
@@ -60,7 +62,7 @@ export class CodeLens implements Provider {
 
   private getDefReferences(project: Project, uri: URI): Result[] {
     // functions
-    const getResolveWanters = project.defManager.getReferenceResolveWanters.bind(project)
+    const getResolveWanters = (defName: string) => project.defManager.getReferenceResolveWanters(defName)
     const getPos = flow(
       getDefNameRange,
       option.map((r) => r.start)
