@@ -38,7 +38,7 @@ export class CodeLens implements Provider {
   }
 
   init(connection: lsp.Connection): void {
-    connection.onCodeLens((p, t) => this.onCodeLensRequest(p, t))
+    connection.onCodeLens((p, t) => this.onCodeLensRequest(p))
   }
 
   // (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
