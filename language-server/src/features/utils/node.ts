@@ -1,6 +1,7 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
-import * as fp from 'fp-ts'
+import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
+import { flow, pipe } from 'fp-ts/lib/function'
 import { AsEnumerable } from 'linq-es2015'
 import ono from 'ono'
 import { container } from 'tsyringe'
@@ -235,7 +236,7 @@ export const childElements = (node: NodeWithChildren) => node.childNodes.filter(
 /**
  * getDefsNode returns <Defs> node in document.
  */
-export const getDefsNode = fp.function.flow(
+export const getDefsNode = flow(
   childElements,
   findFirst((el) => el.name === 'Defs'),
   Result.fromOption(ono('cannot found <Defs> in document.'))
@@ -244,15 +245,15 @@ export const getDefsNode = fp.function.flow(
 /**
  * getDefs returns Defs in document. like <ThingDef>, <DamageDef>, etc...
  */
-export const getDefs = fp.function.flow(getDefsNode, fp.either.map(childElements), fp.either.map(filter(isDef)))
+export const getDefs = flow(getDefsNode, either.map(childElements), either.map(filter(isDef)))
 
 export const getDefNameNode = (def: Def) =>
-  fp.function.pipe(
+  pipe(
     def,
     childElements,
-    fp.array.findFirst((el) => el.name === 'defName')
+    array.findFirst((el) => el.name === 'defName')
   )
 
-export const getContent = (el: Element) => fp.function.pipe(el.content ?? null, fp.option.fromNullable)
+export const getContent = (el: Element) => pipe(el.content ?? null, option.fromNullable)
 
-export const getDefNameStr = fp.function.flow(getDefNameNode, fp.option.chain(getContent))
+export const getDefNameStr = flow(getDefNameNode, option.chain(getContent))
