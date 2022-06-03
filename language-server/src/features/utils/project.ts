@@ -1,5 +1,6 @@
-import fp from 'fp-ts'
+import { either } from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
+import { flow, pipe } from 'fp-ts/lib/function'
 import ono from 'ono'
 import { juxt } from 'ramda'
 import * as tsyringe from 'tsyringe'
@@ -65,17 +66,17 @@ getResources :: (proj, uri) -> Result<[document, uri], ErrorLike>
 
 const _getDocument = (project: Project, uri: URI) => project.getXMLDocumentByUri(uri)
 export const getDocument = (project: Project, uri: URI) =>
-  fp.function.pipe(
+  pipe(
     _getDocument(project, uri), //
     Result.fromNullable(ono(`cannot find document of uri ${uri}`))
   )
 
-export const getRootInProject = fp.function.flow(getDocument, fp.either.chain(getDefsNode))
+export const getRootInProject = flow(getDocument, either.chain(getDefsNode))
 
 export const getDocumentAndRoot = (project: Project, uri: URI) =>
-  sequenceT(fp.either.Apply)(...juxt([getDocument, getRootInProject])(project, uri))
+  sequenceT(either.Apply)(...juxt([getDocument, getRootInProject])(project, uri))
 
-export const getDefsOfUri = fp.function.flow(getDocument, fp.either.chain(getDefs))
+export const getDefsOfUri = flow(getDocument, either.chain(getDefs))
 
 // const res2 = sequenceT(fp.either.Apply)
 // const res2 = sequenceT(fp.either.getApplicativeValidation())(...res)
