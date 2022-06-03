@@ -1,6 +1,7 @@
-import { Def, Injectable } from '@rwxml/analyzer'
+import { Def, Element } from '@rwxml/analyzer'
 import { either, option } from 'fp-ts'
-import { flow, pipe } from 'fp-ts/lib/function'
+import { sequenceT } from 'fp-ts/lib/Apply'
+import { flow } from 'fp-ts/lib/function'
 import { from } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
@@ -10,18 +11,24 @@ import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
 import { getDefNameStr, getDefsOfUri } from './utils'
-import { getDefNameRange, nodeRange as getNodeRange, toRange } from './utils/range'
+import { getDefNameRange, nodeRange as getNodeRange, ToRange, toRange } from './utils/range'
 
 type CodeLensType = 'reference'
 
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
 export class CodeLens implements Provider {
+  private readonly nodeRange: ToRange<Element>
+  private readonly defNameRange: ToRange<Def>
+
   constructor(
     private readonly projectManager: ProjectManager,
     rangeConverter: RangeConverter,
     private readonly _toRange = toRange(rangeConverter) // 이거 tsyringe injection 어떻게 되는거지?
-  ) {}
+  ) {
+    this.nodeRange = getNodeRange(_toRange)
+    this.defNameRange = getDefNameRange(_toRange)
+  }
 
   init(connection: lsp.Connection): void {
     connection.onCodeLens((p, t) => this.onCodeLensRequest(p, t))
@@ -35,52 +42,40 @@ export class CodeLens implements Provider {
   }
 
   private codeLens(project: Project, uri: URI): lsp.CodeLens[] {
+    // functions
+    const getResolveWanters = project.defManager.getReferenceResolveWanters.bind(project)
+    const getPos = flow(
+      getDefNameRange,
+      option.map((r) => r.start)
+    )
+    const getReferences = flow(getDefNameStr, option.map(getResolveWanters))
+
+    // code
     const res = getDefsOfUri(project, uri)
     if (either.isLeft(res)) {
       return []
     }
 
-    const defs = res.right
+    const results: lsp.CodeLens[] = []
 
-    const nodeRange = getNodeRange(this._toRange)
-    const defNameRange = getDefNameRange(this._toRange)
-    const resolveWanters = project.defManager.getReferenceResolveWanters.bind(project)
+    for (const def of res.right) {
+      const res = sequenceT(option.Apply)(this.nodeRange(def), getPos(this._toRange, def), getReferences(def))
+      if (option.isNone(res)) {
+        continue
+      }
 
-    const getData = (def: Def) =>
-      pipe(
-        option.of(def),
-        option.bindTo('def'),
-        option.bind('range', ({ def }) => nodeRange(def)),
-        option.bind('defName', ({ def }) => getDefNameStr(def)),
-        option.bind('defNameRange', ({ def }) => defNameRange(def)),
-        option.bind('pos', ({ defNameRange }) => option.fromNullable(defNameRange?.start)),
-        option.bind('injectables', ({ defName }) => option.some(resolveWanters(defName)))
-      )
+      const [range, pos, injectables] = res.value
 
-    const makeResult = (arg: {
-      def: Def
-      range: lsp.Range
-      pos: lsp.Position
-      defName: string
-      injectables: Injectable[]
-    }): lsp.CodeLens => {
-      const { pos, injectables, range } = arg
-
-      return {
+      results.push({
         range,
         command: {
           title: `${injectables.length} Def References`,
           command: injectables.length ? 'rwxml-language-server:CodeLens:defReference' : '',
           arguments: [uri.toString(), pos],
         },
-      }
+      })
     }
 
-    const getResult = flow(getData, option.map(makeResult))
-
-    return defs
-      .map(getResult)
-      .filter(option.isSome)
-      .map((x) => x.value)
+    return results
   }
 }
