@@ -1,5 +1,5 @@
-import { Def, Element } from '@rwxml/analyzer'
-import { either, option } from 'fp-ts'
+import { Element } from '@rwxml/analyzer'
+import { either, number, option, semigroup } from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
 import { flow } from 'fp-ts/lib/function'
 import { from } from 'linq-es2015'
@@ -15,11 +15,19 @@ import { getDefNameRange, nodeRange as getNodeRange, ToRange, toRange } from './
 
 type CodeLensType = 'reference'
 
+type Result = { range: lsp.Range; uri: string; pos: lsp.Position; refCount: number }
+
+const resultConcat = semigroup.struct<Result>({
+  pos: semigroup.first(),
+  range: semigroup.first(),
+  refCount: number.SemigroupSum,
+  uri: semigroup.first(),
+}).concat
+
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
 export class CodeLens implements Provider {
   private readonly nodeRange: ToRange<Element>
-  private readonly defNameRange: ToRange<Def>
 
   constructor(
     private readonly projectManager: ProjectManager,
@@ -27,7 +35,6 @@ export class CodeLens implements Provider {
     private readonly _toRange = toRange(rangeConverter) // 이거 tsyringe injection 어떻게 되는거지?
   ) {
     this.nodeRange = getNodeRange(_toRange)
-    this.defNameRange = getDefNameRange(_toRange)
   }
 
   init(connection: lsp.Connection): void {
@@ -36,12 +43,26 @@ export class CodeLens implements Provider {
 
   // (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
   private async onCodeLensRequest(params: lsp.CodeLensParams): Promise<lsp.CodeLens[] | null> {
-    return from(this.projectManager.projects)
-      .SelectMany((proj) => this.codeLens(proj, URI.parse(params.textDocument.uri)))
+    // gather results from each projects, and merge result if multiple codelens in a same position.
+    const results = from(this.projectManager.projects)
+      .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
+      .GroupBy((x) => {
+        x.pos, x.range, x.uri
+      })
+      .Select((x) => x.reduce((prev, curr) => resultConcat(prev, curr)))
       .ToArray()
+
+    return results.map((data) => ({
+      range: data.range,
+      command: {
+        title: `${data.refCount} Def References`,
+        command: 'rwxml-language-server:CodeLens:defReference',
+        arguments: [data.uri, data.pos],
+      },
+    }))
   }
 
-  private codeLens(project: Project, uri: URI): lsp.CodeLens[] {
+  private getDefReferences(project: Project, uri: URI): Result[] {
     // functions
     const getResolveWanters = project.defManager.getReferenceResolveWanters.bind(project)
     const getPos = flow(
@@ -56,7 +77,7 @@ export class CodeLens implements Provider {
       return []
     }
 
-    const results: lsp.CodeLens[] = []
+    const results: Result[] = []
 
     for (const def of res.right) {
       const res = sequenceT(option.Apply)(this.nodeRange(def), getPos(this._toRange, def), getReferences(def))
@@ -65,15 +86,7 @@ export class CodeLens implements Provider {
       }
 
       const [range, pos, injectables] = res.value
-
-      results.push({
-        range,
-        command: {
-          title: `${injectables.length} Def References`,
-          command: injectables.length ? 'rwxml-language-server:CodeLens:defReference' : '',
-          arguments: [uri.toString(), pos],
-        },
-      })
+      results.push({ range, pos, uri: uri.toString(), refCount: injectables.length })
     }
 
     return results
