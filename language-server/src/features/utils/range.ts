@@ -2,6 +2,7 @@ import { Def, Element, Range } from '@rwxml/analyzer'
 import { option } from 'fp-ts'
 import { pipe } from 'fp-ts/lib/function'
 import _ from 'lodash'
+import * as lsp from 'vscode-languageserver'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { getDefNameNode } from './node'
 
@@ -22,15 +23,16 @@ export const nodeRange = _.curry((toRange: _toRange, el: Element) =>
 )
 
 /**
- *
+ * toRange -> def -> Option<lsp.Range>
  * @returns option of defName content range of given def.
  */
 export const getDefNameRange = _.curry((toRange: _toRange, def: Def) =>
   pipe(
     def,
     getDefNameNode,
-    option.map((node) => node.contentRange ?? null),
-    option.chain(option.fromNullable),
-    option.map((range) => toRange(range, def.document.uri))
+    option.chain(option.fromNullableK((node) => node.contentRange ?? null)),
+    option.chain(option.fromNullableK((range) => toRange(range, def.document.uri)))
   )
 )
+
+export type ToRange<T> = _.CurriedFunction1<T, option.Option<lsp.Range>>
