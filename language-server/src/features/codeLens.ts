@@ -11,7 +11,7 @@ import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
 import { getDefNameStr, getDefsOfUri } from './utils'
-import { getDefNameRange, nodeRange as getNodeRange, ToRange, toRange } from './utils/range'
+import { getDefNameRange, nodeRange as getNodeRange, toRange as getToRange, ToRange } from './utils/range'
 
 type CodeLensType = 'reference'
 
@@ -29,12 +29,8 @@ const resultConcat = semigroup.struct<Result>({
 export class CodeLens implements Provider {
   private readonly nodeRange: ToRange<Element>
 
-  constructor(
-    private readonly projectManager: ProjectManager,
-    rangeConverter: RangeConverter,
-    private readonly _toRange = toRange(rangeConverter) // 이거 tsyringe injection 어떻게 되는거지?
-  ) {
-    this.nodeRange = getNodeRange(_toRange)
+  constructor(private readonly projectManager: ProjectManager, rangeConverter: RangeConverter) {
+    this.nodeRange = getNodeRange(getToRange(rangeConverter))
   }
 
   init(connection: lsp.Connection): void {
