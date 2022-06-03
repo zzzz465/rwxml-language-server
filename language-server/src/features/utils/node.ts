@@ -1,5 +1,5 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
-import fp from 'fp-ts'
+import * as fp from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
 import { AsEnumerable } from 'linq-es2015'
 import ono from 'ono'
