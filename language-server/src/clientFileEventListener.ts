@@ -1,3 +1,4 @@
+import { either } from 'fp-ts'
 import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
@@ -21,17 +22,17 @@ export class ClientFileEventListener {
   }
 
   private onFileAdded(uri: string) {
-    const [, err] = this.fileStore.load({ uri: URI.parse(uri) })
-    if (err) {
-      this.log.error(`cannot add file. error: ${err.message}`)
+    const res = this.fileStore.load({ uri: URI.parse(uri) })
+    if (either.isLeft(res)) {
+      this.log.error(`cannot add file. error: ${res.left}`)
       return
     }
   }
 
   private onFileChanged(uri: string) {
-    const [, err] = this.fileStore.update(uri)
-    if (err) {
-      this.log.error(`cannot add file. error: ${err.message}`)
+    const res = this.fileStore.update(uri)
+    if (either.isLeft(res)) {
+      this.log.error(`cannot add file. error: ${res.left.message}`)
       return
     }
   }

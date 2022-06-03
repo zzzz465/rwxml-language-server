@@ -1,5 +1,6 @@
 import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
 import { EventEmitter } from 'events'
+import { either } from 'fp-ts'
 import _ from 'lodash'
 import * as ono from 'ono'
 import { serializeError } from 'serialize-error'
@@ -91,13 +92,13 @@ export class Project {
       return
     }
 
-    const [doc, err] = await this.textDocumentManager.get(uri)
-    if (err) {
-      this.log.error(`failed retrieving textDocument. err: ${err}`)
+    const res = await this.textDocumentManager.get(uri)
+    if (either.isLeft(res)) {
+      this.log.error(`failed retrieving textDocument. err: ${res.left}`)
       return
     }
 
-    return doc
+    return res.right
   }
 
   getXMLDocuments(): Document[] {

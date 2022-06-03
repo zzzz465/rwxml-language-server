@@ -1,11 +1,12 @@
 import EventEmitter from 'events'
+import { either } from 'fp-ts'
 import { inject, singleton } from 'tsyringe'
+import TypedEventEmitter from 'typed-emitter'
 import { Connection, TextDocumentChangeEvent, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
-import { ConnectionToken } from './connection'
 import * as winston from 'winston'
-import TypedEventEmitter from 'typed-emitter'
+import { ConnectionToken } from './connection'
 import { FileStore } from './fileStore'
 import defaultLogger, { className, logFormat } from './log'
 
@@ -38,9 +39,9 @@ export class TextDocumentsAdapter {
   }
 
   private onOpen(e: TextDocumentChangeEvent<TextDocument>): void {
-    const [_, err] = this.fileStore.load({ uri: URI.parse(e.document.uri.toString()) })
-    if (err) {
-      this.log.error(`failed load file. err: ${err}`)
+    const res = this.fileStore.load({ uri: URI.parse(e.document.uri.toString()) })
+    if (either.isLeft(res)) {
+      this.log.error(`failed load file. err: ${res.left}`)
       return
     }
   }
