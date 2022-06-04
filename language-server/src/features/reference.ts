@@ -116,7 +116,7 @@ export class Reference {
 
       result.push({
         range: range.value,
-        uri: uri.toString(),
+        uri: node.document.uri,
       })
     }
 
