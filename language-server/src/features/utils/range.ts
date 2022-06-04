@@ -28,6 +28,13 @@ export const toAttribRange = (toRange: _toRange, el: Element, attribName: string
     option.chain(_.curryRight(toRange)(el.document.uri))
   )
 
+export const toAttribValueRange = (toRange: _toRange, el: Element, attribName: string) =>
+  pipe(
+    getAttrib(attribName, el),
+    option.map((x) => x.valueRange),
+    option.chain(_.curryRight(toRange)(el.document.uri))
+  )
+
 /**
  * toRange -> def -> Option<lsp.Range>
  * @returns option of defName content range of given def.
