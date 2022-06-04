@@ -1,4 +1,5 @@
 import { Element, Injectable } from '@rwxml/analyzer'
+import stringify from 'fast-safe-stringify'
 import { array, either, eq, option } from 'fp-ts'
 import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
 import { flow } from 'fp-ts/lib/function'
@@ -51,17 +52,24 @@ export class CodeLens implements Provider {
 
     const uniqResults = array.uniq(resultEq)(results)
 
-    return from(uniqResults)
-      .GroupBy((x) => ({ pos: x.pos, range: x.range, uri: x.uri }))
+    const returnData = from(uniqResults)
+      .GroupBy((x) => stringify({ uri: x.uri, range: x.range, pos: x.pos }))
       .Select((x) => ({
-        range: x.key.range,
+        range: x[0].range,
         command: {
           title: `${x.length} Def References`,
-          command: '',
-          arguments: [x.key.uri, x.key.pos],
+          command: 'rwxml-language-server:CodeLens:defReference',
+          arguments: [x[0].uri, x[0].pos],
         },
       }))
       .ToArray()
+
+    this.log.debug(performance.measure('codelens performance: ', this.onCodeLensRequest.name))
+
+    performance.clearMarks()
+    performance.clearMeasures()
+
+    return returnData
   }
 
   private getDefReferences(project: Project, uri: URI): Result[] {
