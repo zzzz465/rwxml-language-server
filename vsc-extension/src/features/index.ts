@@ -7,7 +7,7 @@ import * as displayTypeInfo from './displayTypeInfo'
 export function registerFeatures(): Disposable[] {
   return [
     ...deco.registerDecoHook(),
-    codeLens.registerFeature(),
+    ...codeLens.registerFeature(),
     displayTypeInfo.registerFeature(),
     displayDefs.registerFeature(),
   ]

@@ -1,11 +1,11 @@
-import { Element, Injectable } from '@rwxml/analyzer'
+import { Def, Element, Injectable } from '@rwxml/analyzer'
 import stringify from 'fast-safe-stringify'
-import { array, either, option, record, semigroup } from 'fp-ts'
+import { array, either, option, semigroup } from 'fp-ts'
 import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
 import { flow, pipe } from 'fp-ts/lib/function'
-import { groupBy } from 'fp-ts/lib/NonEmptyArray'
 import { from } from 'linq-es2015'
 import _ from 'lodash'
+import { juxt } from 'ramda'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
@@ -15,32 +15,52 @@ import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
-import { getDefNameStr, getDefsOfUri } from './utils'
+import { getAttrib, getDefNameStr, getDefsOfUri } from './utils'
 import {
   getContentRange,
   getDefNameRange,
-  nodeRange as getNodeRange,
+  toNodeRange as getNodeRange,
   toRange as getToRange,
   toRange,
   ToRange,
 } from './utils/range'
 
-type CodeLensType = 'reference'
+/*
+1. getDefRefCodeLens, getNameRefCodeLens 에서는 Result 를 반환한다.
+*/
 
-type Result = { range: lsp.Range; uri: string; pos: lsp.Position; refs: { uri: string; range: lsp.Range }[] }
+type CodeLensType = 'defReference' | 'nameReference'
+
+type Result = {
+  type: CodeLensType
+  range: lsp.Range
+  uri: string
+  pos: lsp.Position
+  refs: { uri: string; range: lsp.Range }[]
+}
 
 const resultKey = (r: Result) => stringify({ uri: r.uri, rane: r.range, pos: r.pos })
 const resultSemigroup = semigroup.struct<Result>({
+  type: semigroup.last(),
   pos: semigroup.last(),
   uri: semigroup.last(),
   range: semigroup.last(),
   refs: { concat: (x, y) => _.uniqWith([...x, ...y], _.isEqual) },
 })
 const resultConcatAll = semigroup.concatAll<Result>(resultSemigroup)({
-  pos: 0 as any,
-  range: 0 as any,
+  type: 'defReference',
+  pos: 0 as never,
+  range: 0 as never,
   uri: '',
   refs: [],
+})
+const resultToCodeLens = (r: Result): lsp.CodeLens => ({
+  range: r.range,
+  command: {
+    command: `rwxml-language-server:CodeLens:${r.type}`,
+    title: r.type === 'defReference' ? `${r.refs.length} Def References` : `${r.refs.length} Name References`,
+    arguments: [r.uri, r.pos],
+  },
 })
 
 // TODO: add clear(document) when file removed from pool.
@@ -67,31 +87,22 @@ export class CodeLens implements Provider {
   private async onCodeLensRequest(params: lsp.CodeLensParams): Promise<lsp.CodeLens[] | null> {
     performance.mark(this.onCodeLensRequest.name)
 
+    const uri = URI.parse(params.textDocument.uri)
+    const functions = [this.getDefReferences.bind(this), this.getNameReferences.bind(this)]
+    const getResults = flow(juxt(functions), array.flatten)
+
     const results = from(this.projectManager.projects)
-      .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
+      .SelectMany((x) => getResults(x, uri))
       .ToArray()
 
-    const res = pipe(
-      results,
-      groupBy(resultKey),
-      record.map(resultConcatAll),
-      (x) => Object.values(x),
-      array.map((x) => ({
-        range: x.range,
-        command: {
-          title: `${x.refs.length} Def References`,
-          command: 'rwxml-language-server:CodeLens:defReference',
-          arguments: [x.uri, x.pos],
-        },
-      }))
-    )
+    const codeLensArr = from(results).GroupBy(resultKey).Select(resultConcatAll).Select(resultToCodeLens).ToArray()
 
     this.log.debug(stringify(performance.measure('codelens performance: ', this.onCodeLensRequest.name)))
 
     performance.clearMarks()
     performance.clearMeasures()
 
-    return res
+    return codeLensArr
   }
 
   private getDefReferences(project: Project, uri: URI): Result[] {
@@ -125,7 +136,52 @@ export class CodeLens implements Provider {
       const [range, pos, injectables] = res.value
       const refs = array.compact(injectables.map(ref))
 
-      results.push({ range, pos, uri: uri.toString(), refs })
+      results.push({ type: 'defReference', range, pos, uri: uri.toString(), refs })
+    }
+
+    return results
+  }
+
+  private getNameReferences(project: Project, uri: URI): Result[] {
+    const res = getDefsOfUri(project, uri)
+    if (either.isLeft(res)) {
+      return []
+    }
+
+    const results: Result[] = []
+
+    for (const def of res.right) {
+      const uri = def.document.uri
+
+      const defRange = this.nodeRange(def)
+      if (option.isNone(defRange)) {
+        continue
+      }
+
+      const attrib = getAttrib('Name', def)
+      if (option.isNone(attrib)) {
+        continue
+      }
+
+      const pos = this._toRange(attrib.value.valueRange, uri)
+      if (option.isNone(pos)) {
+        continue
+      }
+
+      const resolveWanters = project.defManager.getInheritResolveWanters(attrib.value.value)
+      const toRef = (def: Def) =>
+        sequenceS(option.Apply)({
+          range: getNodeRange(this._toRange, def),
+          uri: option.some(def.document.uri),
+        })
+
+      results.push({
+        type: 'nameReference',
+        pos: pos.value.start,
+        range: defRange.value,
+        uri: def.document.uri,
+        refs: pipe(resolveWanters.map(toRef), array.compact),
+      })
     }
 
     return results

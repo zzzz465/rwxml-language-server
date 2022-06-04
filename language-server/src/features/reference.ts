@@ -1,17 +1,34 @@
+import { Element, Text } from '@rwxml/analyzer'
+import { array, option } from 'fp-ts'
+import { flow } from 'fp-ts/lib/function'
+import _ from 'lodash'
+import { juxt } from 'ramda'
+import { injectable } from 'tsyringe'
+import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
-import * as lsp from 'vscode-languageserver'
-import { Element, Text } from '@rwxml/analyzer'
-import { isPointingDefNameContent } from './utils/node'
 import { RangeConverter } from '../utils/rangeConverter'
-import { injectable } from 'tsyringe'
+import { getRootInProject } from './utils'
+import { findNodeAt, getAttrib, isElement, isPointingDefNameContent, offsetInNodeAttribValue } from './utils/node'
+import { toAttribValueRange, toRange } from './utils/range'
 
 @injectable()
 export class Reference {
-  constructor(private readonly rangeConverter: RangeConverter) {}
+  private readonly _toRange: ReturnType<typeof toRange>
+
+  constructor(private readonly rangeConverter: RangeConverter) {
+    this._toRange = toRange(rangeConverter)
+  }
+
+  onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
+    const functions = [this.onDefReference.bind(this), this.onNameReference.bind(this)]
+    const getResults = flow(juxt(functions), array.flatten)
+
+    return getResults(project, uri, position)
+  }
 
   // TODO: seperate this to two methods, event handler and actual reference finder
-  onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
+  onDefReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
     const res: lsp.Location[] = []
     const offset = this.rangeConverter.toOffset(position, uri.toString())
     if (!offset) {
@@ -58,5 +75,51 @@ export class Reference {
     }
 
     return res
+  }
+
+  onNameReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
+    if (!offset) {
+      return []
+    }
+
+    // (project, uri) -> Option<Element>
+    const getElement = flow(
+      getRootInProject,
+      option.fromEither,
+      option.chain(_.curry(findNodeAt)(offset)),
+      option.chain(option.fromPredicate(isElement))
+    )
+
+    const element = getElement(project, uri)
+    if (option.isNone(element)) {
+      return []
+    }
+
+    if (!offsetInNodeAttribValue(element.value, 'Name', offset)) {
+      return []
+    }
+
+    const attrib = getAttrib('Name', element.value)
+    if (option.isNone(attrib)) {
+      return []
+    }
+
+    const resolveWanters = project.defManager.getInheritResolveWanters(attrib.value.value)
+    const result: lsp.Location[] = []
+
+    for (const node of resolveWanters) {
+      const range = toAttribValueRange(this._toRange, node, 'ParentName')
+      if (option.isNone(range)) {
+        continue
+      }
+
+      result.push({
+        range: range.value,
+        uri: node.document.uri,
+      })
+    }
+
+    return result
   }
 }

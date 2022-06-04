@@ -1,13 +1,29 @@
-import { commands, Position, Uri } from 'vscode'
+import { commands, Disposable, Position, Uri } from 'vscode'
 
-export function registerFeature() {
+const getCmd = (type: string) => `rwxml-language-server:CodeLens:${type}`
+
+export function registerFeature(): Disposable[] {
   // cannot call editor.action.showReferences directly because plain JSON is sended on grpc instead of object.
-  return commands.registerCommand('rwxml-language-server:CodeLens:defReference', callback)
+  return [
+    commands.registerCommand('rwxml-language-server:CodeLens:defReference', callbackDefReference),
+    commands.registerCommand(getCmd('nameReference'), callbackNameReference),
+  ]
 }
 
-async function callback(uri: string | Uri, position: Position) {
-  uri = Uri.parse(uri as string)
+async function callbackDefReference(uriStr: string, position: Position) {
+  const uri = Uri.parse(uriStr)
   position = new Position(position.line, position.character)
+
+  const locations = await commands.executeCommand('vscode.executeReferenceProvider', uri, position)
+  if (locations && Array.isArray(locations)) {
+    commands.executeCommand('editor.action.showReferences', uri, position, locations)
+  }
+}
+
+async function callbackNameReference(uriStr: string, position: Position) {
+  const uri = Uri.parse(uriStr)
+  position = new Position(position.line, position.character)
+
   const locations = await commands.executeCommand('vscode.executeReferenceProvider', uri, position)
   if (locations && Array.isArray(locations)) {
     commands.executeCommand('editor.action.showReferences', uri, position, locations)
