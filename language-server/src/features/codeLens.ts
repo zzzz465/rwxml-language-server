@@ -1,10 +1,10 @@
 import { Element, Injectable } from '@rwxml/analyzer'
 import stringify from 'fast-safe-stringify'
-import { array, either, eq, option } from 'fp-ts'
+import { array, either, option, record, semigroup } from 'fp-ts'
 import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
-import { flow } from 'fp-ts/lib/function'
+import { flow, pipe } from 'fp-ts/lib/function'
+import { groupBy } from 'fp-ts/lib/NonEmptyArray'
 import { from } from 'linq-es2015'
-import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
@@ -26,9 +26,21 @@ import {
 
 type CodeLensType = 'reference'
 
-type Result = { range: lsp.Range; uri: string; pos: lsp.Position; ref: { uri: string; range: lsp.Range } }
+type Result = { range: lsp.Range; uri: string; pos: lsp.Position; refs: { uri: string; range: lsp.Range }[] }
 
-const resultEq = eq.fromEquals<Result>(_.isEqual)
+const resultKey = (r: Result) => stringify({ uri: r.uri, rane: r.range, pos: r.pos })
+const resultSemigroup = semigroup.struct<Result>({
+  pos: semigroup.last(),
+  uri: semigroup.last(),
+  range: semigroup.last(),
+  refs: array.getSemigroup(),
+})
+const resultConcatAll = semigroup.concatAll<Result>(resultSemigroup)({
+  pos: 0 as any,
+  range: 0 as any,
+  uri: '',
+  refs: [],
+})
 
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
@@ -59,26 +71,27 @@ export class CodeLens implements Provider {
       .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
       .ToArray()
 
-    const uniqResults = array.uniq(resultEq)(results)
-
-    const returnData = from(uniqResults)
-      .GroupBy((x) => stringify({ uri: x.uri, range: x.range, pos: x.pos }))
-      .Select((x) => ({
-        range: x[0].range,
+    const res = pipe(
+      results,
+      groupBy(resultKey),
+      record.map(resultConcatAll),
+      (x) => Object.values(x),
+      array.map((x) => ({
+        range: x.range,
         command: {
-          title: `${x.length} Def References`,
+          title: `${x.refs.length} Def References`,
           command: 'rwxml-language-server:CodeLens:defReference',
-          arguments: [x[0].uri, x[0].pos],
+          arguments: [x.uri, x.pos],
         },
       }))
-      .ToArray()
+    )
 
     this.log.debug(stringify(performance.measure('codelens performance: ', this.onCodeLensRequest.name)))
 
     performance.clearMarks()
     performance.clearMeasures()
 
-    return returnData
+    return res
   }
 
   private getDefReferences(project: Project, uri: URI): Result[] {
@@ -112,9 +125,7 @@ export class CodeLens implements Provider {
       const [range, pos, injectables] = res.value
       const refs = array.compact(injectables.map(ref))
 
-      for (const ref of refs) {
-        results.push({ range, pos, uri: uri.toString(), ref })
-      }
+      results.push({ range, pos, uri: uri.toString(), refs })
     }
 
     return results
