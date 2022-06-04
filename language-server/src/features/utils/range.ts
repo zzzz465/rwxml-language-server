@@ -14,6 +14,7 @@ export const toRange = (converter: RangeConverter) => (range: Range, uri: string
   converter.toLanguageServerRange(range, uri)
 
 type _toRange = ReturnType<typeof toRange>
+export type ToRange<T> = _.CurriedFunction1<T, option.Option<lsp.Range>>
 
 /**
  * @returns option of node range of given element.
@@ -35,4 +36,12 @@ export const getDefNameRange = _.curry((toRange: _toRange, def: Def) =>
   )
 )
 
-export type ToRange<T> = _.CurriedFunction1<T, option.Option<lsp.Range>>
+/**
+ * (toRange, el) -> Option<lsp.Range> (of contentRange)
+ */
+export const getContentRange = _.curry((toRange: _toRange, el: Element) =>
+  pipe(
+    option.fromNullable(el.contentRange),
+    option.chain(option.fromNullableK((contentRange) => toRange(contentRange, el.document.uri)))
+  )
+)
