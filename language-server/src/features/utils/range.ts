@@ -4,7 +4,7 @@ import { pipe } from 'fp-ts/lib/function'
 import _ from 'lodash'
 import * as lsp from 'vscode-languageserver'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { getDefNameNode } from './node'
+import { getAttrib, getDefNameNode } from './node'
 
 /**
  * converts range from given arguments.
@@ -20,6 +20,13 @@ export type ToRange<T> = _.CurriedFunction1<T, option.Option<lsp.Range>>
  * @returns option of node range of given element.
  */
 export const toNodeRange = _.curry((toRange: _toRange, el: Element) => toRange(el.nodeRange, el.document.uri))
+
+export const toAttribRange = (toRange: _toRange, el: Element, attribName: string) =>
+  pipe(
+    getAttrib(attribName, el),
+    option.map((x) => new Range(x.nameRange.start, x.valueRange.end)),
+    option.chain(_.curryRight(toRange)(el.document.uri))
+  )
 
 /**
  * toRange -> def -> Option<lsp.Range>

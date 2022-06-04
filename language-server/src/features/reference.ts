@@ -10,7 +10,7 @@ import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
 import { findNodeAt, getAttrib, isElement, isPointingDefNameContent, offsetInNodeAttribValue } from './utils/node'
-import { toNodeRange, toRange } from './utils/range'
+import { toAttribRange, toRange } from './utils/range'
 
 @injectable()
 export class Reference {
@@ -109,7 +109,7 @@ export class Reference {
     const result: lsp.Location[] = []
 
     for (const node of resolveWanters) {
-      const range = toNodeRange(this._toRange, node)
+      const range = toAttribRange(this._toRange, node, 'Name')
       if (option.isNone(range)) {
         continue
       }
