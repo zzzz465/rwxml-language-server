@@ -3,8 +3,8 @@ import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
 import { flow, pipe } from 'fp-ts/lib/function'
 import { AsEnumerable } from 'linq-es2015'
+import _ from 'lodash'
 import ono from 'ono'
-import R from 'ramda'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
@@ -259,6 +259,7 @@ export const getContent = (el: Element) => pipe(el.content ?? null, option.fromN
 
 export const getDefNameStr = flow(getDefNameNode, option.chain(getContent))
 
-export const getAttrib = R.curry((key: string, el: Element) => option.fromNullable(el.attribs[key]))
+// don't use ramda's curry. it doesn't do type inference.
+export const getAttrib = _.curry((key: string, el: Element) => option.fromNullable(el.attribs[key]))
 
 export const findNodeAt = (offset: number, node: Element) => pipe(node.findNodeAt(offset), option.fromNullable)
