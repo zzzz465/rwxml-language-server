@@ -1,11 +1,11 @@
 import { Element, Injectable } from '@rwxml/analyzer'
 import stringify from 'fast-safe-stringify'
-import { array, either, option, record, semigroup } from 'fp-ts'
+import { array, either, option, semigroup } from 'fp-ts'
 import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
-import { flow, pipe } from 'fp-ts/lib/function'
-import { groupBy } from 'fp-ts/lib/NonEmptyArray'
+import { flow } from 'fp-ts/lib/function'
 import { from } from 'linq-es2015'
 import _ from 'lodash'
+import { juxt } from 'ramda'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
@@ -49,10 +49,18 @@ const resultSemigroup = semigroup.struct<Result>({
 })
 const resultConcatAll = semigroup.concatAll<Result>(resultSemigroup)({
   type: 'defReference',
-  pos: 0 as any,
-  range: 0 as any,
+  pos: 0 as never,
+  range: 0 as never,
   uri: '',
   refs: [],
+})
+const resultToCodeLens = (r: Result): lsp.CodeLens => ({
+  range: r.range,
+  command: {
+    command: `rwxml-language-server:CodeLens:${r.type}`,
+    title: r.type === 'defReference' ? `${r.refs.length} Def References` : `${r.refs.length} Name References`,
+    arguments: [r.uri, r.pos],
+  },
 })
 
 // TODO: add clear(document) when file removed from pool.
@@ -79,31 +87,22 @@ export class CodeLens implements Provider {
   private async onCodeLensRequest(params: lsp.CodeLensParams): Promise<lsp.CodeLens[] | null> {
     performance.mark(this.onCodeLensRequest.name)
 
+    const uri = URI.parse(params.textDocument.uri)
+    const functions = [this.getDefReferences.bind(this), this.getNameReferences.bind(this)]
+    const getResults = flow(juxt(functions), array.flatten)
+
     const results = from(this.projectManager.projects)
-      .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
+      .SelectMany((x) => getResults(x, uri))
       .ToArray()
 
-    const res = pipe(
-      results,
-      groupBy(resultKey),
-      record.map(resultConcatAll),
-      (x) => Object.values(x),
-      array.map((x) => ({
-        range: x.range,
-        command: {
-          title: `${x.refs.length} Def References`,
-          command: 'rwxml-language-server:CodeLens:defReference', // resolved to reference in client side.
-          arguments: [x.uri, x.pos],
-        },
-      }))
-    )
+    const codeLensArr = from(results).GroupBy(resultKey).Select(resultConcatAll).Select(resultToCodeLens).ToArray()
 
     this.log.debug(stringify(performance.measure('codelens performance: ', this.onCodeLensRequest.name)))
 
     performance.clearMarks()
     performance.clearMeasures()
 
-    return res
+    return codeLensArr
   }
 
   private getDefReferences(project: Project, uri: URI): Result[] {
