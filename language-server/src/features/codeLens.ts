@@ -1,8 +1,8 @@
-import { Element, Injectable } from '@rwxml/analyzer'
+import { Def, Element, Injectable } from '@rwxml/analyzer'
 import stringify from 'fast-safe-stringify'
 import { array, either, option, semigroup } from 'fp-ts'
 import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
-import { flow } from 'fp-ts/lib/function'
+import { flow, pipe } from 'fp-ts/lib/function'
 import { from } from 'linq-es2015'
 import _ from 'lodash'
 import { juxt } from 'ramda'
@@ -151,6 +151,8 @@ export class CodeLens implements Provider {
     const results: Result[] = []
 
     for (const def of res.right) {
+      const uri = def.document.uri
+
       const defRange = this.nodeRange(def)
       if (option.isNone(defRange)) {
         continue
@@ -161,20 +163,24 @@ export class CodeLens implements Provider {
         continue
       }
 
-      const uri = def.document.uri
       const pos = this._toRange(attrib.value.valueRange, uri)
       if (option.isNone(pos)) {
         continue
       }
 
-      const refs = project.defManager.getInheritResolveWanters(attrib.value.value)
+      const resolveWanters = project.defManager.getInheritResolveWanters(attrib.value.value)
+      const toRef = (def: Def) =>
+        sequenceS(option.Apply)({
+          range: getNodeRange(this._toRange, def),
+          uri: option.some(def.document.uri),
+        })
 
       results.push({
         type: 'nameReference',
         pos: pos.value.start,
         range: defRange.value,
         uri: def.document.uri,
-        refs: [],
+        refs: pipe(resolveWanters.map(toRef), array.compact),
       })
     }
 

@@ -1,7 +1,8 @@
 import { Element, Text } from '@rwxml/analyzer'
-import { option } from 'fp-ts'
+import { array, option } from 'fp-ts'
 import { flow } from 'fp-ts/lib/function'
 import _ from 'lodash'
+import { juxt } from 'ramda'
 import { injectable } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
@@ -25,8 +26,15 @@ export class Reference {
     this._toRange = toRange(rangeConverter)
   }
 
-  // TODO: seperate this to two methods, event handler and actual reference finder
   onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
+    const functions = [this.onDefReference.bind(this), this.onNameReference.bind(this)]
+    const getResults = flow(juxt(functions), array.flatten)
+
+    return getResults(project, uri, position)
+  }
+
+  // TODO: seperate this to two methods, event handler and actual reference finder
+  onDefReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
     const res: lsp.Location[] = []
     const offset = this.rangeConverter.toOffset(position, uri.toString())
     if (!offset) {
