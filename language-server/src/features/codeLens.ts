@@ -8,6 +8,8 @@ import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
 import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
@@ -31,6 +33,11 @@ const resultEq = eq.fromEquals<Result>(_.isEqual)
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
 export class CodeLens implements Provider {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(CodeLens), logFormat),
+    transports: [defaultLogger()],
+  })
+
   private readonly _toRange: ReturnType<typeof toRange>
   private readonly nodeRange: ToRange<Element>
 
@@ -45,6 +52,8 @@ export class CodeLens implements Provider {
 
   // (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
   private async onCodeLensRequest(params: lsp.CodeLensParams): Promise<lsp.CodeLens[] | null> {
+    performance.mark(this.onCodeLensRequest.name)
+
     // gather results from each projects, and merge result if multiple codelens in a same position.
     const results = from(this.projectManager.projects)
       .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
@@ -64,7 +73,7 @@ export class CodeLens implements Provider {
       }))
       .ToArray()
 
-    this.log.debug(performance.measure('codelens performance: ', this.onCodeLensRequest.name))
+    this.log.debug(stringify(performance.measure('codelens performance: ', this.onCodeLensRequest.name)))
 
     performance.clearMarks()
     performance.clearMeasures()
