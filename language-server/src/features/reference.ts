@@ -1,14 +1,29 @@
+import { Element, Text } from '@rwxml/analyzer'
+import { option } from 'fp-ts'
+import { flow } from 'fp-ts/lib/function'
+import _ from 'lodash'
+import { injectable } from 'tsyringe'
+import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
-import * as lsp from 'vscode-languageserver'
-import { Element, Text } from '@rwxml/analyzer'
-import { isPointingDefNameContent } from './utils/node'
 import { RangeConverter } from '../utils/rangeConverter'
-import { injectable } from 'tsyringe'
+import { getRootInProject } from './utils'
+import {
+  findNodeAt,
+  getAttrib,
+  isElement,
+  isPointingDefNameContent,
+  isPointingParentNameAttributeValue,
+} from './utils/node'
+import { toNodeRange, toRange } from './utils/range'
 
 @injectable()
 export class Reference {
-  constructor(private readonly rangeConverter: RangeConverter) {}
+  private readonly _toRange: ReturnType<typeof toRange>
+
+  constructor(private readonly rangeConverter: RangeConverter) {
+    this._toRange = toRange(rangeConverter)
+  }
 
   // TODO: seperate this to two methods, event handler and actual reference finder
   onReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
@@ -58,5 +73,51 @@ export class Reference {
     }
 
     return res
+  }
+
+  onNameReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
+    if (!offset) {
+      return []
+    }
+
+    // (project, uri) -> Option<Element>
+    const getElement = flow(
+      getRootInProject,
+      option.fromEither,
+      option.chain(_.curry(findNodeAt)(offset)),
+      option.chain(option.fromPredicate(isElement))
+    )
+
+    const element = getElement(project, uri)
+    if (option.isNone(element)) {
+      return []
+    }
+
+    if (!isPointingParentNameAttributeValue(element.value, offset)) {
+      return []
+    }
+
+    const attrib = getAttrib('Name')(element.value)
+    if (option.isNone(attrib)) {
+      return []
+    }
+
+    const resolveWanters = project.defManager.getInheritResolveWanters(attrib.value.value)
+    const result: lsp.Location[] = []
+
+    for (const node of resolveWanters) {
+      const range = toNodeRange(this._toRange, node)
+      if (option.isNone(range)) {
+        continue
+      }
+
+      result.push({
+        range: range.value,
+        uri: uri.toString(),
+      })
+    }
+
+    return result
   }
 }
