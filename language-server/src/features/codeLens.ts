@@ -156,7 +156,7 @@ export class CodeLens implements Provider {
         continue
       }
 
-      const attrib = getAttrib('Name')(def)
+      const attrib = getAttrib('Name', def)
       if (option.isNone(attrib)) {
         continue
       }

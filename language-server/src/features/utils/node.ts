@@ -4,6 +4,7 @@ import { filter, findFirst } from 'fp-ts/lib/Array'
 import { flow, pipe } from 'fp-ts/lib/function'
 import { AsEnumerable } from 'linq-es2015'
 import ono from 'ono'
+import R from 'ramda'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
@@ -258,6 +259,6 @@ export const getContent = (el: Element) => pipe(el.content ?? null, option.fromN
 
 export const getDefNameStr = flow(getDefNameNode, option.chain(getContent))
 
-export const getAttrib = (key: string) => (el: Element) => option.fromNullable(el.attribs[key])
+export const getAttrib = R.curry((key: string, el: Element) => option.fromNullable(el.attribs[key]))
 
 export const findNodeAt = (offset: number, node: Element) => pipe(node.findNodeAt(offset), option.fromNullable)

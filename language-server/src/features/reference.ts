@@ -98,7 +98,7 @@ export class Reference {
       return []
     }
 
-    const attrib = getAttrib('Name')(element.value)
+    const attrib = getAttrib('Name', element.value)
     if (option.isNone(attrib)) {
       return []
     }
