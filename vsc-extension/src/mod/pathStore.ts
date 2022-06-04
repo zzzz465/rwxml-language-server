@@ -66,7 +66,7 @@ export abstract class PathStore {
   get RimWorldDatadirectory(): string {
     return this.getOrDefault(
       vscode.workspace.getConfiguration('rwxml.paths').get<string>('rimWorldData'),
-      this.defaultRimWorldDirectory()
+      this.defaultRimWorldDatadirectory()
     )
   }
 
