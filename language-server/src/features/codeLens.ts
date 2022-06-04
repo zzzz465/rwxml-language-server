@@ -5,6 +5,7 @@ import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
 import { flow, pipe } from 'fp-ts/lib/function'
 import { groupBy } from 'fp-ts/lib/NonEmptyArray'
 import { from } from 'linq-es2015'
+import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
@@ -33,7 +34,7 @@ const resultSemigroup = semigroup.struct<Result>({
   pos: semigroup.last(),
   uri: semigroup.last(),
   range: semigroup.last(),
-  refs: array.getSemigroup(),
+  refs: { concat: (x, y) => _.uniqWith([...x, ...y], _.isEqual) },
 })
 const resultConcatAll = semigroup.concatAll<Result>(resultSemigroup)({
   pos: 0 as any,
@@ -66,7 +67,6 @@ export class CodeLens implements Provider {
   private async onCodeLensRequest(params: lsp.CodeLensParams): Promise<lsp.CodeLens[] | null> {
     performance.mark(this.onCodeLensRequest.name)
 
-    // gather results from each projects, and merge result if multiple codelens in a same position.
     const results = from(this.projectManager.projects)
       .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
       .ToArray()
