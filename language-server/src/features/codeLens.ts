@@ -19,7 +19,7 @@ import { getAttrib, getDefNameStr, getDefsOfUri } from './utils'
 import {
   getContentRange,
   getDefNameRange,
-  nodeRange as getNodeRange,
+  toNodeRange as getNodeRange,
   toRange as getToRange,
   toRange,
   ToRange,
@@ -162,7 +162,7 @@ export class CodeLens implements Provider {
       }
 
       const uri = def.document.uri
-      const pos = option.fromNullable(this._toRange(attrib.value.valueRange, uri))
+      const pos = this._toRange(attrib.value.valueRange, uri)
       if (option.isNone(pos)) {
         continue
       }
