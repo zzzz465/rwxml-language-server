@@ -109,7 +109,7 @@ export class Reference {
     const result: lsp.Location[] = []
 
     for (const node of resolveWanters) {
-      const range = toAttribRange(this._toRange, node, 'Name')
+      const range = toAttribRange(this._toRange, node, 'ParentName')
       if (option.isNone(range)) {
         continue
       }
