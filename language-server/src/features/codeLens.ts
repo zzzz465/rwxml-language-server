@@ -15,7 +15,7 @@ import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
-import { getDefNameStr, getDefsOfUri } from './utils'
+import { getAttrib, getDefNameStr, getDefsOfUri } from './utils'
 import {
   getContentRange,
   getDefNameRange,
@@ -25,18 +25,30 @@ import {
   ToRange,
 } from './utils/range'
 
-type CodeLensType = 'reference'
+/*
+1. getDefRefCodeLens, getNameRefCodeLens 에서는 Result 를 반환한다.
+*/
 
-type Result = { range: lsp.Range; uri: string; pos: lsp.Position; refs: { uri: string; range: lsp.Range }[] }
+type CodeLensType = 'defReference' | 'nameReference'
+
+type Result = {
+  type: CodeLensType
+  range: lsp.Range
+  uri: string
+  pos: lsp.Position
+  refs: { uri: string; range: lsp.Range }[]
+}
 
 const resultKey = (r: Result) => stringify({ uri: r.uri, rane: r.range, pos: r.pos })
 const resultSemigroup = semigroup.struct<Result>({
+  type: semigroup.last(),
   pos: semigroup.last(),
   uri: semigroup.last(),
   range: semigroup.last(),
   refs: { concat: (x, y) => _.uniqWith([...x, ...y], _.isEqual) },
 })
 const resultConcatAll = semigroup.concatAll<Result>(resultSemigroup)({
+  type: 'defReference',
   pos: 0 as any,
   range: 0 as any,
   uri: '',
@@ -80,7 +92,7 @@ export class CodeLens implements Provider {
         range: x.range,
         command: {
           title: `${x.refs.length} Def References`,
-          command: 'rwxml-language-server:CodeLens:defReference',
+          command: 'rwxml-language-server:CodeLens:defReference', // resolved to reference in client side.
           arguments: [x.uri, x.pos],
         },
       }))
@@ -125,7 +137,46 @@ export class CodeLens implements Provider {
       const [range, pos, injectables] = res.value
       const refs = array.compact(injectables.map(ref))
 
-      results.push({ range, pos, uri: uri.toString(), refs })
+      results.push({ type: 'defReference', range, pos, uri: uri.toString(), refs })
+    }
+
+    return results
+  }
+
+  private getNameReferences(project: Project, uri: URI): Result[] {
+    const res = getDefsOfUri(project, uri)
+    if (either.isLeft(res)) {
+      return []
+    }
+
+    const results: Result[] = []
+
+    for (const def of res.right) {
+      const defRange = this.nodeRange(def)
+      if (option.isNone(defRange)) {
+        continue
+      }
+
+      const attrib = getAttrib('Name')(def)
+      if (option.isNone(attrib)) {
+        continue
+      }
+
+      const uri = def.document.uri
+      const pos = option.fromNullable(this._toRange(attrib.value.valueRange, uri))
+      if (option.isNone(pos)) {
+        continue
+      }
+
+      const refs = project.defManager.getInheritResolveWanters(attrib.value.value)
+
+      results.push({
+        type: 'nameReference',
+        pos: pos.value.start,
+        range: defRange.value,
+        uri: def.document.uri,
+        refs: [],
+      })
     }
 
     return results
