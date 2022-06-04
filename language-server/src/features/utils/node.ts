@@ -258,4 +258,4 @@ export const getContent = (el: Element) => pipe(el.content ?? null, option.fromN
 
 export const getDefNameStr = flow(getDefNameNode, option.chain(getContent))
 
-export const getAttrib = (key: string) => (el: Element) => option.of(el.attribs[key])
+export const getAttrib = (key: string) => (el: Element) => option.fromNullable(el.attribs[key])
