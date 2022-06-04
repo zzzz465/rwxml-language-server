@@ -1,84 +1,133 @@
-import { Def, Element, Injectable, Range } from '@rwxml/analyzer'
+import { Element, Injectable } from '@rwxml/analyzer'
+import stringify from 'fast-safe-stringify'
+import { array, either, option, record, semigroup } from 'fp-ts'
+import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
+import { flow, pipe } from 'fp-ts/lib/function'
+import { groupBy } from 'fp-ts/lib/NonEmptyArray'
 import { from } from 'linq-es2015'
+import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
+import winston from 'winston'
+import defaultLogger, { className, logFormat } from '../log'
 import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
 import { Provider } from './provider'
-import { toLocation } from './utils/node'
+import { getDefNameStr, getDefsOfUri } from './utils'
+import {
+  getContentRange,
+  getDefNameRange,
+  nodeRange as getNodeRange,
+  toRange as getToRange,
+  toRange,
+  ToRange,
+} from './utils/range'
+
+type CodeLensType = 'reference'
+
+type Result = { range: lsp.Range; uri: string; pos: lsp.Position; refs: { uri: string; range: lsp.Range }[] }
+
+const resultKey = (r: Result) => stringify({ uri: r.uri, rane: r.range, pos: r.pos })
+const resultSemigroup = semigroup.struct<Result>({
+  pos: semigroup.last(),
+  uri: semigroup.last(),
+  range: semigroup.last(),
+  refs: { concat: (x, y) => _.uniqWith([...x, ...y], _.isEqual) },
+})
+const resultConcatAll = semigroup.concatAll<Result>(resultSemigroup)({
+  pos: 0 as any,
+  range: 0 as any,
+  uri: '',
+  refs: [],
+})
 
 // TODO: add clear(document) when file removed from pool.
 @tsyringe.singleton()
 export class CodeLens implements Provider {
-  constructor(private readonly projectManager: ProjectManager, private readonly rangeConverter: RangeConverter) {}
+  private log = winston.createLogger({
+    format: winston.format.combine(className(CodeLens), logFormat),
+    transports: [defaultLogger()],
+  })
+
+  private readonly _toRange: ReturnType<typeof toRange>
+  private readonly nodeRange: ToRange<Element>
+
+  constructor(private readonly projectManager: ProjectManager, rangeConverter: RangeConverter) {
+    this._toRange = getToRange(rangeConverter)
+    this.nodeRange = getNodeRange(this._toRange)
+  }
 
   init(connection: lsp.Connection): void {
-    connection.onCodeLens((p, t) => this.onCodeLensRequest(p, t))
+    connection.onCodeLens((p, t) => this.onCodeLensRequest(p))
   }
 
   // (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
-  private async onCodeLensRequest(
-    params: lsp.CodeLensParams,
-    token: lsp.CancellationToken
-  ): Promise<lsp.CodeLens[] | null> {
-    return from(this.projectManager.projects)
-      .SelectMany((proj) => this.codeLens(proj, URI.parse(params.textDocument.uri)))
+  private async onCodeLensRequest(params: lsp.CodeLensParams): Promise<lsp.CodeLens[] | null> {
+    performance.mark(this.onCodeLensRequest.name)
+
+    const results = from(this.projectManager.projects)
+      .SelectMany((proj) => this.getDefReferences(proj, URI.parse(params.textDocument.uri)))
       .ToArray()
-  }
 
-  private codeLens(project: Project, uri: URI): lsp.CodeLens[] {
-    const document = project.getXMLDocumentByUri(uri)
-    const root = document?.children.find((node) => node instanceof Element) as Element | undefined
+    const res = pipe(
+      results,
+      groupBy(resultKey),
+      record.map(resultConcatAll),
+      (x) => Object.values(x),
+      array.map((x) => ({
+        range: x.range,
+        command: {
+          title: `${x.refs.length} Def References`,
+          command: 'rwxml-language-server:CodeLens:defReference',
+          arguments: [x.uri, x.pos],
+        },
+      }))
+    )
 
-    if (!root || !(root.name === 'Defs')) {
-      return []
-    }
+    this.log.debug(stringify(performance.measure('codelens performance: ', this.onCodeLensRequest.name)))
 
-    const res: lsp.CodeLens[] = []
-
-    for (const def of root.ChildElementNodes) {
-      if (!(def instanceof Def)) {
-        continue
-      }
-
-      const range = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
-
-      if (!range) {
-        continue
-      }
-
-      const defName = def.getDefName()
-      const defNameContentRange =
-        def.ChildElementNodes.find((node) => node.name === 'defName')?.contentRange ?? new Range()
-      const position = this.rangeConverter.toLanguageServerRange(defNameContentRange, uri.toString())?.start
-      if (defName && defNameContentRange && position) {
-        const injectables = project.defManager.getReferenceResolveWanters(defName)
-
-        res.push({
-          range,
-          // for command, see https://github.com/microsoft/vscode/blob/3c33989855def32ab5f614ab62d99b2cdaaf958e/src/vs/editor/contrib/gotoSymbol/goToCommands.ts#L742-L756
-          // cannot call editor.action.showReferences directly because plain JSON is sended on grpc instead of object.
-          command: {
-            title: `${injectables.length} Def References`,
-            command: injectables.length ? 'rwxml-language-server:CodeLens:defReference' : '',
-            arguments: [uri.toString(), position],
-          },
-        })
-      }
-    }
+    performance.clearMarks()
+    performance.clearMeasures()
 
     return res
   }
 
-  private toLocations(converter: RangeConverter, node: Injectable): lsp.Location {
-    const range = toLocation(converter, node)
+  private getDefReferences(project: Project, uri: URI): Result[] {
+    // functions
+    const getResolveWanters = (defName: string) => project.defManager.getReferenceResolveWanters(defName)
+    const getPos = flow(
+      getDefNameRange,
+      option.map((r) => r.start)
+    )
+    const getRefs = flow(getDefNameStr, option.map(getResolveWanters))
+    const ref = (node: Injectable) =>
+      sequenceS(option.Apply)({
+        uri: option.of(node.document.uri),
+        range: getContentRange(this._toRange, node),
+      })
 
-    if (range) {
-      return { range, uri: node.document.uri }
-    } else {
-      throw new Error(`cannot convert node ${node.name} to location, uri: ${decodeURIComponent(node.document.uri)}`)
+    // code
+    const res = getDefsOfUri(project, uri)
+    if (either.isLeft(res)) {
+      return []
     }
+
+    const results: Result[] = []
+
+    for (const def of res.right) {
+      const res = sequenceT(option.Apply)(this.nodeRange(def), getPos(this._toRange, def), getRefs(def))
+      if (option.isNone(res)) {
+        continue
+      }
+
+      const [range, pos, injectables] = res.value
+      const refs = array.compact(injectables.map(ref))
+
+      results.push({ range, pos, uri: uri.toString(), refs })
+    }
+
+    return results
   }
 }

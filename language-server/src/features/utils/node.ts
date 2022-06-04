@@ -1,10 +1,15 @@
 import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
+import { array, either, option } from 'fp-ts'
+import { filter, findFirst } from 'fp-ts/lib/Array'
+import { flow, pipe } from 'fp-ts/lib/function'
 import { AsEnumerable } from 'linq-es2015'
+import ono from 'ono'
 import { container } from 'tsyringe'
 import { Queue } from 'typescript-collections'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import { Project } from '../../project'
+import { Result } from '../../utils/functional/result'
 import { RangeConverter } from '../../utils/rangeConverter'
 
 export function isPointingContentOfNode(node: Node, offset: number): boolean {
@@ -221,3 +226,34 @@ export function getRootElement(node: Node): Element | undefined {
 
   return AsEnumerable(doc.childNodes).FirstOrDefault((x) => x instanceof Element) as Element | undefined
 }
+
+export const isElement = (node: Node): node is Element => node instanceof Element || node instanceof Def
+
+export const isDef = (node: Node): node is Def => node instanceof Def
+
+export const childElements = (node: NodeWithChildren) => node.childNodes.filter(isElement)
+
+/**
+ * getDefsNode returns <Defs> node in document.
+ */
+export const getDefsNode = flow(
+  childElements,
+  findFirst((el) => el.name === 'Defs'),
+  Result.fromOption(ono('cannot found <Defs> in document.'))
+)
+
+/**
+ * getDefs returns Defs in document. like <ThingDef>, <DamageDef>, etc...
+ */
+export const getDefs = flow(getDefsNode, either.map(childElements), either.map(filter(isDef)))
+
+export const getDefNameNode = (def: Def) =>
+  pipe(
+    def,
+    childElements,
+    array.findFirst((el) => el.name === 'defName')
+  )
+
+export const getContent = (el: Element) => pipe(el.content ?? null, option.fromNullable)
+
+export const getDefNameStr = flow(getDefNameNode, option.chain(getContent))

@@ -1,5 +1,6 @@
 import EventEmitter from 'events'
-import * as ono from 'ono'
+import { either } from 'fp-ts'
+import ono, { ErrorLike } from 'ono'
 import { singleton } from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
@@ -7,7 +8,7 @@ import * as winston from 'winston'
 import { File, FileCreateParameters } from './fs'
 import defaultLogger, { className, logFormat } from './log'
 import { NotificationEvents } from './notificationEventManager'
-import { Result } from './types/functional'
+import { Result } from './utils/functional/result'
 
 type Events = NotificationEvents
 
@@ -47,20 +48,20 @@ export class FileStore {
     return this.files[Symbol.iterator]()
   }
 
-  load(params: FileCreateParameters): Result<File, ono.ErrorLike> {
+  load(params: FileCreateParameters): Result<File, ErrorLike> {
     const uri = params.uri.toString()
 
     if (this.files.has(uri)) {
       const file = this.files.get(uri)
       if (!file) {
-        return [null, ono.ono('(panic) file not exists.')]
+        return either.left(ono('(panic) file not exists.'))
       }
 
       const ref = this.incrRef(uri)
 
       this.log.silly(`file loaded. refCount: ${ref}, uri: ${uri}`)
 
-      return [file, null]
+      return either.right(file)
     }
 
     const file = File.create(params)
@@ -73,20 +74,20 @@ export class FileStore {
 
     this.log.silly(`file loaded. refCount: ${ref}, uri: ${uri}`)
 
-    return [file, null]
+    return either.right(file)
   }
 
   update(uri: string): Result<File, Error> {
     const file = this.files.get(uri)
     if (!file) {
-      return [null, new Error(`file changed but not exists in fileStore. uri: ${uri}`)]
+      return either.left(ono(`file changed but not exists in fileStore. uri: ${uri}`))
     }
 
     file.update()
 
     this.event.emit('fileChanged', file)
 
-    return [file, null]
+    return either.right(file)
   }
 
   unload(uri: string): Error | null {
@@ -94,7 +95,7 @@ export class FileStore {
 
     if (ref === 0) {
       if (!this.files.delete(uri)) {
-        return ono.ono(`trying to delete file that is not exists. uri: ${uri}`)
+        return ono(`trying to delete file that is not exists. uri: ${uri}`)
       }
 
       this.event.emit('fileDeleted', uri)

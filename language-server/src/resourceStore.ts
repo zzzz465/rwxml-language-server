@@ -1,4 +1,5 @@
 import EventEmitter from 'events'
+import { either } from 'fp-ts'
 import * as path from 'path'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
@@ -224,13 +225,13 @@ export class ResourceStore {
 
   private async onXMLFileChanged(file: XMLFile) {
     const uri = file.uri.toString()
-    const [data, err] = await this.textDocumentManager.getText(uri)
-    if (err) {
-      this.log.error(`failed retrieving textDocument. err: ${err}`)
+    const res = await this.textDocumentManager.getText(uri)
+    if (either.isLeft(res)) {
+      this.log.error(`failed retrieving textDocument. err: ${res.left}`)
       return
     }
 
-    this.xmls.set(uri, data)
+    this.xmls.set(uri, res.right)
 
     this.event.emit('xmlChanged', uri)
   }

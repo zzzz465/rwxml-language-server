@@ -1,5 +1,6 @@
 import AsyncLock from 'async-lock'
 import EventEmitter from 'events'
+import { either } from 'fp-ts'
 import * as LINQ from 'linq-es2015'
 import _ from 'lodash'
 import * as ono from 'ono'
@@ -12,7 +13,7 @@ import { ConnectionToken } from '../connection'
 import { DependencyRequest, DependencyRequestResponse } from '../events'
 import { FileStore } from '../fileStore'
 import defaultLogger, { className, logFormat } from '../log'
-import { Result } from '../types/functional'
+import { Result } from '../utils/functional/result'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
 
@@ -81,18 +82,20 @@ class DependencyResourceBag {
     const errors: ono.ErrorLike[] = []
 
     for (const dep of added) {
-      const [uris, err] = await this.fetchDependencyResources(dep)
-      if (err) {
-        errors.push(err)
+      const res0 = await this.fetchDependencyResources(dep)
+      if (either.isLeft(res0)) {
+        errors.push(res0.left)
         continue
       }
+
+      const uris = res0.right
 
       this._resources.set(dep.packageId, new Set(uris))
 
       for (const uri of uris) {
-        const [, err] = this.fileStore.load({ uri: URI.parse(uri) })
-        if (err) {
-          errors.push(err)
+        const res1 = this.fileStore.load({ uri: URI.parse(uri) })
+        if (either.isLeft(res1)) {
+          errors.push(res1.left)
         }
       }
     }
@@ -121,7 +124,7 @@ class DependencyResourceBag {
     return null
   }
 
-  private async fetchDependencyResources(dep: Dependency): Promise<Result<string[], ono.ErrorLike>> {
+  private async fetchDependencyResources(dep: Dependency): Promise<Result<string[]>> {
     let res: DependencyRequestResponse
     try {
       res = await this.connection.sendRequest(DependencyRequest, {
@@ -129,14 +132,14 @@ class DependencyResourceBag {
         version: this.version,
       })
     } catch (err) {
-      return [null, ono.ono(err as Error)]
+      return either.left(ono.ono(err as Error))
     }
 
     if (res.error) {
-      return [null, ono.ono(res.error)]
+      return either.left(ono.ono(res.error as Error))
     }
 
-    return [res.uris, null]
+    return either.right(res.uris)
   }
 
   private getDepDiff(oldDeps: Dependency[], newDeps: Dependency[]): [Dependency[], Dependency[]] {
@@ -198,10 +201,10 @@ export class ModDependencyBags {
   getDependenciesOf(version: string): Result<[Dependency[], Dependency[]], ono.ErrorLike> {
     const bag = this.dependencyBags.get(version)
     if (bag) {
-      return [[bag.requiredDependencies, bag.optionalDependencies], null]
+      return either.right([bag.requiredDependencies, bag.optionalDependencies])
     }
 
-    return [null, ono.ono(`dependencyBag of version ${version} is not exists.`)]
+    return either.left(ono.ono(`dependencyBag of version ${version} is not exists.`))
   }
 
   /**
@@ -219,9 +222,9 @@ export class ModDependencyBags {
   private onAboutChanged(about: About): void {
     if (this.isSupportedVersionChanged(about)) {
       this.supportedVersions = [...about.supportedVersions]
-      const [, err] = this.updateDependencyBagList()
-      if (err) {
-        this.log.error(err)
+      const res = this.updateDependencyBagList()
+      if (either.isLeft(res)) {
+        this.log.error(either.left)
         return
       }
     }
@@ -300,6 +303,6 @@ export class ModDependencyBags {
       }
     }
 
-    return [[addedBags, deletedBags], null]
+    return either.right([addedBags, deletedBags])
   }
 }

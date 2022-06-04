@@ -1,4 +1,6 @@
 import EventEmitter from 'events'
+import { either } from 'fp-ts'
+import { pipe } from 'fp-ts/lib/function'
 import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
@@ -9,7 +11,7 @@ import { File, TextFile } from './fs'
 import defaultLogger, { className, logFormat } from './log'
 import { NotificationEvents } from './notificationEventManager'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
-import { Result } from './types/functional'
+import { Result } from './utils/functional/result'
 
 type Events = {
   textDocumentChanged(document: TextDocument): void
@@ -46,11 +48,13 @@ export class TextDocumentManager {
     return this.documents.has(uri)
   }
 
-  async get(uri: string): Promise<Result<TextDocument, Error>> {
-    const [updateRequired, err0] = this.isUpdateRequired(uri)
-    if (err0) {
-      return [null, err0]
+  async get(uri: string): Promise<Result<TextDocument>> {
+    const res0 = this.isUpdateRequired(uri)
+    if (either.isLeft(res0)) {
+      return res0
     }
+
+    const updateRequired = res0.right
 
     if (updateRequired) {
       await this.updateDocument(uri)
@@ -58,37 +62,35 @@ export class TextDocumentManager {
 
     const doc = this.documents.get(uri)
     if (!doc) {
-      return [null, ono(`document not registered. uri: ${uri}`)]
+      return either.left(ono(`document not registered. uri: ${uri}`))
     }
 
-    return [doc, null]
+    return either.right(doc)
   }
 
   getSync(uri: string): TextDocument | null {
     return this.documents.get(uri) ?? null
   }
 
-  async getText(uri: string): Promise<Result<string, Error>> {
-    const [doc, err] = await this.get(uri)
-    if (err) {
-      return [null, err]
-    }
-
-    return [doc?.getText(), null]
+  async getText(uri: string): Promise<Result<string>> {
+    return pipe(
+      await this.get(uri),
+      either.map((doc) => doc.getText())
+    )
   }
 
   private isUpdateRequired(uri: string): Result<boolean, Error> {
     const document = this.documents.get(uri)
     if (!document) {
-      return [null, ono(`document not registered. uri: ${uri}`)]
+      return either.left(ono(`document not registered. uri: ${uri}`))
     }
 
     const file = this.fileStore.get(uri)
     if (!file) {
-      return [null, ono(`file not exists. uri: ${uri}`)]
+      return either.left(ono(`file not exists. uri: ${uri}`))
     }
 
-    return [document.version < file.updatedAt, null]
+    return either.right(document.version < file.updatedAt)
   }
 
   private set(uri: string, text: string, timestamp: number, language = 'xml'): TextDocument {
@@ -101,14 +103,14 @@ export class TextDocumentManager {
   private async updateDocument(uri: string): Promise<Result<string, Error>> {
     const file = this.fileStore.get(uri)
     if (!file) {
-      return [null, ono(`file not exists. uri: ${file}`)]
+      return either.left(ono(`file not exists. uri: ${file}`))
     } else if (!(file instanceof TextFile)) {
-      return [null, ono(`file is not text file. uri: ${uri}`)]
+      return either.left(ono(`file is not text file. uri: ${uri}`))
     }
 
     let doc = this.documents.get(uri)
     if (!doc) {
-      return [null, ono(`document is not registered. uri: ${uri}`)]
+      return either.left(ono(`document is not registered. uri: ${uri}`))
     }
 
     const data = await file.read()
@@ -116,7 +118,7 @@ export class TextDocumentManager {
       doc = this.set(uri, data, file.updatedAt)
     }
 
-    return [doc.getText(), null]
+    return either.right(doc.getText())
   }
 
   private async onFileAdded(file: File): Promise<void> {
