@@ -101,9 +101,9 @@ export abstract class PathStore {
 
   get dependencyDirectories(): string[] {
     return _.uniq([
-      this.defaultRimWorldDatadirectory(),
-      this.defaultLocalModDirectory(),
-      this.defaultWorkshopModDirectory(),
+      this.RimWorldDatadirectory,
+      this.LocalModDirectory,
+      this.WorkshopModDirectory,
       ...this.externalModsDirectory,
     ])
   }
