@@ -43,3 +43,5 @@ export const getContentRange = _.curry((toRange: _toRange, el: Element) =>
     option.chain((contentRange) => toRange(contentRange, el.document.uri))
   )
 )
+
+export const rangeInclude = (offset: number, range: Range) => range.include(offset)

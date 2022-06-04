@@ -9,13 +9,7 @@ import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
-import {
-  findNodeAt,
-  getAttrib,
-  isElement,
-  isPointingDefNameContent,
-  isPointingParentNameAttributeValue,
-} from './utils/node'
+import { findNodeAt, getAttrib, isElement, isPointingDefNameContent, offsetInNodeAttribValue } from './utils/node'
 import { toNodeRange, toRange } from './utils/range'
 
 @injectable()
@@ -102,7 +96,7 @@ export class Reference {
       return []
     }
 
-    if (!isPointingParentNameAttributeValue(element.value, offset)) {
+    if (!offsetInNodeAttribValue(element.value, 'Name', offset)) {
       return []
     }
 

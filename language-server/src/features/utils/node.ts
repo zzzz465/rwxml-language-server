@@ -1,4 +1,15 @@
-import { Comment, DataNode, Def, Document, Element, Injectable, Node, NodeWithChildren, Text } from '@rwxml/analyzer'
+import {
+  Attribute,
+  Comment,
+  DataNode,
+  Def,
+  Document,
+  Element,
+  Injectable,
+  Node,
+  NodeWithChildren,
+  Text,
+} from '@rwxml/analyzer'
 import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
 import { flow, pipe } from 'fp-ts/lib/function'
@@ -263,3 +274,19 @@ export const getDefNameStr = flow(getDefNameNode, option.chain(getContent))
 export const getAttrib = _.curry((key: string, el: Element) => option.fromNullable(el.attribs[key]))
 
 export const findNodeAt = (offset: number, node: Element) => pipe(node.findNodeAt(offset), option.fromNullable)
+
+export const offsetInAttribName = (attrib: Attribute, offset: number) => attrib.nameRange.include(offset)
+
+export const offsetInAttribValue = (attrib: Attribute, offset: number) => attrib.valueRange.include(offset)
+
+/**
+ * @returns check offset is included in given attribute's "Name" range
+ */
+export const offsetInNodeAttribName = (el: Element, attribName: string, offset: number) =>
+  pipe(el, getAttrib(attribName), option.chain(option.fromPredicate(_.curryRight(offsetInAttribName)(offset))))
+
+/**
+ * @returns check offset is included in given attribute's "Value" range
+ */
+export const offsetInNodeAttribValue = (el: Element, attribName: string, offset: number) =>
+  pipe(el, getAttrib(attribName), option.chain(option.fromPredicate(_.curryRight(offsetInAttribValue)(offset))))
