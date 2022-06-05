@@ -77,7 +77,7 @@ export class CompleteAttribute implements CodeCompletionContributor {
       // selecting attribute values
       switch (currentAttribute.name) {
         case 'ParentName': {
-          const defs = project.defManager.nameDatabase.getDef(node.name)
+          const defs = project.defManager.nameDatabase.getDef(null, node.name)
           const candidates = AsEnumerable(defs)
             .Select((def) => def.getNameAttributeValue())
             .Where((value) => !!value)

@@ -64,7 +64,7 @@ export class Definition {
         return []
       }
 
-      return project.defManager.nameDatabase.getDef(attrib.value.value)
+      return project.defManager.nameDatabase.getDef(null, attrib.value.value)
     } else {
       return []
     }
