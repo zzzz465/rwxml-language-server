@@ -8,7 +8,7 @@ import {
   TypeInfoMap,
 } from '@rwxml/analyzer'
 import Deque from 'double-ended-queue'
-import { array, option } from 'fp-ts'
+import { array } from 'fp-ts'
 import { pipe } from 'fp-ts/lib/function'
 import _ from 'lodash'
 import { MultiDictionary } from 'typescript-collections'
@@ -58,26 +58,25 @@ export class DefManager {
    * @param resolveBaseType resolve defs based on defName, including derived types.
    * @returns
    */
-  getDef(defType: string, defName: string | undefined = undefined, resolveBaseType = true): option.Option<Def[]> {
+  getDef(defType: string, defName: string | undefined = undefined, resolveBaseType = true): Def[] {
     if (defName && resolveBaseType) {
       return this.getDefByDefName(defType, defName)
     } else {
-      return option.none
+      return []
     }
   }
 
-  private getDefByDefName(defType: string, defName: string): option.Option<Def[]> {
+  private getDefByDefName(defType: string, defName: string): Def[] {
     const baseType = this.typeInfoMap.getTypeInfoByName(defType)
     if (!baseType) {
-      return option.none
+      return []
     }
 
     const defs = this.defDatabase.getDefByName(defName)
 
     return pipe(
       defs,
-      array.filter((def: Def) => isDerivedType(def.typeInfo, baseType)),
-      option.some
+      array.filter((def: Def) => isDerivedType(def.typeInfo, baseType))
     )
   }
 

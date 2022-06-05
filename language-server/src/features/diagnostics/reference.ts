@@ -1,5 +1,4 @@
 import { Document } from '@rwxml/analyzer'
-import { option } from 'fp-ts'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import * as winston from 'winston'
@@ -56,11 +55,7 @@ export class Reference implements DiagnosticsContributor {
       }
 
       const defs = project.defManager.getDef(ref.typeInfo.getDefType() ?? '', ref.content)
-      if (option.isNone(defs)) {
-        continue
-      }
-
-      if (defs.value.length > 0) {
+      if (defs.length > 0) {
         continue
       }
 

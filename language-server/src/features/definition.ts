@@ -56,7 +56,7 @@ export class Definition {
         defName = getDefNameOfGeneratedDef(defName) ?? ''
       }
 
-      return option.getOrElse<Def[]>(() => [])(project.defManager.getDef(defType ?? '', defName))
+      return project.defManager.getDef(defType ?? '', defName)
     } else if (node.value instanceof Def) {
       // when cursor pointing "ParentName" attribute value
       const attrib = getAttrib('ParentName', node.value)
@@ -101,13 +101,10 @@ export class Definition {
 
   private getDefNameDefinition(project: Project, defType: string, defName: string): DefinitionLink[] {
     const defs = project.defManager.getDef(defType, defName)
-    if (option.isNone(defs)) {
-      return []
-    }
 
     const links: DefinitionLink[] = []
 
-    for (const def of defs.value) {
+    for (const def of defs) {
       const res = sequenceT(option.Apply)(getDefNameRange(this._toRange, def), toNodeRange(this._toRange, def))
       if (option.isNone(res)) {
         continue
