@@ -1,5 +1,6 @@
 import { Def } from './def'
 import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
+import { from } from 'linq-es2015'
 
 export class NameDatabase {
   private inheritNames: DefaultDictionary<string, MultiDictionary<string, Def>> = new DefaultDictionary(
@@ -21,12 +22,25 @@ export class NameDatabase {
     }
   }
 
-  getDef(defType: string, inheritName?: string): Def[] {
-    const dict = this.inheritNames.getValue(defType)
-    if (inheritName) {
-      return dict.getValue(inheritName)
+  getDef(defType: string | null, name: string | null): Def[] {
+    if (defType) {
+      const target = this.inheritNames.getValue(defType)
+
+      if (name) {
+        return target.getValue(name)
+      } else {
+        return target.values()
+      }
     } else {
-      return dict.values()
+      if (name) {
+        return from(this.inheritNames.values())
+          .SelectMany((dict) => dict.getValue(name))
+          .ToArray()
+      } else {
+        return from(this.inheritNames.values())
+          .SelectMany((dict) => dict.values())
+          .ToArray()
+      }
     }
   }
 
