@@ -1,4 +1,6 @@
 import rwxml from '@rwxml/analyzer'
+import { option } from 'fp-ts'
+import { pipe } from 'fp-ts/lib/function'
 import { injectable } from 'tsyringe'
 import { Position, Range } from 'vscode-languageserver-textdocument'
 import { TextDocumentManager } from '../textDocumentManager'
@@ -22,6 +24,14 @@ export class RangeConverter {
     const end = textDocument.positionAt(range.end)
 
     return { start, end }
+  }
+
+  toPosition(offset: number, uri: string): option.Option<Position> {
+    return pipe(
+      this.textDocumentManager.getSync(uri),
+      option.fromNullable,
+      option.map((doc) => doc.positionAt(offset))
+    )
   }
 
   toRange(range: Range, uri: string): rwxml.Range | undefined {
