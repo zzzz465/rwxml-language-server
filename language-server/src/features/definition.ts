@@ -89,7 +89,7 @@ export class Definition {
       return this.getDefNameDefinition(project, defType, defName)
     } else if (node.value instanceof Def) {
       const attrib = getAttrib('ParentName', node.value)
-      if (option.isNone(attrib) || rangeIncludeOffset(attrib.value.valueRange)) {
+      if (option.isNone(attrib) || !rangeIncludeOffset(attrib.value.valueRange)) {
         return []
       }
 
@@ -127,7 +127,7 @@ export class Definition {
   }
 
   private getNameDefinition(project: Project, name: string): DefinitionLink[] {
-    const defs = project.defManager.getInheritResolveWanters(name)
+    const defs = project.defManager.nameDatabase.getDef(null, name)
     const links: DefinitionLink[] = []
 
     for (const def of defs) {
