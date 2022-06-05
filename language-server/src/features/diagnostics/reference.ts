@@ -54,7 +54,12 @@ export class Reference implements DiagnosticsContributor {
         continue
       }
 
-      const defs = project.defManager.getDef(ref.typeInfo.getDefType() ?? '', ref.content)
+      const defType = ref.typeInfo.getDefType()
+      if (!defType) {
+        continue
+      }
+
+      const defs = project.defManager.getDef(defType, ref.content)
       if (defs.length > 0) {
         continue
       }
