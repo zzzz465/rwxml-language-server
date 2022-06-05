@@ -1,20 +1,18 @@
-import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Def, Injectable, Text } from '@rwxml/analyzer'
 import { option } from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
+import { flow } from 'fp-ts/lib/function'
+import _ from 'lodash'
 import { injectable } from 'tsyringe'
 import { DefinitionLink, LocationLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
+import { getRootInProject } from './utils'
 import { getDefNameOfGeneratedDef, isGeneratedDef } from './utils/def'
-import {
-  getNodeAndOffset,
-  isNodeContainsDefReferenceText,
-  isPointingDefNameContent,
-  isTextReferencingDef,
-} from './utils/node'
-import { getDefNameRange, toAttribValueRange, toNodeRange, toRange } from './utils/range'
+import { findNodeAt, getAttrib, isNodeContainsDefReferenceText } from './utils/node'
+import { getDefNameRange, rangeInclude, toAttribValueRange, toNodeRange, toRange } from './utils/range'
 
 type Result = {
   definitionLinks: DefinitionLink[]
@@ -58,24 +56,6 @@ export class Definition {
     }
 
     return []
-  }
-
-  /**
-   * find all Def from given position. only works when position is Text node
-   * @param project
-   * @param uri
-   * @param position
-   * @returns
-   */
-  findDefsFromUriWithPos(project: Project, uri: URI, offset: number): Def[]
-  findDefsFromUriWithPos(project: Project, uri: URI, position: Position): Def[]
-  findDefsFromUriWithPos(project: Project, uri: URI, positionOrOffset: any): Def[] {
-    const refNode = this.findDefRefTextNode(project, uri, positionOrOffset)
-    if (!refNode) {
-      return []
-    }
-
-    return this.findDefsFromDefRefTextNode(project, refNode) ?? []
   }
 
   /**
@@ -129,73 +109,44 @@ export class Definition {
     return null
   }
 
-  findDefRefTextNode(project: Project, uri: URI, offset: number): DefRefTextNode | undefined
-  findDefRefTextNode(project: Project, uri: URI, position: Position): DefRefTextNode | undefined
-  findDefRefTextNode(project: Project, uri: URI, positionOrOffset: Position | number): DefRefTextNode | undefined {
-    let node: Node
-    let offset: number
-    if (typeof positionOrOffset === 'object') {
-      const temp = getNodeAndOffset(project, uri, positionOrOffset)
-      if (!temp) {
-        return
-      }
+  findDefinitions(project: Project, uri: URI, offset: number): Def[] {
+    const getNodeAt = flow(getRootInProject, option.fromEither, option.chain(_.curry(findNodeAt)(offset)))
+    const rangeIncludeOffset = _.curry(rangeInclude)(offset)
 
-      node = temp.node
-      offset = temp.offset
-    } else {
-      const temp = project.getXMLDocumentByUri(uri)?.findNodeAt(positionOrOffset)
-      if (!temp) {
-        return
-      }
-
-      node = temp
-      offset = positionOrOffset
-    }
-
-    if (isTextReferencingDef(node) || isPointingDefNameContent(node, offset)) {
-      // is it refernced defName text? or defName text itself?
-      return node as DefRefTextNode
-    }
-  }
-
-  private getDefinitionLinks(project: Project, defType: string, defName: string): DefinitionLink[] {
-    const links: DefinitionLink[] = []
-    const getDefsRes = project.defManager.getDef(defType, defName)
-
-    if (getDefsRes === 'DEFTYPE_NOT_EXIST') {
+    const node = getNodeAt(project, uri)
+    if (option.isNone(node)) {
       return []
     }
 
-    const defs = getDefsRes
-
-    for (const def of defs) {
-      const defNameNode = def.ChildElementNodes.find((node) => node.name === 'defName')
-      const targetRange = this.rangeConverter.toLanguageServerRange(def.nodeRange, def.document.uri)
-
-      if (!(defNameNode && targetRange)) {
-        continue
+    if (node.value instanceof Text && node.value.parent instanceof Injectable && node.value.parent.typeInfo.isDef()) {
+      const defType = node.value.parent.typeInfo.getDefType()
+      let defName = node.value.data
+      if (isGeneratedDef(defName)) {
+        defName = getDefNameOfGeneratedDef(defName) ?? ''
       }
 
-      const targetSelectionRange = this.rangeConverter.toLanguageServerRange(defNameNode.nodeRange, def.document.uri)
-      if (!targetSelectionRange) {
-        continue
+      return option.getOrElse<Def[]>(() => [])(project.defManager.getDef(defType ?? '', defName))
+    } else if (node.value instanceof Def) {
+      const attrib = getAttrib('ParentName', node.value)
+      if (option.isNone(attrib) || rangeIncludeOffset(attrib.value.valueRange)) {
+        return []
       }
 
-      links.push({
-        targetRange,
-        targetSelectionRange,
-        targetUri: def.document.uri,
-      })
+      return project.defManager.nameDatabase.getDef(attrib.value.value)
+    } else {
+      return []
     }
-
-    return links
   }
 
   private getDefNameDefinition(project: Project, defType: string, defName: string): DefinitionLink[] {
     const defs = project.defManager.getDef(defType, defName)
+    if (option.isNone(defs)) {
+      return []
+    }
+
     const links: DefinitionLink[] = []
 
-    for (const def of defs) {
+    for (const def of defs.value) {
       const res = sequenceT(option.Apply)(getDefNameRange(this._toRange, def), toNodeRange(this._toRange, def))
       if (option.isNone(res)) {
         continue

@@ -1,15 +1,16 @@
-import * as tsyringe from 'tsyringe'
-import { URI } from 'vscode-uri'
-import { Project } from '../../project'
-import * as ls from 'vscode-languageserver'
 import { Element } from '@rwxml/analyzer'
-import { Definition } from '../definition'
 import { AsEnumerable } from 'linq-es2015'
+import * as tsyringe from 'tsyringe'
+import * as ls from 'vscode-languageserver'
 import { MarkupContent } from 'vscode-languageserver'
+import { URI } from 'vscode-uri'
+import winston from 'winston'
 import { FileStore } from '../../fileStore'
 import { DependencyFile } from '../../fs'
-import winston from 'winston'
 import defaultLogger, { className, logFormat } from '../../log'
+import { Project } from '../../project'
+import { RangeConverter } from '../../utils/rangeConverter'
+import { Definition } from '../definition'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
 // https://github.com/sprity/sprity/blob/master/lib/style.js#L38-L53
@@ -25,10 +26,19 @@ export class DefReferenceHover {
     transports: [defaultLogger()],
   })
 
-  constructor(private readonly defProvider: Definition, private readonly fileStore: FileStore) {}
+  constructor(
+    private readonly defProvider: Definition,
+    private readonly fileStore: FileStore,
+    private readonly rangeConverter: RangeConverter
+  ) {}
 
   onReferenceHover(project: Project, uri: URI, position: ls.Position): ls.Hover | null {
-    const defs = this.defProvider.findDefsFromUriWithPos(project, uri, position)
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
+    if (!offset) {
+      return null
+    }
+
+    const defs = this.defProvider.findDefinitions(project, uri, offset)
     const def = AsEnumerable(defs).FirstOrDefault()
 
     if (!def) {
