@@ -11,20 +11,12 @@ import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
 import { getDefNameOfGeneratedDef, isGeneratedDef } from './utils/def'
-import { findNodeAt, getAttrib, isNodeContainsDefReferenceText } from './utils/node'
+import { findNodeAt, getAttrib } from './utils/node'
 import { getDefNameRange, rangeInclude, toAttribValueRange, toNodeRange, toRange } from './utils/range'
 
 type Result = {
   definitionLinks: DefinitionLink[]
   errors: any[]
-}
-
-/**
- * DefReferenceTextNode represents TextNode that value is referencing a def.
- * @todo refactor this
- */
-interface DefRefTextNode extends Text {
-  parent: Injectable
 }
 
 @injectable()
@@ -36,77 +28,15 @@ export class Definition {
   }
 
   onDefinition(project: Project, uri: URI, position: Position): Result {
+    const offset = this.rangeConverter.toOffset(position, uri.toString())
+    if (!offset) {
+      return { definitionLinks: [], errors: [] }
+    }
+
     return {
-      definitionLinks: this.findDefinitionLinks(project, uri, position),
+      definitionLinks: this.findDefinitionLinks(project, uri, offset),
       errors: [],
     }
-  }
-
-  findDefinitionLinks(project: Project, uri: URI, position: Position): LocationLink[] {
-    const definitionTextNode = this.findDefRefTextNode(project, uri, position)
-    // is cursor is pointing definition?
-    if (definitionTextNode) {
-      const defName = definitionTextNode.data
-      const defType = this.findDefType(definitionTextNode)
-      if (!defType) {
-        return []
-      }
-
-      return this.getDefinitionLinks(project, defType.value, defName)
-    }
-
-    return []
-  }
-
-  /**
-   * findReferencingDefsFromInjectable returns refrencing defs from given injectable node.
-   * @param project the project context.
-   * @param node the leaf injectable node that have text node as a children.
-   * @returns array of defs that this node is referencing. null if the node is not a leaf node.
-   */
-  findReferencingDefsFromInjectable(project: Project, node: Injectable): Def[] | null {
-    if (!isNodeContainsDefReferenceText(node)) {
-      return null
-    } else if (!node.content) {
-      return null
-    }
-
-    const defName = (() => {
-      if (isGeneratedDef(node.content)) {
-        return getDefNameOfGeneratedDef(node.content)
-      } else {
-        return node.content
-      }
-    })()
-    const defType = node.typeInfo.getDefType()
-    if (!defName || !defType) {
-      return null
-    }
-
-    const res = project.defManager.getDef(defType, defName)
-    if (res === 'DEFTYPE_NOT_EXIST') {
-      return []
-    } else {
-      return res
-    }
-  }
-
-  findDefsFromDefRefTextNode(project: Project, refNode: DefRefTextNode): Def[] | null {
-    return this.findReferencingDefsFromInjectable(project, refNode.parent)
-  }
-
-  findDefType(node: DefRefTextNode): { value: string; li?: boolean } | null {
-    if (node.parent.parent.typeInfo.isList() && node.parent.typeInfo.isDef()) {
-      const defType = node.parent.typeInfo.getDefType() ?? null
-
-      return defType ? { value: defType, li: true } : null
-    } else if (node.parent.fieldInfo?.fieldType.isDef()) {
-      const defType = node.parent.typeInfo.getDefType() ?? null
-
-      return defType ? { value: defType } : null
-    }
-
-    return null
   }
 
   findDefinitions(project: Project, uri: URI, offset: number): Def[] {
@@ -119,6 +49,7 @@ export class Definition {
     }
 
     if (node.value instanceof Text && node.value.parent instanceof Injectable && node.value.parent.typeInfo.isDef()) {
+      // when cursor pointing text (referencing defName)
       const defType = node.value.parent.typeInfo.getDefType()
       let defName = node.value.data
       if (isGeneratedDef(defName)) {
@@ -127,12 +58,42 @@ export class Definition {
 
       return option.getOrElse<Def[]>(() => [])(project.defManager.getDef(defType ?? '', defName))
     } else if (node.value instanceof Def) {
+      // when cursor pointing "ParentName" attribute value
       const attrib = getAttrib('ParentName', node.value)
       if (option.isNone(attrib) || rangeIncludeOffset(attrib.value.valueRange)) {
         return []
       }
 
       return project.defManager.nameDatabase.getDef(attrib.value.value)
+    } else {
+      return []
+    }
+  }
+
+  findDefinitionLinks(project: Project, uri: URI, offset: number): LocationLink[] {
+    const getNodeAt = flow(getRootInProject, option.fromEither, option.chain(_.curry(findNodeAt)(offset)))
+    const rangeIncludeOffset = _.curry(rangeInclude)(offset)
+
+    const node = getNodeAt(project, uri)
+    if (option.isNone(node)) {
+      return []
+    }
+
+    if (node.value instanceof Text && node.value.parent instanceof Injectable && node.value.parent.typeInfo.isDef()) {
+      const defType = node.value.parent.typeInfo.getDefType() ?? ''
+      let defName = node.value.data
+      if (isGeneratedDef(defName)) {
+        defName = getDefNameOfGeneratedDef(defName) ?? ''
+      }
+
+      return this.getDefNameDefinition(project, defType, defName)
+    } else if (node.value instanceof Def) {
+      const attrib = getAttrib('ParentName', node.value)
+      if (option.isNone(attrib) || rangeIncludeOffset(attrib.value.valueRange)) {
+        return []
+      }
+
+      return this.getNameDefinition(project, attrib.value.value)
     } else {
       return []
     }
