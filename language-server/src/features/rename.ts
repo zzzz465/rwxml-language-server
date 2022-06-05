@@ -1,12 +1,10 @@
-import { Project } from '../project'
+import { injectable } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
-import { Reference } from './reference'
-import { getNodeAndOffset } from './utils/node'
-import { DefaultDictionary } from 'typescript-collections'
-import { Definition } from './definition'
+import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
-import { injectable } from 'tsyringe'
+import { Definition } from './definition'
+import { Reference } from './reference'
 import { WritableChecker } from './writableChecker'
 
 type Result = {
@@ -25,6 +23,13 @@ export class Rename {
   rename(project: Project, uri: URI, newName: string, pos: lsp.Position): Result {
     const result: Result = {}
 
+    return result
+    /*
+    const offset = this.rangeConverter.toOffset(pos, uri.toString())
+    if (_.isNil(offset)) {
+      return result
+    }
+
     if (!this.writableChecker.canWrite(uri.toString())) {
       return result
     }
@@ -34,17 +39,19 @@ export class Rename {
       return result
     }
 
-    const definitionNode = this.definition.findDefRefTextNode(project, uri, pos)
-    if (!definitionNode) {
+    const defNodes = this.definition.findDefinitions(project, uri, offset)
+    if (option.isNone(defNodes) || defNodes.value.length === 0) {
       return result
     }
 
-    const definitionEditRange = this.rangeConverter.toLanguageServerRange(definitionNode.dataRange, uri.toString())
+    const def = defNodes.value[0]
+
+    const definitionEditRange = this.rangeConverter.toLanguageServerRange(def.contentRange, uri.toString())
     if (!definitionEditRange) {
       return result
     }
 
-    const referenceNodes = this.reference.findDefReference(project, definitionNode, data.offset)
+    const referenceNodes = this.reference.findDefReference(project, def, data.offset)
     if (!referenceNodes) {
       return result
     }
@@ -66,5 +73,6 @@ export class Rename {
     }
 
     return result
+    */
   }
 }

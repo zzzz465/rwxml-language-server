@@ -8,6 +8,8 @@ import {
   TypeInfoMap,
 } from '@rwxml/analyzer'
 import Deque from 'double-ended-queue'
+import { array } from 'fp-ts'
+import { pipe } from 'fp-ts/lib/function'
 import _ from 'lodash'
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
@@ -56,26 +58,26 @@ export class DefManager {
    * @param resolveBaseType resolve defs based on defName, including derived types.
    * @returns
    */
-  getDef(
-    defType: string,
-    defName: string | undefined = undefined,
-    resolveBaseType = true
-  ): Def[] | 'DEFTYPE_NOT_EXIST' {
+  getDef(defType: string, defName: string | undefined = undefined, resolveBaseType = true): Def[] {
     if (defName && resolveBaseType) {
       return this.getDefByDefName(defType, defName)
+    } else {
+      return []
     }
-
-    return this.defDatabase.getDef(defType, defName)
   }
 
-  private getDefByDefName(defType: string, defName: string): Def[] | 'DEFTYPE_NOT_EXIST' {
+  private getDefByDefName(defType: string, defName: string): Def[] {
     const baseType = this.typeInfoMap.getTypeInfoByName(defType)
     if (!baseType) {
-      return 'DEFTYPE_NOT_EXIST'
+      return []
     }
 
     const defs = this.defDatabase.getDefByName(defName)
-    return defs.filter((def) => isDerivedType(def.typeInfo, baseType))
+
+    return pipe(
+      defs,
+      array.filter((def: Def) => isDerivedType(def.typeInfo, baseType))
+    )
   }
 
   /**
@@ -141,7 +143,7 @@ export class DefManager {
     }
   }
 
-  private removeDef(def: Def) {
+  private removeDef(def: Def): void {
     const parentName = def.getParentNameAttributeValue()
 
     if (parentName && this.isInheritWanter(def)) {

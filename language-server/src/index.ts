@@ -73,7 +73,7 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
           supported: false,
         },
       },
-      renameProvider: true,
+      renameProvider: false,
     },
   }
 
