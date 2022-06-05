@@ -1,4 +1,5 @@
 import { Document } from '@rwxml/analyzer'
+import { option } from 'fp-ts'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import * as winston from 'winston'
@@ -7,7 +8,8 @@ import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { Definition } from '../definition'
-import { isGeneratedDef } from '../utils/def'
+import { getDefName, isGeneratedDef } from '../utils/def'
+import { getContentRange, toRange } from '../utils/range'
 import { DiagnosticsContributor } from './contributor'
 
 @tsyringe.injectable()
@@ -17,7 +19,11 @@ export class Reference implements DiagnosticsContributor {
     transports: [defaultLogger()],
   })
 
-  constructor(private readonly rangeConverter: RangeConverter, private readonly definition: Definition) {}
+  private readonly _toRange: ReturnType<typeof toRange>
+
+  constructor(private readonly rangeConverter: RangeConverter, private readonly definition: Definition) {
+    this._toRange = toRange(rangeConverter)
+  }
 
   getDiagnostics(project: Project, document: DocumentWithNodeMap): { uri: string; diagnostics: ls.Diagnostic[] } {
     // 1. grab all def from document
@@ -40,17 +46,8 @@ export class Reference implements DiagnosticsContributor {
     const diagnostics: ls.Diagnostic[] = []
 
     for (const ref of document.injectables) {
-      const offset = ref.contentRange?.start
-      if (!offset) {
-        continue
-      }
-
-      const range = this.rangeConverter.toLanguageServerRange(ref.contentRange, ref.document.uri)
-      if (!range) {
-        continue
-      }
-
-      if (!ref.content) {
+      const contentRange = getContentRange(this._toRange, ref)
+      if (option.isNone(contentRange)) {
         continue
       }
 
@@ -59,16 +56,21 @@ export class Reference implements DiagnosticsContributor {
         continue
       }
 
-      const defs = project.defManager.getDef(defType, ref.content)
+      const defName = getDefName(ref.content)
+      if (!defName) {
+        continue
+      }
+
+      const defs = project.defManager.getDef(defType, defName)
       if (defs.length > 0) {
         continue
       }
 
-      const message = isGeneratedDef(ref.content) ? 'Unresolved generated reference' : 'Unresolved reference'
+      const message = isGeneratedDef(ref.content!) ? 'Unresolved generated reference' : 'Unresolved reference'
 
       diagnostics.push({
         message: `${message} "${ref.content}"`,
-        range,
+        range: contentRange.value,
         severity: ls.DiagnosticSeverity.Error,
       })
     }

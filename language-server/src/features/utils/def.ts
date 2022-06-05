@@ -13,3 +13,15 @@ export function getDefNameOfGeneratedDef(defName: string): string | null {
 
   return null
 }
+
+export function getDefName(defName?: string): string | null {
+  if (!defName) {
+    return null
+  }
+
+  if (isGeneratedDef(defName)) {
+    return getDefNameOfGeneratedDef(defName)
+  } else {
+    return defName
+  }
+}
