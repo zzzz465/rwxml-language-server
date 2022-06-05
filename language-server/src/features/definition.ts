@@ -1,4 +1,6 @@
 import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
+import { option } from 'fp-ts'
+import { sequenceT } from 'fp-ts/lib/Apply'
 import { injectable } from 'tsyringe'
 import { DefinitionLink, LocationLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
@@ -12,6 +14,7 @@ import {
   isPointingDefNameContent,
   isTextReferencingDef,
 } from './utils/node'
+import { getDefNameRange, toAttribValueRange, toNodeRange, toRange } from './utils/range'
 
 type Result = {
   definitionLinks: DefinitionLink[]
@@ -28,7 +31,11 @@ interface DefRefTextNode extends Text {
 
 @injectable()
 export class Definition {
-  constructor(private readonly rangeConverter: RangeConverter) {}
+  private readonly _toRange: ReturnType<typeof toRange>
+
+  constructor(private readonly rangeConverter: RangeConverter) {
+    this._toRange = toRange(rangeConverter)
+  }
 
   onDefinition(project: Project, uri: URI, position: Position): Result {
     return {
@@ -154,6 +161,7 @@ export class Definition {
   private getDefinitionLinks(project: Project, defType: string, defName: string): DefinitionLink[] {
     const links: DefinitionLink[] = []
     const getDefsRes = project.defManager.getDef(defType, defName)
+
     if (getDefsRes === 'DEFTYPE_NOT_EXIST') {
       return []
     }
@@ -177,6 +185,61 @@ export class Definition {
         targetRange,
         targetSelectionRange,
         targetUri: def.document.uri,
+      })
+    }
+
+    return links
+  }
+
+  private getDefNameDefinition(project: Project, defType: string, defName: string): DefinitionLink[] {
+    const defs = project.defManager.getDef(defType, defName)
+    const links: DefinitionLink[] = []
+
+    for (const def of defs) {
+      const res = sequenceT(option.Apply)(getDefNameRange(this._toRange, def), toNodeRange(this._toRange, def))
+      if (option.isNone(res)) {
+        continue
+      }
+
+      const [targetSelectionRange, targetRange] = res.value
+      const uri = def.document.uri
+
+      // 1. highlight range
+      // 2. selection range
+      // 3. document uri
+      links.push({
+        targetRange,
+        targetSelectionRange,
+        targetUri: uri,
+      })
+    }
+
+    return links
+  }
+
+  private getNameDefinition(project: Project, name: string): DefinitionLink[] {
+    const defs = project.defManager.getInheritResolveWanters(name)
+    const links: DefinitionLink[] = []
+
+    for (const def of defs) {
+      const res = sequenceT(option.Apply)(
+        toAttribValueRange(this._toRange, def, 'Name'),
+        toNodeRange(this._toRange, def)
+      )
+      if (option.isNone(res)) {
+        continue
+      }
+
+      const [targetSelectionRange, targetRange] = res.value
+      const uri = def.document.uri
+
+      // 1. highlight range
+      // 2. selection range
+      // 3. document uri
+      links.push({
+        targetRange,
+        targetSelectionRange,
+        targetUri: uri,
       })
     }
 
