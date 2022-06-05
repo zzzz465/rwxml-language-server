@@ -41,17 +41,14 @@ export class DefNameCompletion implements CodeCompletionContributor {
       return null
     }
 
-    const getDefsRes = project.defManager.getDef(defType)
-    if (getDefsRes === 'DEFTYPE_NOT_EXIST') {
-      return null
-    }
+    const foundDefs = project.defManager.getDef(defType)
 
-    const defs = AsEnumerable(getDefsRes)
+    const defNames = AsEnumerable(foundDefs)
       .Select((def) => def.getDefName())
       .Where((defName) => !!defName)
       .ToArray() as string[]
 
-    const completionTexts = getMatchingText(defs, node.content ?? '')
+    const completionTexts = getMatchingText(defNames, node.content ?? '')
 
     return {
       isIncomplete: false,
