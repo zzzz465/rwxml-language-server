@@ -11,6 +11,7 @@ import { ProjectManager } from '../projectManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
 import { CodeCompletion } from './codeCompletions'
 import { Definition } from './definition'
+import { PatchReference } from './patchReference'
 import { Reference } from './reference'
 import { Rename } from './rename'
 
@@ -31,6 +32,7 @@ export class LanguageFeature {
     private readonly definition: Definition,
     private readonly codeCompletion: CodeCompletion,
     private readonly reference: Reference,
+    private readonly patchReference: PatchReference,
     private readonly rename: Rename
   ) {}
 
@@ -80,6 +82,9 @@ export class LanguageFeature {
       const project = this.projectManager.getProject(version)
       const res = this.reference.onReference(project, uri, position)
       result.push(...res)
+
+      const res2 = await this.patchReference.getReference(project, uri.toString(), position)
+      result.push(...res2)
     }
 
     return result
