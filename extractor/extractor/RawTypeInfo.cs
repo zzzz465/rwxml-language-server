@@ -78,6 +78,14 @@ namespace extractor
                 if (!TypeFilter.IsBannedField(field))
                 {
                     var rawFieldInfo = new RawFieldInfo(field);
+
+                    // base field is overrided by new keyword with same name.
+                    // https://docs.microsoft.com/ko-kr/dotnet/csharp/language-reference/keywords/new-modifier
+                    if (fields.ContainsKey(rawFieldInfo.name))
+                    {
+                        fields.Remove(rawFieldInfo.name);
+                    }
+
                     fields.Add(rawFieldInfo.name, rawFieldInfo);
                 }
             }
