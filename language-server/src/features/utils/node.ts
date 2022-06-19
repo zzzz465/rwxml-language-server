@@ -8,7 +8,7 @@ import {
   Injectable,
   Node,
   NodeWithChildren,
-  Text,
+  Text
 } from '@rwxml/analyzer'
 import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
@@ -239,7 +239,7 @@ export function getRootElement(node: Node): Element | undefined {
   return AsEnumerable(doc.childNodes).FirstOrDefault((x) => x instanceof Element) as Element | undefined
 }
 
-export const isElement = (node: Node): node is Element => node instanceof Element || node instanceof Def
+export const isElement = (node: Node): node is Element => node instanceof Element
 
 export const isDef = (node: Node): node is Def => node instanceof Def
 
