@@ -23,7 +23,6 @@ specifiers:
   eslint-config-typescript: ^3.0.0
   fast-glob: ^3.2.7
   fast-safe-stringify: ^2.1.1
-  fp-ts: ^2.12.3
   htmlparser2: ^7.0.0
   jest: ^26.3.0
   jest-raw-loader: ^1.0.1
@@ -31,6 +30,7 @@ specifiers:
   linq-es2015: ^2.5.1
   lodash: ^4.17.21
   normalize-path: ^3.0.0
+  oxide.ts: ^1.0.5
   prettier: ^2.3.2
   reflect-metadata: ^0.1.13
   semver: ^7.3.5
@@ -61,12 +61,12 @@ dependencies:
   double-ended-queue: 2.1.0-0
   fast-glob: 3.2.7
   fast-safe-stringify: 2.1.1
-  fp-ts: 2.12.3
   htmlparser2: 7.1.2
   js-yaml: 4.1.0
   linq-es2015: 2.5.1
   lodash: 4.17.21
   normalize-path: 3.0.0
+  oxide.ts: 1.0.5
   reflect-metadata: 0.1.13
   semver: 7.3.5
   serialize-error: 9.1.1
@@ -2466,10 +2466,6 @@ packages:
       mime-types: 2.1.32
     dev: true
 
-  /fp-ts/2.12.3:
-    resolution: {integrity: sha512-8m0XvW8kZbfnJOA4NvSVXu95mLbPf4LQGwQyqVukIYS4KzSNJiyKSmuZUmbVHteUi6MGkAJGPb0goPZqI+Tsqg==}
-    dev: false
-
   /fragment-cache/0.2.1:
     resolution: {integrity: sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=}
     engines: {node: '>=0.10.0'}
@@ -3925,6 +3921,10 @@ packages:
       type-check: 0.4.0
       word-wrap: 1.2.3
     dev: true
+
+  /oxide.ts/1.0.5:
+    resolution: {integrity: sha512-OOm8f9hoVemkYLWiKjrwaWkhhaM+O0RBm3hwBZSIyTGV4LpopwLujyaUxiDmfgD8jiK5S+yoKcNo2f8qNDNWnA==}
+    dev: false
 
   /p-each-series/2.2.0:
     resolution: {integrity: sha512-ycIL2+1V32th+8scbpTvyHNaHe02z0sjgh91XXjAk+ZeXoPN4Z46DVUnzdso0aX4KckKw0FNNFHdjZ2UsZvxiA==}

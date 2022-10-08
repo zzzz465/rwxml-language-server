@@ -27,8 +27,10 @@ function getExtractorDirectory(): Option<string> {
   return option.fromNullable(processPath)
 }
 
-function getCWD() {
+function getCWD(): Option<string> {
   const extensionContext = tsyringe.container.resolve<ExtensionContext>(ExtensionContextToken)
+  const extDir = getExtractorDirectory()
+
   const cwd = extensionContext.asAbsolutePath(getExtractorDirectory())
 
   return cwd
