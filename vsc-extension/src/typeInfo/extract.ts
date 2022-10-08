@@ -68,10 +68,10 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
   p.stdout?.on('data', (data) => {
-    defaultLogger().info(data)
+    defaultLogger().info(String(data).trim())
   })
   p.stderr?.on('data', (data) => {
-    defaultLogger().error(data)
+    defaultLogger().error(String(data).trim())
   })
 
   return p
