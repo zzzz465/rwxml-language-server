@@ -15,7 +15,7 @@ namespace extractor
         static Log()
         {
             layout = new PatternLayout();
-            layout.ConversionPattern = "%d %c [%p]: %m%n";
+            layout.ConversionPattern = "%type %method %line - %c [%p]: %m%n";
             layout.ActivateOptions();
         }
 
