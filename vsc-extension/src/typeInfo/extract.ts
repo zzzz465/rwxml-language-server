@@ -1,4 +1,6 @@
 import { spawn } from 'child_process'
+import { option } from 'fp-ts'
+import { Option } from 'fp-ts/lib/Option'
 import _ from 'lodash'
 import { createServer } from 'net'
 import * as tsyringe from 'tsyringe'
@@ -9,7 +11,7 @@ import { ExtractionError } from './error'
 
 // TODO: refactor this code.
 
-function getExtractorDirectory() {
+function getExtractorDirectory(): Option<string> {
   let processPath: string | undefined = undefined
   switch (process.platform) {
     case 'win32':
@@ -22,11 +24,7 @@ function getExtractorDirectory() {
       break
   }
 
-  if (processPath) {
-    return processPath
-  } else {
-    throw new Error(`file: ${processPath} is not a valid extractor.`)
-  }
+  return option.fromNullable(processPath)
 }
 
 function getCWD() {

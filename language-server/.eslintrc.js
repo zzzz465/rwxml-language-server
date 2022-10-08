@@ -2,8 +2,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   extends: ['typescript', 'prettier'],
   env: {
-    'node': true,
-    'jest': true,
+    node: true,
+    jest: true,
   },
   settings: {
     'import/parsers': {
@@ -21,5 +21,6 @@ module.exports = {
     'func-names': ['off'],
     'class-methods-use-this': 'off',
     'import/prefer-default-export': 'off',
+    '@typescript-eslint/explicit-function-return-type': ['error'],
   },
 }
