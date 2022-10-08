@@ -21,7 +21,6 @@ const disposables: vscode.Disposable[] = []
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // 1. reset container && set extensionContext
-  console.log('initializing @rwxml/vsc-extension...')
   container.clearInstances()
 
   container.register(ExtensionVersionToken, { useValue: context.extension.packageJSON.version as string })

@@ -3,6 +3,7 @@ import { container } from 'tsyringe'
 import vscode, { Disposable, window } from 'vscode'
 import * as ls from 'vscode-languageclient'
 import { DocumentTokenRequest } from '../events'
+import defaultLogger from '../log'
 import { DocumentToken, TokenType } from '../types/documentToken'
 import { rangeJSONToRange } from '../utils/range'
 
@@ -49,7 +50,7 @@ async function _updateDecoration(client: ls.LanguageClient, uri: string) {
       applyDecos(response.tokens)
     }
   } catch (err) {
-    console.warn('warn: deco request throw error: ', err)
+    defaultLogger().warn('warn: deco request throw error: ', err)
   }
 }
 

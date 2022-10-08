@@ -1,4 +1,4 @@
-import { execFile } from 'child_process'
+import { spawn } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
 import * as tsyringe from 'tsyringe'
@@ -64,11 +64,15 @@ function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
   const args = buildExtractorArgs(dllPaths, port)
   defaultLogger().silly(`executing process: ${commandToString(extractorCmd, args)}`)
 
-  const p = execFile(extractorCmd, args, { cwd })
+  const p = spawn(extractorCmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
-  // p.stdout?.on('data', console.log)
-  p.stderr?.on('data', console.error)
+  p.stdout?.on('data', (data) => {
+    defaultLogger().info(data)
+  })
+  p.stderr?.on('data', (data) => {
+    defaultLogger().error(data)
+  })
 
   return p
 }
