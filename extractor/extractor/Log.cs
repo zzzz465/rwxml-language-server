@@ -1,6 +1,7 @@
 using log4net;
 using log4net.Appender;
 using log4net.Core;
+using log4net.Filter;
 using log4net.Layout;
 using log4net.Repository.Hierarchy;
 
@@ -22,11 +23,27 @@ namespace extractor
         {
             var hierarchy = (Hierarchy)LogManager.GetRepository();
 
-            var appender = new ConsoleAppender();
-            appender.Layout = layout;
-            appender.ActivateOptions();
+            var appenderStdout = new ConsoleAppender();
+            appenderStdout.Layout = layout;
+            appenderStdout.Target = ConsoleAppender.ConsoleOut;
+            var stdOutFilter = new LevelRangeFilter();
+            stdOutFilter.LevelMax = Level.Warn;
+            stdOutFilter.LevelMin = Level.All;
+            appenderStdout.AddFilter(stdOutFilter);
+            appenderStdout.ActivateOptions();
 
-            hierarchy.Root.AddAppender(appender);
+            var appenderStderr = new ConsoleAppender();
+            appenderStderr.Layout = layout;
+            appenderStderr.Target = ConsoleAppender.ConsoleError;
+            var stdErrFilter = new LevelRangeFilter();
+            stdErrFilter.LevelMax = Level.Fatal;
+            stdErrFilter.LevelMin = Level.Error;
+            appenderStderr.Layout = layout;
+            appenderStderr.AddFilter(stdErrFilter);
+            appenderStderr.ActivateOptions();
+
+            hierarchy.Root.AddAppender(appenderStdout);
+            hierarchy.Root.AddAppender(appenderStderr);
 
             hierarchy.Root.Level = Level.Info;
             hierarchy.Configured = true;
