@@ -23,6 +23,7 @@ specifiers:
   eslint-config-typescript: ^3.0.0
   fast-glob: ^3.2.7
   fast-safe-stringify: ^2.1.1
+  fp-ts: ^2.12.3
   htmlparser2: ^7.0.0
   jest: ^26.3.0
   jest-raw-loader: ^1.0.1
@@ -60,6 +61,7 @@ dependencies:
   double-ended-queue: 2.1.0-0
   fast-glob: 3.2.7
   fast-safe-stringify: 2.1.1
+  fp-ts: 2.12.3
   htmlparser2: 7.1.2
   js-yaml: 4.1.0
   linq-es2015: 2.5.1
@@ -2463,6 +2465,10 @@ packages:
       combined-stream: 1.0.8
       mime-types: 2.1.32
     dev: true
+
+  /fp-ts/2.12.3:
+    resolution: {integrity: sha512-8m0XvW8kZbfnJOA4NvSVXu95mLbPf4LQGwQyqVukIYS4KzSNJiyKSmuZUmbVHteUi6MGkAJGPb0goPZqI+Tsqg==}
+    dev: false
 
   /fragment-cache/0.2.1:
     resolution: {integrity: sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=}
