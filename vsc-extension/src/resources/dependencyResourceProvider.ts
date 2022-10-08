@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import winston from 'winston'
 import { DependencyRequest, DependencyRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import { ModManager } from '../mod/modManager'
 import { globPattern } from '../projectWatcher'
 import jsonStr from '../utils/json'
@@ -14,7 +14,7 @@ import { Provider } from './provider'
 export class DependencyResourceProvider implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(DependencyResourceProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   constructor(private readonly modManager: ModManager) {}

@@ -3,13 +3,13 @@ import { container } from 'tsyringe'
 import vscode, { Disposable, window } from 'vscode'
 import * as ls from 'vscode-languageclient'
 import { DocumentTokenRequest } from '../events'
-import defaultLogger from '../log'
+import { log } from '../log'
 import { DocumentToken, TokenType } from '../types/documentToken'
 import { rangeJSONToRange } from '../utils/range'
 
 let timeout: NodeJS.Timeout | undefined = undefined
 
-function triggerDecoration() {
+function triggerDecoration(): void {
   const client = container.resolve(ls.LanguageClient)
   const uri = window.activeTextEditor?.document.uri.toString()
   if (uri) {
@@ -21,7 +21,7 @@ export function registerDecoHook(): Disposable[] {
   const disposables: Disposable[] = [
     new (class implements Disposable {
       timer = setInterval(triggerDecoration, 300)
-      dispose() {
+      dispose(): void {
         clearInterval(this.timer)
       }
     })(),
@@ -50,7 +50,7 @@ async function _updateDecoration(client: ls.LanguageClient, uri: string) {
       applyDecos(response.tokens)
     }
   } catch (err) {
-    defaultLogger().warn('warn: deco request throw error: ', err)
+    log.warn('warn: deco request throw error: ', err)
   }
 }
 

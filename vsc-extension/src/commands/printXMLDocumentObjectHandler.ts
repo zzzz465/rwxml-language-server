@@ -1,12 +1,10 @@
 import vscode, { ExtensionContext } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { SerializedXMLDocumentRequest } from '../events'
-import defaultLogger from '../log'
+import { log } from '../log'
 
 export function printXMLDocumentObjectHandler(context: ExtensionContext, client: LanguageClient) {
   return async function (): Promise<void> {
-    const log = defaultLogger()
-
     if (vscode.window.activeTextEditor) {
       const uri = vscode.window.activeTextEditor.document.uri.toString()
       log.debug(`printXMLDocumentObjectHandler, uri: ${uri}`)

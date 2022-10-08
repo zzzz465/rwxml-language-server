@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import winston from 'winston'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import * as mod from '../mod'
 import { extractTypeInfos } from '../typeInfo'
 import jsonStr from '../utils/json'
@@ -15,7 +15,7 @@ import { Provider } from './provider'
 export class TypeInfoProvider implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(TypeInfoProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   constructor(@tsyringe.inject(mod.PathStore.token) private readonly pathStore: mod.PathStore) {}

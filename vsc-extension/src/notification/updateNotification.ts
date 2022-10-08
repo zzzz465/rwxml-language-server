@@ -2,7 +2,7 @@ import * as semver from 'semver'
 import { inject, singleton } from 'tsyringe'
 import * as vscode from 'vscode'
 import { ExtensionContextToken } from '../extension'
-import defaultLogger from '../log'
+import { log } from '../log'
 import { ExtensionVersionToken } from '../version'
 
 @singleton()
@@ -73,7 +73,7 @@ export class UpdateNotification {
   storeCurrentVersion() {
     const value = semver.parse(this.version, true)
     if (value === null) {
-      defaultLogger().error(`cannot parse ${value} as semver`)
+      log.error(`cannot parse ${value} as semver`)
 
       return
     }

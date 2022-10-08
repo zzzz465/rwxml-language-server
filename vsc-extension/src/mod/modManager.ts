@@ -3,7 +3,7 @@ import path from 'path'
 import { inject, singleton } from 'tsyringe'
 import vscode, { FileType, Uri } from 'vscode'
 import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import { ProjectWatcher } from '../projectWatcher'
 import jsonStr from '../utils/json'
 import { Mod } from './mod'
@@ -13,7 +13,7 @@ import { PathStore } from './pathStore'
 export class ModManager {
   private log = winston.createLogger({
     format: winston.format.combine(className(ProjectWatcher), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   private readonly _mods: Map<string, Mod> = new Map()

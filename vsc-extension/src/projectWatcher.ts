@@ -1,9 +1,9 @@
 import { injectable } from 'tsyringe'
 import vscode, { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
-import winston from 'winston'
+import * as winston from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
-import defaultLogger, { className, logFormat } from './log'
+import { className, logFormat } from './log'
 import jsonStr from './utils/json'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
@@ -13,14 +13,13 @@ export const globPattern = `**/*.{${watchedExts.join(',')}}`
 export class ProjectWatcher {
   private log = winston.createLogger({
     format: winston.format.combine(className(ProjectWatcher), logFormat),
-    transports: [defaultLogger()],
   })
 
   private readonly fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
 
   private watching = false
 
-  get isWatching() {
+  get isWatching(): boolean {
     return this.watching
   }
 

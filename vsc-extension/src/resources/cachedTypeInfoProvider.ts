@@ -13,7 +13,7 @@ import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import winston from 'winston'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import { md5sum } from '../utils/hash'
 import jsonStr from '../utils/json'
 import { PathStore } from './pathStore'
@@ -35,7 +35,7 @@ interface Cache {
 export class CachedTypeInfoProvider implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(CachedTypeInfoProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   private static readonly extractorVersion = new semver.SemVer('0.7.0')
