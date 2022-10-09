@@ -56,12 +56,12 @@ describe('def reference test', () => {
     defManager.update(refXML)
     expect(defManager.getDef('CultureDef', 'test_def_1')).toHaveLength(1)
     const refDef = defManager.getDef('CultureDef', 'test_def_1')[0]
-    const ideoNameMakerNode = refDef.findNodeAt(286)!
+    const ideoNameMakerNode = refDef.findNodeAt(154)!
     expect(ideoNameMakerNode).toBeDefined()
 
     // HACK
     const definition = new Definition(null as any)
-    const location = definition.findDefinitions(defManager, ideoNameMakerNode.document, 286)
+    const location = definition.findDefinitions(defManager, ideoNameMakerNode.document, 154)
     expect(location).not.toBeNull()
     expect(location).toHaveLength(1)
   })
