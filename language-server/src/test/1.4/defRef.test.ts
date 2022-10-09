@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DefDatabase, NameDatabase, parse, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { DefManager } from '../../defManager'
 import * as documentWithNodeMap from '../../documentWithNodeMap'
-import { Reference } from '../../features/reference'
+import { Definition } from '../../features/definition'
 import typeInfo from './typeInfo.json'
 
 describe('def reference test', () => {
@@ -39,9 +40,7 @@ describe('def reference test', () => {
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
   <CultureDef>
-    <defName>Heruan_Triune</defName>
-    <label>Triune</label>
-    <description>A broad collection of cultures common among frequent space travelers.</description>
+    <defName>test_def_1</defName>
     <ideoNameMaker MayRequire="Ludeon.RimWorld.Ideology">NamerIdeoAstropolitan</ideoNameMaker>
   </CultureDef>
 </Defs>
@@ -57,11 +56,13 @@ describe('def reference test', () => {
     defManager.update(refXML)
     expect(defManager.getDef('CultureDef', 'Heruan_Triune')).toHaveLength(1)
     const refDef = defManager.getDef('CultureDef', 'Heruan_Triune')[0]
+    const ideoNameMakerNode = refDef.findNodeAt(286)!
+    expect(ideoNameMakerNode).toBeDefined()
 
     // HACK
-    // TODO: fix this
-    const reference = new Reference(null as any)
-    const location = reference.findDefReference(defManager, refDef, 286)
+    const definition = new Definition(null as any)
+    const location = definition.findDefinitions(defManager, ideoNameMakerNode.document, 286)
     expect(location).not.toBeNull()
+    expect(location).toHaveLength(1)
   })
 })
