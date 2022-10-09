@@ -43,7 +43,7 @@ export class ProjectWatcher {
   /**
    * scan all files on current workspace for initial loading
    */
-  private async initLoading() {
+  private async initLoading(): Promise<void> {
     const uris = await vscode.workspace.findFiles(globPattern)
     this.log.debug(`sending initial load files. count: ${uris.length}`)
     this.log.silly(`initial load files: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
@@ -53,15 +53,15 @@ export class ProjectWatcher {
     }
   }
 
-  private async onDidcreate(uri: Uri) {
+  private async onDidcreate(uri: Uri): Promise<void> {
     this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
   }
 
-  private async onDidChange(uri: Uri) {
+  private async onDidChange(uri: Uri): Promise<void> {
     this.client.sendNotification(ProjectFileChanged, { uri: uri.toString() })
   }
 
-  private async onDidDelete(uri: Uri) {
+  private async onDidDelete(uri: Uri): Promise<void> {
     this.client.sendNotification(ProjectFileDeleted, { uri: uri.toString() })
   }
 }
