@@ -1,9 +1,16 @@
 import * as vscode from 'vscode'
+import * as winston from 'winston'
+import { className, log, logFormat } from '../log'
 import { RimWorldVersion } from './version'
 
 export type ProgressParams = vscode.Progress<{ message?: string; increment?: number }>
 
 export class ProgressHelper {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ProgressHelper), logFormat),
+    transports: [log],
+  })
+
   public static async create(version: RimWorldVersion): Promise<ProgressHelper> {
     const p = new ProgressHelper(version)
     p.disposedPromise = new Promise((res) => {
