@@ -3,7 +3,6 @@ import { EventEmitter } from 'events'
 import { either } from 'fp-ts'
 import _ from 'lodash'
 import * as ono from 'ono'
-import { serializeError } from 'serialize-error'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
 import { v4 as uuid } from 'uuid'
@@ -172,7 +171,7 @@ export class Project {
     }
 
     if (err0) {
-      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`)
+      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(err0)}`)
     }
 
     this.xmls = new Map()
