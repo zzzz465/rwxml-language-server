@@ -3,7 +3,7 @@ import vscode, { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import * as winston from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
-import { className, logFormat } from './log'
+import { className, log, logFormat } from './log'
 import jsonStr from './utils/json'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
@@ -13,6 +13,7 @@ export const globPattern = `**/*.{${watchedExts.join(',')}}`
 export class ProjectWatcher {
   private log = winston.createLogger({
     format: winston.format.combine(className(ProjectWatcher), logFormat),
+    transports: [log],
   })
 
   private readonly fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
