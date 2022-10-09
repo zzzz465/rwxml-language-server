@@ -6,6 +6,7 @@ import { juxt } from 'ramda'
 import { injectable } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
+import { DefManager } from '../defManager'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
@@ -44,24 +45,24 @@ export class Reference {
     if (isPointingDefNameContent(node, offset) && (node instanceof Element || node instanceof Text)) {
       const defName: string | undefined = node instanceof Text ? node.data : node.content
       if (defName) {
-        res.push(...this.findDefNameReferences(project, defName))
+        res.push(...this.findDefNameReferences(project.defManager, defName))
       }
     }
 
     return res
   }
 
-  findDefReference(project: Project, node: Element | Text, offset: number): lsp.Location[] | null {
+  findDefReference(defManager: DefManager, node: Element | Text, offset: number): lsp.Location[] | null {
     if (node instanceof Text && isPointingDefNameContent(node, offset)) {
       const defName = node.data
-      return this.findDefNameReferences(project, defName)
+      return this.findDefNameReferences(defManager, defName)
     }
 
     return null
   }
 
-  private findDefNameReferences(project: Project, defName: string): lsp.Location[] {
-    const nodes = project.defManager.getReferenceResolveWanters(defName)
+  private findDefNameReferences(defManager: DefManager, defName: string): lsp.Location[] {
+    const nodes = defManager.getReferenceResolveWanters(defName)
     const res: lsp.Location[] = []
 
     for (const node of nodes) {
