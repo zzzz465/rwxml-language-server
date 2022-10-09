@@ -76,7 +76,7 @@ export class ModManager {
   }
 }
 
-async function loadModFromDirectroy(directory: Uri) {
+async function loadModFromDirectroy(directory: Uri): Promise<{ mods: Mod[]; errors: Error[] }> {
   const dirs = await vscode.workspace.fs.readDirectory(directory)
 
   const modsPromise = AsEnumerable(dirs)

@@ -32,7 +32,7 @@ export function registerDecoHook(): Disposable[] {
   return disposables
 }
 
-export function updateDecoration(client: ls.LanguageClient, uri: string, timeout_ms = 250) {
+export function updateDecoration(client: ls.LanguageClient, uri: string, timeout_ms = 250): void {
   if (timeout === undefined) {
     timeout = setTimeout(async () => {
       await _updateDecoration(client, uri)
@@ -41,7 +41,7 @@ export function updateDecoration(client: ls.LanguageClient, uri: string, timeout
   }
 }
 
-async function _updateDecoration(client: ls.LanguageClient, uri: string) {
+async function _updateDecoration(client: ls.LanguageClient, uri: string): Promise<void> {
   try {
     const response = await client.sendRequest(DocumentTokenRequest, { uri })
 
