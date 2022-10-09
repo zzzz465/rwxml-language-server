@@ -78,8 +78,20 @@ namespace extractor
                 RawTypeInfo typeInfo;
                 if (!typeDict.TryGetValue(type, out typeInfo))
                 {
-                    typeInfo = new RawTypeInfo(type);
-                    typeDict.Add(type, typeInfo);
+                    Exception ex = null;
+                    if (TryNewRawTypeInfo(type, out typeInfo, out ex))
+                    {
+                        typeDict.Add(type, typeInfo);
+                    }
+                    else
+                    {
+                        Log.Warn($"failed to add type: {ex}");
+                    }
+                }
+
+                if (typeInfo == null)
+                {
+                    continue;
                 }
 
                 if (typeInfo.childCollected)
@@ -103,8 +115,16 @@ namespace extractor
                         continue;
                     }
 
-                    typeDict.Add(fieldType, new RawTypeInfo(fieldType));
-                    types.Enqueue(fieldType);
+                    Exception ex = null;
+                    if (TryNewRawTypeInfo(fieldType, out RawTypeInfo value, out ex))
+                    {
+                        typeDict.Add(fieldType, value);
+                        types.Enqueue(fieldType);
+                    }
+                    else
+                    {
+                        Log.Warn(ex.ToString());
+                    }
                 }
 
                 // generic type
@@ -114,8 +134,16 @@ namespace extractor
                     {
                         if (!typeDict.ContainsKey(T) && !T.IsGenericParameter)
                         {
-                            typeDict.Add(T, new RawTypeInfo(T));
-                            types.Enqueue(T);
+                            Exception ex = null;
+                            if (TryNewRawTypeInfo(T, out RawTypeInfo value, out ex))
+                            {
+                                typeDict.Add(T, new RawTypeInfo(T));
+                                types.Enqueue(T);
+                            }
+                            else
+                            {
+                                Log.Warn(ex.ToString());
+                            }
                         }
                     }
                 }
@@ -132,8 +160,12 @@ namespace extractor
                         continue;
                     }
 
-                    typeDict.Add(iface, new RawTypeInfo(iface));
-                    types.Enqueue(iface);
+                    Exception ex = null;
+                    if (TryNewRawTypeInfo(iface, out RawTypeInfo value, out ex))
+                    {
+                        typeDict.Add(iface, value);
+                        types.Enqueue(iface);
+                    }
                 }
 
                 typeInfo.childCollected = true;
@@ -188,6 +220,22 @@ namespace extractor
                 }
 
                 rawTypeInfo.populated = true;
+            }
+        }
+
+        static bool TryNewRawTypeInfo(Type T, out RawTypeInfo value, out Exception ex)
+        {
+            try
+            {
+                value = new RawTypeInfo(T);
+                ex = null;
+                return true;
+            }
+            catch (Exception e)
+            {
+                value = null;
+                ex = e;
+                return false;
             }
         }
     }
