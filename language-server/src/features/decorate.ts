@@ -2,7 +2,6 @@
 import { Attribute, Def, Document, Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
-import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { DocumentTokenRequest, DocumentTokenRequestResponse } from '../events'
 import defaultLogger, { className, logFormat } from '../log'
@@ -141,7 +140,7 @@ export class DecoProvider implements Provider {
     const textNode = node as Text & { parent: Injectable }
 
     if (textNode.parent.typeInfo.isDef()) {
-      const definitions = this.defProvider.findDefinitions(project, URI.parse(uri), offset)
+      const definitions = this.defProvider.findDefinitions(project.defManager, node.document, offset)
       if (definitions.length > 0) {
         res.push({
           range: this.rangeConverter.toLanguageServerRange(textNode.dataRange, uri)!,
@@ -227,7 +226,10 @@ export class DecoProvider implements Provider {
         type: `${prefix}.open.parentNameAttribute`,
       })
 
-      if (this.defProvider.findDefinitions(project, URI.parse(uri), parentNameAttrib.valueRange.start).length > 0) {
+      if (
+        this.defProvider.findDefinitions(project.defManager, node.document, parentNameAttrib.valueRange.start).length >
+        0
+      ) {
         res.push({
           range: this.rangeConverter.toLanguageServerRange(parentNameAttrib.valueRange, uri)!,
           type: `${prefix}.open.parentNameAttributeValue.linked`,
