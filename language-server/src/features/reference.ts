@@ -52,13 +52,6 @@ export class Reference {
     return res
   }
 
-  /**
-   * find all def nodes that the offset text is referencing.
-   * @param defManager
-   * @param node the XML node that the offset text is in
-   * @param offset current cursor offset
-   * @returns
-   */
   findDefReference(defManager: DefManager, node: Element | Text, offset: number): lsp.Location[] | null {
     if (node instanceof Text && isPointingDefNameContent(node, offset)) {
       const defName = node.data
