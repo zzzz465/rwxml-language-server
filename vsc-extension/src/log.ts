@@ -24,7 +24,7 @@ export class LogManager {
   static readonly defaultLogger = winston.createLogger({
     format: format.combine(format.colorize({ all: true }), logFormat),
     level: DEFAULT_LOG_LEVEL,
-    transports: [new winston.transports.Console()],
+    transports: [new winston.transports.Console({ level: 'debug' })],
   })
 
   init(): Disposable {

@@ -72,13 +72,13 @@ function initExtractorProcess(
   const port = options?.port ?? 9870
   const args = buildExtractorArgs(dllPaths, port)
 
-  log.silly(`executing process: ${commandToString(cmd, args)}`)
+  log.debug(`executing process: ${commandToString(cmd, args)}`)
 
   const p = spawn(cmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
   p.stdout?.on('data', (data) => {
-    log.info(String(data).trim())
+    log.debug(String(data).trim())
   })
   p.stderr?.on('data', (data) => {
     log.error(String(data).trim())
