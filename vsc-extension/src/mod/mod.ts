@@ -5,11 +5,11 @@ import { About } from './about'
 import { LoadFolder } from './loadFolders'
 
 export class Mod {
-  static async create(rootDirectory: Uri) {
+  static async create(rootDirectory: Uri): Promise<Mod | Error> {
     const fileOrDirsOnRoot = await vscode.workspace.fs.readDirectory(rootDirectory)
 
     if (!fileOrDirsOnRoot.find(([name, type]) => name.toLowerCase() === 'about' && type === FileType.Directory)) {
-      throw new Error(`directory About not exists on directory root ${decodeURIComponent(rootDirectory.toString())}`)
+      return new Error(`about directory not found in ${decodeURIComponent(rootDirectory.toString())}`)
     }
 
     const aboutPath = vscode.Uri.file(path.resolve(rootDirectory.fsPath, 'About', 'About.xml'))

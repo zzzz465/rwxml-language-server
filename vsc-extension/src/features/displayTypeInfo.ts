@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { ParsedTypeInfoRequest } from '../events'
 
-export function registerFeature() {
+export function registerFeature(): vscode.Disposable {
   // TODO: refactor this code
   const instance = tsyringe.container.resolve(DisplayTypeInfo)
   return vscode.commands.registerCommand('rwxml:debug:displayTypeInfo', instance.callback.bind(instance))
@@ -13,10 +13,11 @@ export function registerFeature() {
 class DisplayTypeInfo {
   constructor(private readonly client: LanguageClient) {}
 
-  async callback() {
+  async callback(): Promise<void> {
     const version = await this.askProjectVersion()
     if (!version) {
-      return vscode.window.showInformationMessage('user canceled the task.')
+      vscode.window.showInformationMessage('user canceled the task.')
+      return
     }
 
     try {

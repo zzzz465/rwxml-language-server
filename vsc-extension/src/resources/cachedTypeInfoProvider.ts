@@ -54,7 +54,7 @@ export class CachedTypeInfoProvider implements Provider {
     vscode.commands.registerCommand('rwxml:cache:openDir', this.openCacheDir.bind(this))
   }
 
-  private openCacheDir() {
+  private openCacheDir(): void {
     const platform = os.platform()
     switch (platform) {
       case 'win32':
@@ -70,7 +70,7 @@ export class CachedTypeInfoProvider implements Provider {
     }
   }
 
-  private async clearCache() {
+  private async clearCache(): Promise<void> {
     const caches = await fs.readdir(this.dllCacheDirectory)
     this.log.debug(`deleting ${caches.length} caches: ${jsonStr(caches)}`)
     await Promise.all(caches.map((c) => fs.rm(path.join(this.dllCacheDirectory, c))))
@@ -99,7 +99,7 @@ export class CachedTypeInfoProvider implements Provider {
     this.log.debug(`received typeInfo request. uris count: ${uris.length}`)
     this.log.silly(`uris: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
 
-    const checkCacheValid = async () => {
+    const checkCacheValid = async (): Promise<{ valid: boolean; data: any }> => {
       // https://nodejs.org/api/fs.html#file-system-flags
       let file: fs.FileHandle | null = null
 
@@ -177,7 +177,7 @@ export class CachedTypeInfoProvider implements Provider {
     return [...files.map((uri) => vscode.Uri.parse(uri).fsPath).map(md5sum)]
   }
 
-  private async updateCache(cachePath: string, files: string[], data: any, requestId: string) {
+  private async updateCache(cachePath: string, files: string[], data: any, requestId: string): Promise<void> {
     try {
       const checksums = await this.getChecksums(files)
 

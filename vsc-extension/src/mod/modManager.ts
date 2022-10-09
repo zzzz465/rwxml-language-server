@@ -17,12 +17,12 @@ export class ModManager {
   })
 
   private readonly _mods: Map<string, Mod> = new Map()
-  get mods() {
+  get mods(): Mod[] {
     return [...this._mods.values()]
   }
 
   private _initialized = false
-  get initialized() {
+  get initialized(): boolean {
     return this._initialized
   }
 
@@ -34,7 +34,7 @@ export class ModManager {
     this.log.debug(`ModManager watching directories: ${jsonStr(this.directoryUris.map((data) => data.fsPath))}`)
   }
 
-  async init() {
+  async init(): Promise<void> {
     if (this.initialized) {
       throw new Error('DependencyManager is already initialized.')
     }

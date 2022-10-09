@@ -9,7 +9,7 @@ import { ExtensionContextToken } from './extension'
 import { ExtensionLog } from './extensionLog'
 import * as features from './features'
 import checkInsider from './insiderCheck'
-import log, { DefaultLogToken, LogManager } from './log'
+import { log, LogManager } from './log'
 import { ModManager, PathStore } from './mod'
 import { UpdateNotification } from './notification/updateNotification'
 import { ProjectWatcher } from './projectWatcher'
@@ -29,9 +29,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // init logger
   const logManager = container.resolve(LogManager)
   disposables.push(logManager.init())
-  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
-  const log = logManager.defaultLogger
   log.add(new ExtensionLog())
   // log.add(new winston.transports.File({ dirname: context.logUri.fsPath, filename: 'client.log', level: 'silly' }))
   // console.log(`writing logs to ${context.logUri.fsPath}`)
@@ -95,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   log.info('initialization completed.')
 }
 
-export function deactivate() {
+export function deactivate(): void {
   const client = container.resolve(LanguageClient)
   if (!client) {
     throw new Error('trying to deactivate extension, but it was never initialized.')
@@ -105,11 +103,11 @@ export function deactivate() {
   disposables.map((disposable) => disposable.dispose())
 }
 
-async function createServer() {
+async function createServer(): Promise<LanguageClient> {
   const context = container.resolve<vscode.ExtensionContext>(ExtensionContextToken)
   const pathStore = container.resolve<PathStore>(PathStore.token)
   const module = path.join(context.extensionPath, pathStore.LanguageServerModulePath)
-  log().debug(`server module absolute path: ${module}`)
+  log.debug(`server module absolute path: ${module}`)
 
   const serverOptions: ServerOptions = {
     run: { module, transport: TransportKind.ipc },
