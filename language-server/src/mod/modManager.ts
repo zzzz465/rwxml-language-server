@@ -14,7 +14,7 @@ export class ModManager {
     return [...this._mods.values()]
   }
 
-  listen(connection: Connection) {
+  listen(connection: Connection): void {
     // connection.onNotification(ModChangedNotification, this.onModChanged.bind(this))
   }
 

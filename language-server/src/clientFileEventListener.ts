@@ -21,7 +21,7 @@ export class ClientFileEventListener {
     connection.onNotification(ProjectFileDeleted, ({ uri }) => this.onFileDeleted(uri))
   }
 
-  private onFileAdded(uri: string) {
+  private onFileAdded(uri: string): void {
     const res = this.fileStore.load({ uri: URI.parse(uri) })
     if (either.isLeft(res)) {
       this.log.error(`cannot add file. error: ${res.left}`)
@@ -29,7 +29,7 @@ export class ClientFileEventListener {
     }
   }
 
-  private onFileChanged(uri: string) {
+  private onFileChanged(uri: string): void {
     const res = this.fileStore.update(uri)
     if (either.isLeft(res)) {
       this.log.error(`cannot add file. error: ${res.left.message}`)
@@ -37,11 +37,10 @@ export class ClientFileEventListener {
     }
   }
 
-  private onFileDeleted(uri: string) {
+  private onFileDeleted(uri: string): void {
     const err = this.fileStore.unload(uri)
     if (err) {
       this.log.error(`cannot add file. error: ${err.message}`)
-      return
     }
   }
 }

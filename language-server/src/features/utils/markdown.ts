@@ -1,6 +1,6 @@
 import { Injectable, TypeInfo } from '@rwxml/analyzer'
 
-export function getCsharpFieldCodeBlock(name: string, accessor: string, type: string) {
+export function getCsharpFieldCodeBlock(name: string, accessor: string, type: string): string {
   return ['```csharp', `${accessor} ${type} ${name};`, '```'].join('\n')
 }
 
@@ -31,5 +31,5 @@ export function getGenericClassNameToString(typeInfo: TypeInfo): string {
     })
     .join(', ')
 
-  return `${name}\<${genArgs}\>`
+  return `${name}\\<${genArgs}\\\\>`
 }

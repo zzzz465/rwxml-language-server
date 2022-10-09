@@ -67,7 +67,7 @@ class DependencyResourceBag {
     private readonly fileStore: FileStore
   ) {}
 
-  has(uri: string) {
+  has(uri: string): boolean {
     return LINQ.from(this._resources).Any(([, v]) => v.has(uri))
   }
 
@@ -135,9 +135,7 @@ class DependencyResourceBag {
       return either.left(ono.ono(err as Error))
     }
 
-    if (res.error) {
-      return either.left(ono.ono(res.error as Error))
-    }
+    // TODO: do a error handling
 
     return either.right(res.uris)
   }

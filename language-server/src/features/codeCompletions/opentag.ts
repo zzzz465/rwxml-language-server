@@ -3,6 +3,7 @@ import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import { injectable } from 'tsyringe'
 import { MultiDictionary } from 'typescript-collections'
+import * as lsp from 'vscode-languageserver'
 import { Command, CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
 import { Project } from '../../project'
@@ -80,14 +81,14 @@ export class OpenTagCompletion implements CodeCompletionContributor {
     return false
   }
 
-  private getTextEditRange(node: Element | Text, offset: number, converter: RangeConverter) {
+  private getTextEditRange(node: Element | Text, offset: number, converter: RangeConverter): lsp.Range | null {
     const range = node instanceof Element ? node.openTagNameRange.clone() : new Range(offset, offset)
 
     const textEditRange = converter.toLanguageServerRange(range, node.document.uri)
-    return textEditRange
+    return textEditRange ?? null
   }
 
-  private getDefNames(project: Project) {
+  private getDefNames(project: Project): string[] {
     let cached = this.defs.getValue(project.version)
 
     if (cached.length === 0) {

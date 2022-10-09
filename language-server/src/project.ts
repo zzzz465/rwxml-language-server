@@ -54,7 +54,7 @@ export class Project {
   private cancelTokenSource = new CancellationTokenSource()
 
   private _state: 'ready' | 'reloading' | 'invalid' = 'invalid'
-  get state() {
+  get state(): 'ready' | 'reloading' | 'invalid' {
     return this._state
   }
 
@@ -181,14 +181,14 @@ export class Project {
     return null
   }
 
-  async getTypeInfo(requestId: string = uuid()) {
+  async getTypeInfo(requestId: string = uuid()): Promise<[TypeInfoMap, Error | null]> {
     return this.typeInfoMapProvider.get(requestId)
   }
 
   /**
    * evaluteProject performs parsing on all document on resourceStore
    */
-  private evaluteProject() {
+  private evaluteProject(): void {
     for (const [uri, raw] of this.resourceStore.xmls) {
       this.parseXML(uri, raw)
     }
@@ -216,7 +216,7 @@ export class Project {
    * @param uri uri of the file of the xml
    * @param raw xml string, must be parsable
    */
-  private parseXML(uri: string, raw: string) {
+  private parseXML(uri: string, raw: string): void {
     const document = documentWithNodeMap.create(parse(raw, uri))
 
     this.xmls.set(uri, document)

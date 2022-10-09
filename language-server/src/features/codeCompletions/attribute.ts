@@ -153,7 +153,7 @@ export class CompleteAttribute implements CodeCompletionContributor {
     return { isIncomplete: false, items }
   }
 
-  private getClassValues(project: Project) {
+  private getClassValues(project: Project): string[] {
     const cached = this.classValue.getValue(project.version)
 
     if (cached.length === 0) {

@@ -9,15 +9,15 @@ import { TextDocumentManager } from '../textDocumentManager'
 export class RangeConverter {
   constructor(private readonly textDocumentManager: TextDocumentManager) {}
 
-  toLanguageServerRange(range: rwxml.Range, uri: string): Range | undefined {
+  toLanguageServerRange(range: rwxml.Range, uri: string): Range | null {
     if (range.start === -1 || range.end === -1) {
-      return
+      return null
     }
 
     const textDocument = this.textDocumentManager.getSync(uri)
 
     if (!textDocument) {
-      return
+      return null
     }
 
     const start = textDocument.positionAt(range.start)
@@ -34,11 +34,11 @@ export class RangeConverter {
     )
   }
 
-  toRange(range: Range, uri: string): rwxml.Range | undefined {
+  toRange(range: Range, uri: string): rwxml.Range | null {
     const textDocument = this.textDocumentManager.getSync(uri)
 
     if (!textDocument) {
-      return
+      return null
     }
 
     const start = textDocument.offsetAt(range.start)
@@ -47,11 +47,11 @@ export class RangeConverter {
     return new rwxml.Range(start, end)
   }
 
-  toOffset(position: Position, uri: string): number | undefined {
+  toOffset(position: Position, uri: string): number | null {
     const textDocument = this.textDocumentManager.getSync(uri)
 
     if (!textDocument) {
-      return
+      return null
     }
 
     return textDocument.offsetAt(position)

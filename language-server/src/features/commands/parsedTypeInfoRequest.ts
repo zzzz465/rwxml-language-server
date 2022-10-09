@@ -1,5 +1,5 @@
 import * as tsyringe from 'tsyringe'
-import { Connection } from 'vscode-languageserver'
+import { Connection, ResponseError } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { Logger } from 'winston'
 import { ParsedTypeInfoRequest, ParsedTypeInfoRequestResponse } from '../../events'
@@ -27,18 +27,14 @@ export class ParsedTypeInfoRequestHandler implements Provider {
 
   private async onRequest({
     version,
-  }: ParsedTypeInfoRequest): Promise<ParsedTypeInfoRequestResponse | null | undefined> {
+  }: ParsedTypeInfoRequest): Promise<ParsedTypeInfoRequestResponse | ResponseError<Error>> {
     const project = this.projectManager.getProject(version)
 
-    try {
-      const [typeInfoMap, error] = await project.getTypeInfo()
-      if (error) {
-        return { version, data: '', error: error }
-      }
-
-      return { version, data: typeInfoMap.rawData }
-    } catch (err) {
-      return { version, data: null, error: err as Error }
+    const [typeInfoMap, error] = await project.getTypeInfo()
+    if (error) {
+      return new ResponseError(1, 'failed to get typeInfo', error)
     }
+
+    return { version, data: typeInfoMap }
   }
 }

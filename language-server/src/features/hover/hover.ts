@@ -115,7 +115,7 @@ export class HoverProvider implements Provider {
       }
       const hoverType = getHoverType(proj, node)
 
-      const res = (() => {
+      const res = ((): ls.Hover | null => {
         switch (hoverType) {
           case 'defReference':
             return this.refHover.onReferenceHover(proj, uri, pos)
@@ -129,7 +129,7 @@ export class HoverProvider implements Provider {
           case 'def':
             return this.defHoverProvider.onDefHover(node as Def, offset)
 
-          case 'None':
+          default:
             return null
         }
       })()
