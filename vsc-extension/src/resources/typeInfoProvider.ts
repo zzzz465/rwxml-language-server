@@ -51,6 +51,7 @@ export class TypeInfoProvider implements Provider {
     }
 
     if (typeInfo instanceof Error) {
+      log.error(typeInfo)
       return typeInfo
     } else {
       return { data: typeInfo }
