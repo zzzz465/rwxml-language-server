@@ -140,7 +140,7 @@ export class OtherFile extends File {
     super(uri)
   }
 
-  toString() {
+  toString(): string {
     return `OtherFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
@@ -158,7 +158,7 @@ export class TextFile extends File {
   }
 
   // TODO: add error handling
-  async read(): Promise<string> {
+  async read(): Promise<string | Error> {
     return await this.lock.acquire(this.read.name, async () => {
       if (this.data) {
         return this.data
@@ -168,6 +168,9 @@ export class TextFile extends File {
 
       const xmlFileReader = container.resolve(TextReader)
       const res = await xmlFileReader.read(this)
+      if (res instanceof Error) {
+        return res
+      }
 
       if (lastUpdatedAt !== this.updatedAt) {
         return await this.read()
@@ -185,13 +188,13 @@ export class TextFile extends File {
     super.update()
   }
 
-  toString() {
+  toString(): string {
     return `TextFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
 
 export class XMLFile extends TextFile {
-  toString() {
+  toString(): string {
     return `XMLFile: ${decodeURIComponent(this.uri.toString())}`
   }
 }
@@ -202,7 +205,7 @@ export class TextureFile extends File {
     super(uri)
   }
 
-  toString() {
+  toString(): string {
     return `TextureFile ${decodeURIComponent(this.uri.toString())}`
   }
 }
@@ -213,7 +216,7 @@ export class AudioFile extends File {
     super(uri)
   }
 
-  toString() {
+  toString(): string {
     return `Audiofile ${decodeURIComponent(this.uri.toString())}`
   }
 }
@@ -224,11 +227,11 @@ export class DLLFile extends File {
     super(uri)
   }
 
-  get fsPath() {
+  get fsPath(): string {
     return this.uri.fsPath
   }
 
-  toString() {
+  toString(): string {
     return `DLLFile ${decodeURIComponent(this.uri.toString())}`
   }
 }

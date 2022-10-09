@@ -114,6 +114,10 @@ export class TextDocumentManager {
     }
 
     const data = await file.read()
+    if (data instanceof Error) {
+      return either.left(data)
+    }
+
     if (doc.version < file.updatedAt) {
       doc = this.set(uri, data, file.updatedAt)
     }

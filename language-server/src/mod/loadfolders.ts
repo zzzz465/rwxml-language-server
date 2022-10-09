@@ -60,8 +60,8 @@ export class LoadFolder {
     notiEventManager.preEvent.on('fileChanged', (file) => this.onFileChanged(file))
   }
 
-  getProjectWorkspace(version: string) {
-    return this.projectWorkspaces.get(version)
+  getProjectWorkspace(version: string): ProjectWorkspace | null {
+    return this.projectWorkspaces.get(version) ?? null
   }
 
   /**
@@ -104,7 +104,7 @@ export class LoadFolder {
     return this.getProjectWorkspace(version)?.includes(uri) ?? false
   }
 
-  listen(event: TypedEventEmitter<NotificationEvents>) {
+  listen(event: TypedEventEmitter<NotificationEvents>): void {
     event.on('fileAdded', this.onFileChanged.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     event.on('fileDeleted', this.onFileDeleted.bind(this))
@@ -119,7 +119,7 @@ export class LoadFolder {
   /**
    * update() updates this instance, parsing the given text.
    */
-  private update(text: string) {
+  private update(text: string): void {
     this._rawXML = text
 
     this.projectWorkspaces.clear()
@@ -176,13 +176,19 @@ export class LoadFolder {
     return new ProjectWorkspace(version, this.rootDirectory, relativePaths)
   }
 
-  private async onFileChanged(file: File) {
+  private async onFileChanged(file: File): Promise<void> {
     if (file instanceof XMLFile && file.uri.toString() === this.filePath.toString()) {
-      this.update(await file.read())
+      const loadFolder = await file.read()
+      if (loadFolder instanceof Error) {
+        this.log.error(`failed to read LoadFolder.xml. error: ${loadFolder}`)
+        return
+      }
+
+      this.update(loadFolder)
     }
   }
 
-  private onFileDeleted(uri: string) {
+  private onFileDeleted(uri: string): void {
     if (uri === this.filePath.toString()) {
       this.update('')
     }
@@ -212,6 +218,12 @@ export class LoadFolder {
       return this.update('')
     }
 
-    this.update(await file.read())
+    const loadFolder = await file.read()
+    if (loadFolder instanceof Error) {
+      this.log.error(`failed to read LoadFolder.xml. error: ${loadFolder}`)
+      return
+    }
+
+    this.update(loadFolder)
   }
 }

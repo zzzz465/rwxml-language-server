@@ -163,6 +163,11 @@ export class About {
       }
 
       const text = await file.read()
+      if (text instanceof Error) {
+        this.log.error(`failed to read about.xml. error: ${text}`)
+        return
+      }
+
       this.updateAboutXML(text)
     }
   }

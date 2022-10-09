@@ -51,11 +51,13 @@ export class Reference {
     return res
   }
 
-  findDefReference(project: Project, node: Element | Text, offset: number) {
+  findDefReference(project: Project, node: Element | Text, offset: number): lsp.Location[] | null {
     if (node instanceof Text && isPointingDefNameContent(node, offset)) {
       const defName = node.data
       return this.findDefNameReferences(project, defName)
     }
+
+    return null
   }
 
   private findDefNameReferences(project: Project, defName: string): lsp.Location[] {
