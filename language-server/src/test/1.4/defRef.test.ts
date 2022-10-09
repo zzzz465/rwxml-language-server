@@ -54,8 +54,8 @@ describe('def reference test', () => {
 
     const refXML = documentWithNodeMap.create(parse(ref, 'ref.xml'))
     defManager.update(refXML)
-    expect(defManager.getDef('CultureDef', 'Heruan_Triune')).toHaveLength(1)
-    const refDef = defManager.getDef('CultureDef', 'Heruan_Triune')[0]
+    expect(defManager.getDef('CultureDef', 'test_def_1')).toHaveLength(1)
+    const refDef = defManager.getDef('CultureDef', 'test_def_1')[0]
     const ideoNameMakerNode = refDef.findNodeAt(286)!
     expect(ideoNameMakerNode).toBeDefined()
 

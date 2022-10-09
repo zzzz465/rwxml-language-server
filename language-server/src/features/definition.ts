@@ -1,4 +1,4 @@
-import { Def, Document, Element, Injectable, Text } from '@rwxml/analyzer'
+import { Def, Document, Injectable, Text } from '@rwxml/analyzer'
 import { option } from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
 import { flow } from 'fp-ts/lib/function'
@@ -42,7 +42,7 @@ export class Definition {
 
   findDefinitions(defManager: DefManager, document: Document, offset: number): Def[] {
     const node = document.findNodeAt(offset)
-    if (!node || !(node instanceof Element)) {
+    if (!node) {
       return [] // TODO: return null
     }
 
