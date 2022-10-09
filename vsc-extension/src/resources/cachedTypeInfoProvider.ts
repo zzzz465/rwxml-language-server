@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { mkdirSync } from 'fs'
 import * as fs from 'fs/promises'
 import _ from 'lodash'
+import ono from 'ono'
 import * as os from 'os'
 import * as path from 'path'
 import * as semver from 'semver'
@@ -129,8 +130,8 @@ export class CachedTypeInfoProvider implements Provider {
       this.log.debug('checksum invalid, updating cache.', { id: requestId })
 
       const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
-      if (res.error) {
-        return res
+      if (res instanceof Error) {
+        throw res
       }
 
       data = res.data

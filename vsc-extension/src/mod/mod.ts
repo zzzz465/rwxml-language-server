@@ -23,6 +23,7 @@ export class Mod {
       loadFolder.load(Buffer.from(byteArr).toString())
     } catch (e) {
       // file not exists.
+      // TODO: wrap function and move it to another function.
     }
 
     return new Mod(rootDirectory, about, loadFolder)

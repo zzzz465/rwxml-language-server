@@ -28,7 +28,7 @@ export class TypeInfoProvider implements Provider {
   private requestCounter = 0
   private clearProgress: (() => void) | null = null
 
-  async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
+  async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse | Error> {
     const res: TypeInfoRequestResponse = {}
     const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
 
@@ -49,7 +49,7 @@ export class TypeInfoProvider implements Provider {
     this.log.silly(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
     const typeInfos = await extractTypeInfos(...dllPaths)
     if (typeInfos instanceof Error) {
-      throw ono(typeInfos, 'failed extracting typeInfos')
+      return ono(typeInfos, 'failed extracting typeInfos')
     }
 
     res.data = typeInfos

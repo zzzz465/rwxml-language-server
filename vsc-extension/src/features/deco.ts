@@ -3,7 +3,6 @@ import { container } from 'tsyringe'
 import vscode, { Disposable, window } from 'vscode'
 import * as ls from 'vscode-languageclient'
 import { DocumentTokenRequest } from '../events'
-import { log } from '../log'
 import { DocumentToken, TokenType } from '../types/documentToken'
 import { rangeJSONToRange } from '../utils/range'
 
@@ -42,15 +41,9 @@ export function updateDecoration(client: ls.LanguageClient, uri: string, timeout
 }
 
 async function _updateDecoration(client: ls.LanguageClient, uri: string): Promise<void> {
-  try {
-    const response = await client.sendRequest(DocumentTokenRequest, { uri })
-
-    // still watching same response
-    if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
-      applyDecos(response.tokens)
-    }
-  } catch (err) {
-    log.warn('warn: deco request throw error: ', err)
+  const response = await client.sendRequest(DocumentTokenRequest, { uri })
+  if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
+    applyDecos(response.tokens)
   }
 }
 

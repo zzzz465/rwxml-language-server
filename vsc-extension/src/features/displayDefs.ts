@@ -1,10 +1,11 @@
 import yaml from 'js-yaml'
+import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { DefListRequest } from '../events'
 
-export function registerFeature() {
+export function registerFeature(): vscode.Disposable {
   const instance = tsyringe.container.resolve(DisplayDefs)
   return vscode.commands.registerCommand('rwxml:debug:displayDefs', instance.callback.bind(instance))
 }
@@ -13,19 +14,21 @@ export function registerFeature() {
 class DisplayDefs {
   constructor(private readonly client: LanguageClient) {}
 
-  async callback() {
+  async callback(): Promise<void> {
     const version = await this.askProjectVersion()
     if (!version) {
-      return vscode.window.showInformationMessage('user canceled the task.')
+      vscode.window.showInformationMessage('user canceled the task.')
+      return
     }
 
-    try {
-      const content = await this.requestDefs(version)
-      const doc = await vscode.workspace.openTextDocument({ language: 'yaml', content })
-      await vscode.window.showTextDocument(doc)
-    } catch (err) {
-      vscode.window.showErrorMessage(`displayDefs failed ${String(err)}`)
+    const content = await this.requestDefs(version)
+    if (content instanceof Error) {
+      vscode.window.showErrorMessage(`requestParsedTypeInfo failed. ${ono(content)}`)
+      return
     }
+
+    const doc = await vscode.workspace.openTextDocument({ language: 'yaml', content })
+    await vscode.window.showTextDocument(doc)
   }
 
   private async askProjectVersion(): Promise<string> {
@@ -49,16 +52,13 @@ class DisplayDefs {
     return value
   }
 
-  private async requestDefs(version: string): Promise<string> {
-    const res = await this.client.sendRequest(DefListRequest, { version }, undefined)
-    if (res.error) {
-      throw new Error(String(res.error))
+  private async requestDefs(version: string): Promise<string | Error> {
+    try {
+      const res = await this.client.sendRequest(DefListRequest, { version }, undefined)
+      return yaml.dump(res.data, { indent: 2 })
+    } catch (err) {
+      // TODO: handle error
+      return ono(err as any)
     }
-
-    const marshalled = yaml.dump(res.data, {
-      indent: 2,
-    })
-
-    return marshalled
   }
 }
