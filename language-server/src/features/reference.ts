@@ -1,12 +1,15 @@
-import { Element, Text } from '@rwxml/analyzer'
+import { Element, Range, Text } from '@rwxml/analyzer'
 import { array, option } from 'fp-ts'
 import { flow } from 'fp-ts/lib/function'
 import _ from 'lodash'
+import ono from 'ono'
 import { juxt } from 'ramda'
 import { injectable } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
+import * as winston from 'winston'
 import { DefManager } from '../defManager'
+import defaultLogger, { className, logFormat } from '../log'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
@@ -15,6 +18,11 @@ import { toAttribValueRange, toRange } from './utils/range'
 
 @injectable()
 export class Reference {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(Reference), logFormat),
+    transports: [defaultLogger()],
+  })
+
   private readonly _toRange: ReturnType<typeof toRange>
 
   constructor(private readonly rangeConverter: RangeConverter) {
@@ -45,39 +53,77 @@ export class Reference {
     if (isPointingDefNameContent(node, offset) && (node instanceof Element || node instanceof Text)) {
       const defName: string | undefined = node instanceof Text ? node.data : node.content
       if (defName) {
-        res.push(...this.findDefNameReferences(project.defManager, defName))
+        res.push(...(this.findDefReferenceWithLocation(project.defManager, node, offset) ?? []))
       }
     }
 
     return res
   }
 
-  findDefReference(defManager: DefManager, node: Element | Text, offset: number): lsp.Location[] | null {
-    if (node instanceof Text && isPointingDefNameContent(node, offset)) {
-      const defName = node.data
-      return this.findDefNameReferences(defManager, defName)
+  /**
+   * find all def nodes that the offset text is referencing.
+   * @param defManager
+   * @param node the XML node that the offset text is in
+   * @param offset current cursor offset
+   * @returns
+   */
+  findDefReference(
+    defManager: DefManager,
+    node: Element | Text,
+    offset: number
+  ): { uri: string; range: Range }[] | null {
+    if (!(node instanceof Text && isPointingDefNameContent(node, offset))) {
+      return null
+    }
+    const defName = node.data
+
+    const [ranges, errors] = this.findDefNameReferences(defManager, defName)
+    if (errors.length > 0) {
+      this.log.error(errors)
     }
 
-    return null
+    return ranges
   }
 
-  private findDefNameReferences(defManager: DefManager, defName: string): lsp.Location[] {
+  findDefReferenceWithLocation(defManager: DefManager, node: Element | Text, offset: number): lsp.Location[] | null {
+    const references = this.findDefReference(defManager, node, offset)
+    if (!references) {
+      return null
+    }
+
+    const lspRanges: lsp.Location[] = []
+    const errors: Error[] = []
+
+    for (const refr of references) {
+      const range = this.rangeConverter.toLanguageServerRange(refr.range, refr.uri)
+      if (!range) {
+        errors.push(ono(`failed to convert range ${refr.range} to lsp range`))
+      } else {
+        lspRanges.push({ uri: refr.uri, range })
+      }
+    }
+
+    if (errors.length > 0) {
+      this.log.error(errors)
+    }
+
+    return lspRanges
+  }
+
+  private findDefNameReferences(defManager: DefManager, defName: string): [{ uri: string; range: Range }[], Error[]] {
     const nodes = defManager.getReferenceResolveWanters(defName)
-    const res: lsp.Location[] = []
+    const ranges: { uri: string; range: Range }[] = []
+    const errors: Error[] = []
 
     for (const node of nodes) {
       if (!node.contentRange) {
-        throw new Error(`node ${node.name} marked as defNameReference but contentRange is undefined.`)
-      }
-
-      const range = this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
-
-      if (range) {
-        res.push({ range, uri: node.document.uri })
+        errors.push(new Error(`node ${node} has no contentRange`))
+      } else {
+        ranges.push({ range: node.contentRange, uri: node.document.uri })
       }
     }
 
-    return res
+    return [ranges, errors]
   }
 
   onNameReference(project: Project, uri: URI, position: lsp.Position): lsp.Location[] {
