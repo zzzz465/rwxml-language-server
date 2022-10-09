@@ -2,7 +2,6 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
 import ono from 'ono'
-import { Err, Ok, Option, Result } from 'oxide.ts/dist'
 import * as tsyringe from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { ExtensionContextToken } from '../extension'
@@ -11,7 +10,7 @@ import { ExtractionError } from './error'
 
 // TODO: refactor this code.
 
-function getExtractorDirectory(): Option<string> {
+function getExtractorDirectory(): string | null {
   let processPath: string | undefined = undefined
   switch (process.platform) {
     case 'win32':
@@ -24,23 +23,28 @@ function getExtractorDirectory(): Option<string> {
       break
   }
 
-  return Option.from(processPath)
+  return processPath ?? null
 }
 
-function getCWD(): Option<string> {
+function getCWD(): string | null {
   const extensionContext = tsyringe.container.resolve<ExtensionContext>(ExtensionContextToken)
-  const cwd = getExtractorDirectory().map(extensionContext.asAbsolutePath)
 
-  return cwd
+  const extDir = getExtractorDirectory()
+  if (!extDir) {
+    return null
+  }
+
+  return extensionContext.asAbsolutePath(extDir)
 }
 
-const getExtractorCommand: () => string | null = () => {
+function getExtractorName(): string | null {
   switch (process.platform) {
     case 'win32':
       return 'extractor.exe'
 
     case 'darwin':
-      return 'mono'
+    case 'linux':
+      return 'extractor'
 
     default:
       return null
@@ -59,10 +63,10 @@ function initExtractorProcess(
   cmd: string,
   dllPaths: string[],
   options?: { port: number }
-): Result<ChildProcessWithoutNullStreams, Error> {
-  const cwd = getCWD().unwrapUnchecked()
-  if (cwd) {
-    return Err(ono(`cannot get cwd`))
+): ChildProcessWithoutNullStreams | Error {
+  const cwd = getCWD()
+  if (!cwd) {
+    return ono(`cannot get cwd`)
   }
 
   const port = options?.port ?? 9870
@@ -80,26 +84,24 @@ function initExtractorProcess(
     log.error(String(data).trim())
   })
 
-  return Ok(p)
+  return p
 }
 
 const timeout = 60000 // 60 second
-export async function extractTypeInfos(...dllPaths: string[]): Promise<Result<unknown[], Error>> {
-  const cmd = getExtractorCommand().unwrapUnchecked()
+export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[] | Error> {
+  const cmd = getExtractorName()
   if (!cmd) {
-    return Err(ono(`cannot get extractor command`))
+    return ono(`cannot get extractor name`)
   }
-
-  const x = getExtractorCommand()
 
   const server = createServer()
   const port = _.random(10000, 20000)
   log.silly(`server listening on 127.0.0.1:${port}`)
   server.listen(port, '127.0.0.1')
 
-  const process = initExtractorProcess(cmd, dllPaths, { port }).unwrapUnchecked()
+  const process = initExtractorProcess(cmd, dllPaths, { port })
   if (process instanceof Error) {
-    return Err(ono(process, 'cannot init extractor process'))
+    return ono(process, 'cannot init extractor process')
   }
 
   const connectionPromise = new Promise<Buffer>((res) => {
@@ -139,7 +141,7 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<Result<un
 
     server.close()
 
-    return Err(ono(new ExtractionError(`extraction failed with exit code ${exitCode}`)))
+    return ono(new ExtractionError(`extraction failed with exit code ${exitCode}`))
   }
 
   const result = await connectionPromise

@@ -1,4 +1,4 @@
-import { serializeError } from 'serialize-error'
+import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
@@ -46,15 +46,13 @@ export class TypeInfoProvider implements Provider {
 
     this.requestCounter += 1
 
-    try {
-      this.log.silly(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
-      const typeInfos = await extractTypeInfos(...dllPaths)
-
-      res.data = typeInfos
-    } catch (err) {
-      res.error = err as Error
-      this.log.error(`failed to extract data. error: ${serializeError(err)}`)
+    this.log.silly(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
+    const typeInfos = await extractTypeInfos(...dllPaths)
+    if (typeInfos instanceof Error) {
+      throw ono(typeInfos, 'failed extracting typeInfos')
     }
+
+    res.data = typeInfos
 
     this.requestCounter -= 1
     console.assert(
