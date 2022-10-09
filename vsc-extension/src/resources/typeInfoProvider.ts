@@ -1,4 +1,3 @@
-import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
@@ -29,13 +28,6 @@ export class TypeInfoProvider implements Provider {
   private clearProgress: (() => void) | null = null
 
   async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse | Error> {
-    const res: TypeInfoRequestResponse = {}
-    const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
-
-    const managedDirectory = this.pathStore.RimWorldManagedDirectory
-    this.log.debug('managed directory: ', managedDirectory)
-    dllPaths.push(managedDirectory)
-
     if (!this.clearProgress) {
       const { resolve } = await createProgress({
         location: vscode.ProgressLocation.Notification,
@@ -43,23 +35,14 @@ export class TypeInfoProvider implements Provider {
       })
       this.clearProgress = resolve
     }
-
     this.requestCounter += 1
 
-    this.log.silly(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
-    const typeInfos = await extractTypeInfos(...dllPaths)
-    if (typeInfos instanceof Error) {
-      return ono(typeInfos, 'failed extracting typeInfos')
-    }
-
-    res.data = typeInfos
+    const typeInfo = await this.extractTypeInfo(uris)
 
     this.requestCounter -= 1
-    console.assert(
-      this.requestCounter >= 0,
-      'TypeInfoProvider.requestCount must be greater or equal 0, value: %d',
-      this.requestCounter
-    )
+    if (this.requestCounter < 0) {
+      throw Error()
+    }
 
     if (this.requestCounter === 0) {
       console.assert(this.clearProgress !== null)
@@ -67,6 +50,21 @@ export class TypeInfoProvider implements Provider {
       this.clearProgress = null
     }
 
-    return res
+    if (typeInfo instanceof Error) {
+      return typeInfo
+    } else {
+      return { data: typeInfo }
+    }
+  }
+
+  async extractTypeInfo(uris: string[]): Promise<unknown[] | Error> {
+    const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
+
+    const managedDirectory = this.pathStore.RimWorldManagedDirectory
+    this.log.debug('managed directory: ', managedDirectory)
+    dllPaths.push(managedDirectory)
+
+    this.log.debug(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
+    return await extractTypeInfos(...dllPaths)
   }
 }
