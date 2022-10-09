@@ -4,7 +4,6 @@ import dayjs from 'dayjs'
 import { mkdirSync } from 'fs'
 import * as fs from 'fs/promises'
 import _ from 'lodash'
-import ono from 'ono'
 import * as os from 'os'
 import * as path from 'path'
 import * as semver from 'semver'
@@ -113,7 +112,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        this.log.error(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
+        this.log.warn(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
       } finally {
         await file?.close()
       }
