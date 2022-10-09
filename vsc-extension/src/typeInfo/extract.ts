@@ -1,12 +1,12 @@
-import { spawn } from 'child_process'
-import { option } from 'fp-ts'
-import { Option } from 'fp-ts/lib/Option'
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 import _ from 'lodash'
 import { createServer } from 'net'
+import ono from 'ono'
+import { Err, Ok, Option, Result } from 'oxide.ts/dist'
 import * as tsyringe from 'tsyringe'
 import { ExtensionContext } from 'vscode'
 import { ExtensionContextToken } from '../extension'
-import defaultLogger from '../log'
+import { log } from '../log'
 import { ExtractionError } from './error'
 
 // TODO: refactor this code.
@@ -24,19 +24,17 @@ function getExtractorDirectory(): Option<string> {
       break
   }
 
-  return option.fromNullable(processPath)
+  return Option.from(processPath)
 }
 
 function getCWD(): Option<string> {
   const extensionContext = tsyringe.container.resolve<ExtensionContext>(ExtensionContextToken)
-  const extDir = getExtractorDirectory()
-
-  const cwd = extensionContext.asAbsolutePath(getExtractorDirectory())
+  const cwd = getExtractorDirectory().map(extensionContext.asAbsolutePath)
 
   return cwd
 }
 
-const extractorCmd = (() => {
+const getExtractorCommand: () => string | null = () => {
   switch (process.platform) {
     case 'win32':
       return 'extractor.exe'
@@ -45,9 +43,9 @@ const extractorCmd = (() => {
       return 'mono'
 
     default:
-      return ''
+      return null
   }
-})()
+}
 
 function buildExtractorArgs(dllPaths: string[], port = 9870): string[] {
   return [...dllPaths, '--output-mode=TCP', `--port=${port}`]
@@ -57,34 +55,52 @@ function commandToString(cmd: string, args: string[]): string {
   return `${cmd} ${args.map((v) => `"${v}"`).join(' ')}`
 }
 
-function initExtractorProcess(dllPaths: string[], options?: { port: number }) {
-  const cwd = getCWD()
+function initExtractorProcess(
+  cmd: string,
+  dllPaths: string[],
+  options?: { port: number }
+): Result<ChildProcessWithoutNullStreams, Error> {
+  const cwd = getCWD().unwrapUnchecked()
+  if (cwd) {
+    return Err(ono(`cannot get cwd`))
+  }
+
   const port = options?.port ?? 9870
-
   const args = buildExtractorArgs(dllPaths, port)
-  defaultLogger().silly(`executing process: ${commandToString(extractorCmd, args)}`)
 
-  const p = spawn(extractorCmd, args, { cwd })
+  log.silly(`executing process: ${commandToString(cmd, args)}`)
+
+  const p = spawn(cmd, args, { cwd })
   p.stdout?.setEncoding('utf-8')
   p.stderr?.setEncoding('utf-8')
   p.stdout?.on('data', (data) => {
-    defaultLogger().info(String(data).trim())
+    log.info(String(data).trim())
   })
   p.stderr?.on('data', (data) => {
-    defaultLogger().error(String(data).trim())
+    log.error(String(data).trim())
   })
 
-  return p
+  return Ok(p)
 }
 
 const timeout = 60000 // 60 second
-export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]> {
+export async function extractTypeInfos(...dllPaths: string[]): Promise<Result<unknown[], Error>> {
+  const cmd = getExtractorCommand().unwrapUnchecked()
+  if (!cmd) {
+    return Err(ono(`cannot get extractor command`))
+  }
+
+  const x = getExtractorCommand()
+
   const server = createServer()
   const port = _.random(10000, 20000)
-  defaultLogger().silly(`server listening on 127.0.0.1:${port}`)
+  log.silly(`server listening on 127.0.0.1:${port}`)
   server.listen(port, '127.0.0.1')
 
-  const process = initExtractorProcess(dllPaths, { port })
+  const process = initExtractorProcess(cmd, dllPaths, { port }).unwrapUnchecked()
+  if (process instanceof Error) {
+    return Err(ono(process, 'cannot init extractor process'))
+  }
 
   const connectionPromise = new Promise<Buffer>((res) => {
     server.on('connection', async (socket) => {
@@ -107,7 +123,7 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
     }, timeout)
   )
   const exitPromise = new Promise<number>((res) => {
-    process.on('exit', (code) => {
+    process.on('exit', (code: any) => {
       res(code ?? 0)
     })
   })
@@ -123,7 +139,7 @@ export async function extractTypeInfos(...dllPaths: string[]): Promise<unknown[]
 
     server.close()
 
-    throw new ExtractionError(`exit code: ${exitCode}`, commandToString(extractorCmd, buildExtractorArgs(dllPaths)))
+    return Err(ono(new ExtractionError(`extraction failed with exit code ${exitCode}`)))
   }
 
   const result = await connectionPromise
