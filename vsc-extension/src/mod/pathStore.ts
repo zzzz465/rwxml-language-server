@@ -84,6 +84,10 @@ export abstract class PathStore {
     )
   }
 
+  get RimWorldCoreDLLPath(): string {
+    return path.join(this.RimWorldManagedDirectory, 'Assembly-CSharp.dll')
+  }
+
   get WorkshopModDirectory(): string {
     return this.getOrDefault(
       vscode.workspace.getConfiguration('rwxml.paths').get<string>('workshopMods'),
