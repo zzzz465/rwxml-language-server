@@ -18,7 +18,7 @@ export class Enum implements DiagnosticsContributor {
     const typeNodes = AsEnumerable(nodes)
       .Where((node) => node instanceof Injectable)
       .Cast<Injectable>()
-      .Where((node) => node.typeInfo.isEnum && isLeafNode(node))
+      .Where((node) => node.typeInfo.isEnum && !node.typeInfo.isList() && isLeafNode(node))
       .ToArray()
 
     const diagnostics = AsEnumerable(typeNodes)
