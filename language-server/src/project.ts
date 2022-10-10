@@ -154,7 +154,7 @@ export class Project {
   /**
    * reset project to initial state
    */
-  private async reset(cancelToken?: CancellationToken): Promise<ono.ErrorLike | null> {
+  private async reset(cancelToken?: CancellationToken): Promise<Error | null> {
     this.log.debug(`current project file dll count: ${this.resourceStore.dllFiles.size}`)
     this.log.silly(
       `dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`
