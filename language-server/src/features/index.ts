@@ -5,7 +5,7 @@ import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../log'
+import defaultLogger, { withClass } from '../log'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
@@ -22,7 +22,7 @@ import { Rename } from './rename'
 @singleton()
 export class LanguageFeature {
   private readonly log = winston.createLogger({
-    format: winston.format.combine(className(LanguageFeature), logFormat),
+    format: winston.format.combine(withClass(LanguageFeature)),
     transports: [defaultLogger()],
   })
 
@@ -50,6 +50,10 @@ export class LanguageFeature {
 
     for (const version of versions) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const { isIncomplete, items } = this.codeCompletion.codeCompletion(project, uri, position)
       result.isIncomplete ||= isIncomplete
       result.items.push(...items)
@@ -65,6 +69,10 @@ export class LanguageFeature {
 
     for (const version of versions) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const { definitionLinks, errors } = this.definition.onDefinition(project, uri, position)
 
       this.handleError(errors)
@@ -80,6 +88,10 @@ export class LanguageFeature {
 
     for (const version of RimWorldVersionArray) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const res = this.reference.onReference(project, uri, position)
       result.push(...res)
 
@@ -97,6 +109,10 @@ export class LanguageFeature {
 
     for (const version of RimWorldVersionArray) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const res = this.rename.rename(project, uri, newName, position)
       edit.changes = _.merge(edit.changes, res)
     }

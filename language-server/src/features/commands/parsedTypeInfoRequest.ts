@@ -3,7 +3,7 @@ import { Connection, ResponseError } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { Logger } from 'winston'
 import { ParsedTypeInfoRequest, ParsedTypeInfoRequestResponse } from '../../events'
-import defaultLogger, { className, logFormat } from '../../log'
+import defaultLogger, { withClass } from '../../log'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
 import { ProjectHelper } from '../utils/project'
@@ -11,7 +11,7 @@ import { ProjectHelper } from '../utils/project'
 @tsyringe.injectable()
 export class ParsedTypeInfoRequestHandler implements Provider {
   private log = winston.createLogger({
-    format: winston.format.combine(className(ParsedTypeInfoRequestHandler), logFormat),
+    format: winston.format.combine(withClass(ParsedTypeInfoRequestHandler)),
     transports: [defaultLogger()],
   })
 
@@ -29,6 +29,9 @@ export class ParsedTypeInfoRequestHandler implements Provider {
     version,
   }: ParsedTypeInfoRequest): Promise<ParsedTypeInfoRequestResponse | ResponseError<Error>> {
     const project = this.projectManager.getProject(version)
+    if (!project) {
+      return new ResponseError(1, `Project for version ${version} not found`)
+    }
 
     const [typeInfoMap, error] = await project.getTypeInfo()
     if (error) {

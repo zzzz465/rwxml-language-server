@@ -3,13 +3,13 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
 import * as winston from 'winston'
-import defaultLogger, { className, logFormat } from '../../log'
-import { getGenericClassNameToString, getCsharpFieldCodeBlock, getClassNameCodeBlock } from '../utils/markdown'
+import defaultLogger, { withClass } from '../../log'
+import { getClassNameCodeBlock, getCsharpFieldCodeBlock, getGenericClassNameToString } from '../utils/markdown'
 
 @tsyringe.injectable()
 export class TagHoverProvider {
   private log = winston.createLogger({
-    format: winston.format.combine(className(TagHoverProvider), logFormat),
+    format: winston.format.combine(withClass(TagHoverProvider)),
     transports: [defaultLogger()],
   })
 

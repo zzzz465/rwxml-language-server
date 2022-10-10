@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
 import * as winston from 'winston'
 import { File } from './fs'
-import defaultLogger, { className, logFormat } from './log'
+import defaultLogger, { withClass } from './log'
 import { About } from './mod'
 import { NotificationEvents } from './notificationEventManager'
 import { Project } from './project'
@@ -22,7 +22,7 @@ type Events = {
 @tsyringe.singleton()
 export class ProjectManager {
   private log = winston.createLogger({
-    format: winston.format.combine(className(ProjectManager), logFormat),
+    format: winston.format.combine(withClass(ProjectManager)),
     transports: [defaultLogger()],
   })
 
@@ -35,7 +35,7 @@ export class ProjectManager {
 
   public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
-  constructor(about: About) {
+  constructor(private readonly about: About) {
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 
@@ -65,7 +65,11 @@ export class ProjectManager {
     this.log.info(`supportedVersions deleted: ${jsonStr(deleted)}`)
   }
 
-  getProject(version: string): Project {
+  getProject(version: string): Project | null {
+    if (!this.about.supportedVersions.includes(version)) {
+      return null
+    }
+
     const c = this.getOrCreateContainer(version)
     return c.resolve(Project)
   }

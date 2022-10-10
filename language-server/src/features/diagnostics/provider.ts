@@ -4,10 +4,9 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
-import defaultLogger, { className, logFormat } from '../../log'
+import defaultLogger, { withClass } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
-import jsonStr from '../../utils/json'
 import { Provider } from '../provider'
 import { getRootElement } from '../utils'
 import { DiagnosticsContributor } from './contributor'
@@ -21,7 +20,7 @@ export class DiagnosticsProvider implements Provider {
   private connection?: ls.Connection = undefined
 
   private log = winston.createLogger({
-    format: winston.format.combine(className(DiagnosticsProvider), logFormat),
+    format: winston.format.combine(withClass(DiagnosticsProvider)),
     transports: [defaultLogger()],
   })
 
@@ -104,8 +103,8 @@ export class DiagnosticsProvider implements Provider {
     for (const dig of diagnosticsArr) {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
-        this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
-        this.log.silly(`${jsonStr(dig.diagnostics)}`)
+        // this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
+        // this.log.silly(`${jsonStr(dig.diagnostics)}`)
       } else {
         this.log.warn(
           `tried to send diagnostics which is not allowed in this context. target: ${dig.uri}, document: ${document.uri}`

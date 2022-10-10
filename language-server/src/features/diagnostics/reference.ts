@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import * as winston from 'winston'
 import { DocumentWithNodeMap } from '../../documentWithNodeMap'
-import defaultLogger, { className, logFormat } from '../../log'
+import defaultLogger, { withClass } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { Definition } from '../definition'
@@ -15,7 +15,7 @@ import { DiagnosticsContributor } from './contributor'
 @tsyringe.injectable()
 export class Reference implements DiagnosticsContributor {
   private log = winston.createLogger({
-    format: winston.format.combine(className(Reference), logFormat),
+    format: winston.format.combine(withClass(Reference)),
     transports: [defaultLogger()],
   })
 

@@ -5,14 +5,13 @@ import _ from 'lodash'
 import * as ono from 'ono'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
-import { v4 as uuid } from 'uuid'
 import { CancellationToken, CancellationTokenSource } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { DefManager } from './defManager'
 import * as documentWithNodeMap from './documentWithNodeMap'
-import defaultLogger, { className, logFormat } from './log'
+import defaultLogger, { withClass, withVersion } from './log'
 import { About } from './mod'
 import { ResourceStore } from './resourceStore'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
@@ -40,7 +39,7 @@ type Events = {
 @scoped(Lifecycle.ContainerScoped)
 export class Project {
   private log = winston.createLogger({
-    format: winston.format.combine(className(Project), logFormat),
+    format: winston.format.combine(withClass(Project), withVersion(this.version)),
     transports: [defaultLogger()],
   })
 
@@ -109,13 +108,12 @@ export class Project {
    * uses debounce to limit reloading too often
    */
   private reloadProject = _.debounce(async (reason = '') => {
-    const requestId = uuid()
     if (this.state === 'reloading') {
       this.reloadProject(reason)
       return
     }
 
-    this.log.info(`reloading project... reason: ${reason}`, { id: requestId })
+    this.log.info(`reloading project... reason: ${reason}`)
     this._state = 'reloading'
 
     this.cancelTokenSource.cancel()
@@ -123,26 +121,27 @@ export class Project {
     this.cancelTokenSource = cancelTokenSource
     const cancelToken = this.cancelTokenSource.token
 
-    this.log.info(`loading project resources...`, { id: requestId })
+    this.log.info(`loading project resources...`)
     this.resourceStore.reload('project reload')
 
-    this.log.info(`clear project...`, { id: requestId })
-    const err = await this.reset(requestId, cancelToken)
+    this.log.info(`clear project...`)
+    const err = await this.reset(cancelToken)
 
     if (cancelToken.isCancellationRequested) {
-      this.log.info(`project evluation canceled.`, { id: requestId })
+      this.log.info(`project evluation canceled.`)
       cancelTokenSource.dispose()
       return
     }
 
     if (err) {
       this.log.error(`failed reset project. err: ${err}`)
+      this._state = 'invalid'
     } else {
-      this.log.info(`project cleared.`, { id: requestId })
+      this.log.info(`project cleared.`)
       this.evaluteProject()
       this._state = 'ready'
       this.event.emit('projectReloaded')
-      this.log.info(`project evaluated.`, { id: requestId })
+      this.log.info(`project evaluated.`)
     }
 
     cancelTokenSource.dispose()
@@ -155,23 +154,19 @@ export class Project {
   /**
    * reset project to initial state
    */
-  private async reset(requestId: string = uuid(), cancelToken?: CancellationToken): Promise<ono.ErrorLike | null> {
-    this.log.debug(
-      // TODO: put uuid as log format
-      `current project file dll count: ${this.resourceStore.dllFiles.size}`,
-      { id: requestId }
-    )
+  private async reset(cancelToken?: CancellationToken): Promise<Error | null> {
+    this.log.debug(`current project file dll count: ${this.resourceStore.dllFiles.size}`)
     this.log.silly(
       `dll files: ${jsonStr([...this.resourceStore.dllFiles].map((uri) => decodeURIComponent(uri.toString())))}`
     )
 
-    const [typeInfoMap, err0] = await this.getTypeInfo(requestId)
+    const [typeInfoMap, err0] = await this.getTypeInfo()
     if (cancelToken?.isCancellationRequested) {
-      return ono.ono(`[${requestId}] request canceled.`)
+      return ono.ono(`[${this.version}] request canceled.`)
     }
 
     if (err0) {
-      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(err0)}`)
+      return ono.ono(`[${this.version}] failed fetching typeInfoMap. error: ${jsonStr(err0)}`)
     }
 
     this.xmls = new Map()
@@ -180,8 +175,8 @@ export class Project {
     return null
   }
 
-  async getTypeInfo(requestId: string = uuid()): Promise<[TypeInfoMap, Error | null]> {
-    return this.typeInfoMapProvider.get(requestId)
+  async getTypeInfo(): Promise<[TypeInfoMap, Error | null]> {
+    return this.typeInfoMapProvider.get()
   }
 
   /**

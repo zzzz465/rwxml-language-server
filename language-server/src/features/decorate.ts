@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { DocumentTokenRequest, DocumentTokenRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import defaultLogger, { withClass } from '../log'
 import { Project } from '../project'
 import { DocumentToken } from '../types/documentToken'
 import { RangeConverter } from '../utils/rangeConverter'
@@ -17,7 +17,7 @@ import { ProjectHelper } from './utils/project'
 @tsyringe.injectable()
 export class DecoProvider implements Provider {
   private log = winston.createLogger({
-    format: winston.format.combine(className(DecoProvider), logFormat),
+    format: winston.format.combine(withClass(DecoProvider)),
     transports: [defaultLogger()],
   })
 
@@ -34,8 +34,11 @@ export class DecoProvider implements Provider {
     )
   }
 
-  private onTokenRequest(p: DocumentTokenRequest): DocumentTokenRequestResponse | null | undefined {
-    const projects = this.projectHelper.getProjects(p.uri)
+  private onTokenRequest(p: DocumentTokenRequest): DocumentTokenRequestResponse | null {
+    const projects = this.projectHelper.getProjects(p.uri).filter((project) => project.state === 'ready')
+    if (projects.length === 0) {
+      return { tokens: [], uri: p.uri }
+    }
 
     const tokens: DocumentToken[] = []
 
@@ -52,9 +55,8 @@ export class DecoProvider implements Provider {
     return { uri: p.uri, tokens }
   }
 
-  private getTokenFromDoc(project: Project, doc: Document) {
+  private getTokenFromDoc(project: Project, doc: Document): DocumentToken[] {
     // traverse nodes and get nodes
-
     const nodes: Node[] = this.getNodesBFS(doc)
 
     return nodes.map((node) => this.getTokens(project, node)).flat()

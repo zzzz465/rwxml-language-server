@@ -31,6 +31,7 @@ export interface TextRequestResponse {
 }
 
 export interface TypeInfoRequest {
+  version: string
   uris: string[]
 }
 

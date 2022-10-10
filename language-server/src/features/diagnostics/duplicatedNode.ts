@@ -3,7 +3,7 @@ import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../../log'
+import defaultLogger, { withClass } from '../../log'
 import { Project } from '../../project'
 import jsonStr from '../../utils/json'
 import { RangeConverter } from '../../utils/rangeConverter'
@@ -16,7 +16,7 @@ import { DiagnosticsContributor } from './contributor'
 @tsyringe.injectable()
 export class DuplicatedNode implements DiagnosticsContributor {
   private log = winston.createLogger({
-    format: winston.format.combine(className(DuplicatedNode), logFormat),
+    format: winston.format.combine(withClass(DuplicatedNode)),
     transports: [defaultLogger()],
   })
 

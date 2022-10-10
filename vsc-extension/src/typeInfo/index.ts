@@ -6,7 +6,7 @@ export * from './extract'
 
 const dotnetName = getDotnetName()
 
-function getDotnetName() {
+function getDotnetName(): string | null {
   switch (process.platform) {
     case 'win32':
       return '.NET Framework'
@@ -14,9 +14,10 @@ function getDotnetName() {
     case 'darwin':
     case 'linux':
       return 'Mono (.NET Framework for Linux/OS X)'
-  }
 
-  return
+    default:
+      return null
+  }
 }
 
 export function checkTypeInfoAnalyzeAvailable(): boolean {
@@ -30,7 +31,7 @@ export function checkTypeInfoAnalyzeAvailable(): boolean {
   return available
 }
 
-async function promptDotnetInstall() {
+async function promptDotnetInstall(): Promise<void> {
   if (dotnetName) {
     const message = `\
 ${dotnetName} is not installed. to enable Runtime TypeInfo Extraction, you must have ${dotnetName} with version higher than 4.0.\
@@ -60,18 +61,18 @@ function dotnetAvailable(): boolean {
   }
 }
 
-function getDotnetVersionWindows() {
+function getDotnetVersionWindows(): semver.SemVer | undefined {
   // windows has \r\n, need .trim()
   const stdout = execSync('dotnet --version', { encoding: 'utf-8' }).trim()
   return semver.parse(stdout) ?? undefined
 }
 
-function getDotnetVersionLinux() {
+function getDotnetVersionLinux(): string {
   const stdout = execSync('mono --version', { encoding: 'utf-8' }).trim()
   return stdout ?? undefined
 }
 
-function getDotnetVersionOSX() {
+function getDotnetVersionOSX(): string {
   const stdout = execSync('mono --version', { encoding: 'utf-8' }).trim()
   return stdout ?? undefined
 }

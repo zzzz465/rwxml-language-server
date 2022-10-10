@@ -7,8 +7,10 @@ const DEFAULT_LOG_LEVEL = 'info'
 
 @tsyringe.singleton()
 export class LogManager {
+  readonly transport = new winston.transports.Console()
+
   readonly defaultLogger = winston.createLogger({
-    format: format.combine(logFormat),
+    format: logFormat,
     level: DEFAULT_LOG_LEVEL,
     transports: [new winston.transports.Console()],
   })
@@ -44,15 +46,33 @@ export class LogManager {
   }
 }
 
-export const className = format((info, classType?: new (...p: any[]) => any) => {
-  info.className = classType?.name ?? 'NONTYPE'
+export const withClass = format((data, classType?: new (...p: any[]) => any) => {
+  data.className = classType?.name ?? 'NONTYPE'
 
-  return info
+  return data
 })
 
-export const logFormat = format.printf(({ level, className, id, message }) =>
-  id ? `[${level}]\t[${className}]\t(${id}):\t${message}` : `[${level}]\t[${className}]:\t${message}`
-)
+export const withVersion = format((data, version) => {
+  data.version = version
+
+  return data
+})
+
+const logFormat = format.printf(({ level, className, version, message }) => {
+  const tags: string[] = []
+
+  tags.push(`[${level}]`)
+  if (className) {
+    tags.push(`[${className}]`)
+  }
+  if (version) {
+    tags.push(`[${version}]`)
+  }
+
+  const tag = tags.join('\t')
+
+  return `${tag}:\t${message}`
+})
 
 export default function defaultLogger(): winston.Logger {
   return tsyringe.container.resolve(LogManager).defaultLogger

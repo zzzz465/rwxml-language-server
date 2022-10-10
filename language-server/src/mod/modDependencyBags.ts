@@ -12,7 +12,7 @@ import winston from 'winston'
 import { ConnectionToken } from '../connection'
 import { DependencyRequest, DependencyRequestResponse } from '../events'
 import { FileStore } from '../fileStore'
-import defaultLogger, { className, logFormat } from '../log'
+import defaultLogger, { withClass } from '../log'
 import { Result } from '../utils/functional/result'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
@@ -170,7 +170,7 @@ type Events = {
 @tsyringe.singleton()
 export class ModDependencyBags {
   private log = winston.createLogger({
-    format: winston.format.combine(className(ModDependencyBags), logFormat),
+    format: winston.format.combine(withClass(ModDependencyBags)),
     transports: [defaultLogger()],
   })
 

@@ -20,13 +20,21 @@ import { getDefs, getDefsNode } from './node'
 export class ProjectHelper {
   constructor(protected readonly loadFolder: LoadFolder, protected readonly projectManager: ProjectManager) {}
 
-  getProjects(uri: string | URI) {
-    const versions = this.getVersions(uri)
+  getProjects(uri: string | URI): Project[] {
+    const projects: Project[] = []
 
-    return versions.map((ver) => this.projectManager.getProject(ver))
+    const versions = this.getVersions(uri)
+    for (const version of versions) {
+      const project = this.projectManager.getProject(version)
+      if (project) {
+        projects.push(project)
+      }
+    }
+
+    return projects
   }
 
-  getVersions(uri: string | URI) {
+  getVersions(uri: string | URI): string[] {
     if (typeof uri === 'string') {
       uri = URI.parse(uri)
     }
