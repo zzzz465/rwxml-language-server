@@ -503,27 +503,22 @@ function cloneChildren(childs: Node[]): Node[] {
 
 type RangedNode = Element | Comment | Text | DataNode
 
+// TODO: return null instead of undefined
 function findNodeAt(node: RangedNode, offset: number): RangedNode | undefined {
-  if (node instanceof Document) {
-    const index = sortedFindFirst(node.childNodes, (node: any) => node.nodeRange && offset <= node.nodeRange.start) - 1
-    if (index >= 0) {
-      const child = node.childNodes[index] as unknown
-      if ((child instanceof Element || child instanceof DataNode) && child.nodeRange.include(offset)) {
-        return findNodeAt(child, offset) ?? child
-      }
-    }
-  } else if (node instanceof Element) {
-    const index = sortedFindFirst(node.childNodes, (node: any) => node.nodeRange && offset <= node.nodeRange.start) - 1
+  if (node instanceof Element || node instanceof Document) {
+    const index = sortedFindFirst(node.childNodes, (child: any) => child.nodeRange && child.nodeRange.start <= offset)
     if (index >= 0) {
       const child = node.childNodes[index]
-      if ((child instanceof Element || child instanceof DataNode) && child.nodeRange.include(offset)) {
+      if (child instanceof Element) {
         return findNodeAt(child, offset) ?? child
+      } else if (child instanceof Text || child instanceof DataNode) {
+        return child
       }
     }
+  } else if (node.nodeRange.include(offset)) {
+    return node
   } else {
-    if (node.dataRange.include(offset)) {
-      return node
-    }
+    return undefined
   }
 }
 
