@@ -1,10 +1,10 @@
 import { spawnSync } from 'child_process'
 import { getFileProperties } from 'get-file-properties'
 import ono from 'ono'
-import { SemVer } from 'semver'
+import * as semver from 'semver'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient, ResponseError } from 'vscode-languageclient'
 import winston from 'winston'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
 import { className, log, logFormat } from '../log'
@@ -21,7 +21,7 @@ export class TypeInfoProvider implements Provider {
     transports: [log],
   })
 
-  private static readonly defaultVersion = new SemVer('0.0.0')
+  private static readonly defaultVersion = new semver.SemVer('0.0.0')
 
   constructor(@tsyringe.inject(mod.PathStore.token) private readonly pathStore: mod.PathStore) {}
 
@@ -33,15 +33,24 @@ export class TypeInfoProvider implements Provider {
   private requestCounter = 0
   private clearProgress: (() => void) | null = null
 
-  async onTypeInfoRequest({ uris, version }: TypeInfoRequest): Promise<TypeInfoRequestResponse | Error> {
+  async onTypeInfoRequest({ uris, version }: TypeInfoRequest): Promise<TypeInfoRequestResponse | ResponseError<Error>> {
     this.log.info('received TypeInfo request.')
 
     const CoreDLLPath = this.pathStore.RimWorldCoreDLLPath
-    const isCoreDLLVersionCorrect = await this.checkCoreDLLVersion(CoreDLLPath, new SemVer(version))
+    const semverVersion = this.parseVersion(version)
+    if (!semverVersion) {
+      const err = ono(`cannot parse version: ${version}`)
+      this.log.error(err)
+      return new ResponseError(1, err.message, err)
+    }
+
+    const isCoreDLLVersionCorrect = await this.checkCoreDLLVersion(CoreDLLPath, semverVersion)
     if (!isCoreDLLVersionCorrect) {
-      return Error(
-        `RWXML: Core DLL version mismatch. expected ${version}, got ${await this.getCoreDLLVersion(CoreDLLPath)}`
+      const err = ono(
+        `Core DLL version mismatch. expected: ${semverVersion}, actual: ${await this.getCoreDLLVersion(CoreDLLPath)}`
       )
+      this.log.error(err)
+      return new ResponseError(2, err.message, err)
     }
 
     if (!this.clearProgress) {
@@ -57,7 +66,8 @@ export class TypeInfoProvider implements Provider {
 
     this.requestCounter -= 1
     if (this.requestCounter < 0) {
-      throw Error() // panic? should never happen
+      this.requestCounter = 0
+      this.log.error('request counter is negative.')
     }
 
     if (this.requestCounter === 0) {
@@ -68,7 +78,7 @@ export class TypeInfoProvider implements Provider {
 
     if (typeInfo instanceof Error) {
       log.error(typeInfo)
-      return typeInfo
+      return new ResponseError(3, typeInfo.message, typeInfo)
     } else {
       return { data: typeInfo }
     }
@@ -86,16 +96,20 @@ export class TypeInfoProvider implements Provider {
     return await extractTypeInfos(...dllPaths)
   }
 
-  async checkCoreDLLVersion(DLLPath: string, version: SemVer): Promise<boolean> {
+  async checkCoreDLLVersion(DLLPath: string, version: semver.SemVer): Promise<boolean> {
     this.log.debug('checking Core DLL version...')
 
     const fileVersionOrErr = await this.getCoreDLLVersion(DLLPath)
     if (fileVersionOrErr instanceof Error) {
-      this.log.debug(`failed to get Core DLL version. err: ${fileVersionOrErr}`)
+      this.log.error(`failed to get Core DLL version. err: ${fileVersionOrErr}`)
       return false
     }
 
-    const fileVersion = new SemVer(fileVersionOrErr)
+    const fileVersion = semver.coerce(fileVersionOrErr)
+    if (!fileVersion) {
+      this.log.error(`failed to parse Core DLL version. version: ${fileVersionOrErr}`)
+      return false
+    }
 
     return fileVersion.major === version.major && fileVersion.minor === version.minor
   }
@@ -110,6 +124,14 @@ export class TypeInfoProvider implements Provider {
 
       default:
         return Error(`Unsupported platform: ${process.platform}`)
+    }
+  }
+
+  private parseVersion(version: string): semver.SemVer | null {
+    if (version === 'default') {
+      return TypeInfoProvider.defaultVersion
+    } else {
+      return semver.coerce(version)
     }
   }
 
