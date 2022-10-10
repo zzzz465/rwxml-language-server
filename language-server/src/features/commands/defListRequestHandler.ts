@@ -27,8 +27,11 @@ export class DefListRequestHandler implements Provider {
     return this.log
   }
 
-  private async onRequest({ version }: DefListRequest): Promise<DefListRequestResponse | null | undefined> {
+  private async onRequest({ version }: DefListRequest): Promise<DefListRequestResponse | null> {
     const project = this.projectManager.getProject(version)
+    if (!project) {
+      return null
+    }
 
     const marshalledDefs = AsEnumerable(project.defManager.defDatabase.defs())
       .Select((def) => this.marshalDef(def))

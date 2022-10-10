@@ -50,6 +50,10 @@ export class LanguageFeature {
 
     for (const version of versions) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const { isIncomplete, items } = this.codeCompletion.codeCompletion(project, uri, position)
       result.isIncomplete ||= isIncomplete
       result.items.push(...items)
@@ -65,6 +69,10 @@ export class LanguageFeature {
 
     for (const version of versions) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const { definitionLinks, errors } = this.definition.onDefinition(project, uri, position)
 
       this.handleError(errors)
@@ -80,6 +88,10 @@ export class LanguageFeature {
 
     for (const version of RimWorldVersionArray) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const res = this.reference.onReference(project, uri, position)
       result.push(...res)
 
@@ -97,6 +109,10 @@ export class LanguageFeature {
 
     for (const version of RimWorldVersionArray) {
       const project = this.projectManager.getProject(version)
+      if (!project) {
+        continue
+      }
+
       const res = this.rename.rename(project, uri, newName, position)
       edit.changes = _.merge(edit.changes, res)
     }

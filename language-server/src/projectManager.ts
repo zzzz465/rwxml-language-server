@@ -35,7 +35,7 @@ export class ProjectManager {
 
   public readonly events = new EventEmitter() as TypedEventEmitter<Events>
 
-  constructor(about: About) {
+  constructor(private readonly about: About) {
     about.event.on('aboutChanged', this.onAboutChanged.bind(this))
   }
 
@@ -65,7 +65,11 @@ export class ProjectManager {
     this.log.info(`supportedVersions deleted: ${jsonStr(deleted)}`)
   }
 
-  getProject(version: string): Project {
+  getProject(version: string): Project | null {
+    if (!this.about.supportedVersions.includes(version)) {
+      return null
+    }
+
     const c = this.getOrCreateContainer(version)
     return c.resolve(Project)
   }

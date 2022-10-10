@@ -29,6 +29,9 @@ export class ParsedTypeInfoRequestHandler implements Provider {
     version,
   }: ParsedTypeInfoRequest): Promise<ParsedTypeInfoRequestResponse | ResponseError<Error>> {
     const project = this.projectManager.getProject(version)
+    if (!project) {
+      return new ResponseError(1, `Project for version ${version} not found`)
+    }
 
     const [typeInfoMap, error] = await project.getTypeInfo()
     if (error) {
