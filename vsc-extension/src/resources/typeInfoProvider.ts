@@ -1,3 +1,7 @@
+import { spawnSync } from 'child_process'
+import { getFileProperties } from 'get-file-properties'
+import ono from 'ono'
+import { SemVer } from 'semver'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
@@ -33,12 +37,7 @@ export class TypeInfoProvider implements Provider {
     this.log.info('received TypeInfo request.')
 
     const CoreDLLPath = this.pathStore.RimWorldCoreDLLPath
-    const semverVersion = this.parseVersion(version)
-    if (!semverVersion) {
-      return ono(`invalid version: ${version}`)
-    }
-
-    const isCoreDLLVersionCorrect = await this.checkCoreDLLVersion(CoreDLLPath, semverVersion)
+    const isCoreDLLVersionCorrect = await this.checkCoreDLLVersion(CoreDLLPath, new SemVer(version))
     if (!isCoreDLLVersionCorrect) {
       return Error(
         `RWXML: Core DLL version mismatch. expected ${version}, got ${await this.getCoreDLLVersion(CoreDLLPath)}`
@@ -58,7 +57,7 @@ export class TypeInfoProvider implements Provider {
 
     this.requestCounter -= 1
     if (this.requestCounter < 0) {
-      throw Error()
+      throw Error() // panic? should never happen
     }
 
     if (this.requestCounter === 0) {
@@ -79,6 +78,7 @@ export class TypeInfoProvider implements Provider {
     const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
 
     const managedDirectory = this.pathStore.RimWorldManagedDirectory
+
     this.log.debug('managed directory: ', managedDirectory)
     dllPaths.push(managedDirectory)
 
@@ -88,9 +88,6 @@ export class TypeInfoProvider implements Provider {
 
   async checkCoreDLLVersion(DLLPath: string, version: SemVer): Promise<boolean> {
     this.log.debug('checking Core DLL version...')
-    if (version.compare(TypeInfoProvider.defaultVersion) === 0) {
-      return true
-    }
 
     const fileVersionOrErr = await this.getCoreDLLVersion(DLLPath)
     if (fileVersionOrErr instanceof Error) {
@@ -99,8 +96,6 @@ export class TypeInfoProvider implements Provider {
     }
 
     const fileVersion = new SemVer(fileVersionOrErr)
-
-    this.log.debug(`given version: ${version}, Core DLL version: ${fileVersion}`)
 
     return fileVersion.major === version.major && fileVersion.minor === version.minor
   }
@@ -115,18 +110,6 @@ export class TypeInfoProvider implements Provider {
 
       default:
         return Error(`Unsupported platform: ${process.platform}`)
-    }
-  }
-
-  private parseVersion(version: string): SemVer | null {
-    if (version === 'default') {
-      return TypeInfoProvider.defaultVersion
-    } else {
-      try {
-        return new SemVer(version, true)
-      } catch (err) {
-        return null
-      }
     }
   }
 

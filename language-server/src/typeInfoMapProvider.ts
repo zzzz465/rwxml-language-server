@@ -47,7 +47,8 @@ export class TypeInfoMapProvider {
 
   private async requestTypeInfos(uris: string[]): Promise<Partial<TypeInfo>[] | Error> {
     try {
-      return (await this.connection.sendRequest(TypeInfoRequest, { uris })).data as Partial<TypeInfo>[]
+      return (await this.connection.sendRequest(TypeInfoRequest, { uris, version: this.version }))
+        .data as Partial<TypeInfo>[]
     } catch (err) {
       // TODO: error handling
       return ono(err as any, 'failed to request typeInfo')

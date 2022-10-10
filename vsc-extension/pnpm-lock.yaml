@@ -23,6 +23,7 @@ specifiers:
   eslint-config-typescript: ^3.0.0
   fast-glob: ^3.2.7
   fast-safe-stringify: ^2.1.1
+  get-file-properties: ^1.0.1
   htmlparser2: ^7.0.0
   jest: ^26.3.0
   jest-raw-loader: ^1.0.1
@@ -61,6 +62,7 @@ dependencies:
   double-ended-queue: 2.1.0-0
   fast-glob: 3.2.7
   fast-safe-stringify: 2.1.1
+  get-file-properties: 1.0.1
   htmlparser2: 7.1.2
   js-yaml: 4.1.0
   linq-es2015: 2.5.1
@@ -2506,6 +2508,10 @@ packages:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
     dev: true
+
+  /get-file-properties/1.0.1:
+    resolution: {integrity: sha512-46xG/mXgpE1T0sCh/dg10t1DKecxyLyUUyy0UwYsFIoEX5yKFSIdnyY5FGC9uyF3pT7BgJ4hyurbmdxyXXd5cw==}
+    dev: false
 
   /get-package-type/0.1.0:
     resolution: {integrity: sha512-pjzuKtY64GYfWizNAJ0fr9VqttZkNiK2iS430LtIHzjBEr6bX8Am2zm4sW4Ro5wjWW5cAlRL1qAMTcXbjNAO2Q==}

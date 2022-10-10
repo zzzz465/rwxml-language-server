@@ -8,7 +8,6 @@ import * as os from 'os'
 import * as path from 'path'
 import * as semver from 'semver'
 import { inject, injectable } from 'tsyringe'
-import { v4 as uuid } from 'uuid'
 import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import winston from 'winston'
@@ -86,8 +85,8 @@ export class CachedTypeInfoProvider implements Provider {
   /**
    * @todo check cache confliction on write
    */
-  private async onTypeInfoRequest({ uris }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
-    const requestId = uuid()
+  private async onTypeInfoRequest({ uris, version }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
+    this.log.debug(`received type info request. version: ${version}`)
 
     uris.sort()
 
@@ -126,16 +125,16 @@ export class CachedTypeInfoProvider implements Provider {
     const cacheData = await checkCacheValid()
     let data = cacheData.data
     if (!cacheData.valid) {
-      this.log.debug('checksum invalid, updating cache.', { id: requestId })
+      this.log.debug('checksum invalid, updating cache.')
 
-      const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
+      const res = await this.typeInfoProvider.onTypeInfoRequest({ uris, version })
       if (res instanceof Error) {
         throw res
       }
 
       data = res.data
 
-      await this.updateCache(cachePath, uris, data, requestId)
+      await this.updateCache(cachePath, uris, data)
     } else {
       this.log.silly(`cache hit! uris: ${jsonStr(uris)}`)
     }
@@ -177,7 +176,7 @@ export class CachedTypeInfoProvider implements Provider {
     return [...files.map((uri) => vscode.Uri.parse(uri).fsPath).map(md5sum)]
   }
 
-  private async updateCache(cachePath: string, files: string[], data: any, requestId: string): Promise<void> {
+  private async updateCache(cachePath: string, files: string[], data: any): Promise<void> {
     try {
       const checksums = await this.getChecksums(files)
 
@@ -193,9 +192,9 @@ export class CachedTypeInfoProvider implements Provider {
       const raw = jsonStr(cache)
 
       await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
-      this.log.debug(`write cache to file: ${jsonStr(cachePath)}`, { id: requestId })
+      this.log.debug(`write cache to file: ${jsonStr(cachePath)}`)
     } catch (err) {
-      this.log.error(`failed to write cache to file: ${cachePath}, err: ${jsonStr(err)}`, { id: requestId })
+      this.log.error(`failed to write cache to file: ${cachePath}, err: ${jsonStr(err)}`)
     }
   }
 }
