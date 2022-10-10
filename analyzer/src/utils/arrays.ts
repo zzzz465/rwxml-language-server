@@ -4,11 +4,8 @@
  * @returns the least x for which p(x) is true or array.length if no element fullfills the given function.
  */
 export function sortedFindFirst<T>(array: T[], p: (x: T) => boolean): number {
-  let low = 0,
-    high = array.length
-  if (high === 0) {
-    return 0 // no children
-  }
+  let low = 0
+  let high = array.length
   while (low < high) {
     const mid = Math.floor((low + high) / 2)
     if (p(array[mid])) {
@@ -17,7 +14,11 @@ export function sortedFindFirst<T>(array: T[], p: (x: T) => boolean): number {
       low = mid + 1
     }
   }
-  return low
+  if (low === 0 && p(array[low])) {
+    return low
+  } else {
+    return low - 1
+  }
 }
 
 export function binarySearch<T>(array: T[], key: T, comparator: (op1: T, op2: T) => number): number {
