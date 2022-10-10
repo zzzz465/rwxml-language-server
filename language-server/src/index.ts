@@ -17,6 +17,10 @@ import { TextDocumentManager } from './textDocumentManager'
 
 install()
 
+process.on('uncaughtException', (err) => {
+  console.error(`uncaughtException: ${err}`)
+})
+
 const connection = ls.createConnection(ls.ProposedFeatures.all)
 container.register(ConnectionToken, { useValue: connection })
 

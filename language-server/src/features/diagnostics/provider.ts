@@ -103,7 +103,7 @@ export class DiagnosticsProvider implements Provider {
     for (const dig of diagnosticsArr) {
       if (dig.uri === document.uri) {
         this.connection?.sendDiagnostics({ uri: dig.uri, diagnostics: dig.diagnostics })
-        // this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
+        this.log.debug(`[${project.version}] send diagnostics to uri: ${dig.uri}, items: ${dig.diagnostics.length}`)
         // this.log.silly(`${jsonStr(dig.diagnostics)}`)
       } else {
         this.log.warn(
