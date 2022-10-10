@@ -1,10 +1,17 @@
 import * as vscode from 'vscode'
+import * as winston from 'winston'
+import { className, log, logFormat } from '../log'
 import { RimWorldVersion } from './version'
 
 export type ProgressParams = vscode.Progress<{ message?: string; increment?: number }>
 
 export class ProgressHelper {
-  public static async create(version: RimWorldVersion) {
+  private log = winston.createLogger({
+    format: winston.format.combine(className(ProgressHelper), logFormat),
+    transports: [log],
+  })
+
+  public static async create(version: RimWorldVersion): Promise<ProgressHelper> {
     const p = new ProgressHelper(version)
     p.disposedPromise = new Promise((res) => {
       const interval = setInterval(() => {
@@ -35,7 +42,7 @@ export class ProgressHelper {
   private disposed = false
   public disposedPromise!: Promise<void>
 
-  get token() {
+  get token(): vscode.CancellationToken {
     if (this.disposed) {
       throw new Error()
     }
@@ -50,11 +57,11 @@ export class ProgressHelper {
 
   constructor(public readonly version: RimWorldVersion) {}
 
-  report(message: string, increment?: number) {
+  report(message: string, increment?: number): void {
     this.progress.report({ message, increment })
   }
 
-  cancel() {
+  cancel(): void {
     if (this.cancellationTokenSource) {
       this.cancellationTokenSource.cancel()
       this.cancellationTokenSource.dispose()
@@ -62,7 +69,7 @@ export class ProgressHelper {
     }
   }
 
-  dispose() {
+  dispose(): void {
     if (!this.disposed) {
       this.cancellationTokenSource?.dispose()
       this.cancellationTokenSource = undefined

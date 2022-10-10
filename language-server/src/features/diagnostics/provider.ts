@@ -118,7 +118,11 @@ export class DiagnosticsProvider implements Provider {
     this.connection?.sendDiagnostics({ uri, diagnostics: [] })
   }
 
-  private diagnoseDocument(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]) {
+  private diagnoseDocument(
+    project: Project,
+    document: Document,
+    dirtyNodes: (Def | Injectable)[]
+  ): { uri: string; diagnostics: ls.Diagnostic[] }[] {
     return AsEnumerable(this.contributors)
       .Select((contributor) => contributor.getDiagnostics(project, document, dirtyNodes))
       .GroupBy((x) => x.uri)
@@ -136,11 +140,11 @@ export class DiagnosticsProvider implements Provider {
     return value !== false
   }
 
-  private async onConfigurationChanged() {
+  private async onConfigurationChanged(): Promise<void> {
     await this.diagnoseWorkspace()
   }
 
-  private async diagnoseWorkspace() {
+  private async diagnoseWorkspace(): Promise<void> {
     if (await this.enabled()) {
       this.diagnoseAllDocuments()
     } else {

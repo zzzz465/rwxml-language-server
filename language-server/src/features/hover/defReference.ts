@@ -38,7 +38,12 @@ export class DefReferenceHover {
       return null
     }
 
-    const defs = this.defProvider.findDefinitions(project, uri, offset)
+    const node = project.getXMLDocumentByUri(uri)
+    if (!node) {
+      return null
+    }
+
+    const defs = this.defProvider.findDefinitions(project.defManager, node, offset)
     const def = AsEnumerable(defs).FirstOrDefault()
 
     if (!def) {
@@ -62,7 +67,7 @@ export class DefReferenceHover {
     return { contents }
   }
 
-  private getPackageId(uri: string) {
+  private getPackageId(uri: string): string {
     const file = this.fileStore.get(uri)
 
     if (file && DependencyFile.is(file)) {

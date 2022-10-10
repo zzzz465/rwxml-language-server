@@ -70,26 +70,26 @@ export class ProjectManager {
     return c.resolve(Project)
   }
 
-  private onAboutChanged(about: About) {
+  private onAboutChanged(about: About): void {
     if (!_.isEqual(this.supportedVersions, about.supportedVersions)) {
       this.setSupportedVersions(about.supportedVersions)
       this.supportedVersions = about.supportedVersions
     }
   }
 
-  private onProjectFileAdded(file: File) {
+  private onProjectFileAdded(file: File): void {
     for (const proj of this.projects) {
       proj.resourceStore.fileAdded(file)
     }
   }
 
-  private onProjectFileChanged(file: File) {
+  private onProjectFileChanged(file: File): void {
     for (const proj of this.projects) {
       proj.resourceStore.fileChanged(file.uri.toString())
     }
   }
 
-  private onProjectFileDeleted(uri: string) {
+  private onProjectFileDeleted(uri: string): void {
     for (const proj of this.projects) {
       proj.resourceStore.fileDeleted(uri)
     }

@@ -8,7 +8,7 @@ import {
   Injectable,
   Node,
   NodeWithChildren,
-  Text
+  Text,
 } from '@rwxml/analyzer'
 import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
@@ -127,25 +127,29 @@ export function makeTagNode(tag: string): string {
   return `<${tag}></${tag}>`
 }
 
-export function toLocation(converter: RangeConverter, node: Element | Text) {
+export function toLocation(converter: RangeConverter, node: Element | Text): lsp.Range | null {
   const range = converter.toLanguageServerRange(node.nodeRange, node.document.uri)
   return range
 }
 
-export function getNodeAndOffset(project: Project, uri: URI, position: lsp.Position) {
+export function getNodeAndOffset(
+  project: Project,
+  uri: URI,
+  position: lsp.Position
+): { offset: number; document: Document; node: Node } | null {
   const rangeConverter = container.resolve(RangeConverter)
 
   const offset = rangeConverter.toOffset(position, uri.toString())
   const document = project.getXMLDocumentByUri(uri)
 
   if (!offset || !document) {
-    return
+    return null
   }
 
   const node = document?.findNodeAt(offset)
 
   if (!node) {
-    return
+    return null
   }
 
   return { offset, document, node }

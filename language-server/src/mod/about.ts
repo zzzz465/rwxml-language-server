@@ -50,32 +50,32 @@ export class About {
   private _modDependencies: Dependency[] = []
   private _loadAfter: string[] = [] // contains packageId of other mods
 
-  get name() {
+  get name(): string {
     return this._name
   }
-  get author() {
+  get author(): string {
     return this._author
   }
-  get packageId() {
+  get packageId(): string {
     return this._packageId
   }
-  get supportedVersions() {
+  get supportedVersions(): string[] {
     return [...this._supportedVersions]
   }
-  get description() {
+  get description(): string {
     return this._description
   }
-  get modDependencies() {
+  get modDependencies(): Dependency[] {
     return this._modDependencies
   }
-  get loadAfter() {
+  get loadAfter(): string[] {
     return this._loadAfter
   }
-  get rawXML() {
+  get rawXML(): string {
     return this._rawXML
   }
 
-  updateAboutXML(text: string) {
+  updateAboutXML(text: string): void {
     this.log.silly('About.xml changed.')
 
     this._rawXML = text
@@ -92,7 +92,15 @@ export class About {
     this.event.emit('aboutChanged', this)
   }
 
-  private parseNewXML() {
+  private parseNewXML(): {
+    name: string
+    author: string
+    packageId: string
+    description: string
+    loadAfter: string[]
+    supportedVersions: string[]
+    modDependencies: Dependency[]
+  } {
     const $ = xml.parse(this.rawXML)
 
     const name = $('ModMetaData > name').text()
@@ -136,14 +144,14 @@ export class About {
     }
   }
 
-  listen(event: TypedEventEmitter<NotificationEvents>) {
+  listen(event: TypedEventEmitter<NotificationEvents>): void {
     event.on('fileAdded', this.onFileChanged.bind(this))
     event.on('fileChanged', this.onFileChanged.bind(this))
     // TODO: implement handler for 'fileDeleted'
     // event.on('fileDeleted')
   }
 
-  private async onFileChanged(file: File) {
+  private async onFileChanged(file: File): Promise<void> {
     if (isAboutFile(file)) {
       this.log.info('about file changed.')
 
@@ -155,6 +163,11 @@ export class About {
       }
 
       const text = await file.read()
+      if (text instanceof Error) {
+        this.log.error(`failed to read about.xml. error: ${text}`)
+        return
+      }
+
       this.updateAboutXML(text)
     }
   }

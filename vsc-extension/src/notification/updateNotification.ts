@@ -2,6 +2,7 @@ import * as semver from 'semver'
 import { inject, singleton } from 'tsyringe'
 import * as vscode from 'vscode'
 import { ExtensionContextToken } from '../extension'
+import { log } from '../log'
 import { ExtensionVersionToken } from '../version'
 
 @singleton()
@@ -13,7 +14,7 @@ export class UpdateNotification {
     @inject(ExtensionVersionToken) private readonly version: string
   ) {}
 
-  async checkFirstRunThisVersion() {
+  async checkFirstRunThisVersion(): Promise<void> {
     if (this.isFirstRunThisVersion()) {
       await this.notifyExtensionUpdated()
     }
@@ -21,10 +22,11 @@ export class UpdateNotification {
     this.storeCurrentVersion()
   }
 
-  async notifyExtensionUpdated() {
+  async notifyExtensionUpdated(): Promise<void> {
     const currVersion = this.getCurrentVersion()
     const storedVersion = this.getStoredVersion()
-    const response = await vscode.window.showInformationMessage(
+
+    await vscode.window.showInformationMessage(
       `RWXML Langauge Server: Updated to v${currVersion.format()} from ${storedVersion.format()}`,
       'OK'
     )
@@ -32,14 +34,14 @@ export class UpdateNotification {
     // TODO: open webpage to release page
   }
 
-  isFirstRunThisVersion() {
+  isFirstRunThisVersion(): boolean {
     const currVersion = this.getCurrentVersion()
     const lastCheckedVersion = this.getStoredVersion()
 
     return currVersion.compare(lastCheckedVersion) !== 0
   }
 
-  getDefaultVersion() {
+  getDefaultVersion(): semver.SemVer {
     const defaultVersion = semver.parse('v0.0.0', true)
     if (!defaultVersion) {
       throw new Error(
@@ -50,12 +52,12 @@ export class UpdateNotification {
     return defaultVersion
   }
 
-  getCurrentVersion() {
+  getCurrentVersion(): semver.SemVer {
     const defaultVersion = this.getDefaultVersion()
     return semver.parse(this.version, true) ?? defaultVersion
   }
 
-  getStoredVersion() {
+  getStoredVersion(): semver.SemVer {
     const defaultVersion = this.getDefaultVersion()
 
     const lastCheckedVersionStr = this.extensionContext.globalState.get<string | null>(
@@ -69,10 +71,11 @@ export class UpdateNotification {
     return semver.parse(lastCheckedVersionStr, true) ?? defaultVersion
   }
 
-  storeCurrentVersion() {
+  storeCurrentVersion(): void {
     const value = semver.parse(this.version, true)
     if (value === null) {
-      console.error(`cannot parse ${value} as semver`)
+      log.error(`cannot parse ${value} as semver`)
+
       return
     }
 

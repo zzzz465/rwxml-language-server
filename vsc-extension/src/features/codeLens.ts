@@ -1,6 +1,6 @@
 import { commands, Disposable, Position, Uri } from 'vscode'
 
-const getCmd = (type: string) => `rwxml-language-server:CodeLens:${type}`
+const getCmd = (type: string): string => `rwxml-language-server:CodeLens:${type}`
 
 export function registerFeature(): Disposable[] {
   // cannot call editor.action.showReferences directly because plain JSON is sended on grpc instead of object.
@@ -10,7 +10,7 @@ export function registerFeature(): Disposable[] {
   ]
 }
 
-async function callbackDefReference(uriStr: string, position: Position) {
+async function callbackDefReference(uriStr: string, position: Position): Promise<void> {
   const uri = Uri.parse(uriStr)
   position = new Position(position.line, position.character)
 
@@ -20,7 +20,7 @@ async function callbackDefReference(uriStr: string, position: Position) {
   }
 }
 
-async function callbackNameReference(uriStr: string, position: Position) {
+async function callbackNameReference(uriStr: string, position: Position): Promise<void> {
   const uri = Uri.parse(uriStr)
   position = new Position(position.line, position.character)
 

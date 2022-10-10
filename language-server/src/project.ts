@@ -3,7 +3,6 @@ import { EventEmitter } from 'events'
 import { either } from 'fp-ts'
 import _ from 'lodash'
 import * as ono from 'ono'
-import { serializeError } from 'serialize-error'
 import { inject, Lifecycle, scoped } from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
 import { v4 as uuid } from 'uuid'
@@ -54,7 +53,7 @@ export class Project {
   private cancelTokenSource = new CancellationTokenSource()
 
   private _state: 'ready' | 'reloading' | 'invalid' = 'invalid'
-  get state() {
+  get state(): 'ready' | 'reloading' | 'invalid' {
     return this._state
   }
 
@@ -172,7 +171,7 @@ export class Project {
     }
 
     if (err0) {
-      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(serializeError(err0))}`)
+      return ono.ono(`[${requestId}] failed fetching typeInfoMap. error: ${jsonStr(err0)}`)
     }
 
     this.xmls = new Map()
@@ -181,14 +180,14 @@ export class Project {
     return null
   }
 
-  async getTypeInfo(requestId: string = uuid()) {
+  async getTypeInfo(requestId: string = uuid()): Promise<[TypeInfoMap, Error | null]> {
     return this.typeInfoMapProvider.get(requestId)
   }
 
   /**
    * evaluteProject performs parsing on all document on resourceStore
    */
-  private evaluteProject() {
+  private evaluteProject(): void {
     for (const [uri, raw] of this.resourceStore.xmls) {
       this.parseXML(uri, raw)
     }
@@ -216,7 +215,7 @@ export class Project {
    * @param uri uri of the file of the xml
    * @param raw xml string, must be parsable
    */
-  private parseXML(uri: string, raw: string) {
+  private parseXML(uri: string, raw: string): void {
     const document = documentWithNodeMap.create(parse(raw, uri))
 
     this.xmls.set(uri, document)

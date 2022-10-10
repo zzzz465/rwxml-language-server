@@ -21,7 +21,7 @@ export class ResourcePath implements CodeCompletionContributor {
 
   getCompletion(project: Project, node: Node, offset: number): CompletionList | null {
     let tagNode: Injectable
-    let editRange: Range | undefined
+    let editRange: Range | null
     let text: string
 
     if (!isPointingContentOfNode(node, offset)) {

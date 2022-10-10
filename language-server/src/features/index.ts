@@ -36,14 +36,14 @@ export class LanguageFeature {
     private readonly rename: Rename
   ) {}
 
-  listen(connection: lsp.Connection) {
+  listen(connection: lsp.Connection): void {
     connection.onDefinition(this.wrapExceptionStackTraces(this.onDefinition.bind(this)))
     connection.onCompletion(this.wrapExceptionStackTraces(this.onCompletion.bind(this)))
     connection.onReferences(this.wrapExceptionStackTraces(this.onReference.bind(this)))
     connection.onRenameRequest(this.wrapExceptionStackTraces(this.onRenameRequest.bind(this)))
   }
 
-  private async onCompletion({ position, textDocument }: lsp.CompletionParams) {
+  private async onCompletion({ position, textDocument }: lsp.CompletionParams): Promise<lsp.CompletionList> {
     const uri = URI.parse(textDocument.uri)
     const versions = this.loadFolder.isBelongsTo(uri)
     const result: lsp.CompletionList = { isIncomplete: true, items: [] }
@@ -58,7 +58,7 @@ export class LanguageFeature {
     return result
   }
 
-  private async onDefinition({ position, textDocument }: lsp.DefinitionParams) {
+  private async onDefinition({ position, textDocument }: lsp.DefinitionParams): Promise<lsp.LocationLink[]> {
     const uri = URI.parse(textDocument.uri)
     const versions = this.loadFolder.isBelongsTo(uri)
     const result: lsp.LocationLink[] = []
@@ -74,7 +74,7 @@ export class LanguageFeature {
     return result
   }
 
-  private async onReference({ position, textDocument }: lsp.ReferenceParams) {
+  private async onReference({ position, textDocument }: lsp.ReferenceParams): Promise<lsp.Location[]> {
     const uri = URI.parse(textDocument.uri)
     const result: lsp.Location[] = []
 
@@ -104,7 +104,7 @@ export class LanguageFeature {
     return edit
   }
 
-  private handleError(errors: any[], message?: string) {
+  private handleError(errors: any[], message?: string): void {
     if (errors.length > 0) {
       if (message) {
         this.log.error(message)

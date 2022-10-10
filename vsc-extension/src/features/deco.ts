@@ -8,7 +8,7 @@ import { rangeJSONToRange } from '../utils/range'
 
 let timeout: NodeJS.Timeout | undefined = undefined
 
-function triggerDecoration() {
+function triggerDecoration(): void {
   const client = container.resolve(ls.LanguageClient)
   const uri = window.activeTextEditor?.document.uri.toString()
   if (uri) {
@@ -20,7 +20,7 @@ export function registerDecoHook(): Disposable[] {
   const disposables: Disposable[] = [
     new (class implements Disposable {
       timer = setInterval(triggerDecoration, 300)
-      dispose() {
+      dispose(): void {
         clearInterval(this.timer)
       }
     })(),
@@ -31,7 +31,7 @@ export function registerDecoHook(): Disposable[] {
   return disposables
 }
 
-export function updateDecoration(client: ls.LanguageClient, uri: string, timeout_ms = 250) {
+export function updateDecoration(client: ls.LanguageClient, uri: string, timeout_ms = 250): void {
   if (timeout === undefined) {
     timeout = setTimeout(async () => {
       await _updateDecoration(client, uri)
@@ -40,16 +40,10 @@ export function updateDecoration(client: ls.LanguageClient, uri: string, timeout
   }
 }
 
-async function _updateDecoration(client: ls.LanguageClient, uri: string) {
-  try {
-    const response = await client.sendRequest(DocumentTokenRequest, { uri })
-
-    // still watching same response
-    if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
-      applyDecos(response.tokens)
-    }
-  } catch (err) {
-    console.warn('warn: deco request throw error: ', err)
+async function _updateDecoration(client: ls.LanguageClient, uri: string): Promise<void> {
+  const response = await client.sendRequest(DocumentTokenRequest, { uri })
+  if (uri === vscode.window.activeTextEditor?.document.uri.toString()) {
+    applyDecos(response.tokens)
   }
 }
 

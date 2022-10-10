@@ -13,7 +13,7 @@ import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import winston from 'winston'
 import { TypeInfoRequest, TypeInfoRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import { md5sum } from '../utils/hash'
 import jsonStr from '../utils/json'
 import { PathStore } from './pathStore'
@@ -35,7 +35,7 @@ interface Cache {
 export class CachedTypeInfoProvider implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(CachedTypeInfoProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   private static readonly extractorVersion = new semver.SemVer('0.7.0')
@@ -54,7 +54,7 @@ export class CachedTypeInfoProvider implements Provider {
     vscode.commands.registerCommand('rwxml:cache:openDir', this.openCacheDir.bind(this))
   }
 
-  private openCacheDir() {
+  private openCacheDir(): void {
     const platform = os.platform()
     switch (platform) {
       case 'win32':
@@ -70,7 +70,7 @@ export class CachedTypeInfoProvider implements Provider {
     }
   }
 
-  private async clearCache() {
+  private async clearCache(): Promise<void> {
     const caches = await fs.readdir(this.dllCacheDirectory)
     this.log.debug(`deleting ${caches.length} caches: ${jsonStr(caches)}`)
     await Promise.all(caches.map((c) => fs.rm(path.join(this.dllCacheDirectory, c))))
@@ -99,7 +99,7 @@ export class CachedTypeInfoProvider implements Provider {
     this.log.debug(`received typeInfo request. uris count: ${uris.length}`)
     this.log.silly(`uris: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
 
-    const checkCacheValid = async () => {
+    const checkCacheValid = async (): Promise<{ valid: boolean; data: any }> => {
       // https://nodejs.org/api/fs.html#file-system-flags
       let file: fs.FileHandle | null = null
 
@@ -112,7 +112,7 @@ export class CachedTypeInfoProvider implements Provider {
           data: cache.data,
         }
       } catch (e) {
-        this.log.error(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
+        this.log.warn(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
       } finally {
         await file?.close()
       }
@@ -129,8 +129,8 @@ export class CachedTypeInfoProvider implements Provider {
       this.log.debug('checksum invalid, updating cache.', { id: requestId })
 
       const res = await this.typeInfoProvider.onTypeInfoRequest({ uris })
-      if (res.error) {
-        return res
+      if (res instanceof Error) {
+        throw res
       }
 
       data = res.data
@@ -177,7 +177,7 @@ export class CachedTypeInfoProvider implements Provider {
     return [...files.map((uri) => vscode.Uri.parse(uri).fsPath).map(md5sum)]
   }
 
-  private async updateCache(cachePath: string, files: string[], data: any, requestId: string) {
+  private async updateCache(cachePath: string, files: string[], data: any, requestId: string): Promise<void> {
     try {
       const checksums = await this.getChecksums(files)
 

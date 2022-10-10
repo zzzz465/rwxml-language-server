@@ -46,11 +46,11 @@ export class TextDocumentsAdapter {
     }
   }
 
-  private onContentChanged(e: TextDocumentChangeEvent<TextDocument>) {
+  private onContentChanged(e: TextDocumentChangeEvent<TextDocument>): void {
     this.event.emit('textDocumentChanged', e.document)
   }
 
-  private async onDidClose(e: TextDocumentChangeEvent<TextDocument>) {
+  private onDidClose(e: TextDocumentChangeEvent<TextDocument>): void {
     const err = this.fileStore.unload(e.document.uri.toString())
     if (err) {
       this.log.error(err)

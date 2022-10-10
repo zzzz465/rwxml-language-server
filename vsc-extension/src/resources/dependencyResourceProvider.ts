@@ -1,10 +1,9 @@
-import { serializeError } from 'serialize-error'
 import { injectable } from 'tsyringe'
 import * as vscode from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient, ResponseError } from 'vscode-languageclient'
 import winston from 'winston'
 import { DependencyRequest, DependencyRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import { ModManager } from '../mod/modManager'
 import { globPattern } from '../projectWatcher'
 import jsonStr from '../utils/json'
@@ -14,7 +13,7 @@ import { Provider } from './provider'
 export class DependencyResourceProvider implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(DependencyResourceProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   constructor(private readonly modManager: ModManager) {}
@@ -24,18 +23,18 @@ export class DependencyResourceProvider implements Provider {
     client.onRequest(DependencyRequest, this.onDependencyRequest.bind(this))
   }
 
-  private async onDependencyRequest({ packageId, version }: DependencyRequest): Promise<DependencyRequestResponse> {
+  private async onDependencyRequest({
+    packageId,
+    version,
+  }: DependencyRequest): Promise<DependencyRequestResponse | ResponseError<Error>> {
     this.log.debug(`received dependency request for packageId: ${packageId}, version: ${version}`)
+    if (!packageId) {
+      return new ResponseError(1, 'packageId is required')
+    }
 
-    // if pacakgeId "" is UB.
     const mod = this.modManager.getMod(packageId)
-    if (!packageId || !mod) {
-      return {
-        packageId,
-        version,
-        uris: [],
-        error: serializeError(new Error(`mod for ${packageId} does not exists`)) as Error,
-      }
+    if (!mod) {
+      return new ResponseError(2, `mod not found: ${packageId}`)
     }
 
     const resources = (await mod.loadFolder.getProjectWorkspace(version)?.getResources(globPattern)) ?? []

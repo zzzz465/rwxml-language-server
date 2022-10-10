@@ -3,7 +3,7 @@ import path from 'path'
 import { inject, singleton } from 'tsyringe'
 import vscode, { FileType, Uri } from 'vscode'
 import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, log, logFormat } from '../log'
 import { ProjectWatcher } from '../projectWatcher'
 import jsonStr from '../utils/json'
 import { Mod } from './mod'
@@ -13,16 +13,16 @@ import { PathStore } from './pathStore'
 export class ModManager {
   private log = winston.createLogger({
     format: winston.format.combine(className(ProjectWatcher), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   private readonly _mods: Map<string, Mod> = new Map()
-  get mods() {
+  get mods(): Mod[] {
     return [...this._mods.values()]
   }
 
   private _initialized = false
-  get initialized() {
+  get initialized(): boolean {
     return this._initialized
   }
 
@@ -34,7 +34,7 @@ export class ModManager {
     this.log.debug(`ModManager watching directories: ${jsonStr(this.directoryUris.map((data) => data.fsPath))}`)
   }
 
-  async init() {
+  async init(): Promise<void> {
     if (this.initialized) {
       throw new Error('DependencyManager is already initialized.')
     }
@@ -76,7 +76,7 @@ export class ModManager {
   }
 }
 
-async function loadModFromDirectroy(directory: Uri) {
+async function loadModFromDirectroy(directory: Uri): Promise<{ mods: Mod[]; errors: Error[] }> {
   const dirs = await vscode.workspace.fs.readDirectory(directory)
 
   const modsPromise = AsEnumerable(dirs)

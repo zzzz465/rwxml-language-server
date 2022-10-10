@@ -1,16 +1,10 @@
-﻿using CommandLine;
-using log4net.Appender;
+using CommandLine;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using System.Net.Sockets;
-using System.Net;
-using System.Reflection;
 
 namespace extractor
 {
@@ -57,47 +51,56 @@ namespace extractor
             int exitCode = 1;
             commandline.WithParsed(option =>
             {
-                if (option.outputMode != OutputMode.stdout || option.outputMode != OutputMode.stdoutBytes)
+                try
                 {
-                    Log.SetStdOutput();
+
+                    if (option.outputMode != OutputMode.stdout || option.outputMode != OutputMode.stdoutBytes)
+                    {
+                        Log.SetStdOutput();
+                    }
+                    // if (option.logOutputPath != null)
+                    // {
+                    // 	Log.SetOutput(option.logOutputPath);
+                    // }
+
+                    port = option.port;
+
+                    Log.Info("Extracting data from");
+                    foreach (var file in option.targetFiles)
+                    {
+                        Log.Info(file);
+                    }
+                    var assemblies = AssemblyLoader.Load(option.targetFiles);
+                    Log.Info("extracting data...");
+                    var parseResult = Extractor.parse(assemblies);
+                    Log.Info($"Completed extracting data, data count: {parseResult.Count}");
+
+                    var result = new Dictionary<string, RawTypeInfo>();
+                    foreach (var pair in parseResult)
+                    {
+                        var typeInfo = pair.Value;
+                        if (result.ContainsKey(typeInfo.fullName))
+                            continue;
+                        result.Add(typeInfo.fullName, typeInfo);
+                    }
+
+                    var serializerSetting = new JsonSerializerSettings();
+                    serializerSetting.Formatting = option.formatted ? Formatting.Indented : Formatting.None;
+                    serializerSetting.NullValueHandling = NullValueHandling.Ignore;
+                    serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
+
+                    var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
+                    Log.Info($"serialized Object string length: {serializedObject.Length}");
+
+                    SendSerializedData(option.outputMode, serializedObject);
+                    Log.Info("Extraction completed!");
+                    exitCode = 0;
                 }
-                // if (option.logOutputPath != null)
-                // {
-                // 	Log.SetOutput(option.logOutputPath);
-                // }
-
-                port = option.port;
-
-                Log.Info("Extracting data from");
-                foreach (var file in option.targetFiles)
+                catch (Exception ex)
                 {
-                    Log.Info(file);
+                    Log.Error(ex.ToString());
+                    exitCode = 1;
                 }
-                var assemblies = AssemblyLoader.Load(option.targetFiles);
-                Log.Info("extracting data...");
-                var parseResult = Extractor.parse(assemblies);
-                Log.Info($"Completed extracting data, data count: {parseResult.Count}");
-
-                var result = new Dictionary<string, RawTypeInfo>();
-                foreach (var pair in parseResult)
-                {
-                    var typeInfo = pair.Value;
-                    if (result.ContainsKey(typeInfo.fullName))
-                        continue;
-                    result.Add(typeInfo.fullName, typeInfo);
-                }
-
-                var serializerSetting = new JsonSerializerSettings();
-                serializerSetting.Formatting = option.formatted ? Formatting.Indented : Formatting.None;
-                serializerSetting.NullValueHandling = NullValueHandling.Ignore;
-                serializerSetting.DefaultValueHandling = DefaultValueHandling.Ignore;
-
-                var serializedObject = JsonConvert.SerializeObject(result.Select(d => d.Value), serializerSetting);
-                Log.Info($"serialized Object string length: {serializedObject.Length}");
-
-                SendSerializedData(option.outputMode, serializedObject);
-                Log.Info("Extraction completed!");
-                exitCode = 0;
             });
 
             return exitCode;

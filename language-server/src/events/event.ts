@@ -28,7 +28,6 @@ export interface TextRequest {
 
 export interface TextRequestResponse {
   data: string
-  error?: Error
 }
 
 export interface TypeInfoRequest {
@@ -37,7 +36,6 @@ export interface TypeInfoRequest {
 
 export interface TypeInfoRequestResponse {
   data?: unknown[]
-  error?: Error
 }
 
 export interface DependencyRequest {
@@ -49,7 +47,6 @@ export interface DependencyRequestResponse {
   packageId: string
   version: string
   uris: string[]
-  error?: Error
 }
 
 export interface ResourceExistsRequest {
@@ -59,7 +56,6 @@ export interface ResourceExistsRequest {
 export interface ResourceExistsRequestResponse {
   uri: string
   exists: boolean
-  error?: Error
 }
 
 export interface DocumentTokenRequest {
@@ -81,7 +77,6 @@ export interface ParsedTypeInfoRequest {
 export interface ParsedTypeInfoRequestResponse {
   version: string
   data: any
-  error?: Error
 }
 
 /**
@@ -94,7 +89,6 @@ export interface DefListRequest {
 export interface DefListRequestResponse {
   version: string
   data: any
-  error?: Error
 }
 
 export const ProjectFileAdded = new ls.NotificationType<ProjectFileAddedNotificationParams>(

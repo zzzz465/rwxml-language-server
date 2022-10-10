@@ -1,9 +1,10 @@
+import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { ParsedTypeInfoRequest } from '../events'
 
-export function registerFeature() {
+export function registerFeature(): vscode.Disposable {
   // TODO: refactor this code
   const instance = tsyringe.container.resolve(DisplayTypeInfo)
   return vscode.commands.registerCommand('rwxml:debug:displayTypeInfo', instance.callback.bind(instance))
@@ -13,19 +14,21 @@ export function registerFeature() {
 class DisplayTypeInfo {
   constructor(private readonly client: LanguageClient) {}
 
-  async callback() {
+  async callback(): Promise<void> {
     const version = await this.askProjectVersion()
     if (!version) {
-      return vscode.window.showInformationMessage('user canceled the task.')
+      vscode.window.showInformationMessage('user canceled the task.')
+      return
     }
 
-    try {
-      const content = await this.requestParsedTypeInfo(version)
-      const doc = await vscode.workspace.openTextDocument({ language: 'json', content })
-      await vscode.window.showTextDocument(doc)
-    } catch (err) {
-      vscode.window.showErrorMessage(`requestParsedTypeInfo failed ${String(err)}`)
+    const content = await this.requestParsedTypeInfo(version)
+    if (content instanceof Error) {
+      vscode.window.showErrorMessage(`requestParsedTypeInfo failed. ${ono(content)}`)
+      return
     }
+
+    const doc = await vscode.workspace.openTextDocument({ language: 'json', content })
+    await vscode.window.showTextDocument(doc)
   }
 
   private async askProjectVersion(): Promise<string> {
@@ -49,12 +52,15 @@ class DisplayTypeInfo {
     return value
   }
 
-  private async requestParsedTypeInfo(version: string): Promise<string> {
-    const res = await this.client.sendRequest(ParsedTypeInfoRequest, { version }, undefined)
-    if (res.error) {
-      throw new Error(String(res.error))
-    }
+  // request typeInfo from client side to server side
+  private async requestParsedTypeInfo(version: string): Promise<string | Error> {
+    try {
+      const res = await this.client.sendRequest(ParsedTypeInfoRequest, { version }, undefined)
 
-    return JSON.stringify(res.data, null, 4)
+      return JSON.stringify(res.data, null, 4)
+    } catch (err) {
+      // TODO: handle error
+      return ono(err as any, 'requestParsedTypeInfo failed')
+    }
   }
 }

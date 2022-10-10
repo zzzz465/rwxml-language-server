@@ -1,3 +1,4 @@
+import ono from 'ono'
 import { inject, injectable } from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
@@ -15,18 +16,14 @@ export class TextReader {
 
   constructor(@inject(ConnectionToken) private readonly connection: Connection) {}
 
-  async read(file: File): Promise<string> {
+  async read(file: File): Promise<string | Error> {
     this.log.silly(`read file: ${file.uri.toString()}`)
 
-    const { data, error } = await this.connection.sendRequest(TextRequest, {
-      uri: file.uri.toString(),
-    })
-
-    if (error) {
-      this.log.error(`request failed, error: ${error}`)
-      throw error
+    try {
+      const { data } = await this.connection.sendRequest(TextRequest, { uri: file.uri.toString() })
+      return data
+    } catch (err) {
+      return ono(err as any, `failed to read file: ${file.uri.toString()}`)
     }
-
-    return data
   }
 }

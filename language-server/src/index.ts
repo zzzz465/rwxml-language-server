@@ -7,7 +7,7 @@ import { ConnectionToken } from './connection'
 import * as features from './features'
 import { FileStore } from './fileStore'
 import { InitRegistry } from './initRegistry'
-import defaultLogger, { DefaultLogToken, LogManager } from './log'
+import defaultLogger, { LogManager } from './log'
 import { About } from './mod'
 import { LoadFolder } from './mod/loadfolders'
 import { ModManager } from './mod/modManager'
@@ -28,8 +28,6 @@ connection.onInitialize(async (params: ls.InitializeParams) => {
 
   const logManager = container.resolve(LogManager)
   await logManager.init(logLevel)
-
-  container.register(DefaultLogToken, { useValue: logManager.defaultLogger })
 
   const log = defaultLogger()
 

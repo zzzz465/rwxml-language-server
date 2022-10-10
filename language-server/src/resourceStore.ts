@@ -204,7 +204,7 @@ export class ResourceStore {
   /**
    * compare project files against fileStore, and add/delete files
    */
-  reload(reason?: string) {
+  reload(reason?: string): void {
     this.log.debug(`reload resourceStore. reason: ${reason}`)
     for (const [uri, file] of this.fileStore) {
       if (this.isProjectResource(uri) && !this.files.has(uri)) {
@@ -219,11 +219,11 @@ export class ResourceStore {
     }
   }
 
-  private async onXMLFileAdded(file: XMLFile) {
+  private async onXMLFileAdded(file: XMLFile): Promise<void> {
     await this.onXMLFileChanged(file)
   }
 
-  private async onXMLFileChanged(file: XMLFile) {
+  private async onXMLFileChanged(file: XMLFile): Promise<void> {
     const uri = file.uri.toString()
     const res = await this.textDocumentManager.getText(uri)
     if (either.isLeft(res)) {
@@ -236,7 +236,7 @@ export class ResourceStore {
     this.event.emit('xmlChanged', uri)
   }
 
-  private onXMLFileDeleted(uri: string) {
+  private onXMLFileDeleted(uri: string): void {
     if (!this.xmls.delete(uri)) {
       this.log.error(`trying to delete xml ${uri} but not exists.`)
     }
@@ -259,7 +259,7 @@ export class ResourceStore {
     this.textures.add(resourcePath)
   }
 
-  private onTextureFileChanged(file: TextureFile) {
+  private onTextureFileChanged(file: TextureFile): void {
     // just do nothing.
     // const resourcePath = this.loadFolder.getProjectWorkspace(this.version)?.getResourcePath(file.uri) // .getResourcePath(file.uri, this.version)
     // if (!resourcePath) {
@@ -267,7 +267,7 @@ export class ResourceStore {
     // }
   }
 
-  private onTextureFileDeleted(uri: string) {
+  private onTextureFileDeleted(uri: string): void {
     const resourcePath = this.loadFolder.getProjectWorkspace(this.version)?.getResourcePath(URI.parse(uri))
     if (!resourcePath) {
       this.log.error(`texture deleted but not exists. uri: ${uri}`)
@@ -277,7 +277,7 @@ export class ResourceStore {
     this.textures.delete(resourcePath)
   }
 
-  private onAudioFileAdded(file: AudioFile) {
+  private onAudioFileAdded(file: AudioFile): void {
     const resourcePath = this.loadFolder.getProjectWorkspace(this.version)?.getResourcePath(file.uri) // .getResourcePath(file.uri, this.version)
     if (!resourcePath) {
       this.log.error(`audio registered but not exists. uri: ${file.uri.toString()}`)
@@ -289,7 +289,7 @@ export class ResourceStore {
     this.audioDirectories.add(resourceDir)
   }
 
-  private onAudioFileChanged(file: AudioFile) {
+  private onAudioFileChanged(file: AudioFile): void {
     // do nothing.
     // const resourcePath = this.loadFolder.getProjectWorkspace(this.version)?.includes(file.uri) // .getResourcePath(file.uri, this.version)
     // if (!resourcePath) {
@@ -297,7 +297,7 @@ export class ResourceStore {
     // }
   }
 
-  private onAudioFileDeleted(uri: string) {
+  private onAudioFileDeleted(uri: string): void {
     const resourcePath = this.loadFolder.getProjectWorkspace(this.version)?.getResourcePath(URI.parse(uri))
     if (!resourcePath) {
       this.log.error(`audio registered but not exists. uri: ${uri}`)
@@ -309,7 +309,7 @@ export class ResourceStore {
     this.audioDirectories.remove(resourceDir)
   }
 
-  private onDLLFileAdded(file: DLLFile) {
+  private onDLLFileAdded(file: DLLFile): void {
     const uri = file.uri.toString()
     if (this.dllFiles.has(uri)) {
       this.log.error(`dll added but already exists. uri: ${uri}`)
@@ -321,7 +321,7 @@ export class ResourceStore {
     this.event.emit('dllChanged', uri)
   }
 
-  private onDLLFileChanged(file: DLLFile) {
+  private onDLLFileChanged(file: DLLFile): void {
     const uri = file.uri.toString()
     if (!this.dllFiles.has(uri)) {
       this.log.error(`dll changed but not exists. uri: ${file.uri.toString()}`)
@@ -331,7 +331,7 @@ export class ResourceStore {
     this.event.emit('dllChanged', uri)
   }
 
-  private onDLLFileDeleted(uri: string) {
+  private onDLLFileDeleted(uri: string): void {
     if (!this.dllFiles.delete(uri)) {
       this.log.error(`trying to delete dllFile, but ${uri} is not exists.`)
       return

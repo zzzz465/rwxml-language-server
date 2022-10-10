@@ -38,7 +38,7 @@ export class TextDocumentManager {
     textDocumentAdapter.event.on('textDocumentChanged', (doc) => this.onTextDocumentChanged(doc))
   }
 
-  listen(events: TypedEventEmitter<NotificationEvents>) {
+  listen(events: TypedEventEmitter<NotificationEvents>): void {
     events.on('fileAdded', (file) => this.onFileAdded(file))
     events.on('fileChanged', (file) => this.onFileChanged(file))
     events.on('fileDeleted', (uri) => this.onFileDeleted(uri))
@@ -114,6 +114,10 @@ export class TextDocumentManager {
     }
 
     const data = await file.read()
+    if (data instanceof Error) {
+      return either.left(data)
+    }
+
     if (doc.version < file.updatedAt) {
       doc = this.set(uri, data, file.updatedAt)
     }

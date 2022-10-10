@@ -186,6 +186,10 @@ export class AboutMetadata {
     }
 
     const raw = await file.read()
+    if (raw instanceof Error) {
+      this.log.error(`failed to read aboutMetadata. ${raw.toString()}`)
+      return
+    }
 
     this.update(raw)
   }

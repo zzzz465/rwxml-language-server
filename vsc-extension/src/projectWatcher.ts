@@ -1,9 +1,9 @@
 import { injectable } from 'tsyringe'
 import vscode, { Uri, workspace } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
-import winston from 'winston'
+import * as winston from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
-import defaultLogger, { className, logFormat } from './log'
+import { className, log, logFormat } from './log'
 import jsonStr from './utils/json'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
@@ -13,14 +13,14 @@ export const globPattern = `**/*.{${watchedExts.join(',')}}`
 export class ProjectWatcher {
   private log = winston.createLogger({
     format: winston.format.combine(className(ProjectWatcher), logFormat),
-    transports: [defaultLogger()],
+    transports: [log],
   })
 
   private readonly fileSystemWatcher = workspace.createFileSystemWatcher(globPattern)
 
   private watching = false
 
-  get isWatching() {
+  get isWatching(): boolean {
     return this.watching
   }
 
@@ -43,7 +43,7 @@ export class ProjectWatcher {
   /**
    * scan all files on current workspace for initial loading
    */
-  private async initLoading() {
+  private async initLoading(): Promise<void> {
     const uris = await vscode.workspace.findFiles(globPattern)
     this.log.debug(`sending initial load files. count: ${uris.length}`)
     this.log.silly(`initial load files: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
@@ -53,15 +53,15 @@ export class ProjectWatcher {
     }
   }
 
-  private async onDidcreate(uri: Uri) {
+  private async onDidcreate(uri: Uri): Promise<void> {
     this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
   }
 
-  private async onDidChange(uri: Uri) {
+  private async onDidChange(uri: Uri): Promise<void> {
     this.client.sendNotification(ProjectFileChanged, { uri: uri.toString() })
   }
 
-  private async onDidDelete(uri: Uri) {
+  private async onDidDelete(uri: Uri): Promise<void> {
     this.client.sendNotification(ProjectFileDeleted, { uri: uri.toString() })
   }
 }

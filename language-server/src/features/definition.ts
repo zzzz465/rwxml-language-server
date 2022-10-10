@@ -1,4 +1,4 @@
-import { Def, Injectable, Text } from '@rwxml/analyzer'
+import { Def, Document, Injectable, Text } from '@rwxml/analyzer'
 import { option } from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
 import { flow } from 'fp-ts/lib/function'
@@ -7,6 +7,7 @@ import { injectable } from 'tsyringe'
 import { DefinitionLink, LocationLink } from 'vscode-languageserver'
 import { Position } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
+import { DefManager } from '../defManager'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
@@ -39,32 +40,29 @@ export class Definition {
     }
   }
 
-  findDefinitions(project: Project, uri: URI, offset: number): Def[] {
-    const getNodeAt = flow(getRootInProject, option.fromEither, option.chain(_.curry(findNodeAt)(offset)))
-    const rangeIncludeOffset = _.curry(rangeInclude)(offset)
-
-    const node = getNodeAt(project, uri)
-    if (option.isNone(node)) {
-      return []
+  findDefinitions(defManager: DefManager, document: Document, offset: number): Def[] {
+    const node = document.findNodeAt(offset)
+    if (!node) {
+      return [] // TODO: return null
     }
 
-    if (node.value instanceof Text && node.value.parent instanceof Injectable && node.value.parent.typeInfo.isDef()) {
+    if (node instanceof Text && node.parent instanceof Injectable && node.parent.typeInfo.isDef()) {
       // when cursor pointing text (referencing defName)
-      const defType = node.value.parent.typeInfo.getDefType()
-      let defName = node.value.data
+      const defType = node.parent.typeInfo.getDefType()
+      let defName = node.data
       if (isGeneratedDef(defName)) {
         defName = getDefNameOfGeneratedDef(defName) ?? ''
       }
 
-      return project.defManager.getDef(defType ?? '', defName)
-    } else if (node.value instanceof Def) {
+      return defManager.getDef(defType ?? '', defName)
+    } else if (node instanceof Def) {
       // when cursor pointing "ParentName" attribute value
-      const attrib = getAttrib('ParentName', node.value)
-      if (option.isNone(attrib) || rangeIncludeOffset(attrib.value.valueRange)) {
+      const attrib = getAttrib('ParentName', node)
+      if (option.isNone(attrib) || attrib.value.valueRange.include(offset)) {
         return []
       }
 
-      return project.defManager.nameDatabase.getDef(null, attrib.value.value)
+      return defManager.nameDatabase.getDef(null, attrib.value.value)
     } else {
       return []
     }

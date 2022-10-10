@@ -24,8 +24,8 @@ export class FileStore {
   private readonly files: Map<string, File> = new Map()
   private readonly referenceCounter: DefaultDictionary<string, number> = new DefaultDictionary(() => 0)
 
-  get(uri: string) {
-    return this.files.get(uri)
+  get(uri: string): File | null {
+    return this.files.get(uri) ?? null
   }
 
   has(key: string): boolean {
