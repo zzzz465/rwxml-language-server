@@ -13,7 +13,7 @@ const xml = `
 
 // jest 가 <, > 를 인식 못함..
 describe('findNodeAt offset should find Text Node', () => {
-  test('loadAliased property hairTags should be injected', () => {
+  test('offset 154 should find Text Node inside ideoNameMaker tag', () => {
     const root = parse(xml)
     const node = root.findNodeAt(154)!
     expect(node).toBeDefined()
