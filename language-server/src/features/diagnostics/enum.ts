@@ -18,7 +18,8 @@ export class Enum implements DiagnosticsContributor {
     const typeNodes = AsEnumerable(nodes)
       .Where((node) => node instanceof Injectable)
       .Cast<Injectable>()
-      .Where((node) => node.typeInfo.isEnum && isLeafNode(node))
+      // empty enum field have fieldInfo property, while <li>enum</li> doesn't.
+      .Where((node) => node.typeInfo.isEnum && !node.fieldInfo && isLeafNode(node))
       .ToArray()
 
     const diagnostics = AsEnumerable(typeNodes)
@@ -35,8 +36,19 @@ export class Enum implements DiagnosticsContributor {
   }
 
   private diagnosisEnum(node: Injectable): ls.Diagnostic[] | null {
-    if (!node.contentRange) {
+    const nodeRange = this.rangeConverter.toLanguageServerRange(node.nodeRange, node.document.uri)
+    if (!nodeRange) {
+      // TODO: print error
       return null
+    }
+
+    if (!node.contentRange) {
+      return [
+        {
+          range: nodeRange,
+          message: 'enum value cannot be empty.',
+        },
+      ]
     }
 
     const content = node.content
