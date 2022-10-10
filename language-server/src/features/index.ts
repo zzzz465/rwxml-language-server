@@ -5,7 +5,7 @@ import { singleton } from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, logFormat } from '../log'
 import { LoadFolder } from '../mod/loadfolders'
 import { ProjectManager } from '../projectManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
@@ -23,7 +23,7 @@ import { Rename } from './rename'
 export class LanguageFeature {
   private readonly log = winston.createLogger({
     format: winston.format.combine(className(LanguageFeature), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   constructor(

@@ -3,7 +3,7 @@ import { Connection, ResponseError } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { Logger } from 'winston'
 import { ParsedTypeInfoRequest, ParsedTypeInfoRequestResponse } from '../../events'
-import defaultLogger, { className, logFormat } from '../../log'
+import { className, logFormat } from '../../log'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
 import { ProjectHelper } from '../utils/project'
@@ -12,7 +12,7 @@ import { ProjectHelper } from '../utils/project'
 export class ParsedTypeInfoRequestHandler implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(ParsedTypeInfoRequestHandler), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {}

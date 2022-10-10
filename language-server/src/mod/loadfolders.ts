@@ -8,7 +8,7 @@ import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { FileStore } from '../fileStore'
 import { File, XMLFile } from '../fs'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, logFormat } from '../log'
 import { NotificationEventManager, NotificationEvents } from '../notificationEventManager'
 import { RimWorldVersion, RimWorldVersionArray } from '../RimWorldVersion'
 import { xml } from '../utils'
@@ -27,7 +27,7 @@ type Events = {
 export class LoadFolder {
   private log = winston.createLogger({
     format: winston.format.combine(className(LoadFolder), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   private _rawXML = ''

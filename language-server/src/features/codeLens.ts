@@ -10,7 +10,7 @@ import * as tsyringe from 'tsyringe'
 import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import winston from 'winston'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, logFormat } from '../log'
 import { Project } from '../project'
 import { ProjectManager } from '../projectManager'
 import { RangeConverter } from '../utils/rangeConverter'
@@ -68,7 +68,7 @@ const resultToCodeLens = (r: Result): lsp.CodeLens => ({
 export class CodeLens implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(CodeLens), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   private readonly _toRange: ReturnType<typeof toRange>

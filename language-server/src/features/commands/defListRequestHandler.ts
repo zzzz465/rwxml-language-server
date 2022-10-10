@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import winston from 'winston'
 import { DefListRequest, DefListRequestResponse } from '../../events'
-import defaultLogger, { className, logFormat } from '../../log'
+import { className, logFormat } from '../../log'
 import { ProjectManager } from '../../projectManager'
 import { PlainObject } from '../../types/plainObject'
 import { Provider } from '../provider'
@@ -14,7 +14,7 @@ import { ProjectHelper } from '../utils/project'
 export class DefListRequestHandler implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(DefListRequestHandler), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   constructor(private readonly projectManager: ProjectManager, private readonly projectHelper: ProjectHelper) {}

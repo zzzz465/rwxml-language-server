@@ -6,7 +6,7 @@ import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { ConnectionToken } from './connection'
 import { TypeInfoRequest } from './events'
-import defaultLogger, { className, logFormat } from './log'
+import { className, logFormat } from './log'
 import { Project } from './project'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
 import jsonStr from './utils/json'
@@ -15,7 +15,7 @@ import jsonStr from './utils/json'
 export class TypeInfoMapProvider {
   private log = winston.createLogger({
     format: winston.format.combine(className(TypeInfoMapProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   constructor(

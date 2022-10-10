@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { DocumentTokenRequest, DocumentTokenRequestResponse } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, logFormat } from '../log'
 import { Project } from '../project'
 import { DocumentToken } from '../types/documentToken'
 import { RangeConverter } from '../utils/rangeConverter'
@@ -18,7 +18,7 @@ import { ProjectHelper } from './utils/project'
 export class DecoProvider implements Provider {
   private log = winston.createLogger({
     format: winston.format.combine(className(DecoProvider), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   constructor(

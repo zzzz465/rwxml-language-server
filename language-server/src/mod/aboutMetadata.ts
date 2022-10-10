@@ -8,7 +8,7 @@ import { URI } from 'vscode-uri'
 import winston from 'winston'
 import { FileStore } from '../fileStore'
 import { File, XMLFile } from '../fs'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, logFormat } from '../log'
 import { NotificationEventManager } from '../notificationEventManager'
 import jsonStr from '../utils/json'
 import * as xml from '../utils/xml'
@@ -67,7 +67,7 @@ export class AboutMetadata {
 
   private log = winston.createLogger({
     format: winston.format.combine(className(AboutMetadata), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>

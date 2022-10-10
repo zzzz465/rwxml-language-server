@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import TypedEventEmitter from 'typed-emitter'
 import * as winston from 'winston'
 import { File } from './fs'
-import defaultLogger, { className, logFormat } from './log'
+import { className, logFormat } from './log'
 import { About } from './mod'
 import { NotificationEvents } from './notificationEventManager'
 import { Project } from './project'
@@ -23,7 +23,7 @@ type Events = {
 export class ProjectManager {
   private log = winston.createLogger({
     format: winston.format.combine(className(ProjectManager), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   private supportedVersions: string[] = []

@@ -12,7 +12,7 @@ import winston from 'winston'
 import { ConnectionToken } from '../connection'
 import { DependencyRequest, DependencyRequestResponse } from '../events'
 import { FileStore } from '../fileStore'
-import defaultLogger, { className, logFormat } from '../log'
+import { className, logFormat } from '../log'
 import { Result } from '../utils/functional/result'
 import { About } from './about'
 import { AboutMetadata } from './aboutMetadata'
@@ -171,7 +171,7 @@ type Events = {
 export class ModDependencyBags {
   private log = winston.createLogger({
     format: winston.format.combine(className(ModDependencyBags), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   private readonly dependencyBags: Map<string, DependencyResourceBag> = new Map()

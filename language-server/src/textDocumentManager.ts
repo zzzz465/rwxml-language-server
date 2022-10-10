@@ -8,7 +8,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import * as winston from 'winston'
 import { FileStore } from './fileStore'
 import { File, TextFile } from './fs'
-import defaultLogger, { className, logFormat } from './log'
+import { className, logFormat } from './log'
 import { NotificationEvents } from './notificationEventManager'
 import { TextDocumentsAdapter } from './textDocumentsAdapter'
 import { Result } from './utils/functional/result'
@@ -27,7 +27,7 @@ type Events = {
 export class TextDocumentManager {
   private log = winston.createLogger({
     format: winston.format.combine(className(TextDocumentManager), logFormat),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   private documents: Map<string, TextDocument> = new Map()

@@ -11,7 +11,7 @@ import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { DefManager } from './defManager'
 import * as documentWithNodeMap from './documentWithNodeMap'
-import defaultLogger, { className, logFormatWithVersion } from './log'
+import { className, logFormatWithVersion } from './log'
 import { About } from './mod'
 import { ResourceStore } from './resourceStore'
 import { RimWorldVersion, RimWorldVersionToken } from './RimWorldVersion'
@@ -40,7 +40,7 @@ type Events = {
 export class Project {
   private log = winston.createLogger({
     format: winston.format.combine(className(Project), logFormatWithVersion(this.version)),
-    transports: [defaultLogger()],
+    transports: [new winston.transports.Console()],
   })
 
   private xmls: Map<string, Document> = new Map()
