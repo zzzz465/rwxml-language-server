@@ -18,7 +18,7 @@ import {
   TextureFile,
   XMLFile,
 } from './fs'
-import defaultLogger, { className, logFormat } from './log'
+import defaultLogger, { className, logFormatWithVersion } from './log'
 import { LoadFolder } from './mod/loadfolders'
 import { ModDependencyBags } from './mod/modDependencyBags'
 import { ProjectWorkspace } from './mod/projectWorkspace'
@@ -41,7 +41,7 @@ type Events = {
 @scoped(Lifecycle.ContainerScoped)
 export class ResourceStore {
   private log = winston.createLogger({
-    format: winston.format.combine(className(ResourceStore), logFormat),
+    format: winston.format.combine(className(ResourceStore), logFormatWithVersion(this.version)),
     transports: [defaultLogger()],
   })
 

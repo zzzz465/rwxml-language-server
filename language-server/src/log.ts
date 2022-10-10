@@ -54,6 +54,9 @@ export const logFormat = format.printf(({ level, className, id, message }) =>
   id ? `[${level}]\t[${className}]\t(${id}):\t${message}` : `[${level}]\t[${className}]:\t${message}`
 )
 
+export const logFormatWithVersion = (version: string): winston.Logform.Format =>
+  format.printf(({ level, className, message }) => `[${level}]\t[${className}]\t(${version}):\t${message}`)
+
 export default function defaultLogger(): winston.Logger {
   return tsyringe.container.resolve(LogManager).defaultLogger
 }

@@ -2,7 +2,6 @@
 import { TypeInfo, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
 import ono from 'ono'
 import { delay, inject, Lifecycle, scoped } from 'tsyringe'
-import { v4 as uuid } from 'uuid'
 import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { ConnectionToken } from './connection'
@@ -25,17 +24,17 @@ export class TypeInfoMapProvider {
     @inject(delay(() => Project)) private readonly project: Project
   ) {}
 
-  async get(requestId: string = uuid()): Promise<[TypeInfoMap, Error | null]> {
+  async get(): Promise<[TypeInfoMap, Error | null]> {
     const dllUris = this.getTargetDLLUris()
 
-    this.log.debug(`requesting typeInfo. count: ${dllUris.length}`, { id: requestId })
+    this.log.debug(`requesting typeInfo. count: ${dllUris.length}`, { id: this.version })
     this.log.silly(`uris: ${jsonStr(dllUris)}`)
     const typeInfos = await this.requestTypeInfos(dllUris)
     if (typeInfos instanceof Error) {
       return [new TypeInfoMap(), typeInfos]
     }
 
-    this.log.debug(`received typeInfo from client, length: ${typeInfos.length}`, { id: requestId })
+    this.log.debug(`received typeInfo from client, length: ${typeInfos.length}`, { id: this.version })
 
     const typeInfoMap = TypeInfoLoader.load(typeInfos)
 
