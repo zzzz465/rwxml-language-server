@@ -4,13 +4,13 @@ import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
 import { ConnectionToken } from '../connection'
 import { TextRequest } from '../events'
-import defaultLogger, { className, logFormat } from '../log'
+import defaultLogger, { withClass } from '../log'
 import { File } from './file'
 
 @injectable()
 export class TextReader {
   private log = winston.createLogger({
-    format: winston.format.combine(className(TextReader), logFormat),
+    format: winston.format.combine(withClass(TextReader)),
     transports: [defaultLogger()],
   })
 

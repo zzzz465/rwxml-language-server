@@ -14,12 +14,12 @@ import _ from 'lodash'
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { DocumentWithNodeMap } from './documentWithNodeMap'
-import defaultLogger, { className, logFormat } from './log'
+import defaultLogger, { withClass, withVersion } from './log'
 import { RimWorldVersion } from './RimWorldVersion'
 
 export class DefManager {
   private log = winston.createLogger({
-    format: winston.format.combine(className(DefManager), logFormat),
+    format: winston.format.combine(withClass(DefManager), withVersion(this.version ?? '')),
     transports: [defaultLogger()],
   })
 

@@ -9,7 +9,7 @@ import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { DefManager } from '../defManager'
-import defaultLogger, { className, logFormat } from '../log'
+import defaultLogger, { withClass } from '../log'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
@@ -19,7 +19,7 @@ import { toAttribValueRange, toRange } from './utils/range'
 @injectable()
 export class Reference {
   private log = winston.createLogger({
-    format: winston.format.combine(className(Reference), logFormat),
+    format: winston.format.combine(withClass(Reference)),
     transports: [defaultLogger()],
   })
 

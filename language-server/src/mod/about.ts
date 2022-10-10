@@ -6,7 +6,7 @@ import TypedEventEmitter from 'typed-emitter'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { File, XMLFile } from '../fs'
-import defaultLogger, { className, logFormat } from '../log'
+import defaultLogger, { withClass } from '../log'
 import { NotificationEvents } from '../notificationEventManager'
 import { RimWorldVersionArray } from '../RimWorldVersion'
 import { xml } from '../utils'
@@ -19,7 +19,7 @@ export type AboutEvents = {
 @singleton()
 export class About {
   private log = winston.createLogger({
-    format: winston.format.combine(className(About), logFormat),
+    format: winston.format.combine(withClass(About)),
     transports: [defaultLogger()],
   })
 

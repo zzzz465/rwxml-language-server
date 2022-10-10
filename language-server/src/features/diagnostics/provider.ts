@@ -4,7 +4,7 @@ import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
 import { Configuration } from '../../configuration'
-import defaultLogger, { className, logFormat } from '../../log'
+import defaultLogger, { withClass } from '../../log'
 import { Project } from '../../project'
 import { ProjectManager } from '../../projectManager'
 import { Provider } from '../provider'
@@ -20,7 +20,7 @@ export class DiagnosticsProvider implements Provider {
   private connection?: ls.Connection = undefined
 
   private log = winston.createLogger({
-    format: winston.format.combine(className(DiagnosticsProvider), logFormat),
+    format: winston.format.combine(withClass(DiagnosticsProvider)),
     transports: [defaultLogger()],
   })
 

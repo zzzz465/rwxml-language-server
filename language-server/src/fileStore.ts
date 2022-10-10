@@ -6,7 +6,7 @@ import TypedEventEmitter from 'typed-emitter'
 import { DefaultDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { File, FileCreateParameters } from './fs'
-import defaultLogger, { className, logFormat } from './log'
+import defaultLogger, { withClass } from './log'
 import { NotificationEvents } from './notificationEventManager'
 import { Result } from './utils/functional/result'
 
@@ -15,7 +15,7 @@ type Events = NotificationEvents
 @singleton()
 export class FileStore {
   private log = winston.createLogger({
-    format: winston.format.combine(className(FileStore), logFormat),
+    format: winston.format.combine(withClass(FileStore)),
     transports: [defaultLogger()],
   })
 

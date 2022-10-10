@@ -4,7 +4,7 @@ import * as ls from 'vscode-languageserver'
 import { Connection } from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
-import defaultLogger, { className, logFormat } from '../../log'
+import defaultLogger, { withClass } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { Provider } from '../provider'
@@ -58,7 +58,7 @@ type HoverType = 'parentNameValue' | 'defReference' | 'tag' | 'content' | 'def' 
 @injectable()
 export class HoverProvider implements Provider {
   private log = winston.createLogger({
-    format: winston.format.combine(className(HoverProvider), logFormat),
+    format: winston.format.combine(withClass(HoverProvider)),
     transports: [defaultLogger()],
   })
 
