@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { DefDatabase, NameDatabase, parse, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
+import { DefDatabase, Injectable, NameDatabase, parse, Text, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { DefManager } from '../../defManager'
@@ -8,11 +8,7 @@ import { Definition } from '../../features/definition'
 import typeInfo from './typeInfo.json'
 
 describe('def reference test', () => {
-  let typeMap: TypeInfoMap
-
-  beforeAll(() => {
-    typeMap = TypeInfoLoader.load((typeInfo as any).rawData)
-  })
+  const typeMap: TypeInfoMap = TypeInfoLoader.load((typeInfo as any).rawData)
 
   beforeEach(() => {
     container.clearInstances()
@@ -64,5 +60,99 @@ describe('def reference test', () => {
     const location = definition.findDefinitions(defManager, ideoNameMakerNode.document, 154)
     expect(location).not.toBeNull()
     expect(location).toHaveLength(1)
+  })
+
+  describe('it should be able to resolve ref field added in 1.4', () => {
+    const ref = `
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="BuildingBase" Name="AT_Wall">
+    <defName>AT_Wall</defName>
+    <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded> <!-- ref 1 -->
+    <stuffCategories>
+      <li>Metallic</li> <!-- 2 -- >
+      <li>Stony</li>
+    </stuffCategories>
+    <comps>
+      <li Class="CompProperties_MeditationFocus">
+        <statDef>MeditationFocusStrength</statDef> <!-- ref 3 -->
+        <focusTypes>
+          <li>Minimal</li> <!-- ref 4 -->
+        </focusTypes>
+      </li>
+      <li Class="CompProperties_ShipHeat" MayRequire="kentington.saveourship2">
+        <compClass>CompShipHeat</compClass> <!-- ref 5 (Code) -->
+      </li>
+    </comps>
+    <damageMultipliers>
+      <li>
+        <damageDef>Thump</damageDef> <!-- ref 6 -->
+        <multiplier>0.5</multiplier>
+      </li>
+    </damageMultipliers>
+  </ThingDef>
+</Defs>
+`
+
+    const src = `
+    <?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <TerrainAffordanceDef>
+    <defName>Heavy</defName> <!-- 1 -- >
+  </TerrainAffordanceDef>
+
+  <StuffCategoryDef>
+    <defName>Metallic</defName> <!-- 2 -->
+  </StuffCategoryDef>
+
+  <StatDef ParentName="MeditationFocusBase">
+    <defName>MeditationFocusStrength</defName> <!-- 3 -->
+  </StatDef>
+
+  <StyleItemCategoryDef>
+    <defName>Minimal</defName> <!-- 4 -->
+  </StyleItemCategoryDef>
+
+  <DamageDef> <!-- 6 -->
+    <defName>Thump</defName>
+  </DamageDef>
+</Defs>
+`
+
+    const defManager = new DefManager(new DefDatabase(), new NameDatabase(), typeMap, '1.4')
+    const refXML = documentWithNodeMap.create(parse(ref, 'target.xml'))
+    defManager.update(refXML)
+
+    const srcXML = documentWithNodeMap.create(parse(ref, 'ref.xml'))
+    defManager.update(srcXML)
+
+    // HACK
+    const definition = new Definition(null as any)
+
+    it('test search of "TerrainAffordanceDef"', () => {
+      const metallicNode = refXML.findNodeAt(241)!
+      expect(metallicNode).toBeDefined()
+      expect(metallicNode).toBeInstanceOf(Text)
+      expect(metallicNode?.parent).toBeInstanceOf(Injectable)
+
+      const defs = definition.findDefinitions(defManager, refXML, 241)
+      expect(defs).toHaveLength(1)
+    })
+
+    it('test search of "StuffCategoryDef"', () => {
+      // TODO
+    })
+
+    it('test search of "StatDef"', () => {
+      // TODO
+    })
+
+    it('test search of "StyleItemCategoryDef"', () => {
+      // TODO
+    })
+
+    it('test search of "DamageDef"', () => {
+      // TODO
+    })
   })
 })
