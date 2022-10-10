@@ -5,21 +5,20 @@ import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
 import jsonStr from '../../utils/json'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { getNodesBFS, isLeafNode } from '../utils'
+import { getNodesBFS } from '../utils'
 import { DiagnosticsContributor } from './contributor'
 
 @tsyringe.injectable()
 export class Enum implements DiagnosticsContributor {
   constructor(private readonly rangeConverter: RangeConverter) {}
 
-  getDiagnostics(_: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {
+  getDiagnostics(project: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {
     const nodes = getNodesBFS(document)
 
     const typeNodes = AsEnumerable(nodes)
       .Where((node) => node instanceof Injectable)
       .Cast<Injectable>()
-      // empty enum field have fieldInfo property, while <li>enum</li> doesn't.
-      .Where((node) => node.typeInfo.isEnum && !node.fieldInfo && isLeafNode(node))
+      .Where((node) => node.typeInfo.isEnum && !!node.fieldInfo)
       .ToArray()
 
     const diagnostics = AsEnumerable(typeNodes)
@@ -47,6 +46,15 @@ export class Enum implements DiagnosticsContributor {
         {
           range: nodeRange,
           message: 'enum value cannot be empty.',
+        },
+      ]
+    }
+
+    if (node.ChildElementNodes.length > 0) {
+      return [
+        {
+          range: nodeRange,
+          message: 'enum value cannot have child elements.',
         },
       ]
     }
