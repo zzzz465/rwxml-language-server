@@ -65,10 +65,7 @@ export class Enum implements DiagnosticsContributor {
       return null
     }
 
-    const invalidEnums = content
-      .split(',')
-      .map((e) => e.trim())
-      .filter((e) => !node.typeInfo.enums.includes(e))
+    const invalidEnums = content.split(',').filter((e) => !node.typeInfo.enums.includes(e))
 
     if (invalidEnums.length > 0) {
       return [
