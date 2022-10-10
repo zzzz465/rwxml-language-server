@@ -95,10 +95,10 @@ describe('def reference test', () => {
 `
 
     const src = `
-    <?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
   <TerrainAffordanceDef>
-    <defName>Heavy</defName> <!-- 1 -- >
+    <defName>Heavy</defName> <!-- 1 -->
   </TerrainAffordanceDef>
 
   <StuffCategoryDef>
@@ -130,7 +130,7 @@ describe('def reference test', () => {
     const definition = new Definition(null as any)
 
     it('injector should inject StuffCategoryDef', () => {
-      const stuffCategoryDefNode = refXML.findNodeAt(154)!
+      const stuffCategoryDefNode = srcXML.findNodeAt(149)!
       expect(stuffCategoryDefNode).toBeDefined()
       expect(stuffCategoryDefNode).toBeInstanceOf(Def)
     })
