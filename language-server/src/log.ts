@@ -8,7 +8,7 @@ const DEFAULT_LOG_LEVEL = 'info'
 @tsyringe.singleton()
 export class LogManager {
   readonly defaultLogger = winston.createLogger({
-    format: format.simple(),
+    format: format.combine(logFormat),
     level: DEFAULT_LOG_LEVEL,
     transports: [new winston.transports.Console()],
   })

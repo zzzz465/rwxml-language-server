@@ -9,7 +9,7 @@ import * as lsp from 'vscode-languageserver'
 import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { DefManager } from '../defManager'
-import { className, logFormat } from '../log'
+import defaultLogger, { className, logFormat } from '../log'
 import { Project } from '../project'
 import { RangeConverter } from '../utils/rangeConverter'
 import { getRootInProject } from './utils'
@@ -20,7 +20,7 @@ import { toAttribValueRange, toRange } from './utils/range'
 export class Reference {
   private log = winston.createLogger({
     format: winston.format.combine(className(Reference), logFormat),
-    transports: [new winston.transports.Console()],
+    transports: [defaultLogger()],
   })
 
   private readonly _toRange: ReturnType<typeof toRange>

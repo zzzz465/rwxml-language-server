@@ -7,7 +7,7 @@ import { URI } from 'vscode-uri'
 import winston from 'winston'
 import { FileStore } from '../../fileStore'
 import { DependencyFile } from '../../fs'
-import { className, logFormat } from '../../log'
+import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 // how to use 'prettydiff' (it is quite different to use than other standard libs)
 // https://github.com/prettydiff/prettydiff/issues/176
@@ -21,7 +21,7 @@ prettydiff.options.indent_char = ' '
 export class ParentNameAttribValueHover {
   private log = winston.createLogger({
     format: winston.format.combine(className(ParentNameAttribValueHover), logFormat),
-    transports: [new winston.transports.Console()],
+    transports: [defaultLogger()],
   })
 
   constructor(private readonly fileStore: FileStore) {}

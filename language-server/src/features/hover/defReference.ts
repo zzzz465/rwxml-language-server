@@ -7,7 +7,7 @@ import { URI } from 'vscode-uri'
 import winston from 'winston'
 import { FileStore } from '../../fileStore'
 import { DependencyFile } from '../../fs'
-import { className, logFormat } from '../../log'
+import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { Definition } from '../definition'
@@ -23,7 +23,7 @@ prettydiff.options.indent_char = ' '
 export class DefReferenceHover {
   private log = winston.createLogger({
     format: winston.format.combine(className(DefReferenceHover), logFormat),
-    transports: [new winston.transports.Console()],
+    transports: [defaultLogger()],
   })
 
   constructor(

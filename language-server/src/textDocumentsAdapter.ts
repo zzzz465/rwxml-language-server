@@ -8,7 +8,7 @@ import { URI } from 'vscode-uri'
 import * as winston from 'winston'
 import { ConnectionToken } from './connection'
 import { FileStore } from './fileStore'
-import { className, logFormat } from './log'
+import defaultLogger, { className, logFormat } from './log'
 
 type Events = {
   textDocumentChanged(document: TextDocument): void
@@ -24,7 +24,7 @@ type Events = {
 export class TextDocumentsAdapter {
   private log = winston.createLogger({
     format: winston.format.combine(className(TextDocumentsAdapter), logFormat),
-    transports: [new winston.transports.Console()],
+    transports: [defaultLogger()],
   })
 
   readonly event = new EventEmitter() as TypedEventEmitter<Events>

@@ -1,10 +1,10 @@
 import EventEmitter from 'events'
 import * as tsyringe from 'tsyringe'
-import TypedEventEmitter from 'typed-emitter'
 import { URI } from 'vscode-uri'
-import * as winston from 'winston'
 import { File } from './fs'
-import { className, logFormat } from './log'
+import * as winston from 'winston'
+import TypedEventEmitter from 'typed-emitter'
+import defaultLogger, { className, logFormat } from './log'
 
 // events that this manager will emit
 export type NotificationEvents = {
@@ -20,7 +20,7 @@ export type NotificationEvents = {
 export class NotificationEventManager {
   private log = winston.createLogger({
     format: winston.format.combine(className(NotificationEventManager), logFormat),
-    transports: [new winston.transports.Console()],
+    transports: [defaultLogger()],
   })
 
   // pre-event stage emit

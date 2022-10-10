@@ -3,7 +3,7 @@ import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import winston from 'winston'
-import { className, logFormat } from '../../log'
+import defaultLogger, { className, logFormat } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { getNodesBFS, isFloat, isInteger, isLeafNode } from '../utils'
@@ -17,7 +17,7 @@ import { DiagnosticsContributor } from './contributor'
 export class PrimitiveValue implements DiagnosticsContributor {
   private log = winston.createLogger({
     format: winston.format.combine(className(PrimitiveValue), logFormat),
-    transports: [new winston.transports.Console()],
+    transports: [defaultLogger()],
   })
 
   constructor(private readonly rangeConverter: RangeConverter) {}

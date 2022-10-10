@@ -14,13 +14,13 @@ import _ from 'lodash'
 import { MultiDictionary } from 'typescript-collections'
 import * as winston from 'winston'
 import { DocumentWithNodeMap } from './documentWithNodeMap'
-import { className, logFormatWithVersion } from './log'
+import defaultLogger, { className, logFormat } from './log'
 import { RimWorldVersion } from './RimWorldVersion'
 
 export class DefManager {
   private log = winston.createLogger({
-    format: winston.format.combine(className(DefManager), logFormatWithVersion(this.version ?? '')),
-    transports: [new winston.transports.Console()],
+    format: winston.format.combine(className(DefManager), logFormat),
+    transports: [defaultLogger()],
   })
 
   private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
