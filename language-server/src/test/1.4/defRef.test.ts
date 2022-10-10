@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { DefDatabase, Injectable, NameDatabase, parse, Text, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
+import { Def, DefDatabase, Injectable, NameDatabase, parse, Text, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { DefManager } from '../../defManager'
@@ -123,11 +123,17 @@ describe('def reference test', () => {
     const refXML = documentWithNodeMap.create(parse(ref, 'target.xml'))
     defManager.update(refXML)
 
-    const srcXML = documentWithNodeMap.create(parse(ref, 'ref.xml'))
+    const srcXML = documentWithNodeMap.create(parse(src, 'src.xml'))
     defManager.update(srcXML)
 
     // HACK
     const definition = new Definition(null as any)
+
+    it('injector should inject StuffCategoryDef', () => {
+      const stuffCategoryDefNode = refXML.findNodeAt(154)!
+      expect(stuffCategoryDefNode).toBeDefined()
+      expect(stuffCategoryDefNode).toBeInstanceOf(Def)
+    })
 
     it('test search of "TerrainAffordanceDef"', () => {
       const metallicNode = refXML.findNodeAt(241)!
