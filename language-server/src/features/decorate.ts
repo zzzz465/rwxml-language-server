@@ -34,8 +34,11 @@ export class DecoProvider implements Provider {
     )
   }
 
-  private onTokenRequest(p: DocumentTokenRequest): DocumentTokenRequestResponse | null | undefined {
-    const projects = this.projectHelper.getProjects(p.uri)
+  private onTokenRequest(p: DocumentTokenRequest): DocumentTokenRequestResponse | null {
+    const projects = this.projectHelper.getProjects(p.uri).filter((project) => project.state === 'ready')
+    if (projects.length === 0) {
+      return { tokens: [], uri: p.uri }
+    }
 
     const tokens: DocumentToken[] = []
 
@@ -52,9 +55,8 @@ export class DecoProvider implements Provider {
     return { uri: p.uri, tokens }
   }
 
-  private getTokenFromDoc(project: Project, doc: Document) {
+  private getTokenFromDoc(project: Project, doc: Document): DocumentToken[] {
     // traverse nodes and get nodes
-
     const nodes: Node[] = this.getNodesBFS(doc)
 
     return nodes.map((node) => this.getTokens(project, node)).flat()
