@@ -81,4 +81,31 @@ describe('Enum type test', () => {
     expect(workDisablesNode).toBeInstanceOf(Injectable)
     expect(workDisablesNode.typeInfo.isEnum).toBeTruthy()
   })
+
+  test('enum should have TypeInfo', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="BaseFilth">
+    <defName>Filth_Trash</defName>
+    <filth>
+      <placementMask> <!-- enum (flag) type -->
+        <li>Terrain</li>
+        <li>Unnatural</li>
+      </placementMask>
+    </filth>
+  </ThingDef>
+</Defs>
+`
+
+    const document = parse(xml)
+    injector_1_4.inject(document)
+
+    const terrainTextNode = document.findNodeAt(194)! as Text
+    expect(terrainTextNode).toBeDefined()
+    expect(terrainTextNode).toBeInstanceOf(Text)
+    expect(terrainTextNode.data).toBe('Terrain')
+    expect(terrainTextNode.typeInfo).not.toBeNull()
+    expect(terrainTextNode.typeInfo!.isEnum).toBeTruthy()
+  })
 })
