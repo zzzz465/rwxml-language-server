@@ -1,5 +1,6 @@
 import { Document, Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
+import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
@@ -32,6 +33,19 @@ export class Enum implements DiagnosticsContributor {
       uri: document.uri,
       diagnostics,
     }
+  }
+
+  private checkEnumList(enumNode: Injectable): ls.Diagnostic[] | null {
+    if (enumNode.isLeafNode()) {
+      throw ono('node is leaf node')
+    }
+
+    const diagnosis: ls.Diagnostic[] = []
+
+    const liNodes = enumNode.ChildElementNodes.filter((node) => node.tagName === 'li')
+    // TODO: impl this
+
+    return diagnosis
   }
 
   private diagnosisEnum(node: Injectable): ls.Diagnostic[] | null {
