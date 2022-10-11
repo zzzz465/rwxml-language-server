@@ -1,43 +1,61 @@
-import { Document, parse } from '../../parser'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { Document, parse, Text } from '../../parser'
 import $ from 'cheerio'
-import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
+import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 import data_1_4 from '../data/typeinfo-1_4.json'
 
-const xml = `\
-<?xml version="1.0" encoding="utf-8"?>
-<Defs>
-  <ThingDef ParentName="BaseFilth">
-    <defName>Filth_Trash</defName>
-    <filth>
-      <placementMask> <!-- enum (flag) type -->
-        <li>Terrain</li>
-        <li>Unnatural</li>
-      </placementMask>
-    </filth>
-  </ThingDef>
-</Defs>
-`
+// FIXME: consuming data multiple times creates circular reference error.
 
 describe('Enum type test', () => {
-  let root: Document
-  const map: TypeInfoMap = TypeInfoLoader.load(data as RawTypeInfo[])
-
-  beforeEach(() => {
-    root = parse(xml)
-
-    const injector = new TypeInfoInjector(map)
-
-    injector.inject(root)
-  })
+  const injector_1_3 = new TypeInfoInjector(TypeInfoLoader.load(data as RawTypeInfo[]))
+  const injector_1_4 = new TypeInfoInjector(TypeInfoLoader.load((data_1_4 as any).rawData as RawTypeInfo[]))
 
   test('enum type should be parsed', () => {
+    const xml = `\
+    <?xml version="1.0" encoding="utf-8"?>
+    <Defs>
+      <ThingDef ParentName="BaseFilth">
+        <defName>Filth_Trash</defName>
+        <filth>
+          <placementMask> <!-- enum (flag) type -->
+            <li>Terrain</li>
+            <li>Unnatural</li>
+          </placementMask>
+        </filth>
+      </ThingDef>
+    </Defs>
+    `
+
+    const root: Document = parse(xml)
+
+    injector_1_3.inject(root)
+
     const injectable = $(root).find('Defs > ThingDef > filth > placementMask').get(0)
     expect(injectable).toBeInstanceOf(Injectable)
   })
 
   // eslint-disable-next-line quotes
   test("enum flag's child elements should get typeInfos", () => {
+    const xml = `\
+    <?xml version="1.0" encoding="utf-8"?>
+    <Defs>
+      <ThingDef ParentName="BaseFilth">
+        <defName>Filth_Trash</defName>
+        <filth>
+          <placementMask> <!-- enum (flag) type -->
+            <li>Terrain</li>
+            <li>Unnatural</li>
+          </placementMask>
+        </filth>
+      </ThingDef>
+    </Defs>
+    `
+
+    const root: Document = parse(xml)
+
+    injector_1_3.inject(root)
+
     const injectable = $(root).find('Defs > ThingDef > filth > placementMask > li').get(0)
     expect(injectable).toBeInstanceOf(Injectable)
   })
@@ -54,11 +72,9 @@ describe('Enum type test', () => {
 `
 
     // TODO: move 1.4 version loader to another path
-    const typeInfoMap = TypeInfoLoader.load((data_1_4 as any).rawData)
-    const injector = new TypeInfoInjector(typeInfoMap)
 
     const document = parse(xml)
-    injector.inject(document)
+    injector_1_4.inject(document)
 
     const workDisablesNode = document.findNodeAt(110) as Injectable
     expect(workDisablesNode).toBeDefined()
