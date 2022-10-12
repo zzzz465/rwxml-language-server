@@ -8,7 +8,12 @@ import defaultLogger, { withClass } from '../../log'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
 import { Provider } from '../provider'
-import { isPointingInjectableTag, isPointingParentNameAttributeValue, isTextReferencingDef } from '../utils/node'
+import {
+  isOffsetOnCloseTag,
+  isOffsetOnOpenTag,
+  isPointingParentNameAttributeValue,
+  isTextReferencingDef,
+} from '../utils/node'
 import { ProjectHelper } from '../utils/project'
 import { DefHoverProvider } from './def'
 import { DefReferenceHover } from './defReference'
@@ -96,7 +101,7 @@ export class HoverProvider implements Provider {
         return 'defReference'
       } else if (isPointingParentNameAttributeValue(node, offset)) {
         return 'parentNameValue'
-      } else if (isPointingInjectableTag(node, offset)) {
+      } else if (node instanceof Injectable && (isOffsetOnOpenTag(node, offset) || isOffsetOnCloseTag(node, offset))) {
         return 'tag'
       } else if (node instanceof Text && node.parent instanceof Injectable) {
         return 'content'

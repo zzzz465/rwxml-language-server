@@ -507,24 +507,32 @@ function cloneChildren(childs: Node[]): Node[] {
   return children
 }
 
-type RangedNode = Element | Comment | Text | DataNode
+type RangedNode = Element | DataNode
+
+// NOTE: is this really needed?
+function isRangedNode(node: Node): node is RangedNode {
+  return node instanceof Element || node instanceof DataNode
+}
 
 // TODO: return null instead of undefined
-function findNodeAt(node: RangedNode, offset: number): RangedNode | undefined {
-  if (node instanceof Element || node instanceof Document) {
+// TODO: refactor code for higher readability.
+function findNodeAt(node: Node, offset: number): RangedNode | undefined {
+  if (node instanceof NodeWithChildren) {
     const index = sortedFindFirst(node.childNodes, (child: any) => child.nodeRange && child.nodeRange.start <= offset)
     if (index >= 0) {
       const child = node.childNodes[index]
-      if (child instanceof Element) {
-        return findNodeAt(child, offset) ?? child
-      } else if (child instanceof Text || child instanceof DataNode) {
-        return child
+      const result = findNodeAt(child, offset)
+
+      if (result) {
+        return result
       }
     }
-  } else if (node.nodeRange.include(offset)) {
-    return node
-  } else {
-    return undefined
+  }
+
+  if (isRangedNode(node)) {
+    if (node.nodeRange.include(offset)) {
+      return node
+    }
   }
 }
 
