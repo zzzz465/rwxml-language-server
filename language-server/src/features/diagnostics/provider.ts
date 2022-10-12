@@ -88,6 +88,15 @@ export class DiagnosticsProvider implements Provider {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
 
+    const projectReady = project.state === 'ready'
+    const uriValid = document.uri !== ''
+    const dependencyFile = project.resourceStore.isDependencyFile(document.uri)
+    const RootIsDefsNode = getRootElement(document)?.tagName === 'Defs'
+
+    if (!(projectReady && uriValid && !dependencyFile && RootIsDefsNode)) {
+      return
+    }
+
     const shouldDiagnosis =
       document.uri !== '' &&
       !project.resourceStore.isDependencyFile(document.uri) &&
