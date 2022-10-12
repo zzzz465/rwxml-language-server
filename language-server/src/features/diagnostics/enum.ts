@@ -87,7 +87,7 @@ export class Enum implements DiagnosticsContributor {
       return null
     }
 
-    const content = node.content ?? ''
+    const content = node.content?.trim() ?? ''
     if (!node.contentRange || content.trim() === '') {
       return [
         {
@@ -102,7 +102,10 @@ export class Enum implements DiagnosticsContributor {
       return null
     }
 
-    const invalidEnums = content.split(',').filter((e) => !node.typeInfo.enums.includes(e))
+    const invalidEnums = content
+      .split(',')
+      .map((str) => str.trim())
+      .filter((e) => !node.typeInfo.enums.includes(e))
 
     if (invalidEnums.length > 0) {
       return [
