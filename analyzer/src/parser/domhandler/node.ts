@@ -6,6 +6,7 @@ import { ElementType, isTag as isTagRaw } from 'domelementtype'
 import { sortedFindFirst } from '../../utils/arrays'
 import { Range } from '../range'
 import $ from 'cheerio'
+import { TypeInfo } from '../../rimworld-types'
 
 const nodeTypes = new Map<ElementType, number>([
   [ElementType.Tag, 1],
@@ -46,7 +47,7 @@ export class Node {
    *
    * @param type The type of the node.
    */
-  constructor(public type: ElementType) {}
+  constructor(public type: ElementType) { }
 
   // Read-only aliases
   get nodeType(): number {
@@ -143,6 +144,11 @@ export class DataNode extends Node {
  * Text within the document.
  */
 export class Text extends DataNode {
+  /**
+   * enum, boolean can have TypeInfo
+   */
+  typeInfo: TypeInfo | null = null
+
   constructor(data: string) {
     super(ElementType.Text, data)
   }

@@ -24,8 +24,11 @@ export class Injectable extends Element {
   readonly fields!: Map<string, Injectable>
   readonly parent!: Injectable | Def
 
+  /**
+   * checks if this node contains ChildElementNodes or not.
+   */
   isLeafNode() {
-    return this.children.length == 0
+    return this.ChildElementNodes.length === 0
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })

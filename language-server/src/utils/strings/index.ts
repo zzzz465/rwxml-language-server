@@ -6,10 +6,15 @@ type Predicate = (char: string) => boolean
  * get string between prefix and postfix. <prefix>...<offset>...<postfix>
  * @param text the text to search
  * @param offset current offset of cursor
- * @param prefix expand until this
- * @param postfix expand until this
+ * @param prefix determine prefix advance to lower until this predicate returns false
+ * @param postfix determine prefix advance to higher until this predicate returns false
  */
-export function expandUntil(text: string, offset: number, prefix: Predicate, postfix: Predicate) {
+export function expandUntil(
+  text: string,
+  offset: number,
+  prefix: Predicate,
+  postfix: Predicate
+): { text: string; range: Range } {
   // set is preffered but if array is short enough, array is faster than set.
 
   // half-open
