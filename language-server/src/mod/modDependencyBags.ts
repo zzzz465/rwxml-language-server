@@ -271,11 +271,20 @@ export class ModDependencyBags {
   }
 
   private getRequiredDependencies(): Dependency[] {
-    return [...this.about.modDependencies, { packageId: 'Ludeon.RimWorld' }]
+    const deps = [...this.about.modDependencies, { packageId: 'Ludeon.RimWorld' }]
+
+    // dependencies cannot have self as dependency.
+    // example: open core with the extension.
+    return deps.filter((dep) => dep.packageId !== this.about.packageId)
   }
 
   private getOptionalDependenciesOf(version: string): Dependency[] | null {
-    return this.aboutMetadata.get(version)?.modDependency?.optional ?? null
+    // dependencies cannot have self as dependency.
+    return (
+      this.aboutMetadata
+        .get(version)
+        ?.modDependency?.optional?.filter((dep) => dep.packageId !== this.about.packageId) ?? null
+    )
   }
 
   private isSupportedVersionChanged(about: About): boolean {
