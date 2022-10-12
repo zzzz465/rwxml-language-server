@@ -23,8 +23,6 @@ export class Enum implements DiagnosticsContributor {
 
     const diagnostics = AsEnumerable(typeNodes)
       .SelectMany((node) => [...(this.checkEnumList(node) ?? []), ...(this.checkFlatEnum(node) ?? [])])
-      .Cast<ls.Diagnostic[]>()
-      .SelectMany((x) => x)
       .ToArray()
 
     return {
