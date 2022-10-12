@@ -1,6 +1,5 @@
-import { Document, Injectable } from '@rwxml/analyzer'
+import { Document, Element, Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
-import ono from 'ono'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
@@ -23,8 +22,7 @@ export class Enum implements DiagnosticsContributor {
       .ToArray()
 
     const diagnostics = AsEnumerable(typeNodes)
-      .Select((node) => this.diagnosisEnum(node))
-      .Where((res) => res !== null)
+      .SelectMany((node) => [...(this.checkEnumList(node) ?? []), ...(this.checkFlatEnum(node) ?? [])])
       .Cast<ls.Diagnostic[]>()
       .SelectMany((x) => x)
       .ToArray()
@@ -35,20 +33,56 @@ export class Enum implements DiagnosticsContributor {
     }
   }
 
+  /**
+   * validate enum field structured as list.
+   */
   private checkEnumList(enumNode: Injectable): ls.Diagnostic[] | null {
     if (enumNode.isLeafNode()) {
-      throw ono('node is leaf node')
+      return null
     }
 
     const diagnosis: ls.Diagnostic[] = []
 
-    const liNodes = enumNode.ChildElementNodes.filter((node) => node.tagName === 'li')
-    // TODO: impl this
+    for (const childNode of enumNode.childNodes) {
+      if (!(childNode instanceof Element)) {
+        continue
+      }
+
+      const content = childNode.content ?? ''
+      if (!childNode.contentRange) {
+        // TOOD: print log
+        continue
+      }
+
+      const range = this.rangeConverter.toLanguageServerRange(childNode.contentRange, enumNode.document.uri)
+      if (!range) {
+        // TODO: print log
+        continue
+      }
+
+      if (childNode.tagName === 'li') {
+        if (enumNode.typeInfo.enums.includes(content)) {
+          diagnosis.push({
+            range,
+            message: `Unknown enum value ${content}`,
+          })
+        }
+      } else {
+        diagnosis.push({
+          range,
+          message: `Enum field should not have other than <li> node.`,
+        })
+      }
+    }
 
     return diagnosis
   }
 
-  private diagnosisEnum(node: Injectable): ls.Diagnostic[] | null {
+  private checkFlatEnum(node: Injectable): ls.Diagnostic[] | null {
+    if (!node.isLeafNode()) {
+      return null
+    }
+
     const nodeRange = this.rangeConverter.toLanguageServerRange(node.nodeRange, node.document.uri)
     if (!nodeRange) {
       // TODO: print error
@@ -60,15 +94,6 @@ export class Enum implements DiagnosticsContributor {
         {
           range: nodeRange,
           message: 'enum value cannot be empty.',
-        },
-      ]
-    }
-
-    if (node.ChildElementNodes.length > 0) {
-      return [
-        {
-          range: nodeRange,
-          message: 'enum value cannot have child elements.',
         },
       ]
     }
