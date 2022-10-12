@@ -255,7 +255,7 @@ export class ModDependencyBags {
 
   private async updateVersion(version: string): Promise<ono.ErrorLike | null> {
     const requiredDeps = this.getRequiredDependencies()
-    const optionalDeps = this.getOptionalDependenciesOf(version) ?? []
+    const optionalDeps = this.getOptionalDependenciesOf(version)
 
     const bag = this.dependencyBags.get(version)
     if (!bag) {
@@ -278,13 +278,13 @@ export class ModDependencyBags {
     return deps.filter((dep) => dep.packageId !== this.about.packageId)
   }
 
-  private getOptionalDependenciesOf(version: string): Dependency[] | null {
+  private getOptionalDependenciesOf(version: string): Dependency[] {
+    const deps = this.aboutMetadata.get(version)?.modDependency?.optional ?? []
+    deps.push({ packageId: 'Ludeon.RimWorld.Ideology' })
+    deps.push({ packageId: 'Ludeon.RimWorld.Royalty' })
+
     // dependencies cannot have self as dependency.
-    return (
-      this.aboutMetadata
-        .get(version)
-        ?.modDependency?.optional?.filter((dep) => dep.packageId !== this.about.packageId) ?? null
-    )
+    return deps.filter((dep) => dep.packageId !== this.about.packageId)
   }
 
   private isSupportedVersionChanged(about: About): boolean {
