@@ -98,6 +98,10 @@ export class TypeInfoProvider implements Provider {
 
   async checkCoreDLLVersion(DLLPath: string, version: semver.SemVer): Promise<boolean> {
     this.log.debug('checking Core DLL version...')
+    if (version.compare(TypeInfoProvider.defaultVersion) === 0) {
+      this.log.debug('version is default. skipping check.')
+      return true
+    }
 
     const fileVersionOrErr = await this.getCoreDLLVersion(DLLPath)
     if (fileVersionOrErr instanceof Error) {
