@@ -87,7 +87,8 @@ export class Enum implements DiagnosticsContributor {
       return null
     }
 
-    if (!node.contentRange) {
+    const content = node.content ?? ''
+    if (!node.contentRange || content.trim() === '') {
       return [
         {
           range: nodeRange,
@@ -96,7 +97,6 @@ export class Enum implements DiagnosticsContributor {
       ]
     }
 
-    const content = node.content
     const range = this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
     if (!range || !content) {
       return null
