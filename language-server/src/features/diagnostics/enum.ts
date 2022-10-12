@@ -59,7 +59,7 @@ export class Enum implements DiagnosticsContributor {
       }
 
       if (childNode.tagName === 'li') {
-        if (enumNode.typeInfo.enums.includes(content)) {
+        if (!enumNode.typeInfo.enums.includes(content)) {
           diagnosis.push({
             range,
             message: `Unknown enum value ${content}`,
