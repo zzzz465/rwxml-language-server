@@ -37,7 +37,8 @@ export class CachedTypeInfoProvider implements Provider {
     transports: [log],
   })
 
-  private static readonly extractorVersion = new semver.SemVer('0.7.0')
+  // TODO: move this line to extractor.
+  private static readonly extractorVersion = new semver.SemVer('0.8.0')
 
   get dllCacheDirectory(): string {
     return path.join(this.pathStore.cacheDirectory, 'dlls')
