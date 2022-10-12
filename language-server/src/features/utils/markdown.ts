@@ -31,5 +31,5 @@ export function getGenericClassNameToString(typeInfo: TypeInfo): string {
     })
     .join(', ')
 
-  return `${name}\\<${genArgs}\\\\>`
+  return `${name}<${genArgs}>`
 }

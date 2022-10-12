@@ -123,6 +123,22 @@ export function isPointingInjectableTag(node: Node, offset: number): boolean {
   return node.openTagNameRange.include(offset) || node.closeTagNameRange.include(offset)
 }
 
+export function isOffsetOnOpenTag(node: Node, offset: number): boolean {
+  if (!(node instanceof Element)) {
+    return false
+  }
+
+  return node.openTagRange.include(offset)
+}
+
+export function isOffsetOnCloseTag(node: Node, offset: number): boolean {
+  if (!(node instanceof Element)) {
+    return false
+  }
+
+  return node.closeTagRange.include(offset)
+}
+
 export function makeTagNode(tag: string): string {
   return `<${tag}></${tag}>`
 }
