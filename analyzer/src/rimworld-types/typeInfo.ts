@@ -44,9 +44,13 @@ export class TypeInfo {
      */
     public readonly interfaces: Record<string, TypeInfo>, // need to populate typeInfo
     public readonly isInterface: boolean
-  ) {}
+  ) { }
 
   isDerivedFrom(base: TypeInfo) {
+    if (this === base) {
+      return false
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let parent: TypeInfo = this
     while (parent !== base && !!parent.baseClass) {
