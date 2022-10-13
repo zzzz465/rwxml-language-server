@@ -52,11 +52,9 @@ export class TypeInfoInjector {
   injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
-    const classAttributeValue = xmlNode.attribs['Class']?.value
-    const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo)
-
-    if (specificTypeInfo) {
-      return this.injectType(xmlNode, specificTypeInfo, fieldInfo)
+    const overridedTypeInfo = this.getOverridedTypeInfo(xmlNode, typeInfo)
+    if (overridedTypeInfo) {
+      return this.injectType(xmlNode, overridedTypeInfo, fieldInfo)
     }
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
@@ -132,6 +130,12 @@ export class TypeInfoInjector {
     }
 
     return injectable
+  }
+
+  private getOverridedTypeInfo(xmlNode: Element, typeInfo: TypeInfo): TypeInfo | null {
+    const classAttributeValue = xmlNode.attribs['Class']?.value
+
+    return this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo) ?? null
   }
 
   private getDerivedTypeOf(classAttributeValue: string, baseClass: TypeInfo) {
