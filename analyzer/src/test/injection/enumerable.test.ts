@@ -65,4 +65,35 @@ describe('enumerable type injection test', () => {
     expect(liNode).toBeInstanceOf(Injectable)
     expect(liNode.typeInfo.className).toBe('String')
   })
+
+  it('non-list or non-array, but IEnumerable type should not determined as ListStructured', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <FactionDef Abstract="True" Name="AT_PlayerFactionBase">
+		<settlementTexturePath>Icon/ATP_Icon</settlementTexturePath>
+		<colorSpectrum>
+			<li>(1, 1, 1)</li>
+		</colorSpectrum>
+		<raidLootValueFromPointsCurve>
+			<points>
+				<li>(35,     15)</li>
+				<li>(100,   120)</li>
+				<li>(1000,  500)</li>
+				<li>(2000,  800)</li>
+				<li>(4000, 1000)</li>
+			</points>
+		</raidLootValueFromPointsCurve>
+	</FactionDef>
+</Defs>
+`
+
+    const doc = parse(xml)
+    injector_1_4.inject(doc)
+
+    const raidLootValueNode = doc.findNodeAt(235)! as Injectable
+    expect(raidLootValueNode).toBeDefined()
+    expect(raidLootValueNode).toBeInstanceOf(Injectable)
+    expect(raidLootValueNode.typeInfo.isListStructured()).toBeFalsy()
+  })
 })
