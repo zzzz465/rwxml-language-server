@@ -346,24 +346,31 @@ export class TypeInfo {
 
   /**
    * getEnumerableType returns T in IEnumerable<T>
+   * 
+   * T may also be IEnumerable<T> itself, then T will be flattened.
    * @see isListStructured()
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getEnumerableType(): TypeInfo | null {
-    if (!this.isGeneric || this.genericArguments.length === 0) {
-      // edge case: Non-generic enumerable type
-      // we'll not handle this.
+    const enumerableType = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
+
+    if (!enumerableType) {
       return null
     }
 
-    const genArg0 = this.genericArguments[0]
-    if (genArg0.isEnumerable()) {
-      // ?? genArg0 is when T implements IEnumerable<T> but not a generic type.
-      // example: String
-      return genArg0.getEnumerableType() ?? genArg0
-    } else {
-      return genArg0
+
+    if (enumerableType.genericArguments.length !== 1) {
+      // exception case
+      return null
     }
+
+    const genArg0 = enumerableType.genericArguments[0]
+
+    if (genArg0.isEnumerable()) {
+      return genArg0.getEnumerableType()
+    }
+
+    return genArg0
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
