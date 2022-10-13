@@ -5,6 +5,7 @@ import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
 import { Document, Element, Text } from '../parser'
 import $ from 'cheerio'
+import { DefReference, DefReferenceType } from './defReference'
 
 $._options.xmlMode = true
 
@@ -119,7 +120,36 @@ export class TypeInfoInjector {
   }
 
   private injectCustomLoaderType(xmlNode: Element, typeInfo: TypeInfo) {
-    // TODO
+    /*
+    - direct def references
+      - <statBases>
+      - <equippedStatModifier>
+      - <costList>
+      - <skillRequirements>
+    - defType name as key and defName as value
+      - <XXXHyperLinks>
+    - TODO
+    */
+
+    switch (typeInfo.className) {
+      case 'StatModifier':
+      case 'SkillRequirement':
+      case 'ThingDefCountClass':
+        return this.injectDefReferenceType(xmlNode, typeInfo)
+
+      case 'DefHyperlink':
+        return this.injectHyperLinkType(xmlNode, typeInfo)
+    }
+  }
+
+  // special case where tag is defName, and value is an integer.
+  private injectDefReferenceType(xmlNode: Element, typeInfo: TypeInfo) {
+    return DefReference.into(xmlNode, typeInfo, DefReferenceType.DefReference)
+  }
+
+  // speical case where tag is DefType, and value is defName.
+  private injectHyperLinkType(xmlNode: Element, typeInfo: TypeInfo) {
+    return DefReference.into(xmlNode, typeInfo, DefReferenceType.Hyperlink)
   }
 
   private getOverridedTypeInfo(xmlNode: Element, typeInfo: TypeInfo): TypeInfo | null {
