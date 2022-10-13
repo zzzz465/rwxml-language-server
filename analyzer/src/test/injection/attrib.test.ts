@@ -59,6 +59,6 @@ describe('xml attrib related test', () => {
     const optionLiNode = doc.findNodeAt(223)! as Injectable
     expect(optionLiNode).toBeDefined()
     expect(optionLiNode).toBeInstanceOf(Injectable)
-    expect(optionLiNode.typeInfo.className).toBe('ThingSetMaker_Sum.Option')
+    expect(optionLiNode.typeInfo.className).toBe('ThingSetMaker_Sum+Option')
   })
 })
