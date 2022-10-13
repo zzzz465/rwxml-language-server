@@ -345,7 +345,9 @@ export class TypeInfo {
 
     const genArg0 = this.genericArguments[0]
     if (genArg0.isEnumerable()) {
-      return genArg0.getEnumerableType()
+      // ?? genArg0 is when T implements IEnumerable<T> but not a generic type.
+      // example: String
+      return genArg0.getEnumerableType() ?? genArg0
     } else {
       return genArg0
     }
