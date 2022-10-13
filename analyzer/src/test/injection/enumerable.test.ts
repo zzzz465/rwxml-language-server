@@ -14,7 +14,7 @@ describe('enumerable type injection test', () => {
             <storeAs>sitePartDefs</storeAs>
             <storeFactionAs>siteFaction</storeFactionAs>
             <sitePartsTags>
-              <li>
+              <li> <!-- 1 -->
                 <tag>DownedRefugee</tag>
               </li>
               <li>
@@ -37,9 +37,9 @@ describe('enumerable type injection test', () => {
     expect(rootNode).toBeDefined()
     expect(rootNode).toBeInstanceOf(Injectable)
     expect(rootNode.typeInfo.className.startsWith('SlateRef`1')).toBe(true) // `1 = one generic argument
-    expect(rootNode.typeInfo.isEnumerable()).toBeTruthy()
+    expect(rootNode.typeInfo.isEnumerable()).not.toBeTruthy()
 
-    const liNode = doc.findNodeAt(394)! as Injectable
+    const liNode = doc.findNodeAt(394)! as Injectable // 1 node
     expect(liNode).toBeDefined()
     expect(liNode).toBeInstanceOf(Injectable)
     expect(liNode.typeInfo.className).toBe('QuestNode_GetSitePartDefsByTagsAndFaction+SitePartOption')
