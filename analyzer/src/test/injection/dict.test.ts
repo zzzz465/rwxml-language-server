@@ -2,6 +2,7 @@ import { Document, parse } from '../../parser'
 import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
 import data from './anty.json'
+import { injector_1_4 } from '../data/injector'
 
 const xml = `\
 <?xml version="1.0" encoding="utf-8"?>
@@ -86,5 +87,38 @@ describe('Dictionary K, V type test', () => {
       expect(node).toBeInstanceOf(Injectable)
       expect(node.typeInfo.fullName).toBe('AlienRace.StyleSettings')
     }
+  })
+
+  test('dictionary K, V test', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <AlienRace.ThingDef_AlienRace ParentName="AntyBase">
+    <defName>AT_dreadnought</defName>
+    <alienRace>
+      <styleSettings Inherit="False">
+        <li>
+          <key>HairDef</key>
+          <value>
+            <hasStyle>false</hasStyle>
+          </value>
+        </li>
+      </styleSettings>
+    </alienRace>
+  </AlienRace.ThingDef_AlienRace>
+</Defs>
+`
+
+    const root = parse(xml)
+    injector_1_4.inject(root)
+
+    const styleSettingsNode = root.findNodeAt(164) as Injectable
+    expect(styleSettingsNode).toBeDefined()
+    expect(styleSettingsNode).toBeInstanceOf(Injectable)
+    expect(styleSettingsNode.typeInfo.isDictionary()).toBe(true)
+
+    const liNode = root.findNodeAt(203) as Injectable
+    expect(liNode).toBeDefined()
+    expect(liNode).toBeInstanceOf(Injectable)
   })
 })
