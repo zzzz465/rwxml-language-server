@@ -39,17 +39,15 @@ export class TypeInfoInjector {
     const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
-      const def = this.injectType(xmlNode, defTypeInfo) as Injectable
-      Def.toDef(def)
+      this.injectType(xmlNode, defTypeInfo)
+      Def.toDef(xmlNode as Injectable)
       return true
     } else {
       return false
     }
   }
 
-  // recursively inject all typeInfo to xmlNode
-  // TODO: refactor this hell.
-  injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
+  injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
     const overridedTypeInfo = this.getOverridedTypeInfo(xmlNode, typeInfo)
@@ -60,14 +58,19 @@ export class TypeInfoInjector {
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
     if (typeInfo.isListStructured()) {
+      if (!typeInfo.isMapStructured() && typeInfo.customLoader()) {
+        const genArg0 = typeInfo.getEnumerableType()
+        if (genArg0) {
+          return xmlNode.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, genArg0))
+        }
+      }
+
       if (typeInfo.isMapStructured()) {
-        // TODO: pick out function that finds appropriate typeInfo for this node.
-        typeInfo.genericArguments
         const typePair = typeInfo.getMapGenTypes()
         if (typePair) {
           const [keyType, valueType] = typePair
 
-          injectable.ChildElementNodes
+          return injectable.ChildElementNodes
             .filter(node => node.tagName === 'li')
             .forEach(node => {
               const keyNode = node.ChildElementNodes.find(node => node.tagName === 'key')
@@ -80,56 +83,36 @@ export class TypeInfoInjector {
                 this.injectType(valueNode, valueType)
               }
             })
-
-          return injectable
         }
-      } else if (typeInfo.customLoader()) {
-        // TODO: implement custom loader
-        // in most cases, just treating 
-      } else {
-        const enumerableType = typeInfo.getEnumerableType()
-
-        if (enumerableType) {
-          injectable.ChildElementNodes
-            .filter(node => node.tagName === 'li')
-            .forEach(node =>
-              this.injectType(node, enumerableType, fieldInfo)
-            )
-        }
-
-        return injectable
       }
-
     }
 
     if (typeInfo.isEnum) {
       if (injectable.isLeafNode()) {
         // prettier-ignore
-        injectable.childNodes
+        return injectable.childNodes
           .flatMap(node => node instanceof Text ? [node] : [])
           .forEach(node => node.typeInfo = typeInfo)
       } else {
         //prettier-ignore
-        injectable
+        return injectable
           .ChildElementNodes
           .filter((node) => node.tagName === 'li')
           .forEach((node) => this.injectType(node, typeInfo))
       }
-
-      return injectable
     }
 
-    for (const childNode of injectable.ChildElementNodes) {
-      if (childNode.name) {
-        const fieldInfo = injectable.typeInfo.getField(childNode.name)
+    return injectable.ChildElementNodes.forEach((childNode) => {
+      const fieldInfo = typeInfo.getField(childNode.tagName)
 
-        if (fieldInfo) {
-          this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
-        }
+      if (fieldInfo) {
+        this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
       }
-    }
+    })
+  }
 
-    return injectable
+  private injectCustomLoaderType(xmlNode: Element, typeInfo: TypeInfo) {
+    // TODO
   }
 
   private getOverridedTypeInfo(xmlNode: Element, typeInfo: TypeInfo): TypeInfo | null {
