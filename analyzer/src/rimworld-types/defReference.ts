@@ -3,7 +3,8 @@ import { Writable } from "../utils/types";
 import { Injectable } from "./injectable";
 import { TypeInfo } from "./typeInfo";
 
-export const enum DefReferenceType {
+// const enum cannot be used, it will break test cases.
+export enum DefReferenceType {
   DefReference,
   Hyperlink,
 }
