@@ -1,5 +1,5 @@
 import { parse } from "../../parser"
-import { Injectable } from "../../rimworld-types"
+import { DefReference, DefReferenceType, Injectable } from "../../rimworld-types"
 import { injector_1_4 } from "../data/injector"
 
 describe('enumerable type injection test', () => {
@@ -117,14 +117,19 @@ describe('enumerable type injection test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const globalLearningFactorNode = doc.findNodeAt(167)! as Injectable
-    expect(globalLearningFactorNode).toBeDefined()
-    expect(globalLearningFactorNode).toBeInstanceOf(Injectable)
-    expect(globalLearningFactorNode.typeInfo.isListStructured()).toBeTruthy()
+    const statOffsetsNode = doc.findNodeAt(140)! as Injectable
+    expect(statOffsetsNode).toBeDefined()
+    expect(statOffsetsNode).toBeInstanceOf(Injectable)
 
-    const genType = globalLearningFactorNode.typeInfo.getEnumerableType()!
-    expect(genType).toBeTruthy()
-    expect(genType.customLoader()).toBe(true)
+    const genType = statOffsetsNode.typeInfo.getEnumerableType()!
+    expect(genType).toBeDefined()
     expect(genType.className).toBe('StatModifier')
+    expect(genType.customLoader()).toBe(true)
+
+
+    const globalLearningFactorNode = doc.findNodeAt(167)! as DefReference
+    expect(globalLearningFactorNode).toBeDefined()
+    expect(globalLearningFactorNode).toBeInstanceOf(DefReference)
+    expect(globalLearningFactorNode.refType).toBe(DefReferenceType.DefReference)
   })
 })
