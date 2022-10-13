@@ -308,18 +308,21 @@ export class TypeInfo {
 
   /**
    * getEnumerableType returns T in IEnumerable<T>
+   * @see isListStructured()
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getEnumerableType(): TypeInfo | null {
-    const enumerableType =
-      AsEnumerable(this.getInterfaces())
-        .Where((type) => type.isEnumerable() && type.isGeneric && type.className.includes('IEnumerable'))
-        .FirstOrDefault() ?? null
-
-    if (enumerableType?.genericArguments.length === 1) {
-      return enumerableType.genericArguments[0]
+    if (!this.isGeneric || this.genericArguments.length === 0) {
+      // edge case: Non-generic enumerable type
+      // we'll not handle this.
+      return null
     }
 
-    return null
+    const genArg0 = this.genericArguments[0]
+    if (genArg0.isEnumerable()) {
+      return genArg0.getEnumerableType()
+    } else {
+      return genArg0
+    }
   }
 }
