@@ -46,6 +46,15 @@ export class TypeInfo {
     public readonly isInterface: boolean
   ) { }
 
+  /**
+   * check if this TypeInfo treated as a special type.
+   * most case is that this type have a method `LoadDataFromXmlCustom`
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  customLoader(): boolean {
+    return this.methods.includes('LoadDataFromXmlCustom')
+  }
+
   isDerivedFrom(base: TypeInfo) {
     if (this === base) {
       return false
