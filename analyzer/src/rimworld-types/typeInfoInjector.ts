@@ -59,26 +59,6 @@ export class TypeInfoInjector {
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
     if (typeInfo.isListStructured()) {
-      if (typeInfo.isMapStructured()) {
-        const typePair = typeInfo.getMapGenTypes()
-        if (typePair) {
-          const [keyType, valueType] = typePair
-
-          return injectable.ChildElementNodes
-            .filter(node => node.tagName === 'li')
-            .forEach(node => {
-              const keyNode = node.ChildElementNodes.find(node => node.tagName === 'key')
-              if (keyNode) {
-                this.injectType(keyNode, keyType)
-              }
-
-              const valueNode = node.ChildElementNodes.find(node => node.tagName === 'value')
-              if (valueNode) {
-                this.injectType(valueNode, valueType)
-              }
-            })
-        }
-      }
 
       const enumerableType = typeInfo.getEnumerableType()
       if (enumerableType) {
