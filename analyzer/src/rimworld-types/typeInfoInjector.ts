@@ -59,13 +59,6 @@ export class TypeInfoInjector {
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
     if (typeInfo.isListStructured()) {
-      if (!typeInfo.isMapStructured() && typeInfo.customLoader()) {
-        const genArg0 = typeInfo.getEnumerableType()
-        if (genArg0) {
-          return xmlNode.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, genArg0))
-        }
-      }
-
       if (typeInfo.isMapStructured()) {
         const typePair = typeInfo.getMapGenTypes()
         if (typePair) {
@@ -89,6 +82,10 @@ export class TypeInfoInjector {
 
       const enumerableType = typeInfo.getEnumerableType()
       if (enumerableType) {
+        if (enumerableType.customLoader()) {
+          return xmlNode.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
+        }
+
         return injectable.ChildElementNodes
           .filter(node => node.tagName === 'li')
           .forEach(node => this.injectType(node, enumerableType))
