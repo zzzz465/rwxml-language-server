@@ -85,6 +85,13 @@ export class TypeInfoInjector {
             })
         }
       }
+
+      const enumerableType = typeInfo.getEnumerableType()
+      if (enumerableType) {
+        return injectable.ChildElementNodes
+          .filter(node => node.tagName === 'li')
+          .forEach(node => this.injectType(node, enumerableType))
+      }
     }
 
     if (typeInfo.isEnum) {
