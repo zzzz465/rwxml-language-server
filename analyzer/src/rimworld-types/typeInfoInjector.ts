@@ -32,7 +32,9 @@ export class TypeInfoInjector {
     const classAttributeValue = xmlNode.attribs['Class']?.value
     const specificTypeInfo = this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo)
 
-    typeInfo = specificTypeInfo ?? typeInfo
+    if (specificTypeInfo) {
+      return this.injectType(xmlNode, specificTypeInfo, fieldInfo)
+    }
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
