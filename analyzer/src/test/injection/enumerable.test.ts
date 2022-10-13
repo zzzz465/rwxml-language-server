@@ -120,6 +120,11 @@ describe('enumerable type injection test', () => {
     const globalLearningFactorNode = doc.findNodeAt(167)! as Injectable
     expect(globalLearningFactorNode).toBeDefined()
     expect(globalLearningFactorNode).toBeInstanceOf(Injectable)
-    expect(globalLearningFactorNode.typeInfo.className).toBe('StatModifier')
+    expect(globalLearningFactorNode.typeInfo.isListStructured()).toBeTruthy()
+
+    const genType = globalLearningFactorNode.typeInfo.getEnumerableType()!
+    expect(genType).toBeTruthy()
+    expect(genType.customLoader()).toBe(true)
+    expect(genType.className).toBe('StatModifier')
   })
 })
