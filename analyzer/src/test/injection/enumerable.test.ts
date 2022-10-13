@@ -96,4 +96,30 @@ describe('enumerable type injection test', () => {
     expect(raidLootValueNode).toBeInstanceOf(Injectable)
     expect(raidLootValueNode.typeInfo.isListStructured()).toBeFalsy()
   })
+
+  it('List Type injection test', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <HediffDef>
+    <defName>AT_LarvaLearningAid</defName>
+    <stages>
+      <li>
+        <statOffsets>
+          <GlobalLearningFactor>5</GlobalLearningFactor>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+</Defs>
+`
+
+    const doc = parse(xml)
+    injector_1_4.inject(doc)
+
+    const globalLearningFactorNode = doc.findNodeAt(167)! as Injectable
+    expect(globalLearningFactorNode).toBeDefined()
+    expect(globalLearningFactorNode).toBeInstanceOf(Injectable)
+    expect(globalLearningFactorNode.typeInfo.className).toBe('StatModifier')
+  })
 })
