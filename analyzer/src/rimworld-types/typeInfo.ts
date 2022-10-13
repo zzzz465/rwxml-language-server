@@ -106,6 +106,31 @@ export class TypeInfo {
   }
 
   /**
+   * isMapStructured() returns true if the XML map structured.
+   * 
+   * usually, `IDictionary<K, V>` is the target.
+   * 
+   * @example
+   * ```xml
+   * <map> <!-- this is map structured -->
+   *  <li>
+   *    <key>key1</key>
+   *    <value>value1</value>
+   *  </li>
+   *  <li>...</li>
+   * </map>
+   * ``` 
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isMapStructured(): boolean {
+    if (this.isDictionary()) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
    * isList() returns the TypeInfo implements IList.
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
@@ -324,5 +349,23 @@ export class TypeInfo {
     } else {
       return genArg0
     }
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getMapGenTypes(): [TypeInfo, TypeInfo] | null {
+    // return if this is not a dictionary
+    if (!this.isMapStructured()) {
+      return null
+    }
+
+    // if length isn't 2, it's a special case. examine later.
+    if (this.genericArguments.length !== 2) {
+      return null
+    }
+
+    const k = this.genericArguments[0]
+    const v = this.genericArguments[1]
+
+    return [k, v]
   }
 }
