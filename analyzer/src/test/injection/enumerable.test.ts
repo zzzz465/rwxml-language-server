@@ -44,4 +44,25 @@ describe('enumerable type injection test', () => {
     expect(liNode).toBeInstanceOf(Injectable)
     expect(liNode.typeInfo.className).toBe('QuestNode_GetSitePartDefsByTagsAndFaction+SitePartOption')
   })
+
+  it('node should inject String as injectable type', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="DrugPillBase">
+		<defName>Battlestimulation_jelly_thing</defName>
+		<tradeTags>
+			<li>Antyjelly</li>
+		</tradeTags>
+	</ThingDef>
+</Defs>
+`
+    const doc = parse(xml)
+    injector_1_4.inject(doc)
+
+    const liNode = doc.findNodeAt(157)! as Injectable
+    expect(liNode).toBeDefined()
+    expect(liNode).toBeInstanceOf(Injectable)
+    expect(liNode.typeInfo.className).toBe('String')
+  })
 })
