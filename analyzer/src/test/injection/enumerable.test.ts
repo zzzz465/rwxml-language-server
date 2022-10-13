@@ -36,12 +36,12 @@ describe('enumerable type injection test', () => {
     const rootNode = doc.findNodeAt(365)! as Injectable
     expect(rootNode).toBeDefined()
     expect(rootNode).toBeInstanceOf(Injectable)
-    expect(rootNode.typeInfo.className).toBe('SlateRef`1') // `1 = one generic argument
+    expect(rootNode.typeInfo.className.startsWith('SlateRef`1')).toBe(true) // `1 = one generic argument
     expect(rootNode.typeInfo.isEnumerable()).toBeTruthy()
 
     const liNode = doc.findNodeAt(394)! as Injectable
     expect(liNode).toBeDefined()
     expect(liNode).toBeInstanceOf(Injectable)
-    expect(liNode.typeInfo.className).toBe('QuestNode_GetSitePartDefsByTagsAndFaction.SitePartOption')
+    expect(liNode.typeInfo.className).toBe('QuestNode_GetSitePartDefsByTagsAndFaction+SitePartOption')
   })
 })
