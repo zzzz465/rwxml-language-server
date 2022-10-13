@@ -11,6 +11,29 @@ $._options.xmlMode = true
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) { }
 
+  inject(document: Document) {
+    const res = {
+      document: document,
+      defs: [] as Def[],
+    }
+
+    const root = $(document).children('Defs').get(0) // possible undefined, but type isn't showing
+
+    if (root instanceof Element) {
+      if (root && root.name === 'Defs') {
+        for (const node of root.ChildElementNodes) {
+          const success = this.injectDefType(node)
+
+          if (success) {
+            res.defs.push(node as Def)
+          }
+        }
+      }
+    }
+
+    return res
+  }
+
   injectDefType(xmlNode: Element): boolean {
     const elementName = xmlNode.name
     const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
@@ -116,28 +139,5 @@ export class TypeInfoInjector {
     if (typeInfo?.isDerivedFrom(baseClass)) {
       return typeInfo
     }
-  }
-
-  inject(document: Document) {
-    const res = {
-      document: document,
-      defs: [] as Def[],
-    }
-
-    const root = $(document).children('Defs').get(0) // possible undefined, but type isn't showing
-
-    if (root instanceof Element) {
-      if (root && root.name === 'Defs') {
-        for (const node of root.ChildElementNodes) {
-          const success = this.injectDefType(node)
-
-          if (success) {
-            res.defs.push(node as Def)
-          }
-        }
-      }
-    }
-
-    return res
   }
 }
