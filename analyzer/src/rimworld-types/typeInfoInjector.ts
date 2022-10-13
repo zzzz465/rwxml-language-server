@@ -38,12 +38,37 @@ export class TypeInfoInjector {
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
-    if (typeInfo.isListStructured() || typeInfo.isDictionary()) {
-      const enumerableType = typeInfo.getEnumerableType()
+    if (typeInfo.isListStructured()) {
+      if (typeInfo.isMapStructured()) {
+        // TODO: pick out function that finds appropriate typeInfo for this node.
+        typeInfo.genericArguments
+        const typePair = typeInfo.getMapGenTypes()
+        if (typePair) {
+          const [keyType, valueType] = typePair
 
-      if (enumerableType) {
-        for (const childNode of injectable.ChildElementNodes) {
-          this.injectType(childNode, enumerableType)
+          injectable.ChildElementNodes
+            .filter(node => node.tagName === 'li')
+            .forEach(node => {
+              const keyNode = node.ChildElementNodes.find(node => node.tagName === 'key')
+              if (keyNode) {
+                this.injectType(keyNode, keyType)
+              }
+
+              const valueNode = node.ChildElementNodes.find(node => node.tagName === 'value')
+              if (valueNode) {
+                this.injectType(valueNode, valueType)
+              }
+            })
+        }
+      } else {
+        const enumerableType = typeInfo.getEnumerableType()
+
+        if (enumerableType) {
+          injectable.ChildElementNodes
+            .filter(node => node.tagName === 'li')
+            .forEach(node =>
+              this.injectType(node, enumerableType, fieldInfo)
+            )
         }
       }
     } else if (typeInfo.isEnum) {
