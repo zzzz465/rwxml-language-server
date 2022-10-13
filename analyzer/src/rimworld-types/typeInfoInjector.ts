@@ -38,7 +38,7 @@ export class TypeInfoInjector {
 
     const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
 
-    if (typeInfo.isList() || typeInfo.isDictionary()) {
+    if (typeInfo.isListStructured() || typeInfo.isDictionary()) {
       const enumerableType = typeInfo.getEnumerableType()
 
       if (enumerableType) {
