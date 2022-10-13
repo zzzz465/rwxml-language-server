@@ -84,6 +84,28 @@ export class TypeInfo {
   }
 
   /**
+   * isListStructured() returns true if the XML list (<li> node) structured.
+   * 
+   * usually, `IEnumerable<T>`, `IList<T>` is the target.
+   * @see getEnumerableType()
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isListStructured(): boolean {
+    if (this.isEnumerable()) {
+      return true
+    }
+
+    if (this.isGeneric && this.genericArguments.length === 1) {
+      const genArg0 = this.genericArguments[0]
+      if (genArg0.isEnumerable()) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  /**
    * isList() returns the TypeInfo implements IList.
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
