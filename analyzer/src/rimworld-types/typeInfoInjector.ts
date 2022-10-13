@@ -59,7 +59,12 @@ export class TypeInfoInjector {
                 this.injectType(valueNode, valueType)
               }
             })
+
+          return injectable
         }
+      } else if (typeInfo.customLoader()) {
+        // TODO: implement custom loader
+        // in most cases, just treating 
       } else {
         const enumerableType = typeInfo.getEnumerableType()
 
@@ -70,8 +75,13 @@ export class TypeInfoInjector {
               this.injectType(node, enumerableType, fieldInfo)
             )
         }
+
+        return injectable
       }
-    } else if (typeInfo.isEnum) {
+
+    }
+
+    if (typeInfo.isEnum) {
       if (injectable.isLeafNode()) {
         // prettier-ignore
         injectable.childNodes
@@ -84,14 +94,16 @@ export class TypeInfoInjector {
           .filter((node) => node.tagName === 'li')
           .forEach((node) => this.injectType(node, typeInfo))
       }
-    } else {
-      for (const childNode of injectable.ChildElementNodes) {
-        if (childNode.name) {
-          const fieldInfo = injectable.typeInfo.getField(childNode.name)
 
-          if (fieldInfo) {
-            this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
-          }
+      return injectable
+    }
+
+    for (const childNode of injectable.ChildElementNodes) {
+      if (childNode.name) {
+        const fieldInfo = injectable.typeInfo.getField(childNode.name)
+
+        if (fieldInfo) {
+          this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
         }
       }
     }

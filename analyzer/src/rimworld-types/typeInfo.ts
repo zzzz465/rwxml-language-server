@@ -100,12 +100,16 @@ export class TypeInfo {
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isListStructured(): boolean {
-    if (this.isEnumerable()) {
+    // dictionary is also represented as list
+    // isEnumerable() cannot detect non-list structured but enumerable type
+    if (this.isDictionary() || this.isList() || this.isArray) {
       return true
     }
 
     if (this.isGeneric && this.genericArguments.length === 1) {
       const genArg0 = this.genericArguments[0]
+
+      // why not checking with List or Array? -> check QuestNode sitePartsTags
       if (genArg0.isEnumerable()) {
         return true
       }
