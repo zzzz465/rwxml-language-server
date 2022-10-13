@@ -29,10 +29,10 @@ describe('enumerable type injection test', () => {
   </Defs>
   `
 
-  const doc = parse(xml)
-  injector_1_4.inject(doc)
-
   it('node should be treated as injectable if generic type is Enumerable', () => {
+    const doc = parse(xml)
+    injector_1_4.inject(doc)
+
     const rootNode = doc.findNodeAt(365)! as Injectable
     expect(rootNode).toBeDefined()
     expect(rootNode).toBeInstanceOf(Injectable)
