@@ -66,7 +66,9 @@ export class Property implements DiagnosticsContributor {
   }
 
   private collectNonInjectedNodesInternal(node: Element, out: Element[]): void {
-    if (node instanceof Def) {
+    const isDefLike =
+      node instanceof Def || (node.parent && node.parent instanceof Element && node.parent.tagName === 'Defs')
+    if (isDefLike) {
       return
     }
 
