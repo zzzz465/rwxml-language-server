@@ -1,4 +1,4 @@
-import { Injectable, Node, Text } from '@rwxml/analyzer'
+import { Injectable, Node, Text, TypeInfo } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -24,9 +24,16 @@ export class Type implements CodeCompletionContributor {
 
     const content = node.content ?? ''
 
-    const haystacks = AsEnumerable(project.defManager.typeInfoMap.getAllVerbTypes())
-      .Select((x) => getTypeReferenceName(x))
-      .Distinct((x) => x)
+    let hayStackTypes: TypeInfo[] = []
+    if (node.tagName.toLowerCase().includes('comp')) {
+      hayStackTypes = project.defManager.typeInfoMap.getAllCompTypes()
+    } else if (node.tagName.toLowerCase().includes('verb')) {
+      hayStackTypes = project.defManager.typeInfoMap.getAllVerbTypes()
+    }
+
+    const haystacks = AsEnumerable(hayStackTypes)
+      .Select((type) => getTypeReferenceName(type))
+      .Distinct((typeName) => typeName)
       .ToArray()
 
     const matchedTypes = getMatchingText(haystacks, content)

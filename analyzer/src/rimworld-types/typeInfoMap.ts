@@ -41,6 +41,11 @@ export class TypeInfoMap {
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getAllCompTypes(): TypeInfo[] {
+    return this.getAllNodes().filter((type) => type.className.startsWith('Comp'))
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getAllVerbTypes(): TypeInfo[] {
     return this.getAllNodes().filter((type) => type.className.startsWith('Verb_'))
   }
