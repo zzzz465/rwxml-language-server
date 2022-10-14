@@ -202,7 +202,7 @@ export class TypeInfo {
       'System.Double',
     ]
 
-    return integerTypes.includes(this.fullName) || integerTypes.some((type) => this.extends(type))
+    return this.isEnum || integerTypes.includes(this.fullName) || integerTypes.some((type) => this.extends(type))
 
   }
 
