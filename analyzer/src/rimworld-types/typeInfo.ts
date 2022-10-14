@@ -382,25 +382,18 @@ export class TypeInfo {
     }
 
     // type may have nested List type. eg) List<List<T>>
-    if (this.isList()) {
-      if (this.genericArguments.length === 1) {
-        return this.genericArguments[0]
-      }
-
-      // panic
-      return null
+    let enumerableType: TypeInfo | null = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
+    if (!enumerableType && this.fullName.startsWith('System.Collections.Generic.IEnumerable')) {
+      enumerableType = this
     }
 
-    // T in IEnumerable<T> may does not have... WHAT?
-    if (this.isEnumerable()) {
-      if (this.genericArguments.length === 1) {
-        const genArg0 = this.genericArguments[0]
-
-        return genArg0
+    if (enumerableType) {
+      if (enumerableType.genericArguments.length !== 1) {
+        // panic
+        return null
       }
 
-      // unknown case
-      return null
+      return enumerableType.genericArguments[0]
     }
 
     // edge case: HediffDef.stages.li.statOffsets is StatModifier<IEnumerable<StatModifier>>
