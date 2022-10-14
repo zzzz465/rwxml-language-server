@@ -381,39 +381,42 @@ export class TypeInfo {
       return this
     }
 
-    let enumerableType: TypeInfo | null = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
-    if (!enumerableType) {
-      // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
-      // if thisType is IEnumerable<T>, it implements non-generic IEnumerable.
-      if (this.isEnumerable()) {
-        enumerableType = this
+    // type may have nested List type. eg) List<List<T>>
+    if (this.isList()) {
+      if (this.genericArguments.length === 1) {
+        return this.genericArguments[0]
       }
+
+      // panic
+      return null
     }
 
-    if (!enumerableType) {
-      // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
-      if (this.isGeneric && this.genericArguments.length === 1) {
+    // T in IEnumerable<T> may does not have... WHAT?
+    if (this.isEnumerable()) {
+      if (this.genericArguments.length === 1) {
         const genArg0 = this.genericArguments[0]
-        if (genArg0.isEnumerable()) {
-          return genArg0.getEnumerableType()
-        }
+
+        return genArg0
       }
 
+      // unknown case
       return null
     }
 
-    if (enumerableType.genericArguments.length !== 1) {
-      // exception case
+    // edge case: HediffDef.stages.li.statOffsets is StatModifier<IEnumerable<StatModifier>>
+    // StatModifier itself is not enumerable, but inner generic is.
+    if (!this.isEnumerable() && this.isGeneric) {
+      if (this.genericArguments.length === 1) {
+        const genArg0 = this.genericArguments[0]
+
+        return genArg0.getEnumerableType() ?? genArg0
+      }
+
+      // unknown case
       return null
     }
 
-    const genArg0 = enumerableType.genericArguments[0]
-
-    if (genArg0.isEnumerable()) {
-      return genArg0.getEnumerableType()
-    }
-
-    return genArg0
+    return null
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
