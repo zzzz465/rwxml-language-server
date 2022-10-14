@@ -88,13 +88,18 @@ export class Enum implements DiagnosticsContributor {
     }
 
     const content = node.content?.trim() ?? ''
+    if (!node.contentRange) {
+      return null
+    }
+
     if (!node.contentRange || content.trim() === '') {
-      return [
-        {
-          range: nodeRange,
-          message: 'enum value cannot be empty.',
-        },
-      ]
+      // enum can be empty?
+      // return [
+      //   {
+      //     range: nodeRange,
+      //     message: 'enum value cannot be empty.',
+      //   },
+      // ]
     }
 
     const range = this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
