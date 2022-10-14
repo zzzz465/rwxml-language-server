@@ -114,7 +114,7 @@ export class Enum implements DiagnosticsContributor {
       return null
     }
 
-    const numericParsed = _.toInteger(content)
+    const numericParsed = _.parseInt(content)
     if (!_.isNaN(numericParsed)) {
       // TODO: support when enum variant has specific value
       if (numericParsed < 0 || numericParsed >= node.typeInfo.enums.length) {
