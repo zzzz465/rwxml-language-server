@@ -30,6 +30,7 @@ export function getGenericClassNameToString(typeInfo: TypeInfo): string {
       return t.isGeneric ? getGenericClassNameToString(t) : t.className
     })
     .join(', ')
+    .replace('+', '.') // nested classes
 
   return `${name}<${genArgs}>`
 }

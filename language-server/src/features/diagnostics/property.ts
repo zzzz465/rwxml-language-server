@@ -1,10 +1,10 @@
-import { Document, Element, Node } from '@rwxml/analyzer'
+import { Def, Document, Element, Injectable, Node } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
 import { RangeConverter } from '../../utils/rangeConverter'
-import { getRootElement, isDefOrInjectable } from '../utils'
+import { getRootElement } from '../utils'
 import { DiagnosticsContributor } from './contributor'
 
 /**
@@ -57,19 +57,29 @@ export class Property implements DiagnosticsContributor {
   }
 
   private collectNonInjectedNodes(node: Node): Element[] | null {
-    if (!(node instanceof Element)) {
-      return null
+    const result: Element[] = []
+    if (node instanceof Element) {
+      this.collectNonInjectedNodesInternal(node, result)
     }
 
-    if (!isDefOrInjectable(node)) {
-      return [node]
+    return result
+  }
+
+  private collectNonInjectedNodesInternal(node: Element, out: Element[]): void {
+    const isDefLike =
+      node instanceof Def || (node.parent && node.parent instanceof Element && node.parent.tagName === 'Defs')
+    if (isDefLike) {
+      return
     }
 
-    return AsEnumerable(node.ChildElementNodes)
-      .Select((x) => this.collectNonInjectedNodes(x))
-      .Where((x) => x !== null)
-      .Cast<Element[]>()
-      .SelectMany((x) => x)
-      .ToArray()
+    for (const childNode of node.ChildElementNodes) {
+      if (childNode instanceof Element) {
+        out.push(childNode)
+      }
+
+      if (childNode instanceof Injectable) {
+        this.collectNonInjectedNodesInternal(childNode, out)
+      }
+    }
   }
 }

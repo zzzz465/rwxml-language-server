@@ -44,9 +44,22 @@ export class TypeInfo {
      */
     public readonly interfaces: Record<string, TypeInfo>, // need to populate typeInfo
     public readonly isInterface: boolean
-  ) {}
+  ) { }
+
+  /**
+   * check if this TypeInfo treated as a special type.
+   * most case is that this type have a method `LoadDataFromXmlCustom`
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  customLoader(): boolean {
+    return this.methods.includes('LoadDataFromXmlCustom')
+  }
 
   isDerivedFrom(base: TypeInfo) {
+    if (this === base) {
+      return false
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let parent: TypeInfo = this
     while (parent !== base && !!parent.baseClass) {
@@ -77,6 +90,57 @@ export class TypeInfo {
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isEnumerable(): boolean {
     return !!this.isImplementingInterface('System.Collections.IEnumerable')
+  }
+
+  /**
+   * isListStructured() returns true if the XML list (<li> node) structured.
+   * 
+   * usually, `IEnumerable<T>`, `IList<T>` is the target.
+   * @see getEnumerableType()
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isListStructured(): boolean {
+    // dictionary is also represented as list
+    // isEnumerable() cannot detect non-list structured but enumerable type
+    if (this.isDictionary() || this.isList() || this.isArray) {
+      return true
+    }
+
+    if (this.isGeneric && this.genericArguments.length === 1) {
+      const genArg0 = this.genericArguments[0]
+
+      // why not checking with List or Array? -> check QuestNode sitePartsTags
+      if (genArg0.isEnumerable()) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  /**
+   * isMapStructured() returns true if the XML map structured.
+   * 
+   * usually, `IDictionary<K, V>` is the target.
+   * 
+   * @example
+   * ```xml
+   * <map> <!-- this is map structured -->
+   *  <li>
+   *    <key>key1</key>
+   *    <value>value1</value>
+   *  </li>
+   *  <li>...</li>
+   * </map>
+   * ``` 
+   */
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isMapStructured(): boolean {
+    if (this.isDictionary()) {
+      return true
+    }
+
+    return false
   }
 
   /**
@@ -282,18 +346,67 @@ export class TypeInfo {
 
   /**
    * getEnumerableType returns T in IEnumerable<T>
+   * 
+   * T may also be IEnumerable<T> itself, then T will be flattened.
+   * @see isListStructured()
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getEnumerableType(): TypeInfo | null {
-    const enumerableType =
-      AsEnumerable(this.getInterfaces())
-        .Where((type) => type.isEnumerable() && type.isGeneric && type.className.includes('IEnumerable'))
-        .FirstOrDefault() ?? null
-
-    if (enumerableType?.genericArguments.length === 1) {
-      return enumerableType.genericArguments[0]
+    // edge case: string is IEnumerable<char>
+    if (this.isString()) {
+      return this
     }
 
-    return null
+    let enumerableType: TypeInfo | null = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
+    if (!enumerableType) {
+      // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
+      // if thisType is IEnumerable<T>, it implements non-generic IEnumerable.
+      if (this.isEnumerable()) {
+        enumerableType = this
+      }
+    }
+
+    if (!enumerableType) {
+      // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
+      if (this.isGeneric && this.genericArguments.length === 1) {
+        const genArg0 = this.genericArguments[0]
+        if (genArg0.isEnumerable()) {
+          return genArg0.getEnumerableType()
+        }
+      }
+
+      return null
+    }
+
+    if (enumerableType.genericArguments.length !== 1) {
+      // exception case
+      return null
+    }
+
+    const genArg0 = enumerableType.genericArguments[0]
+
+    if (genArg0.isEnumerable()) {
+      return genArg0.getEnumerableType()
+    }
+
+    return genArg0
+  }
+
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  getMapGenTypes(): [TypeInfo, TypeInfo] | null {
+    // return if this is not a dictionary
+    if (!this.isMapStructured()) {
+      return null
+    }
+
+    // if length isn't 2, it's a special case. examine later.
+    if (this.genericArguments.length !== 2) {
+      return null
+    }
+
+    const k = this.genericArguments[0]
+    const v = this.genericArguments[1]
+
+    return [k, v]
   }
 }

@@ -119,7 +119,7 @@ export class HoverProvider implements Provider {
         continue
       }
       const hoverType = getHoverType(proj, node)
-      this.log.debug(`hover type: ${hoverType}`)
+      this.log.debug(`hover type: ${hoverType}, className: ${node.constructor.name}`)
 
       const res = ((): ls.Hover | null => {
         switch (hoverType) {
