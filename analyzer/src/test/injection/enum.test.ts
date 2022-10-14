@@ -4,6 +4,7 @@ import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 import data_1_4 from '../data/typeinfo-1_4.json'
+import { not } from 'cheerio/lib/api/traversing'
 
 // FIXME: consuming data multiple times creates circular reference error.
 
@@ -107,5 +108,32 @@ describe('Enum type test', () => {
     expect(terrainTextNode.data).toBe('Terrain')
     expect(terrainTextNode.typeInfo).not.toBeNull()
     expect(terrainTextNode.typeInfo!.isEnum).toBeTruthy()
+  })
+
+  test('integer-flagged enum should be true for isInteger()', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="CrashedShipPartBase">
+    <defName>PsychicDronerShipPart</defName>
+    <comps>
+      <li Class="CompProperties_CausesGameCondition_PsychicEmanation">
+        <droneLevel>2</droneLevel> <!-- check here -->
+      </li>
+    </comps>
+  </ThingDef>
+</Defs>
+`
+
+    // TODO: implement this
+
+    const document = parse(xml)
+    injector_1_4.inject(document)
+
+    const droneLevelNode = document.findNodeAt(233)! as Injectable
+    expect(droneLevelNode).toBeDefined()
+    expect(droneLevelNode).toBeInstanceOf(Injectable)
+    expect(droneLevelNode.typeInfo).toBeDefined()
+    expect(droneLevelNode.typeInfo.isInteger()).toBeFalsy()
   })
 })

@@ -55,6 +55,10 @@ export class TypeInfo {
     return this.methods.includes('LoadDataFromXmlCustom')
   }
 
+  /**
+   * isDerivedFrom checks this type inherits base type.
+   * this method returns false when base equals to self.
+   */
   isDerivedFrom(base: TypeInfo) {
     if (this === base) {
       return false
@@ -71,6 +75,25 @@ export class TypeInfo {
     } else {
       return false
     }
+  }
+
+  /**
+   * extends check this typeInfo extends typeName
+   * unlike derivedFrom(), extends returns true when typeName equals to self.
+   * @param typeName class full name to match.
+   */
+  extends(typeName: string): boolean {
+    let current: TypeInfo | null = this
+
+    while (current) {
+      if (current.fullName === typeName) {
+        return true
+      }
+
+      current = current.baseClass ?? null
+    }
+
+    return false
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
@@ -164,23 +187,24 @@ export class TypeInfo {
     return this.fullName === 'System.String'
   }
 
+  // TODO: enum should be diagnosed as numeric value, but it will break all diagnostics
+  // so, we need to find a way to fix this.
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isInteger() {
-    switch (this.fullName) {
-      case 'System.Byte':
-      case 'System.SByte':
-      case 'System.UInt16':
-      case 'System.UInt32':
-      case 'System.UInt64':
-      case 'System.Int16':
-      case 'System.Int32':
-      case 'System.Int64':
-      case 'System.Decimal':
-      case 'System.Double':
-        return true
-    }
+    const integerTypes = [
+      'System.Byte',
+      'System.SByte',
+      'System.UInt16',
+      'System.UInt32',
+      'System.UInt64',
+      'System.Int16',
+      'System.Int32',
+      'System.Int64',
+      'System.Decimal',
+      'System.Double',
+    ]
 
-    return false
+    return integerTypes.includes(this.fullName)
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })

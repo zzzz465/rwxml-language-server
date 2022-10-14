@@ -1,5 +1,6 @@
 import { Document, Element, Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
+import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
@@ -21,13 +22,19 @@ export class Enum implements DiagnosticsContributor {
       .Where((node) => node.typeInfo.isEnum && !!node.fieldInfo)
       .ToArray()
 
-    const diagnostics = AsEnumerable(typeNodes)
-      .SelectMany((node) => [...(this.checkEnumList(node) ?? []), ...(this.checkFlatEnum(node) ?? [])])
-      .ToArray()
+    const diagnostics = typeNodes.flatMap((node) => this.checkEnum(node) ?? [])
 
     return {
       uri: document.uri,
       diagnostics,
+    }
+  }
+
+  checkEnum(node: Injectable): ls.Diagnostic[] | null {
+    if (node.isLeafNode()) {
+      return this.checkFlatEnum(node)
+    } else {
+      return this.checkEnumList(node)
     }
   }
 
@@ -105,6 +112,19 @@ export class Enum implements DiagnosticsContributor {
     const range = this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
     if (!range || !content) {
       return null
+    }
+
+    const numericParsed = _.parseInt(content)
+    if (!_.isNaN(numericParsed)) {
+      // TODO: support when enum variant has specific value
+      if (numericParsed < 0 || numericParsed >= node.typeInfo.enums.length) {
+        return [
+          {
+            range,
+            message: `Enum value ${content} is out of range. expected: 0 <= value < ${node.typeInfo.enums.length}`,
+          },
+        ]
+      }
     }
 
     const invalidEnums = content
