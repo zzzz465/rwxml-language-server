@@ -132,4 +132,36 @@ describe('enumerable type injection test', () => {
     expect(globalLearningFactorNode).toBeInstanceOf(DefReference)
     expect(globalLearningFactorNode.refType).toBe(DefReferenceType.RefWithCount)
   })
+
+  test('nestd List test', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <MemeDef>
+    <defName>Supremacist</defName>
+    <requireOne>
+      <li> <!-- 0 -->
+        <li>Slavery_Acceptable</li> <!-- 1 -->
+        <li>Slavery_Honorable</li>
+      </li>
+      <li> <!-- 2 -->
+        <li>Execution_Required</li>
+        <li>Execution_RespectedIfGuilty</li>
+        <li>Execution_DontCare</li>
+      </li>
+    </requireOne>
+  </MemeDef>
+</Defs>
+`
+
+    const doc = parse(xml)
+    injector_1_4.inject(doc)
+
+    const li_0_Node = doc.findNodeAt(120)! as Injectable
+    expect(li_0_Node).toBeDefined()
+    expect(li_0_Node).toBeInstanceOf(Injectable)
+    expect(li_0_Node.typeInfo.isEnumerable()).toBeTruthy()
+    expect(li_0_Node.typeInfo.isListStructured()).toBeTruthy()
+    expect(li_0_Node.typeInfo.isList()).toBeTruthy()
+  })
 })
