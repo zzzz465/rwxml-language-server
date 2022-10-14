@@ -1,5 +1,6 @@
 import { Document, Element, Injectable } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
+import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
@@ -21,14 +22,74 @@ export class Enum implements DiagnosticsContributor {
       .Where((node) => node.typeInfo.isEnum && !!node.fieldInfo)
       .ToArray()
 
-    const diagnostics = AsEnumerable(typeNodes)
-      .SelectMany((node) => [...(this.checkEnumList(node) ?? []), ...(this.checkFlatEnum(node) ?? [])])
-      .ToArray()
+    const diagnostics = typeNodes.flatMap((node) => this.checkEnum(node) ?? [])
 
     return {
       uri: document.uri,
       diagnostics,
     }
+  }
+
+  checkEnum(node: Injectable): ls.Diagnostic[] | null {
+    if (node.typeInfo.isInteger()) {
+      return this.checkIntegerEnum(node)
+    }
+
+    if (node.isLeafNode()) {
+      return this.checkFlatEnum(node)
+    } else {
+      return this.checkEnumList(node)
+    }
+  }
+
+  // flag enum check. enum extends byte, short, int, long, or etc.
+  // TODO: return Error instead of null
+  private checkIntegerEnum(node: Injectable): ls.Diagnostic[] | null {
+    const nodeRange = this.rangeConverter.toLanguageServerRange(node.nodeRange, node.document.uri)
+    if (!nodeRange) {
+      return null
+    }
+
+    if (!node.isLeafNode()) {
+      return [
+        {
+          message: 'Integer enum should be leaf node.',
+          range: nodeRange,
+        },
+      ]
+    }
+
+    const content = node.content?.trim() ?? ''
+    if (!node.contentRange) {
+      return null
+    }
+
+    const contentRange = this.rangeConverter.toLanguageServerRange(node.contentRange, node.document.uri)
+    if (!contentRange || !content) {
+      return null
+    }
+
+    const parsed = _.parseInt(content)
+
+    if (_.isNaN(parsed)) {
+      return [
+        {
+          message: `cannot parse to integer. value: ${content}`,
+          range: contentRange,
+        },
+      ]
+    }
+
+    if (parsed >= node.typeInfo.enums.length) {
+      return [
+        {
+          message: `enum value is out of range. value: ${content}, expected: 0 ~ ${node.typeInfo.enums.length - 1}`,
+          range: contentRange,
+        },
+      ]
+    }
+
+    return null
   }
 
   /**
