@@ -62,7 +62,7 @@ export class DefManager {
     if (defName && resolveBaseType) {
       return this.getDefByDefName(defType, defName)
     } else {
-      return []
+      return this.defDatabase.getDef(defType)
     }
   }
 

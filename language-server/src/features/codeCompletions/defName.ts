@@ -32,12 +32,11 @@ export class DefNameCompletion implements CodeCompletionContributor {
       return null
     }
 
-    const fieldType = node.fieldInfo?.fieldType
-    const defType = fieldType?.getDefType()
+    const defType = node.typeInfo.getDefType()
     const range = node.contentRange ?? new Range(offset, offset)
     const editRange = this.rangeConverter.toLanguageServerRange(range, node.document.uri)
 
-    if (!(fieldType && defType && editRange)) {
+    if (!(defType && editRange)) {
       return null
     }
 
