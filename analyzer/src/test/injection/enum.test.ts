@@ -108,4 +108,31 @@ describe('Enum type test', () => {
     expect(terrainTextNode.typeInfo).not.toBeNull()
     expect(terrainTextNode.typeInfo!.isEnum).toBeTruthy()
   })
+
+  test('integer-flagged enum should be true for isInteger()', () => {
+    const xml = `
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="CrashedShipPartBase">
+    <defName>PsychicDronerShipPart</defName>
+    <comps>
+      <li Class="CompProperties_CausesGameCondition_PsychicEmanation">
+        <droneLevel>2</droneLevel> <!-- check here -->
+      </li>
+    </comps>
+  </ThingDef>
+</Defs>
+`
+
+    // TODO: implement this
+
+    const document = parse(xml)
+    injector_1_4.inject(document)
+
+    const droneLevelNode = document.findNodeAt(233)! as Injectable
+    expect(droneLevelNode).toBeDefined()
+    expect(droneLevelNode).toBeInstanceOf(Injectable)
+    expect(droneLevelNode.typeInfo).toBeDefined()
+    expect(droneLevelNode.typeInfo.isInteger()).toBeTruthy()
+  })
 })
