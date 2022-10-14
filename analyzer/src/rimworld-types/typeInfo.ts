@@ -187,6 +187,8 @@ export class TypeInfo {
     return this.fullName === 'System.String'
   }
 
+  // TODO: enum should be diagnosed as numeric value, but it will break all diagnostics
+  // so, we need to find a way to fix this.
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isInteger() {
     const integerTypes = [
