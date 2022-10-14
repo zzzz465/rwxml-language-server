@@ -4,6 +4,7 @@ import $ from 'cheerio'
 import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 import data_1_4 from '../data/typeinfo-1_4.json'
+import { not } from 'cheerio/lib/api/traversing'
 
 // FIXME: consuming data multiple times creates circular reference error.
 
@@ -133,6 +134,6 @@ describe('Enum type test', () => {
     expect(droneLevelNode).toBeDefined()
     expect(droneLevelNode).toBeInstanceOf(Injectable)
     expect(droneLevelNode.typeInfo).toBeDefined()
-    expect(droneLevelNode.typeInfo.isInteger()).toBeTruthy()
+    expect(droneLevelNode.typeInfo.isInteger()).toBeFalsy()
   })
 })
