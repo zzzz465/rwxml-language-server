@@ -111,7 +111,8 @@ export class TypeInfoInjector {
       case 'StatModifier':
       case 'SkillRequirement':
       case 'ThingDefCountClass':
-        return this.injectDefReferenceType(xmlNode, typeInfo)
+      case 'PawnGenOption':
+        return this.injectDefRefType(xmlNode, typeInfo)
 
       case 'DefHyperlink':
         return this.injectHyperLinkType(xmlNode, typeInfo)
@@ -119,8 +120,8 @@ export class TypeInfoInjector {
   }
 
   // special case where tag is defName, and value is an integer.
-  private injectDefReferenceType(xmlNode: Element, typeInfo: TypeInfo) {
-    return DefReference.into(xmlNode, typeInfo, DefReferenceType.DefReference)
+  private injectDefRefType(xmlNode: Element, typeInfo: TypeInfo) {
+    return DefReference.into(xmlNode, typeInfo, DefReferenceType.RefWithCount)
   }
 
   // speical case where tag is DefType, and value is defName.

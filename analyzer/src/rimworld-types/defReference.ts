@@ -5,7 +5,7 @@ import { TypeInfo } from "./typeInfo";
 
 // const enum cannot be used, it will break test cases.
 export enum DefReferenceType {
-  DefReference,
+  RefWithCount,
   Hyperlink,
 }
 

@@ -130,6 +130,6 @@ describe('enumerable type injection test', () => {
     const globalLearningFactorNode = doc.findNodeAt(167)! as DefReference
     expect(globalLearningFactorNode).toBeDefined()
     expect(globalLearningFactorNode).toBeInstanceOf(DefReference)
-    expect(globalLearningFactorNode.refType).toBe(DefReferenceType.DefReference)
+    expect(globalLearningFactorNode.refType).toBe(DefReferenceType.RefWithCount)
   })
 })
