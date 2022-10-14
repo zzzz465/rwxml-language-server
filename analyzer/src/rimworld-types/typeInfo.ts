@@ -352,12 +352,26 @@ export class TypeInfo {
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getEnumerableType(): TypeInfo | null {
-    const enumerableType = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
-
+    let enumerableType: TypeInfo | null = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
     if (!enumerableType) {
-      return null
+      // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
+      // if thisType is IEnumerable<T>, it implements non-generic IEnumerable.
+      if (this.isEnumerable()) {
+        enumerableType = this
+      }
     }
 
+    if (!enumerableType) {
+      // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
+      if (this.isGeneric && this.genericArguments.length === 1) {
+        const genArg0 = this.genericArguments[0]
+        if (genArg0.isEnumerable()) {
+          return genArg0.getEnumerableType()
+        }
+      }
+
+      return null
+    }
 
     if (enumerableType.genericArguments.length !== 1) {
       // exception case
