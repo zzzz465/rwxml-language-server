@@ -352,6 +352,11 @@ export class TypeInfo {
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   getEnumerableType(): TypeInfo | null {
+    // edge case: string is IEnumerable<char>
+    if (this.isString()) {
+      return this
+    }
+
     let enumerableType: TypeInfo | null = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
     if (!enumerableType) {
       // edge case: <statOffsets> and SlateRef<IEnumerable<T>>
