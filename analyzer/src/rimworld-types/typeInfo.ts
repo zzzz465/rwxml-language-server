@@ -202,8 +202,7 @@ export class TypeInfo {
       'System.Double',
     ]
 
-    return this.isEnum || integerTypes.includes(this.fullName) || integerTypes.some((type) => this.extends(type))
-
+    return integerTypes.includes(this.fullName)
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
