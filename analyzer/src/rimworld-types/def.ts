@@ -1,4 +1,4 @@
-import { Injectable } from './injectable'
+import { TypedElement } from './typedElement'
 import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { Element } from '../parser'
@@ -13,7 +13,7 @@ export class Def extends Element {
     since typeof Injectable.parent is fixed to Injectable | Def
   */
 
-  static toDef(injectable: Injectable): Def {
+  static toDef(injectable: TypedElement): Def {
     const def = injectable as unknown as Writable<Def>
 
     Reflect.setPrototypeOf(def, Def.prototype)
@@ -35,7 +35,7 @@ export class Def extends Element {
   readonly name!: string
   readonly typeInfo!: TypeInfo
   readonly fieldInfo?: FieldInfo
-  readonly fields!: Map<string, Injectable>
+  readonly fields!: Map<string, TypedElement>
   readonly parent!: Element
 
   isLeafNode() {

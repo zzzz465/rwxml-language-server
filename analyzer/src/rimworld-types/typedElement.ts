@@ -5,24 +5,24 @@ import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { Element } from '../parser'
 import { Def } from './def'
 
-export class Injectable extends Element {
-  static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): Injectable {
-    const ret = node as Writable<Injectable>
+export class TypedElement extends Element {
+  static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): TypedElement {
+    const ret = node as Writable<TypedElement>
 
     ret.typeInfo = typeInfo
     ret.fields = new Map()
     ret.fieldInfo = fieldInfo
 
-    Reflect.setPrototypeOf(ret, Injectable.prototype)
+    Reflect.setPrototypeOf(ret, TypedElement.prototype)
 
-    return ret as Injectable
+    return ret as TypedElement
   }
 
   readonly name!: string
   readonly typeInfo!: TypeInfo
   readonly fieldInfo?: FieldInfo
-  readonly fields!: Map<string, Injectable>
-  readonly parent!: Injectable | Def
+  readonly fields!: Map<string, TypedElement>
+  readonly parent!: TypedElement | Def
 
   /**
    * checks if this node contains ChildElementNodes or not.

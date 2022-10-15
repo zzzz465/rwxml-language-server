@@ -1,5 +1,5 @@
 import { parse } from "../../parser"
-import { Injectable } from "../../rimworld-types"
+import { TypedElement } from "../../rimworld-types"
 import { injector_1_4 } from "../data/injector"
 
 describe('xml attrib related test', () => {
@@ -45,20 +45,20 @@ describe('xml attrib related test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const rootNode = doc.findNodeAt(119)! as Injectable
+    const rootNode = doc.findNodeAt(119)! as TypedElement
     expect(rootNode).toBeDefined()
-    expect(rootNode).toBeInstanceOf(Injectable)
+    expect(rootNode).toBeInstanceOf(TypedElement)
     expect(rootNode.typeInfo.className).toBe('ThingSetMaker_Sum')
     expect(rootNode.fieldInfo).toBeDefined()
 
-    const optionsNode = doc.findNodeAt(203)! as Injectable
+    const optionsNode = doc.findNodeAt(203)! as TypedElement
     expect(optionsNode).toBeDefined()
-    expect(optionsNode).toBeInstanceOf(Injectable)
+    expect(optionsNode).toBeInstanceOf(TypedElement)
     expect(optionsNode.typeInfo.isList).toBeTruthy()
 
-    const optionLiNode = doc.findNodeAt(223)! as Injectable
+    const optionLiNode = doc.findNodeAt(223)! as TypedElement
     expect(optionLiNode).toBeDefined()
-    expect(optionLiNode).toBeInstanceOf(Injectable)
+    expect(optionLiNode).toBeInstanceOf(TypedElement)
     expect(optionLiNode.typeInfo.className).toBe('ThingSetMaker_Sum+Option')
   })
 })

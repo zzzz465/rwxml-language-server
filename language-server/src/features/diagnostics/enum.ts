@@ -1,4 +1,4 @@
-import { Document, Element, Injectable } from '@rwxml/analyzer'
+import { Document, Element, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import * as tsyringe from 'tsyringe'
@@ -17,8 +17,8 @@ export class Enum implements DiagnosticsContributor {
     const nodes = getNodesBFS(document)
 
     const typeNodes = AsEnumerable(nodes)
-      .Where((node) => node instanceof Injectable)
-      .Cast<Injectable>()
+      .Where((node) => node instanceof TypedElement)
+      .Cast<TypedElement>()
       .Where((node) => node.typeInfo.isEnum && !!node.fieldInfo)
       .ToArray()
 
@@ -30,7 +30,7 @@ export class Enum implements DiagnosticsContributor {
     }
   }
 
-  checkEnum(node: Injectable): ls.Diagnostic[] | null {
+  checkEnum(node: TypedElement): ls.Diagnostic[] | null {
     if (node.isLeafNode()) {
       return this.checkFlatEnum(node)
     } else {
@@ -41,7 +41,7 @@ export class Enum implements DiagnosticsContributor {
   /**
    * validate enum field structured as list.
    */
-  private checkEnumList(enumNode: Injectable): ls.Diagnostic[] | null {
+  private checkEnumList(enumNode: TypedElement): ls.Diagnostic[] | null {
     if (enumNode.isLeafNode()) {
       return null
     }
@@ -83,7 +83,7 @@ export class Enum implements DiagnosticsContributor {
     return diagnosis
   }
 
-  private checkFlatEnum(node: Injectable): ls.Diagnostic[] | null {
+  private checkFlatEnum(node: TypedElement): ls.Diagnostic[] | null {
     if (!node.isLeafNode()) {
       return null
     }

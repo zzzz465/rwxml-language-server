@@ -1,4 +1,4 @@
-import { Def, Document, Injectable } from '@rwxml/analyzer'
+import { Def, Document, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -56,7 +56,7 @@ export class DiagnosticsProvider implements Provider {
     }
   }
 
-  private async onDefChanged(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
+  private async onDefChanged(project: Project, document: Document, dirtyNodes: (Def | TypedElement)[]): Promise<void> {
     // because node.document is plain document, not documentWithNodeMap.
     const documents = AsEnumerable(dirtyNodes)
       .Select((node) => project.getXMLDocumentByUri(node.document.uri))
@@ -73,7 +73,7 @@ export class DiagnosticsProvider implements Provider {
   private async evaluateDocument(
     project: Project,
     document: Document,
-    dirtyNodes: (Def | Injectable)[]
+    dirtyNodes: (Def | TypedElement)[]
   ): Promise<void> {
     // TODO: add option to control each contributors?
     if (!(await this.enabled())) {
@@ -83,7 +83,7 @@ export class DiagnosticsProvider implements Provider {
     this.sendDiagnostics(project, document, dirtyNodes)
   }
 
-  async sendDiagnostics(project: Project, document: Document, dirtyNodes: (Def | Injectable)[]): Promise<void> {
+  async sendDiagnostics(project: Project, document: Document, dirtyNodes: (Def | TypedElement)[]): Promise<void> {
     if (!this.connection) {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
@@ -129,7 +129,7 @@ export class DiagnosticsProvider implements Provider {
   private diagnoseDocument(
     project: Project,
     document: Document,
-    dirtyNodes: (Def | Injectable)[]
+    dirtyNodes: (Def | TypedElement)[]
   ): { uri: string; diagnostics: ls.Diagnostic[] }[] {
     return AsEnumerable(this.contributors)
       .Select((contributor) => contributor.getDiagnostics(project, document, dirtyNodes))

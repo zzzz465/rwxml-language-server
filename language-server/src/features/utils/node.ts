@@ -5,10 +5,10 @@ import {
   Def,
   Document,
   Element,
-  Injectable,
   Node,
   NodeWithChildren,
   Text,
+  TypedElement,
 } from '@rwxml/analyzer'
 import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
@@ -38,7 +38,7 @@ export function isPointingContentOfNode(node: Node, offset: number): boolean {
 // TODO: check empty content when offset is provided
 export function isPointingDefNameContent(node: Node, offset?: number): boolean {
   if (node instanceof Text) {
-    if (node.parent instanceof Injectable && node.parent.name === 'defName' && node.parent.parent instanceof Def) {
+    if (node.parent instanceof TypedElement && node.parent.name === 'defName' && node.parent.parent instanceof Def) {
       return true
     }
   } else if (offset !== undefined) {
@@ -62,8 +62,8 @@ export function isPointingDefNameContent(node: Node, offset?: number): boolean {
 export function isTextReferencingDef(node: Node): node is Text {
   if (
     node instanceof Text &&
-    node.parent instanceof Injectable &&
-    (node.parent.parent instanceof Injectable || node.parent.parent instanceof Def)
+    node.parent instanceof TypedElement &&
+    (node.parent.parent instanceof TypedElement || node.parent.parent instanceof Def)
   ) {
     if (node.parent.parent.typeInfo.isList() && node.parent.typeInfo.isDef()) {
       // if node is child of list node
@@ -82,7 +82,7 @@ export function isTextReferencingDef(node: Node): node is Text {
  * @returns
  */
 export function isNodeContainsDefReferenceText(node: Node): boolean {
-  if (!(node instanceof Injectable)) {
+  if (!(node instanceof TypedElement)) {
     return false
   }
 
@@ -98,7 +98,7 @@ export function isNodeContainsDefReferenceText(node: Node): boolean {
 }
 
 export function isPointingParentNameAttributeValue(node: Node, offset: number): boolean {
-  if (!(node instanceof Def || node instanceof Injectable)) {
+  if (!(node instanceof Def || node instanceof TypedElement)) {
     return false
   }
 
@@ -115,8 +115,8 @@ export function isPointingParentNameAttributeValue(node: Node, offset: number): 
   return false
 }
 
-export function isPointingInjectableTag(node: Node, offset: number): boolean {
-  if (!(node instanceof Injectable)) {
+export function isPointingTypedElementTag(node: Node, offset: number): boolean {
+  if (!(node instanceof TypedElement)) {
     return false
   }
 
@@ -171,8 +171,8 @@ export function getNodeAndOffset(
   return { offset, document, node }
 }
 
-export function isDefOrInjectable(node: Node | null | undefined): node is Def | Injectable {
-  return !!node && (node instanceof Def || node instanceof Injectable)
+export function isDefOrTypedElement(node: Node | null | undefined): node is Def | TypedElement {
+  return !!node && (node instanceof Def || node instanceof TypedElement)
 }
 
 /**

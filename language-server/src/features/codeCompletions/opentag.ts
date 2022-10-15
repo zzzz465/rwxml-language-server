@@ -1,4 +1,4 @@
-import { Def, Document, Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
+import { Def, Document, Element, Node, Range, Text, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 import { injectable } from 'tsyringe'
@@ -27,9 +27,9 @@ export class OpenTagCompletion implements CodeCompletionContributor {
       return null
     }
 
-    // Element (<Defs> node), Def, Injectable or nothing
-    const parent: Def | Injectable | Element | null = node.parent as unknown as Def | Injectable | null
-    if (!(parent instanceof Def || parent instanceof Injectable || parent instanceof Element)) {
+    // Element (<Defs> node), Def, TypedElementor nothing
+    const parent: Def | TypedElement | Element | null = node.parent as unknown as Def | TypedElement | null
+    if (!(parent instanceof Def || parent instanceof TypedElement || parent instanceof Element)) {
       return null
     }
 
@@ -41,12 +41,12 @@ export class OpenTagCompletion implements CodeCompletionContributor {
       const completions = getMatchingText(tags, nodeName)
 
       return this.toCompletionList(node, offset, this.rangeConverter, node.document, completions)
-    } else if (parent instanceof Def || parent instanceof Injectable) {
+    } else if (parent instanceof Def || parent instanceof TypedElement) {
       if (parent.typeInfo.isList() || parent.typeInfo.isDictionary() || parent.typeInfo.isEnumFlag()) {
         return this.toCompletionList(node, offset, this.rangeConverter, node.document, ['li'])
       } else {
         const childNodes = AsEnumerable(parent.ChildElementNodes)
-          .Where((e) => e instanceof Injectable)
+          .Where((e) => e instanceof TypedElement)
           .Select((e) => e.name)
           .ToArray()
 

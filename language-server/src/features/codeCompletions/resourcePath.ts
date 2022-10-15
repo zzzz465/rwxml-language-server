@@ -1,5 +1,5 @@
 import * as rwxml from '@rwxml/analyzer'
-import { Injectable, Node, Text } from '@rwxml/analyzer'
+import { Node, Text, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import path from 'path'
 import { injectable } from 'tsyringe'
@@ -20,7 +20,7 @@ export class ResourcePath implements CodeCompletionContributor {
   constructor(private readonly rangeConverter: RangeConverter) {}
 
   getCompletion(project: Project, node: Node, offset: number): CompletionList | null {
-    let tagNode: Injectable
+    let tagNode: TypedElement
     let editRange: Range | null
     let text: string
 
@@ -28,11 +28,11 @@ export class ResourcePath implements CodeCompletionContributor {
       return null
     }
 
-    if (node instanceof Text && node.parent instanceof Injectable) {
+    if (node instanceof Text && node.parent instanceof TypedElement) {
       tagNode = node.parent
       text = node.nodeValue
       editRange = this.rangeConverter.toLanguageServerRange(node.dataRange, node.document.uri)
-    } else if (node instanceof Injectable) {
+    } else if (node instanceof TypedElement) {
       tagNode = node
       text = ''
       editRange = this.rangeConverter.toLanguageServerRange(new rwxml.Range(offset, offset), node.document.uri)
@@ -93,7 +93,7 @@ export class ResourcePath implements CodeCompletionContributor {
     )
   }
 
-  private completeTexturePath(project: Project, node: Injectable, text: string, editRange: Range): CompletionItem[] {
+  private completeTexturePath(project: Project, node: TypedElement, text: string, editRange: Range): CompletionItem[] {
     const nodeType = getTextureResourceNodeType(project, node)
     const possibleValues: string[] = []
 

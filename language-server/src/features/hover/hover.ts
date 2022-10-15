@@ -1,4 +1,4 @@
-import { Def, Injectable, Node, Text } from '@rwxml/analyzer'
+import { Def, Node, Text, TypedElement } from '@rwxml/analyzer'
 import { injectable } from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Connection } from 'vscode-languageserver'
@@ -101,9 +101,12 @@ export class HoverProvider implements Provider {
         return 'defReference'
       } else if (isPointingParentNameAttributeValue(node, offset)) {
         return 'parentNameValue'
-      } else if (node instanceof Injectable && (isOffsetOnOpenTag(node, offset) || isOffsetOnCloseTag(node, offset))) {
+      } else if (
+        node instanceof TypedElement &&
+        (isOffsetOnOpenTag(node, offset) || isOffsetOnCloseTag(node, offset))
+      ) {
         return 'tag'
-      } else if (node instanceof Text && node.parent instanceof Injectable) {
+      } else if (node instanceof Text && node.parent instanceof TypedElement) {
         return 'content'
       } else if (node instanceof Def) {
         return 'def'
@@ -130,7 +133,7 @@ export class HoverProvider implements Provider {
             return this.parentNameAttribValueHover.onReferenceHover(proj, node)
 
           case 'tag':
-            return this.tagHoverProvider.onTagHover(node as Injectable, offset)
+            return this.tagHoverProvider.onTagHover(node as TypedElement, offset)
 
           case 'def':
             return this.defHoverProvider.onDefHover(node as Def, offset)

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Document, parse, Text } from '../../parser'
 import $ from 'cheerio'
-import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
+import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 import data_1_4 from '../data/typeinfo-1_4.json'
 import { not } from 'cheerio/lib/api/traversing'
@@ -33,7 +33,7 @@ describe('Enum type test', () => {
     injector_1_3.inject(root)
 
     const injectable = $(root).find('Defs > ThingDef > filth > placementMask').get(0)
-    expect(injectable).toBeInstanceOf(Injectable)
+    expect(injectable).toBeInstanceOf(TypedElement)
   })
 
   // eslint-disable-next-line quotes
@@ -58,7 +58,7 @@ describe('Enum type test', () => {
     injector_1_3.inject(root)
 
     const injectable = $(root).find('Defs > ThingDef > filth > placementMask > li').get(0)
-    expect(injectable).toBeInstanceOf(Injectable)
+    expect(injectable).toBeInstanceOf(TypedElement)
   })
 
   test('List<enum> should be correctly injected', () => {
@@ -77,9 +77,9 @@ describe('Enum type test', () => {
     const document = parse(xml)
     injector_1_4.inject(document)
 
-    const workDisablesNode = document.findNodeAt(110) as Injectable
+    const workDisablesNode = document.findNodeAt(110) as TypedElement
     expect(workDisablesNode).toBeDefined()
-    expect(workDisablesNode).toBeInstanceOf(Injectable)
+    expect(workDisablesNode).toBeInstanceOf(TypedElement)
     expect(workDisablesNode.typeInfo.isEnum).toBeTruthy()
   })
 
@@ -130,9 +130,9 @@ describe('Enum type test', () => {
     const document = parse(xml)
     injector_1_4.inject(document)
 
-    const droneLevelNode = document.findNodeAt(233)! as Injectable
+    const droneLevelNode = document.findNodeAt(233)! as TypedElement
     expect(droneLevelNode).toBeDefined()
-    expect(droneLevelNode).toBeInstanceOf(Injectable)
+    expect(droneLevelNode).toBeInstanceOf(TypedElement)
     expect(droneLevelNode.typeInfo).toBeDefined()
     expect(droneLevelNode.typeInfo.isInteger()).toBeFalsy()
   })

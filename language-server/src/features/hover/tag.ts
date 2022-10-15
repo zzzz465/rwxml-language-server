@@ -1,4 +1,4 @@
-import { FieldInfo, Injectable } from '@rwxml/analyzer'
+import { FieldInfo, TypedElement } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
@@ -14,7 +14,7 @@ export class TagHoverProvider {
     transports: [defaultLogger()],
   })
 
-  onTagHover(node: Injectable, offset: number): ls.Hover | null {
+  onTagHover(node: TypedElement, offset: number): ls.Hover | null {
     if (node.fieldInfo && (isOffsetOnOpenTag(node, offset) || isOffsetOnCloseTag(node, offset))) {
       return {
         contents: { kind: MarkupKind.Markdown, value: this.getFieldHoverText(node, node.fieldInfo) },
@@ -26,7 +26,7 @@ export class TagHoverProvider {
     }
   }
 
-  private getFieldHoverText(node: Injectable, fieldInfo: FieldInfo): string {
+  private getFieldHoverText(node: TypedElement, fieldInfo: FieldInfo): string {
     const accessor = fieldInfo.isPublic ? 'public' : 'private'
     const type = fieldInfo.fieldType.isGeneric
       ? getGenericClassNameToString(fieldInfo.fieldType)

@@ -1,4 +1,4 @@
-import { Def, Element, Injectable } from '@rwxml/analyzer'
+import { Def, Element, TypedElement } from '@rwxml/analyzer'
 import stringify from 'fast-safe-stringify'
 import { array, either, option, semigroup } from 'fp-ts'
 import { sequenceS, sequenceT } from 'fp-ts/lib/Apply'
@@ -113,7 +113,7 @@ export class CodeLens implements Provider {
       option.map((r) => r.start)
     )
     const getRefs = flow(getDefNameStr, option.map(getResolveWanters))
-    const ref = (node: Injectable) =>
+    const ref = (node: TypedElement) =>
       sequenceS(option.Apply)({
         uri: option.of(node.document.uri),
         range: getContentRange(this._toRange, node),
@@ -133,8 +133,8 @@ export class CodeLens implements Provider {
         continue
       }
 
-      const [range, pos, injectables] = res.value
-      const refs = array.compact(injectables.map(ref))
+      const [range, pos, typedElements] = res.value
+      const refs = array.compact(typedElements.map(ref))
 
       results.push({ type: 'defReference', range, pos, uri: uri.toString(), refs })
     }

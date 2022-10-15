@@ -1,9 +1,9 @@
 import {
   Def,
   DefDatabase,
-  Injectable,
   isDerivedType,
   NameDatabase,
+  TypedElement,
   TypeInfoInjector,
   TypeInfoMap,
 } from '@rwxml/analyzer'
@@ -23,8 +23,12 @@ export class DefManager {
     transports: [defaultLogger()],
   })
 
-  private referenceResolveWanter: MultiDictionary<string, Injectable> = new MultiDictionary(undefined, undefined, true) // defName, Injectable
-  private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, Injectable
+  private referenceResolveWanter: MultiDictionary<string, TypedElement> = new MultiDictionary(
+    undefined,
+    undefined,
+    true
+  ) // defName, TypedElement
+  private inheritResolveWanter: MultiDictionary<string, Def> = new MultiDictionary(undefined, undefined, true) // ParentName, TypedElement
   private readonly typeInfoInjector: TypeInfoInjector
 
   constructor(
@@ -43,7 +47,7 @@ export class DefManager {
     this.typeInfoInjector = new TypeInfoInjector(typeInfoMap)
   }
 
-  getReferenceResolveWanters(defName: string): Injectable[] {
+  getReferenceResolveWanters(defName: string): TypedElement[] {
     return this.referenceResolveWanter.getValue(defName)
   }
 
@@ -81,9 +85,9 @@ export class DefManager {
   }
 
   /**
-   * @returns dirty nodes that require re-evaluation. (only referenced injectables/defs are returned)
+   * @returns dirty nodes that require re-evaluation. (only referenced typedElement/defs are returned)
    */
-  update(document: DocumentWithNodeMap): (Injectable | Def)[] {
+  update(document: DocumentWithNodeMap): (TypedElement | Def)[] {
     const injectResult = this.typeInfoInjector.inject(document)
 
     const DefsFromDefDatabase = this.defDatabase.getDefByUri(document.uri)
@@ -101,39 +105,39 @@ export class DefManager {
     }
 
     document.defs.push(...injectResult.defs)
-    document.injectables.push(...injectResult.defs.map((def) => this.getInjectables(def)).flat())
+    document.typedElements.push(...injectResult.defs.map((def) => this.getTypedElements(def)).flat())
 
     // grab dirty nodes
-    const dirtyInjectables: Set<Def | Injectable> = new Set()
+    const dirtyNodes: Set<Def | TypedElement> = new Set()
     for (const def of removedDefs.concat(injectResult.defs)) {
       const defName = def.getDefName()
       const nameAttribute = def.getNameAttributeValue()
 
       if (defName) {
         for (const other of this.referenceResolveWanter.getValue(defName)) {
-          dirtyInjectables.add(other)
+          dirtyNodes.add(other)
         }
       }
 
       if (nameAttribute) {
         for (const other of this.inheritResolveWanter.getValue(nameAttribute)) {
-          dirtyInjectables.add(other)
+          dirtyNodes.add(other)
         }
       }
     }
 
-    return [...dirtyInjectables.values()]
+    return [...dirtyNodes.values()]
   }
 
   private addDef(def: Def): void {
     this.defDatabase.addDef(def)
     this.nameDatabase.addDef(def)
 
-    const injectables = this.getInjectables(def)
+    const typedNodes = this.getTypedElements(def)
 
-    for (const injectable of injectables) {
-      if (this.isReferenceWanter(injectable) && injectable.content) {
-        this.referenceResolveWanter.setValue(injectable.content, injectable)
+    for (const typedNode of typedNodes) {
+      if (this.isReferenceWanter(typedNode) && typedNode.content) {
+        this.referenceResolveWanter.setValue(typedNode.content, typedNode)
       }
     }
 
@@ -150,42 +154,42 @@ export class DefManager {
       this.inheritResolveWanter.remove(parentName, def)
     }
 
-    const injectables = this.getInjectables(def)
+    const typedNodes = this.getTypedElements(def)
 
-    for (const injectable of injectables) {
-      if (this.isReferenceWanter(injectable) && injectable.content) {
-        this.referenceResolveWanter.remove(injectable.content, injectable)
+    for (const typedNode of typedNodes) {
+      if (this.isReferenceWanter(typedNode) && typedNode.content) {
+        this.referenceResolveWanter.remove(typedNode.content, typedNode)
       }
     }
 
     this.defDatabase.removeDef(def)
   }
 
-  private getInjectables(def: Def): Injectable[] {
-    const injectables: Injectable[] = []
+  private getTypedElements(def: Def): TypedElement[] {
+    const typedNodes: TypedElement[] = []
 
-    const queue: Deque<Def | Injectable> = new Deque([def])
+    const queue: Deque<Def | TypedElement> = new Deque([def])
 
-    let injectable: Def | Injectable | undefined = undefined
-    while ((injectable = queue.dequeue())) {
-      // Def should not added because only Injectables (not Def) wants reference to be resolved.
-      if (injectable instanceof Injectable) {
-        injectables.push(injectable)
+    let typedNode: Def | TypedElement | undefined = undefined
+    while ((typedNode = queue.dequeue())) {
+      // Def should not added because only TypedElement (not Def) wants reference to be resolved.
+      if (typedNode instanceof TypedElement) {
+        typedNodes.push(typedNode)
       }
 
-      for (const child of injectable.ChildElementNodes) {
-        if (child instanceof Injectable) {
+      for (const child of typedNode.ChildElementNodes) {
+        if (child instanceof TypedElement) {
           queue.enqueue(child)
         }
       }
     }
 
-    return injectables
+    return typedNodes
   }
 
-  private isReferenceWanter(injectable: Injectable): boolean {
-    // why not injectable.typeInfo ???
-    const fieldInfo = injectable.getFieldInfo()
+  private isReferenceWanter(typedElement: TypedElement): boolean {
+    // why not typedElement.typeInfo ???
+    const fieldInfo = typedElement.getFieldInfo()
 
     if (fieldInfo) {
       if (fieldInfo.fieldType.isDef()) {
@@ -193,8 +197,8 @@ export class DefManager {
       }
 
       // TODO: support for CompProperties_XXX or something else.
-    } else if (injectable.parent instanceof Injectable && injectable.parent.typeInfo.isList()) {
-      if (injectable.typeInfo.isDef()) {
+    } else if (typedElement.parent instanceof TypedElement && typedElement.parent.typeInfo.isList()) {
+      if (typedElement.typeInfo.isDef()) {
         return true
       }
     }

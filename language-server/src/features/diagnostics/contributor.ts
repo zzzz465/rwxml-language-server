@@ -1,4 +1,4 @@
-import { Def, Document, Injectable } from '@rwxml/analyzer'
+import { Def, Document, TypedElement } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { Project } from '../../project'
@@ -52,11 +52,11 @@ export abstract class DiagnosticsContributor {
    * getDiagnostics returns language server diagnostics from given arguments.
    * @param project the currnet project context.
    * @param document the document that need to be diagnosed.
-   * @param dirtyInjectables optional project-wide dirty injectable/defs. NOTE: contributor must evaluate only the nodes that matching to the given document.
+   * @param dirtyTypedElements optional project-wide dirty typedElement/defs. NOTE: contributor must evaluate only the nodes that matching to the given document.
    */
   abstract getDiagnostics(
     project: Project,
     document: Document,
-    dirtyInjectables: (Def | Injectable)[]
+    dirtyTypedElements: (Def | TypedElement)[]
   ): { uri: string; diagnostics: ls.Diagnostic[] }
 }

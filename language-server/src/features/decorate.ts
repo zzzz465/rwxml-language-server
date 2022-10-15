@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Attribute, Def, Document, Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
+import { Attribute, Def, Document, Element, Node, Range, Text, TypedElement } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import { Connection } from 'vscode-languageserver'
 import * as winston from 'winston'
@@ -69,8 +69,8 @@ export class DecoProvider implements Provider {
   private getTokens(project: Project, node: Node): DocumentToken[] {
     if (node instanceof Def) {
       return this.getTokenOfDef(project, node)
-    } else if (node instanceof Injectable) {
-      return this.getTokenOfInjectable(project, node)
+    } else if (node instanceof TypedElement) {
+      return this.getTokenOfTypedElement(project, node)
     } else if (node instanceof Element) {
       if (node.tagName === 'Defs') {
         return this.getTokenOfRootDefs(project, node)
@@ -102,7 +102,7 @@ export class DecoProvider implements Provider {
     return res
   }
 
-  private getTokenOfInjectable(project: Project, node: Injectable): DocumentToken[] {
+  private getTokenOfTypedElement(project: Project, node: TypedElement): DocumentToken[] {
     const res: DocumentToken[] = []
 
     res.push(...this.getNodeOpenCloseTokens(node))
@@ -112,7 +112,7 @@ export class DecoProvider implements Provider {
   }
 
   private getTokenOfElement(project: Project, node: Element): DocumentToken[] {
-    // NOTE: this element is not injectable
+    // NOTE: this element is not TypedElement
     const res: DocumentToken[] = []
 
     res.push(...this.getNodeOpenCloseTokens(node))
@@ -135,11 +135,11 @@ export class DecoProvider implements Provider {
     const res: DocumentToken[] = []
     const uri = node.document.uri
     const offset = node.dataRange.start + 1
-    if (!(node.parent instanceof Injectable)) {
+    if (!(node.parent instanceof TypedElement)) {
       return []
     }
 
-    const textNode = node as Text & { parent: Injectable }
+    const textNode = node as Text & { parent: TypedElement }
 
     if (textNode.parent.typeInfo.isDef()) {
       const definitions = this.defProvider.findDefinitions(project.defManager, node.document, offset)
@@ -159,7 +159,7 @@ export class DecoProvider implements Provider {
     return res
   }
 
-  private getNodeOpenCloseTokens(node: Injectable | Def | Element): DocumentToken[] {
+  private getNodeOpenCloseTokens(node: TypedElement | Def | Element): DocumentToken[] {
     const res: DocumentToken[] = []
     const uri = node.document.uri
     const prefix = this.getPrefixOf(node)
@@ -204,7 +204,7 @@ export class DecoProvider implements Provider {
     return res
   }
 
-  private getAttributeValueTokens(project: Project, node: Injectable | Def): DocumentToken[] {
+  private getAttributeValueTokens(project: Project, node: TypedElement | Def): DocumentToken[] {
     const res: DocumentToken[] = []
     const uri = node.document.uri
     const prefix = node instanceof Def ? 'def' : 'injectable'
@@ -272,10 +272,10 @@ export class DecoProvider implements Provider {
     return res
   }
 
-  private getPrefixOf(node: Def | Injectable | Element) {
+  private getPrefixOf(node: Def | Element | TypedElement): 'def' | 'injectable' | 'defs' | 'tag' {
     if (node instanceof Def) {
       return 'def'
-    } else if (node instanceof Injectable) {
+    } else if (node instanceof TypedElement) {
       return 'injectable'
     } else if (node.tagName === 'Defs') {
       return 'defs'

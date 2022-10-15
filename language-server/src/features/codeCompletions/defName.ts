@@ -1,4 +1,4 @@
-import { Element, Injectable, Node, Range, Text } from '@rwxml/analyzer'
+import { Element, Node, Range, Text, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import { injectable } from 'tsyringe'
 import { CompletionItem, CompletionItemKind, CompletionList, TextEdit } from 'vscode-languageserver'
@@ -27,8 +27,8 @@ export class DefNameCompletion implements CodeCompletionContributor {
       return null
     }
 
-    const node = selection instanceof Injectable ? selection : selection.parent
-    if (!(node instanceof Injectable)) {
+    const node = selection instanceof TypedElement ? selection : selection.parent
+    if (!(node instanceof TypedElement)) {
       return null
     }
 

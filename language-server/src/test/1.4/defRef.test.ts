@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Def, DefDatabase, Injectable, NameDatabase, parse, Text, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
+import { Def, DefDatabase, NameDatabase, parse, Text, TypedElement, TypeInfoLoader, TypeInfoMap } from '@rwxml/analyzer'
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { DefManager } from '../../defManager'
@@ -139,7 +139,7 @@ describe('def reference test', () => {
       const metallicNode = refXML.findNodeAt(241)!
       expect(metallicNode).toBeDefined()
       expect(metallicNode).toBeInstanceOf(Text)
-      expect(metallicNode?.parent).toBeInstanceOf(Injectable)
+      expect(metallicNode?.parent).toBeInstanceOf(TypedElement)
 
       const defs = definition.findDefinitions(defManager, refXML, 241)
       expect(defs).toHaveLength(1)
