@@ -1,9 +1,9 @@
-import { TypedElement } from './typedElement'
-import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { Element } from '../parser'
-import { TypeInfo } from './typeInfo'
+import { TypedElement } from '../parser/domhandler/typedElement'
+import { Writable } from '../utils/types'
 import { FieldInfo } from './fieldInfo'
+import { TypeInfo } from './typeInfo'
 
 export type DefNameType = string
 
