@@ -1,10 +1,8 @@
 import { ElementType } from 'domelementtype'
 import { sortedFindFirst } from '../../utils/arrays'
-import { Range } from '../range'
 import { Attribute } from './attribute'
 import { Document } from './document'
 import { Node, NodeWithChildren } from './node'
-import { Text } from './text'
 
 /**
  * An element within the DOM.
@@ -30,19 +28,15 @@ export class Element extends NodeWithChildren {
     super(type, children)
   }
 
-  /**
-   * text content of element if exists. returns undefined.d
-   */
-  get content(): string | undefined {
-    if (this.firstChild && this.firstChild instanceof Text) {
-      return this.firstChild.data
-    }
-  }
+  // return content inside <tag>[here]</tag> as a string form.
+  get content(): string {
+    const start = this.contentRange.start
+    const end = this.contentRange.end
 
-  get contentRange(): Range | undefined {
-    if (this.firstChild && this.firstChild instanceof Text) {
-      return this.firstChild.dataRange
-    }
+    // it's wise to just copy the content because
+    // in most cases, content shouldn't long enough to cause performance issue.
+    // when the caller wants to store content, referencing may creates a leak.
+    return this.document.rawText.slice(start, end).repeat(1)
   }
 
   get document(): Document {

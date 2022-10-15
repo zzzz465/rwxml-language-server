@@ -83,6 +83,11 @@ export class Node {
 // NOTE: NodeWithChildren is used by Node, so it cannot be splitted to another file.
 // or else it would make a circular dependency, which is unable to compile.
 export class NodeWithChildren extends Node {
+  /**
+   * contentRange is the range starts after openining tag > and ends before closing tag <
+   */
+  readonly contentRange = new Range()
+
   // Aliases
   get firstChild(): Node | null {
     return this.childNodes[0] ?? null
