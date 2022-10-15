@@ -7,7 +7,6 @@ import { Node } from './node'
  */
 
 export class DataNode extends Node {
-  readonly nodeRange = new Range()
   readonly dataRange = new Range()
 
   /**

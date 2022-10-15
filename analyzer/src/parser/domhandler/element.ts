@@ -10,12 +10,6 @@ import { Text } from './text'
  * An element within the DOM.
  */
 export class Element extends NodeWithChildren {
-  readonly nodeRange = new Range()
-  readonly openTagRange = new Range()
-  readonly openTagNameRange = new Range()
-  readonly closeTagRange = new Range()
-  readonly closeTagNameRange = new Range()
-
   // what about self closing?
   /**
    * @param name Name of the tag, eg. `div`, `span`.
@@ -78,11 +72,11 @@ export class Element extends NodeWithChildren {
     this.name = name
   }
 
-  get attributes() {
+  get attributes(): Attribute[] {
     return Object.values(this.attribs)
   }
 
-  get leafNode() {
+  get leafNode(): boolean {
     return this.ChildElementNodes.length === 0
   }
 
