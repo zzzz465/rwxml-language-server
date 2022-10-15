@@ -104,20 +104,25 @@ export class NodeWithChildren extends Node {
   }
 
   get childNodes(): Node[] {
-    return this.children
+    return this._children
   }
 
   set childNodes(children: Node[]) {
-    this.children = children
+    this._children = children
+  }
+
+  // DOM Level 1 aliases
+  get children(): Node[] {
+    return this._children
   }
 
   /**
    * @param type Type of the node.
-   * @param children Children of the node. Only certain node types can have children.
+   * @param _children Children of the node. Only certain node types can have children.
    */
   constructor(
     type: ElementType.Root | ElementType.CDATA | ElementType.Script | ElementType.Style | ElementType.Tag,
-    private children: Node[]
+    private _children: Node[]
   ) {
     super(type)
   }
