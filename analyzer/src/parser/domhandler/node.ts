@@ -1,3 +1,4 @@
+import * as cheerio from 'cheerio'
 import { ElementType } from 'domelementtype'
 import { Range } from '../range'
 
@@ -76,7 +77,8 @@ export class Node {
    */
   constructor(public type: ElementType) {}
 
-  cloneNode<T extends Node>(recursive?: boolean): T {
+  // DOM Level 1 aliases
+  cloneNode<T extends cheerio.Node>(this: T, recursive = false): T {
     throw new Error('Not implemented')
   }
 }
