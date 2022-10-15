@@ -1,5 +1,4 @@
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
-import { Comment } from './comment'
 import { DataNode } from './dataNode'
 import { Document } from './document'
 import { Element } from './element'
@@ -61,85 +60,4 @@ export function isDocument(node: Node): node is Document {
  */
 export function hasChildren(node: Node): node is NodeWithChildren {
   return Object.prototype.hasOwnProperty.call(node, 'children')
-}
-
-/**
- * Clone a node, and optionally its children.
- *
- * @param recursive Clone child nodes as well.
- * @returns A clone of the node.
- * @deprecated not implemented yet.
- */
-export function cloneNode<T extends Node>(node: T, recursive = false): T {
-  let result: Node
-
-  if (isText(node)) {
-    result = new Text(node.data)
-  } else if (isComment(node)) {
-    result = new Comment(node.data)
-  } else if (isTag(node)) {
-    const children = recursive ? cloneChildren(node.childNodes) : []
-    const clone = new Element(node.name, { ...node.attribs }, children)
-    children.forEach((child) => (child.parent = clone))
-
-    Object.assign(clone.nodeRange, node.nodeRange)
-    Object.assign(clone.openTagRange, node.openTagRange)
-    Object.assign(clone.openTagNameRange, node.openTagNameRange)
-    Object.assign(clone.closeTagRange, node.closeTagRange)
-    Object.assign(clone.closeTagNameRange, node.closeTagNameRange)
-
-    if (node['x-attribsNamespace']) {
-      clone['x-attribsNamespace'] = { ...node['x-attribsNamespace'] }
-    }
-    if (node['x-attribsPrefix']) {
-      clone['x-attribsPrefix'] = { ...node['x-attribsPrefix'] }
-    }
-
-    result = clone
-  } else if (isCDATA(node)) {
-    const children = recursive ? cloneChildren(node.childNodes) : []
-    const clone = new NodeWithChildren(ElementType.CDATA, children)
-    children.forEach((child) => (child.parent = clone))
-    result = clone
-  } else if (isDocument(node)) {
-    const children = recursive ? cloneChildren(node.childNodes) : []
-    const clone = new Document(children)
-    children.forEach((child) => (child.parent = clone))
-
-    if (node['x-mode']) {
-      clone['x-mode'] = node['x-mode']
-    }
-
-    result = clone
-  } else if (isDirective(node)) {
-    const instruction = new ProcessingInstruction(node.name, node.data)
-
-    if (node['x-name'] != null) {
-      instruction['x-name'] = node['x-name']
-      instruction['x-publicId'] = node['x-publicId']
-      instruction['x-systemId'] = node['x-systemId']
-    }
-
-    result = instruction
-  } else {
-    throw new Error(`Not implemented yet: ${node.type}`)
-  }
-
-  result.parent = node.parent
-  result.prev = node.prev
-  result.next = node.next
-  result.startIndex = node.startIndex
-  result.endIndex = node.endIndex
-  return result as T
-}
-
-function cloneChildren(childs: Node[]): Node[] {
-  const children = childs.map((child) => cloneNode(child, true))
-
-  for (let i = 1; i < children.length; i++) {
-    children[i].prev = children[i - 1]
-    children[i - 1].next = children[i]
-  }
-
-  return children
 }
