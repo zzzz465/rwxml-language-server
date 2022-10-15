@@ -1,7 +1,17 @@
 {
-    "files.eol": "\n",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
     "editor.codeActionsOnSave": {
-        "source.fixAll": true
+        "source.fixAll": true,
+        "source.organizeImports": true
     },
-    "editor.tabSize": 2
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }
