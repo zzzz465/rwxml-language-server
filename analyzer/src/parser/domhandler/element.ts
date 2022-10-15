@@ -60,7 +60,7 @@ export class Element extends NodeWithChildren {
   }
 
   get ChildElementNodes(): Element[] {
-    return this.children.filter((node) => node instanceof Element) as Element[]
+    return this.childNodes.filter((node) => node instanceof Element) as Element[]
   }
 
   // DOM Level 1 aliases
@@ -93,9 +93,9 @@ export class Element extends NodeWithChildren {
       return null
     }
 
-    const index = sortedFindFirst(this.children, predicate)
+    const index = sortedFindFirst(this.childNodes, predicate)
     if (index >= 0) {
-      const child = this.children[index]
+      const child = this.childNodes[index]
       if (child instanceof Element) {
         return child.findNodeAt(offset)
       }
@@ -113,7 +113,7 @@ export class Element extends NodeWithChildren {
       result.push(this)
     }
 
-    for (const child of this.children) {
+    for (const child of this.childNodes) {
       if (child instanceof Element) {
         result.push(...child.findNode(predicate))
       }

@@ -167,9 +167,9 @@ export class DomHandler {
 
   protected addNode(node: Node): void {
     const parent = this.tagStack[this.tagStack.length - 1]
-    const previousSibling = parent.children[parent.children.length - 1] as Node | undefined
+    const previousSibling = parent.childNodes[parent.childNodes.length - 1] as Node | undefined
 
-    parent.children.push(node)
+    parent.childNodes.push(node)
 
     if (previousSibling) {
       node.prev = previousSibling

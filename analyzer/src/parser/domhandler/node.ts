@@ -85,11 +85,11 @@ export class Node {
 export class NodeWithChildren extends Node {
   // Aliases
   get firstChild(): Node | null {
-    return this.children[0] ?? null
+    return this.childNodes[0] ?? null
   }
 
   get lastChild(): Node | null {
-    return this.children.length > 0 ? this.children[this.children.length - 1] : null
+    return this.childNodes.length > 0 ? this.childNodes[this.childNodes.length - 1] : null
   }
 
   get childNodes(): Node[] {
@@ -106,7 +106,7 @@ export class NodeWithChildren extends Node {
    */
   constructor(
     type: ElementType.Root | ElementType.CDATA | ElementType.Script | ElementType.Style | ElementType.Tag,
-    public children: Node[]
+    private children: Node[]
   ) {
     super(type)
   }
