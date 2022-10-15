@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import DomHandler, { Comment, Document, Element, Text } from '../../parser/domhandler'
+import { Comment, Document, DomHandler, Element, Text } from '../../parser/domhandler'
 import { Parser } from '../../parser/htmlparser2'
 import $ from 'cheerio'
 import { readFileSync } from 'fs'

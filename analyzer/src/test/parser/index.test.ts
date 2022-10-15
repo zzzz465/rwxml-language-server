@@ -1,5 +1,5 @@
 import $ from 'cheerio'
-import DomHandler from '../../parser/domhandler'
+import { DomHandler } from '../../parser'
 import { Parser } from '../../parser/htmlparser2'
 
 describe('parser test', () => {

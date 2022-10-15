@@ -1,4 +1,4 @@
-import DomHandler from './domhandler'
+import { DomHandler } from './domhandler'
 import { Parser } from './htmlparser2'
 
 export * from './domhandler'

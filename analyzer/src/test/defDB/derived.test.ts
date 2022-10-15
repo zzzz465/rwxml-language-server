@@ -80,52 +80,52 @@ const XML = `\
 `
 
 describe('DefDatabase test', () => {
-  let doc: Document
-  let defDB: DefDatabase
-  const typeInfoMap = TypeInfoLoader.load(typeInfo as any)
-  const injector = new TypeInfoInjector(typeInfoMap)
+	let doc: Document
+	let defDB: DefDatabase
+	const typeInfoMap = TypeInfoLoader.load(typeInfo as any)
+	const injector = new TypeInfoInjector(typeInfoMap)
 
-  let damageKnockbackDef: Def
-  let bulletExecutionerChain: Def
+	let damageKnockbackDef: Def
+	let bulletExecutionerChain: Def
 
-  beforeEach(() => {
-    doc = parse(XML)
-    defDB = new DefDatabase()
-    injector.inject(doc)
+	beforeEach(() => {
+		doc = parse(XML)
+		defDB = new DefDatabase()
+		injector.inject(doc)
 
-    damageKnockbackDef = $(doc).find('Defs > PawnKnockback\\.DamageKnockbackDef').get(0) as unknown as Def
-    bulletExecutionerChain = $(doc).find('Defs > ThingDef').get(0) as unknown as Def
-  })
+		damageKnockbackDef = $(doc).find('Defs > PawnKnockback\\.DamageKnockbackDef').get(0) as unknown as Def
+		bulletExecutionerChain = $(doc).find('Defs > ThingDef').get(0) as unknown as Def
+	})
 
-  test('xml should be parsed as intended types', () => {
-    expect(damageKnockbackDef).toBeInstanceOf(Def)
-    expect(bulletExecutionerChain).toBeInstanceOf(Def)
-  })
+	test('xml should be parsed as intended types', () => {
+		expect(damageKnockbackDef).toBeInstanceOf(Def)
+		expect(bulletExecutionerChain).toBeInstanceOf(Def)
+	})
 
-  test('DefDatabase should return defs by defName', () => {
-    defDB.addDef(damageKnockbackDef)
-    defDB.addDef(bulletExecutionerChain)
+	test('DefDatabase should return defs by defName', () => {
+		defDB.addDef(damageKnockbackDef)
+		defDB.addDef(bulletExecutionerChain)
 
-    let def = defDB.getDefByName('AT_ChainDamageDef')
-    expect(def.length).toBeGreaterThan(0)
+		let def = defDB.getDefByName('AT_ChainDamageDef')
+		expect(def.length).toBeGreaterThan(0)
 
-    const def2 = defDB.getDefByName('BulletExecutionerChain')
-    expect(def2.length).toBeGreaterThan(0)
+		const def2 = defDB.getDefByName('BulletExecutionerChain')
+		expect(def2.length).toBeGreaterThan(0)
 
-    defDB.removeDef(damageKnockbackDef)
-    def = defDB.getDefByName('AT_ChainDamageDef')
-    expect(def.length).toBe(0)
-  })
+		defDB.removeDef(damageKnockbackDef)
+		def = defDB.getDefByName('AT_ChainDamageDef')
+		expect(def.length).toBe(0)
+	})
 
-  test('PawnKnockback.DamageKnockbackDef should be determined as derived class of DamageDef', () => {
-    const damageDefTypeInfo = typeInfoMap.getTypeInfoByName('DamageDef')!
-    expect(damageDefTypeInfo).not.toBeUndefined()
+	test('PawnKnockback.DamageKnockbackDef should be determined as derived class of DamageDef', () => {
+		const damageDefTypeInfo = typeInfoMap.getTypeInfoByName('DamageDef')!
+		expect(damageDefTypeInfo).not.toBeUndefined()
 
-    const derived = damageKnockbackDef.typeInfo
-    expect(isDerivedType(derived, damageDefTypeInfo)).toBeTruthy()
+		const derived = damageKnockbackDef.typeInfo
+		expect(isDerivedType(derived, damageDefTypeInfo)).toBeTruthy()
 
-    const underived = bulletExecutionerChain.typeInfo!
-    expect(underived).not.toBeUndefined()
-    expect(isDerivedType(underived, damageDefTypeInfo)).toBeFalsy()
-  })
+		const underived = bulletExecutionerChain.typeInfo!
+		expect(underived).not.toBeUndefined()
+		expect(isDerivedType(underived, damageDefTypeInfo)).toBeFalsy()
+	})
 })
