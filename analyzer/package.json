@@ -27,6 +27,7 @@
     "preset": "ts-jest"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^3.3.1",
     "@types/double-ended-queue": "^2.1.1",
     "@types/jest": "^26.0.9",
     "@types/js-yaml": "^4.0.2",
