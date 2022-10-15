@@ -86,7 +86,9 @@ export class NodeWithChildren extends Node {
   /**
    * contentRange is the range starts after openining tag > and ends before closing tag <
    */
-  readonly contentRange = new Range()
+  get contentRange(): Range {
+    return new Range(this.openTagRange.end, this.closeTagRange.start)
+  }
 
   // Aliases
   get firstChild(): Node | null {
