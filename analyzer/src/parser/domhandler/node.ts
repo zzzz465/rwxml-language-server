@@ -3,7 +3,7 @@
 // all rights goes to original author.
 
 import { ElementType } from 'domelementtype'
-import { cloneNode } from './utils'
+import { Range } from '../range'
 
 const nodeTypes = new Map<ElementType, number>([
   [ElementType.Tag, 1],
@@ -30,21 +30,25 @@ export class Node {
   /** Next sibling */
   next: Node | null = null
 
-  /**
-   * @deprecated exists for compability. not used.
-   */
-  startIndex: number | null = null
+  readonly nodeRange = new Range()
+  readonly openTagRange = new Range()
+  readonly openTagNameRange = new Range()
+  readonly closeTagRange = new Range()
+  readonly closeTagNameRange = new Range()
 
-  /**
-   * @deprecated exists for compability. not used.
-   */
-  endIndex: number | null = null
+  get startIndex(): number {
+    return this.nodeRange.start
+  }
+
+  get endIndex(): number {
+    return this.nodeRange.end
+  }
 
   /**
    *
    * @param type The type of the node.
    */
-  constructor(public type: ElementType) { }
+  constructor(public type: ElementType) {}
 
   // Read-only aliases
   get nodeType(): number {
@@ -74,20 +78,6 @@ export class Node {
 
   set nextSibling(next: Node | null) {
     this.next = next
-  }
-
-  /**
-   * Clone this node, and optionally its children.
-   *
-   * @param recursive Clone child nodes as well.
-   * @returns A clone of the node.
-   */
-  cloneNode<T extends Node>(this: T, recursive = false): T {
-    return cloneNode(this, recursive)
-  }
-
-  toString(): string {
-    throw new Error('toString not implemented')
   }
 }
 
