@@ -1,5 +1,5 @@
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
-import { Comment } from './Comment'
+import { Comment } from './comment'
 import { DataNode } from './dataNode'
 import { Document } from './document'
 import { Element } from './element'

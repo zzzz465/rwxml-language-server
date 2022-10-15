@@ -1,13 +1,13 @@
 import { ElementType } from 'domelementtype'
 import { Parser } from '../htmlparser2'
+import { Attribute } from './attribute'
+import { Comment } from './comment'
+import { DataNode } from './dataNode'
+import { Document } from './document'
 import { Element } from './element'
 import { Node, NodeWithChildren } from './node'
-import { Comment } from './Comment'
 import { ProcessingInstruction } from './processingInstruction'
-import { DataNode } from './dataNode'
 import { Text } from './text'
-import { Attribute } from './attribute'
-import { Document } from './document'
 
 type Callback = (error: Error | null, dom: Node[]) => void
 type ElementCallback = (element: Element) => void
