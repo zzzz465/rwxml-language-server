@@ -1,15 +1,14 @@
 import { ElementType } from 'domelementtype'
+import { sortedFindFirst } from '../../utils/arrays'
 import { Range } from '../range'
 import { Attribute } from './attribute'
 import { Document } from './document'
 import { Node, NodeWithChildren } from './node'
 import { Text } from './text'
-import { findNode, findNodeAt } from './utils'
 
 /**
  * An element within the DOM.
  */
-
 export class Element extends NodeWithChildren {
   readonly nodeRange = new Range()
   readonly openTagRange = new Range()
@@ -87,16 +86,46 @@ export class Element extends NodeWithChildren {
     return this.ChildElementNodes.length === 0
   }
 
-  findNodeAt(offset: number) {
-    return findNodeAt(this, offset)
+  findNodeAt(offset: number): Node | null {
+    const predicate = (node: Node): boolean => {
+      if (node instanceof Element) {
+        return node.nodeRange.start <= offset
+      }
+
+      return false
+    }
+
+    if (!this.nodeRange.include(offset)) {
+      return null
+    }
+
+    const index = sortedFindFirst(this.children, predicate)
+    if (index >= 0) {
+      const child = this.children[index]
+      if (child instanceof Element) {
+        return child.findNodeAt(offset)
+      }
+
+      // TODO: impl
+    }
+
+    return null
   }
 
   findNode(predicate: (node: Node) => boolean): Element[] {
-    const ret: Element[] = []
+    const result: Element[] = []
 
-    findNode(ret, this, predicate)
+    if (predicate(this)) {
+      result.push(this)
+    }
 
-    return ret
+    for (const child of this.children) {
+      if (child instanceof Element) {
+        result.push(...child.findNode(predicate))
+      }
+    }
+
+    return result
   }
 
   'x-attribsNamespace'?: Record<string, string>

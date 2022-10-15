@@ -1,17 +1,18 @@
 import { ElementType } from 'domelementtype'
-import { Node, NodeWithChildren } from './node'
-import { findNode, findNodeAt } from './utils'
+import { Element } from './element'
+import { Node } from './node'
 
 /**
  * The root node of the document.
  */
 
-export class Document extends NodeWithChildren {
+export class Document extends Element {
   uri: string
   rawText: string
+  'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
 
   constructor(children: Node[], uri?: string, rawText = '') {
-    super(ElementType.Root, children)
+    super(ElementType.Root, {})
     this.uri = uri ?? ''
     this.rawText = rawText
   }
@@ -19,20 +20,6 @@ export class Document extends NodeWithChildren {
   getCharAt(offset: number): string {
     return this.rawText.charAt(offset)
   }
-
-  findNodeAt(offset: number) {
-    return findNodeAt(this, offset)
-  }
-
-  findNode(predicate: (node: Node) => boolean): Node[] {
-    const ret: Node[] = []
-
-    this.children.forEach((childNode) => findNode(ret, childNode, predicate))
-
-    return ret
-  }
-
-  'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
 
   toString(): string {
     return this.rawText
