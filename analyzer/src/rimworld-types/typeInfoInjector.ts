@@ -1,16 +1,16 @@
-import { TypeInfoMap } from './typeInfoMap'
-import { TypeInfo } from './typeInfo'
-import { TypedElement } from './typedElement'
-import { Def } from './def'
-import { FieldInfo } from './fieldInfo'
-import { Document, Element, Text } from '../parser'
 import $ from 'cheerio'
+import { Document, Element, Text } from '../parser'
+import { TypedElement } from '../parser/domhandler/typedElement'
+import { Def } from './def'
 import { DefReference, DefReferenceType } from './defReference'
+import { FieldInfo } from './fieldInfo'
+import { TypeInfo } from './typeInfo'
+import { TypeInfoMap } from './typeInfoMap'
 
 $._options.xmlMode = true
 
 export class TypeInfoInjector {
-  constructor(private typeInfoMap: TypeInfoMap) { }
+  constructor(private typeInfoMap: TypeInfoMap) {}
 
   inject(document: Document) {
     const res = {
@@ -62,12 +62,14 @@ export class TypeInfoInjector {
       const enumerableType = typeInfo.getEnumerableType()
       if (enumerableType) {
         if (enumerableType.customLoader()) {
-          return xmlNode.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
+          return xmlNode.ChildElementNodes.forEach((childNode) =>
+            this.injectCustomLoaderType(childNode, enumerableType)
+          )
         }
 
-        return injectable.ChildElementNodes
-          .filter(node => node.tagName === 'li')
-          .forEach(node => this.injectType(node, enumerableType))
+        return injectable.ChildElementNodes.filter((node) => node.tagName === 'li').forEach((node) =>
+          this.injectType(node, enumerableType)
+        )
       }
     }
 

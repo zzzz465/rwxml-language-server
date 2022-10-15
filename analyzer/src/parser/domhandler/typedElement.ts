@@ -1,9 +1,9 @@
 import { cache, CacheScope, CacheType } from 'cache-decorator'
-import { Element } from '../parser'
-import { Writable } from '../utils/types'
-import { Def } from './def'
-import { FieldInfo } from './fieldInfo'
-import { TypeInfo } from './typeInfo'
+import { Element } from '..'
+import { Def } from '../../rimworld-types/def'
+import { FieldInfo } from '../../rimworld-types/fieldInfo'
+import { TypeInfo } from '../../rimworld-types/typeInfo'
+import { Writable } from '../../utils/types'
 
 export class TypedElement extends Element {
   static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): TypedElement {
