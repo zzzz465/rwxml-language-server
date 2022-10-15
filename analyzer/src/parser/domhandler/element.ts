@@ -7,6 +7,7 @@ import { Node, NodeWithChildren } from './node'
 /**
  * An element within the DOM.
  */
+// TODO: reorder ctor after property
 export class Element extends NodeWithChildren {
   // what about self closing?
   /**
