@@ -12,7 +12,7 @@ export class Document extends Element {
   'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
 
   constructor(children: Node[], uri?: string, rawText = '') {
-    super(ElementType.Root, {})
+    super(ElementType.Root, {}, children)
     this.uri = uri ?? ''
     this.rawText = rawText
   }
