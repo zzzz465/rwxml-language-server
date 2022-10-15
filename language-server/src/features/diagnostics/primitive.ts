@@ -1,4 +1,4 @@
-import { Document, Injectable } from '@rwxml/analyzer'
+import { Document, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -23,13 +23,13 @@ export class PrimitiveValue implements DiagnosticsContributor {
   constructor(private readonly rangeConverter: RangeConverter) {}
 
   getDiagnostics(_: Project, document: Document): { uri: string; diagnostics: ls.Diagnostic[] } {
-    // 1. find all Injectable leaf nodes
+    // 1. find all TypedElementleaf nodes
     const nodes = getNodesBFS(document)
 
     // 2. check type is primitive type
     const primitiveNodes = AsEnumerable(nodes)
-      .Where((node) => node instanceof Injectable)
-      .Cast<Injectable>()
+      .Where((node) => node instanceof TypedElement)
+      .Cast<TypedElement>()
       .Where((node) => isLeafNode(node))
       .ToArray()
 
@@ -47,7 +47,7 @@ export class PrimitiveValue implements DiagnosticsContributor {
     }
   }
 
-  private diagnosisPrimitveNodes(node: Injectable): ls.Diagnostic[] | null {
+  private diagnosisPrimitveNodes(node: TypedElement): ls.Diagnostic[] | null {
     const text = node.content
     if (!text || !node.contentRange) {
       return null

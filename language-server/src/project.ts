@@ -1,4 +1,4 @@
-import { Def, DefDatabase, Document, Injectable, NameDatabase, parse, TypeInfoMap } from '@rwxml/analyzer'
+import { Def, DefDatabase, Document, NameDatabase, parse, TypedElement, TypeInfoMap } from '@rwxml/analyzer'
 import { EventEmitter } from 'events'
 import { either } from 'fp-ts'
 import _ from 'lodash'
@@ -25,7 +25,7 @@ type Events = {
    * @param updatedDocument the document that updated
    * @param dirtyNodes project-wide dirty node due to the document update
    */
-  defChanged(updatedDocument: Document, dirtyNodes: (Injectable | Def)[]): void
+  defChanged(updatedDocument: Document, dirtyNodes: (TypedElement | Def)[]): void
 
   /**
    * @example listen this event to remove any diagnostics.

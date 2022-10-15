@@ -1,4 +1,4 @@
-import { Injectable, Node, Text, TypeInfo } from '@rwxml/analyzer'
+import { Node, Text, TypedElement, TypeInfo } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -10,11 +10,11 @@ import { CodeCompletionContributor } from './contributor'
 @tsyringe.injectable()
 export class Type implements CodeCompletionContributor {
   getCompletion(project: Project, node: Node): ls.CompletionList | null {
-    if (node instanceof Text && node.parent instanceof Injectable) {
-      node = node.parent as Injectable
+    if (node instanceof Text && node.parent instanceof TypedElement) {
+      node = node.parent as TypedElement
     }
 
-    if (!(node instanceof Injectable)) {
+    if (!(node instanceof TypedElement)) {
       return null
     }
 

@@ -1,6 +1,6 @@
 import { Document, parse } from '../../parser'
 import $ from 'cheerio'
-import { Def, Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
+import { Def, TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
 import data from './anty.json'
 
 const xml = `\
@@ -32,14 +32,14 @@ describe('LoadAliasAttribute testing with HairTags', () => {
   })
 
   test('it should be parsed', () => {
-    const node = $(root).find('Defs > HairDef').get(0) as unknown as Injectable
+    const node = $(root).find('Defs > HairDef').get(0) as unknown as TypedElement
 
     expect(node).toBeInstanceOf(Def)
   })
 
   test('loadAliased property hairTags should be injected', () => {
-    const node = $(root).find('Defs > HairDef > hairTags').get(0) as unknown as Injectable
+    const node = $(root).find('Defs > HairDef > hairTags').get(0) as unknown as TypedElement
 
-    expect(node).toBeInstanceOf(Injectable)
+    expect(node).toBeInstanceOf(TypedElement)
   })
 })

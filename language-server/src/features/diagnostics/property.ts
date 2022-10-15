@@ -1,4 +1,4 @@
-import { Def, Document, Element, Injectable, Node } from '@rwxml/analyzer'
+import { Def, Document, Element, Node, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -77,7 +77,7 @@ export class Property implements DiagnosticsContributor {
         out.push(childNode)
       }
 
-      if (childNode instanceof Injectable) {
+      if (childNode instanceof TypedElement) {
         this.collectNonInjectedNodesInternal(childNode, out)
       }
     }

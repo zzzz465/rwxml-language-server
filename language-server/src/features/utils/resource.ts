@@ -1,4 +1,4 @@
-import { Injectable } from '@rwxml/analyzer'
+import { TypedElement } from '@rwxml/analyzer'
 import { Project } from '../../project'
 
 /*
@@ -32,7 +32,7 @@ export const enum TextureResourceType {
   Unknown,
 }
 
-export function getTextureResourceNodeType(project: Project, node: Injectable): TextureResourceType {
+export function getTextureResourceNodeType(project: Project, node: TypedElement): TextureResourceType {
   const name = node.name
 
   switch (name) {

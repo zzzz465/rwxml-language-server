@@ -1,5 +1,5 @@
 import { parse } from "../../parser"
-import { DefReference, DefReferenceType, Injectable } from "../../rimworld-types"
+import { DefReference, DefReferenceType, TypedElement } from "../../rimworld-types"
 import { injector_1_4 } from "../data/injector"
 
 describe('enumerable type injection test', () => {
@@ -33,15 +33,15 @@ describe('enumerable type injection test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const rootNode = doc.findNodeAt(365)! as Injectable
+    const rootNode = doc.findNodeAt(365)! as TypedElement
     expect(rootNode).toBeDefined()
-    expect(rootNode).toBeInstanceOf(Injectable)
+    expect(rootNode).toBeInstanceOf(TypedElement)
     expect(rootNode.typeInfo.className.startsWith('SlateRef`1')).toBe(true) // `1 = one generic argument
     expect(rootNode.typeInfo.isEnumerable()).not.toBeTruthy()
 
-    const liNode = doc.findNodeAt(394)! as Injectable // 1 node
+    const liNode = doc.findNodeAt(394)! as TypedElement // 1 node
     expect(liNode).toBeDefined()
-    expect(liNode).toBeInstanceOf(Injectable)
+    expect(liNode).toBeInstanceOf(TypedElement)
     expect(liNode.typeInfo.className).toBe('QuestNode_GetSitePartDefsByTagsAndFaction+SitePartOption')
   })
 
@@ -60,9 +60,9 @@ describe('enumerable type injection test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const liNode = doc.findNodeAt(157)! as Injectable
+    const liNode = doc.findNodeAt(157)! as TypedElement
     expect(liNode).toBeDefined()
-    expect(liNode).toBeInstanceOf(Injectable)
+    expect(liNode).toBeInstanceOf(TypedElement)
     expect(liNode.typeInfo.className).toBe('String')
   })
 
@@ -91,9 +91,9 @@ describe('enumerable type injection test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const raidLootValueNode = doc.findNodeAt(235)! as Injectable
+    const raidLootValueNode = doc.findNodeAt(235)! as TypedElement
     expect(raidLootValueNode).toBeDefined()
-    expect(raidLootValueNode).toBeInstanceOf(Injectable)
+    expect(raidLootValueNode).toBeInstanceOf(TypedElement)
     expect(raidLootValueNode.typeInfo.isListStructured()).toBeFalsy()
   })
 
@@ -117,9 +117,9 @@ describe('enumerable type injection test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const statOffsetsNode = doc.findNodeAt(140)! as Injectable
+    const statOffsetsNode = doc.findNodeAt(140)! as TypedElement
     expect(statOffsetsNode).toBeDefined()
-    expect(statOffsetsNode).toBeInstanceOf(Injectable)
+    expect(statOffsetsNode).toBeInstanceOf(TypedElement)
 
     const genType = statOffsetsNode.typeInfo.getEnumerableType()!
     expect(genType).toBeDefined()
@@ -157,9 +157,9 @@ describe('enumerable type injection test', () => {
     const doc = parse(xml)
     injector_1_4.inject(doc)
 
-    const li_0_Node = doc.findNodeAt(120)! as Injectable
+    const li_0_Node = doc.findNodeAt(120)! as TypedElement
     expect(li_0_Node).toBeDefined()
-    expect(li_0_Node).toBeInstanceOf(Injectable)
+    expect(li_0_Node).toBeInstanceOf(TypedElement)
     expect(li_0_Node.typeInfo.isEnumerable()).toBeTruthy()
     expect(li_0_Node.typeInfo.isListStructured()).toBeTruthy()
     expect(li_0_Node.typeInfo.isList()).toBeTruthy()

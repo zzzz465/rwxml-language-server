@@ -1,4 +1,4 @@
-import { Def, Document, Element, Injectable } from '@rwxml/analyzer'
+import { Def, Document, Element, TypedElement } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -28,7 +28,7 @@ export class DuplicatedNode implements DiagnosticsContributor {
     const nodes = getNodesBFS(document)
 
     for (const node of nodes) {
-      if (!(node instanceof Injectable || node instanceof Def)) {
+      if (!(node instanceof TypedElement || node instanceof Def)) {
         continue
       }
 
@@ -49,7 +49,7 @@ export class DuplicatedNode implements DiagnosticsContributor {
    * @param node
    * @returns
    */
-  getDuplicatedNodes(node: Def | Injectable): { tagName: string; nodes: Element[] }[] {
+  getDuplicatedNodes(node: Def | TypedElement): { tagName: string; nodes: Element[] }[] {
     if (node.typeInfo.isList() || node.typeInfo.isDictionary()) {
       return []
     }

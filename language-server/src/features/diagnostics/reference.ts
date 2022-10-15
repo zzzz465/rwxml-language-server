@@ -27,7 +27,7 @@ export class Reference implements DiagnosticsContributor {
 
   getDiagnostics(project: Project, document: DocumentWithNodeMap): { uri: string; diagnostics: ls.Diagnostic[] } {
     // 1. grab all def from document
-    // 2. get all injectable referencing this document?
+    // 2. get all typedElement referencing this document?
     // 3. ignore non-project documents
 
     if (project.resourceStore.isDependencyFile(document.uri)) {
@@ -45,7 +45,7 @@ export class Reference implements DiagnosticsContributor {
   private diagnoseUnresolvedReferences(project: Project, document: DocumentWithNodeMap): ls.Diagnostic[] {
     const diagnostics: ls.Diagnostic[] = []
 
-    for (const ref of document.injectables) {
+    for (const ref of document.typedElements) {
       const contentRange = getContentRange(this._toRange, ref)
       if (option.isNone(contentRange)) {
         continue

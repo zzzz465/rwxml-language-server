@@ -1,4 +1,4 @@
-import { Injectable, Node, Text } from '@rwxml/analyzer'
+import { Node, Text, TypedElement } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { getMatchingText } from '../../data-structures/trie-ext'
@@ -10,11 +10,11 @@ import { CodeCompletionContributor } from './contributor'
 @tsyringe.injectable()
 export class Enum implements CodeCompletionContributor {
   getCompletion(_: Project, node: Node, offset: number): ls.CompletionList | null {
-    if (node instanceof Text && node.parent instanceof Injectable) {
-      node = node.parent as Injectable
+    if (node instanceof Text && node.parent instanceof TypedElement) {
+      node = node.parent as TypedElement
     }
 
-    if (!(node instanceof Injectable) || !node.typeInfo.isEnum || !isLeafNode(node) || !node.contentRange) {
+    if (!(node instanceof TypedElement) || !node.typeInfo.isEnum || !isLeafNode(node) || !node.contentRange) {
       return null
     }
 

@@ -1,10 +1,10 @@
-import { Injectable, TypeInfo } from '@rwxml/analyzer'
+import { TypedElement, TypeInfo } from '@rwxml/analyzer'
 
 export function getCsharpFieldCodeBlock(name: string, accessor: string, type: string): string {
   return ['```csharp', `${accessor} ${type} ${name};`, '```'].join('\n')
 }
 
-export function getClassNameCodeBlock(node: Injectable, showInherits = true): string {
+export function getClassNameCodeBlock(node: TypedElement, showInherits = true): string {
   const className = getClassName(node.typeInfo)
   const texts = ['```csharp', `class ${className}`]
 

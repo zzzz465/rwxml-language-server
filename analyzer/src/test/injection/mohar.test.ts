@@ -1,6 +1,6 @@
 import { Element, parse } from '../../parser'
 import $ from 'cheerio'
-import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
+import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 
 $._options.xmlMode = true
@@ -50,8 +50,8 @@ describe('TypeInfo injection test against HediffDef with mohar', () => {
 
     injector.inject(root)
 
-    const injectable = $(root).find('Defs > HediffDef > comps > li').get(0) as unknown as Injectable
-    expect(injectable).toBeInstanceOf(Injectable)
+    const injectable = $(root).find('Defs > HediffDef > comps > li').get(0) as unknown as TypedElement
+    expect(injectable).toBeInstanceOf(TypedElement)
     expect(injectable.typeInfo.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
   })
 })

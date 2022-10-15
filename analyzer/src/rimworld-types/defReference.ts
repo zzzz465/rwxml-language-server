@@ -1,6 +1,6 @@
 import { Element } from "../parser";
 import { Writable } from "../utils/types";
-import { Injectable } from "./injectable";
+import { TypedElement } from "./typedElement";
 import { TypeInfo } from "./typeInfo";
 
 // const enum cannot be used, it will break test cases.
@@ -22,7 +22,7 @@ export class DefReference extends Element {
   }
 
   readonly typeInfo!: TypeInfo
-  readonly parent!: Injectable
+  readonly parent!: TypedElement
   readonly refType!: DefReferenceType
 
   private constructor() {

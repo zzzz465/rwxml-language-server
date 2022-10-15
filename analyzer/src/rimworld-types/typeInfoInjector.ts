@@ -1,6 +1,6 @@
 import { TypeInfoMap } from './typeInfoMap'
 import { TypeInfo } from './typeInfo'
-import { Injectable } from './injectable'
+import { TypedElement } from './typedElement'
 import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
 import { Document, Element, Text } from '../parser'
@@ -41,7 +41,7 @@ export class TypeInfoInjector {
 
     if (defTypeInfo) {
       this.injectType(xmlNode, defTypeInfo)
-      Def.toDef(xmlNode as Injectable)
+      Def.toDef(xmlNode as TypedElement)
       return true
     } else {
       return false
@@ -56,7 +56,7 @@ export class TypeInfoInjector {
       return this.injectType(xmlNode, overridedTypeInfo, fieldInfo)
     }
 
-    const injectable = Injectable.toInjectable(xmlNode, typeInfo, fieldInfo)
+    const injectable = TypedElement.toInjectable(xmlNode, typeInfo, fieldInfo)
 
     if (typeInfo.isListStructured()) {
       const enumerableType = typeInfo.getEnumerableType()

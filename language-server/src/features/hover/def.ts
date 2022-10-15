@@ -1,4 +1,4 @@
-import { Def, Element, Injectable } from '@rwxml/analyzer'
+import { Def, Element, TypedElement } from '@rwxml/analyzer'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
 import { MarkupKind } from 'vscode-languageserver'
@@ -14,7 +14,7 @@ export class DefHoverProvider {
   })
 
   onDefHover(node: Def, offset: number): ls.Hover | null {
-    const value = getClassNameCodeBlock(node as Element as Injectable)
+    const value = getClassNameCodeBlock(node as Element as TypedElement)
     return { contents: { kind: MarkupKind.Markdown, value } }
   }
 }

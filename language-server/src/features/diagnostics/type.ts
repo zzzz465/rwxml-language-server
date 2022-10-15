@@ -1,4 +1,4 @@
-import { Document, Injectable, TypeInfoMap } from '@rwxml/analyzer'
+import { Document, TypedElement, TypeInfoMap } from '@rwxml/analyzer'
 import { AsEnumerable } from 'linq-es2015'
 import * as tsyringe from 'tsyringe'
 import * as ls from 'vscode-languageserver'
@@ -16,8 +16,8 @@ export class Type implements DiagnosticsContributor {
     const typeInfoMap = project.defManager.typeInfoMap
 
     const typeNodes = AsEnumerable(nodes)
-      .Where((node) => node instanceof Injectable)
-      .Cast<Injectable>()
+      .Where((node) => node instanceof TypedElement)
+      .Cast<TypedElement>()
       .Where((node) => node.typeInfo.isType())
       .ToArray()
 
@@ -34,7 +34,7 @@ export class Type implements DiagnosticsContributor {
     }
   }
 
-  private diagnosisTypeNode(typeInfoMap: TypeInfoMap, node: Injectable): ls.Diagnostic[] | null {
+  private diagnosisTypeNode(typeInfoMap: TypeInfoMap, node: TypedElement): ls.Diagnostic[] | null {
     if (!node.contentRange) {
       return null
     }

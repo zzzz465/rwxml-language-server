@@ -1,6 +1,6 @@
 import { Element, parse } from '../../parser'
 import $ from 'cheerio'
-import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
+import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import core from './anty.json'
 
 $._options.xmlMode = true
@@ -118,6 +118,6 @@ describe('TypeInfo injection test against BodyDef', () => {
     injector.inject(root)
 
     const injectable = $(root).find('Defs > BodyDef > corePart > def').get(0)
-    expect(injectable).toBeInstanceOf(Injectable)
+    expect(injectable).toBeInstanceOf(TypedElement)
   })
 })

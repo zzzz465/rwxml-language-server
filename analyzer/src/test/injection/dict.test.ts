@@ -1,6 +1,6 @@
 import { Document, parse } from '../../parser'
 import $ from 'cheerio'
-import { Injectable, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
+import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
 import data from './anty.json'
 import { injector_1_4 } from '../data/injector'
 
@@ -55,22 +55,22 @@ describe('Dictionary K, V type test', () => {
   test('dictionary type should be parsed as generic', () => {
     const dictNode = $(root)
       .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings')
-      .get(0) as unknown as Injectable
+      .get(0) as unknown as TypedElement
 
     expect(dictNode).not.toBeUndefined()
-    expect(dictNode).toBeInstanceOf(Injectable)
+    expect(dictNode).toBeInstanceOf(TypedElement)
   })
 
   test('dictionary K, V should have li as key with type K', () => {
     const nodes = $(root)
       .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > key')
-      .toArray() as unknown as Injectable[]
+      .toArray() as unknown as TypedElement[]
 
     expect(nodes.length).toBeGreaterThan(0)
 
     for (const node of nodes) {
       expect(node.tagName).toBe('key')
-      expect(node).toBeInstanceOf(Injectable)
+      expect(node).toBeInstanceOf(TypedElement)
       expect(node.typeInfo.isType()).toBeTruthy()
     }
   })
@@ -78,13 +78,13 @@ describe('Dictionary K, V type test', () => {
   test('dictionary K, V should have value as value with type V', () => {
     const nodes = $(root)
       .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > value')
-      .toArray() as unknown as Injectable[]
+      .toArray() as unknown as TypedElement[]
 
     expect(nodes.length).toBeGreaterThan(0)
 
     for (const node of nodes) {
       expect(node.tagName).toBe('value')
-      expect(node).toBeInstanceOf(Injectable)
+      expect(node).toBeInstanceOf(TypedElement)
       expect(node.typeInfo.fullName).toBe('AlienRace.StyleSettings')
     }
   })
@@ -112,13 +112,13 @@ describe('Dictionary K, V type test', () => {
     const root = parse(xml)
     injector_1_4.inject(root)
 
-    const styleSettingsNode = root.findNodeAt(164) as Injectable
+    const styleSettingsNode = root.findNodeAt(164) as TypedElement
     expect(styleSettingsNode).toBeDefined()
-    expect(styleSettingsNode).toBeInstanceOf(Injectable)
+    expect(styleSettingsNode).toBeInstanceOf(TypedElement)
     expect(styleSettingsNode.typeInfo.isDictionary()).toBe(true)
 
-    const liNode = root.findNodeAt(203) as Injectable
+    const liNode = root.findNodeAt(203) as TypedElement
     expect(liNode).toBeDefined()
-    expect(liNode).toBeInstanceOf(Injectable)
+    expect(liNode).toBeInstanceOf(TypedElement)
   })
 })

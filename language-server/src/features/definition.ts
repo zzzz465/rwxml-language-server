@@ -1,4 +1,4 @@
-import { Def, Document, Injectable, Text } from '@rwxml/analyzer'
+import { Def, Document, Text, TypedElement } from '@rwxml/analyzer'
 import { option } from 'fp-ts'
 import { sequenceT } from 'fp-ts/lib/Apply'
 import { flow } from 'fp-ts/lib/function'
@@ -46,7 +46,7 @@ export class Definition {
       return [] // TODO: return null
     }
 
-    if (node instanceof Text && node.parent instanceof Injectable && node.parent.typeInfo.isDef()) {
+    if (node instanceof Text && node.parent instanceof TypedElement && node.parent.typeInfo.isDef()) {
       // when cursor pointing text (referencing defName)
       const defType = node.parent.typeInfo.getDefType()
       let defName = node.data
@@ -77,7 +77,7 @@ export class Definition {
       return []
     }
 
-    if (node.value instanceof Text && node.value.parent instanceof Injectable && node.value.parent.typeInfo.isDef()) {
+    if (node.value instanceof Text && node.value.parent instanceof TypedElement && node.value.parent.typeInfo.isDef()) {
       const defType = node.value.parent.typeInfo.getDefType() ?? ''
       let defName = node.value.data
       if (isGeneratedDef(defName)) {

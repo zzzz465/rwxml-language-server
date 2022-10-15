@@ -1,5 +1,5 @@
 import { parse } from '../..'
-import { Injectable } from '../../rimworld-types'
+import { TypedElement } from '../../rimworld-types'
 import { getInjector } from './utils'
 import cheerio from 'cheerio'
 
@@ -67,17 +67,17 @@ describe('SoundDef TypeInfo injection test', () => {
 
     const $ = cheerio.load(root, { xmlMode: true })
 
-    const clipPathNode = $('clipPath').get(0) as unknown as Injectable
-    const li = $('grains > li').get(0) as unknown as Injectable
+    const clipPathNode = $('clipPath').get(0) as unknown as TypedElement
+    const li = $('grains > li').get(0) as unknown as TypedElement
 
-    expect(li).toBeInstanceOf(Injectable)
+    expect(li).toBeInstanceOf(TypedElement)
 
     const attrib = li.attribs['Class']
     expect(attrib).not.toBeUndefined()
     expect(attrib.name).toEqual('Class')
     expect(attrib.value).toEqual('AudioGrain_Clip')
 
-    expect(clipPathNode).toBeInstanceOf(Injectable)
+    expect(clipPathNode).toBeInstanceOf(TypedElement)
     expect(clipPathNode.parent.typeInfo.className).toEqual('AudioGrain_Clip')
   })
 
@@ -89,13 +89,13 @@ describe('SoundDef TypeInfo injection test', () => {
 
     const $ = cheerio.load(root, { xmlMode: true })
 
-    const liNode = $('grains > li').get(0) as unknown as Injectable
-    const clipPathNode = $('grains > li > clipPath').get(0) as unknown as Injectable
+    const liNode = $('grains > li').get(0) as unknown as TypedElement
+    const clipPathNode = $('grains > li > clipPath').get(0) as unknown as TypedElement
 
-    expect(liNode).toBeInstanceOf(Injectable)
+    expect(liNode).toBeInstanceOf(TypedElement)
     expect(liNode.attribs['Class']?.value).toEqual('AudioGrain_Clip')
     expect(liNode.typeInfo.className).toEqual('AudioGrain_Clip')
 
-    expect(clipPathNode).toBeInstanceOf(Injectable)
+    expect(clipPathNode).toBeInstanceOf(TypedElement)
   })
 })
