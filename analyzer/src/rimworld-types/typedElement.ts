@@ -1,9 +1,9 @@
-import { TypeInfo } from './typeInfo'
-import { FieldInfo } from './fieldInfo'
-import { Writable } from '../utils/types'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { Element } from '../parser'
+import { Writable } from '../utils/types'
 import { Def } from './def'
+import { FieldInfo } from './fieldInfo'
+import { TypeInfo } from './typeInfo'
 
 export class TypedElement extends Element {
   static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): TypedElement {
@@ -37,7 +37,7 @@ export class TypedElement extends Element {
     if (parentDefPath) {
       if (this.parent.typeInfo.isList()) {
         // TODO: add rule which doesn't use <li> node
-        const index = this.parent.children.indexOf(this)
+        const index = this.parent.childNodes.indexOf(this)
         return parentDefPath + '.' + String(index)
       } else {
         return parentDefPath + '.' + this.name

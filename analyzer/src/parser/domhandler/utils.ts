@@ -78,7 +78,7 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
   } else if (isComment(node)) {
     result = new Comment(node.data)
   } else if (isTag(node)) {
-    const children = recursive ? cloneChildren(node.children) : []
+    const children = recursive ? cloneChildren(node.childNodes) : []
     const clone = new Element(node.name, { ...node.attribs }, children)
     children.forEach((child) => (child.parent = clone))
 
@@ -97,12 +97,12 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
 
     result = clone
   } else if (isCDATA(node)) {
-    const children = recursive ? cloneChildren(node.children) : []
+    const children = recursive ? cloneChildren(node.childNodes) : []
     const clone = new NodeWithChildren(ElementType.CDATA, children)
     children.forEach((child) => (child.parent = clone))
     result = clone
   } else if (isDocument(node)) {
-    const children = recursive ? cloneChildren(node.children) : []
+    const children = recursive ? cloneChildren(node.childNodes) : []
     const clone = new Document(children)
     children.forEach((child) => (child.parent = clone))
 
