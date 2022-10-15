@@ -1,7 +1,3 @@
-/* eslint-disable prettier/prettier */
-// original source code: https://github.com/fb55/domhandler
-// all rights goes to original author.
-
 import { ElementType } from 'domelementtype'
 import { Range } from '../range'
 
