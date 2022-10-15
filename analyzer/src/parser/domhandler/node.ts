@@ -125,8 +125,6 @@ export class NodeWithChildren extends Node {
     this.children = children
   }
 
-  findNodeAt(node: )
-
   toString(): string {
     return this.childNodes.map((node) => node.toString()).join('')
   }

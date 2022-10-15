@@ -1,5 +1,4 @@
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
-import { sortedFindFirst } from '../../utils/arrays'
 import { Comment } from './Comment'
 import { DataNode } from './dataNode'
 import { Document } from './document'

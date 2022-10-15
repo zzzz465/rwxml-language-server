@@ -1,7 +1,6 @@
 import { ElementType } from 'domelementtype'
 import { Range } from '../range'
 import { Node } from './node'
-import { findNodeAt, RangedNode } from './utils'
 
 /**
  * A node that contains some data.
@@ -41,8 +40,8 @@ export class DataNode extends Node {
     return node
   }
 
-  findNodeAt(offset: number): RangedNode | undefined {
-    return findNodeAt(this, offset)
+  findNodeAt(offset: number): Node | null {
+    throw new Error('Method not implemented.')
   }
 
   toString(): string {
