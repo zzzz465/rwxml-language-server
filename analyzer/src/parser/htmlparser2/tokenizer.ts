@@ -1,8 +1,8 @@
 // source code: https://github.com/fb55/htmlparser2
 // all rights goes to original author.
 /* eslint-disable prettier/prettier */
+import { BinTrieFlags, determineBranch, xmlDecodeTree } from 'entities/lib/decode'
 import decodeCodePoint from 'entities/lib/decode_codepoint'
-import { xmlDecodeTree, BinTrieFlags, determineBranch } from 'entities/lib/decode'
 
 const enum CharCodes {
   Tab = 0x9, // "\t"
@@ -164,11 +164,11 @@ export interface Callbacks {
   ontext(value: string): void
 }
 
-function ifElseState(upper: string, SUCCESS: State, FAILURE: State) {
+function ifElseState(upper: string, SUCCESS: State, FAILURE: State): (t: Tokenizer, c: number) => void {
   const upperCode = upper.charCodeAt(0)
   const lowerCode = upper.toLowerCase().charCodeAt(0)
 
-  return (t: Tokenizer, c: number) => {
+  return (t: Tokenizer, c: number): void => {
     if (c === lowerCode || c === upperCode) {
       t._state = SUCCESS
     } else {
@@ -308,7 +308,7 @@ export class Tokenizer {
     return this.bufferOffset + this._index
   }
 
-  private stateText(c: number) {
+  private stateText(c: number): void {
     if (c === CharCodes.Lt) {
       // <
       if (this._index > this.sectionStart) {
@@ -335,10 +335,10 @@ export class Tokenizer {
    * XML allows a lot more characters here (@see https://www.w3.org/TR/REC-xml/#NT-NameStartChar).
    * We allow anything that wouldn't end the tag.
    */
-  private isTagStartChar(c: number) {
+  private isTagStartChar(c: number): boolean {
     return isASCIIAlpha(c) || (this.xmlMode && !whitespace(c) && c !== CharCodes.Slash && c !== CharCodes.Gt)
   }
-  private stateBeforeTagName(c: number) {
+  private stateBeforeTagName(c: number): void {
     if (c === CharCodes.Slash) {
       this._state = State.BeforeClosingTagName
     } else if (c === CharCodes.Lt) {
@@ -360,7 +360,7 @@ export class Tokenizer {
       this.sectionStart = this._index
     }
   }
-  private stateInTagName(c: number) {
+  private stateInTagName(c: number): void {
     if (c === CharCodes.Slash || c === CharCodes.Gt || whitespace(c)) {
       this.cbs.onopentagname(this.getSection())
       this.sectionStart = -1
@@ -368,7 +368,7 @@ export class Tokenizer {
       this.stateBeforeAttributeName(c)
     }
   }
-  private stateBeforeClosingTagName(c: number) {
+  private stateBeforeClosingTagName(c: number): void {
     if (whitespace(c)) {
       // Ignore
     } else if (c === CharCodes.Gt) {
@@ -396,7 +396,7 @@ export class Tokenizer {
       this.sectionStart = this._index
     }
   }
-  private stateInClosingTagName(c: number) {
+  private stateInClosingTagName(c: number): void {
     if (c === CharCodes.Gt || whitespace(c)) {
       // > or " "
       this.cbs.onclosetag(this.getSection())
@@ -405,14 +405,14 @@ export class Tokenizer {
       this.stateAfterClosingTagName(c)
     }
   }
-  private stateAfterClosingTagName(c: number) {
+  private stateAfterClosingTagName(c: number): void {
     // Skip everything until ">"
     if (c === CharCodes.Gt) {
       this._state = State.Text
       this.sectionStart = this._index + 1
     }
   }
-  private stateBeforeAttributeName(c: number) {
+  private stateBeforeAttributeName(c: number): void {
     if (c === CharCodes.Gt) {
       this.cbs.onopentagend()
       this._state = State.Text
@@ -424,7 +424,7 @@ export class Tokenizer {
       this.sectionStart = this._index
     }
   }
-  private stateInSelfClosingTag(c: number) {
+  private stateInSelfClosingTag(c: number): void {
     if (c === CharCodes.Gt) {
       this.cbs.onselfclosingtag()
       this._state = State.Text
@@ -435,7 +435,7 @@ export class Tokenizer {
       this.stateBeforeAttributeName(c)
     }
   }
-  private stateInAttributeName(c: number) {
+  private stateInAttributeName(c: number): void {
     if (c === CharCodes.Eq || c === CharCodes.Slash || c === CharCodes.Gt || whitespace(c)) {
       this.cbs.onattribname(this.getSection())
       this.sectionStart = -1
@@ -443,7 +443,7 @@ export class Tokenizer {
       this.stateAfterAttributeName(c)
     }
   }
-  private stateAfterAttributeName(c: number) {
+  private stateAfterAttributeName(c: number): void {
     if (c === CharCodes.Eq) {
       this._state = State.BeforeAttributeValue
     } else if (c === CharCodes.Slash || c === CharCodes.Gt) {
@@ -456,7 +456,7 @@ export class Tokenizer {
       this.sectionStart = this._index
     }
   }
-  private stateBeforeAttributeValue(c: number) {
+  private stateBeforeAttributeValue(c: number): void {
     if (c === CharCodes.DoubleQuote) {
       this._state = State.InAttributeValueDq
       this.sectionStart = this._index + 1
@@ -469,7 +469,7 @@ export class Tokenizer {
       this.stateInAttributeValueNoQuotes(c) // Reconsume token
     }
   }
-  private handleInAttributeValue(c: number, quote: number) {
+  private handleInAttributeValue(c: number, quote: number): void {
     if (c === quote) {
       this.cbs.onattribdata(this.getSection())
       this.sectionStart = -1
@@ -482,13 +482,13 @@ export class Tokenizer {
       this.sectionStart = this._index
     }
   }
-  private stateInAttributeValueDoubleQuotes(c: number) {
+  private stateInAttributeValueDoubleQuotes(c: number): void {
     this.handleInAttributeValue(c, CharCodes.DoubleQuote)
   }
-  private stateInAttributeValueSingleQuotes(c: number) {
+  private stateInAttributeValueSingleQuotes(c: number): void {
     this.handleInAttributeValue(c, CharCodes.SingleQuote)
   }
-  private stateInAttributeValueNoQuotes(c: number) {
+  private stateInAttributeValueNoQuotes(c: number): void {
     if (whitespace(c) || c === CharCodes.Gt) {
       this.cbs.onattribdata(this.getSection())
       this.sectionStart = -1
@@ -502,29 +502,30 @@ export class Tokenizer {
       this.sectionStart = this._index
     }
   }
-  private stateBeforeDeclaration(c: number) {
+  private stateBeforeDeclaration(c: number): void {
     this._state =
+      // prettier-ignore
       c === CharCodes.OpeningSquareBracket
         ? State.BeforeCdata1
         : c === CharCodes.Dash
           ? State.BeforeComment
           : State.InDeclaration
   }
-  private stateInDeclaration(c: number) {
+  private stateInDeclaration(c: number): void {
     if (c === CharCodes.Gt) {
       this.cbs.ondeclaration(this.getSection())
       this._state = State.Text
       this.sectionStart = this._index + 1
     }
   }
-  private stateInProcessingInstruction(c: number) {
+  private stateInProcessingInstruction(c: number): void {
     if (c === CharCodes.Gt) {
       this.cbs.onprocessinginstruction(this.getSection())
       this._state = State.Text
       this.sectionStart = this._index + 1
     }
   }
-  private stateBeforeComment(c: number) {
+  private stateBeforeComment(c: number): void {
     if (c === CharCodes.Dash) {
       this._state = State.InComment
       this.sectionStart = this._index + 1
@@ -532,24 +533,24 @@ export class Tokenizer {
       this._state = State.InDeclaration
     }
   }
-  private stateInComment(c: number) {
+  private stateInComment(c: number): void {
     if (c === CharCodes.Dash) this._state = State.AfterComment1
   }
-  private stateInSpecialComment(c: number) {
+  private stateInSpecialComment(c: number): void {
     if (c === CharCodes.Gt) {
       this.cbs.oncomment(this.buffer.substring(this.sectionStart, this._index))
       this._state = State.Text
       this.sectionStart = this._index + 1
     }
   }
-  private stateAfterComment1(c: number) {
+  private stateAfterComment1(c: number): void {
     if (c === CharCodes.Dash) {
       this._state = State.AfterComment2
     } else {
       this._state = State.InComment
     }
   }
-  private stateAfterComment2(c: number) {
+  private stateAfterComment2(c: number): void {
     if (c === CharCodes.Gt) {
       // Remove 2 trailing chars
       this.cbs.oncomment(this.buffer.substring(this.sectionStart, this._index - 2))
@@ -560,7 +561,7 @@ export class Tokenizer {
     }
     // Else: stay in AFTER_COMMENT_2 (`--->`)
   }
-  private stateBeforeCdata6(c: number) {
+  private stateBeforeCdata6(c: number): void {
     if (c === CharCodes.OpeningSquareBracket) {
       this._state = State.InCdata
       this.sectionStart = this._index + 1
@@ -569,14 +570,14 @@ export class Tokenizer {
       this.stateInDeclaration(c)
     }
   }
-  private stateInCdata(c: number) {
+  private stateInCdata(c: number): void {
     if (c === CharCodes.ClosingSquareBracket) this._state = State.AfterCdata1
   }
-  private stateAfterCdata1(c: number) {
+  private stateAfterCdata1(c: number): void {
     if (c === CharCodes.ClosingSquareBracket) this._state = State.AfterCdata2
     else this._state = State.InCdata
   }
-  private stateAfterCdata2(c: number) {
+  private stateAfterCdata2(c: number): void {
     if (c === CharCodes.Gt) {
       // Remove 2 trailing chars
       this.cbs.oncdata(this.buffer.substring(this.sectionStart, this._index - 2))
@@ -587,7 +588,7 @@ export class Tokenizer {
     }
     // Else: stay in AFTER_CDATA_2 (`]]]>`)
   }
-  private stateBeforeSpecialS(c: number) {
+  private stateBeforeSpecialS(c: number): void {
     if (c === CharCodes.LowerC || c === CharCodes.UpperC) {
       this._state = State.BeforeScript1
     } else if (c === CharCodes.LowerT || c === CharCodes.UpperT) {
@@ -597,21 +598,21 @@ export class Tokenizer {
       this.stateInTagName(c) // Consume the token again
     }
   }
-  private stateBeforeSpecialSEnd(c: number) {
+  private stateBeforeSpecialSEnd(c: number): void {
     if (this.special === Special.Script && (c === CharCodes.LowerC || c === CharCodes.UpperC)) {
       this._state = State.AfterScript1
     } else if (this.special === Special.Style && (c === CharCodes.LowerT || c === CharCodes.UpperT)) {
       this._state = State.AfterStyle1
     } else this._state = State.Text
   }
-  private stateBeforeSpecialLast(c: number, special: Special) {
+  private stateBeforeSpecialLast(c: number, special: Special): void {
     if (c === CharCodes.Slash || c === CharCodes.Gt || whitespace(c)) {
       this.special = special
     }
     this._state = State.InTagName
     this.stateInTagName(c) // Consume the token again
   }
-  private stateAfterSpecialLast(c: number, sectionStartOffset: number) {
+  private stateAfterSpecialLast(c: number, sectionStartOffset: number): void {
     if (c === CharCodes.Gt || whitespace(c)) {
       this.sectionStart = this._index - sectionStartOffset
       this.special = Special.None
@@ -625,7 +626,7 @@ export class Tokenizer {
   private trieResult: string | null = null
   private trieExcess = 0
 
-  private stateBeforeEntity(c: number) {
+  private stateBeforeEntity(c: number): void {
     if (c === CharCodes.Num) {
       this._state = State.BeforeNumericEntity
     } else if (c === CharCodes.Amp) {
@@ -643,7 +644,7 @@ export class Tokenizer {
     }
   }
 
-  private stateInNamedEntity(c: number) {
+  private stateInNamedEntity(c: number): void {
     this.trieExcess += 1
 
     this.trieIndex = determineBranch(this.entityTrie, this.trieCurrent, this.trieIndex + 1, c)
@@ -672,7 +673,7 @@ export class Tokenizer {
     }
   }
 
-  private emitNamedEntity() {
+  private emitNamedEntity(): void {
     if (this.trieResult) {
       this.emitPartial(this.trieResult)
     }
@@ -682,7 +683,7 @@ export class Tokenizer {
     this._index--
   }
 
-  private decodeNumericEntity(base: 10 | 16, strict: boolean) {
+  private decodeNumericEntity(base: 10 | 16, strict: boolean): void {
     const sectionStart = this.sectionStart + 2 + (base >> 4)
     if (sectionStart !== this._index) {
       // Parse entity
@@ -693,7 +694,7 @@ export class Tokenizer {
     }
     this._state = this.baseState
   }
-  private stateInNumericEntity(c: number) {
+  private stateInNumericEntity(c: number): void {
     if (c === CharCodes.Semi) {
       this.decodeNumericEntity(10, true)
     } else if (c < CharCodes.Zero || c > CharCodes.Nine) {
@@ -701,7 +702,7 @@ export class Tokenizer {
       this._index--
     }
   }
-  private stateInHexEntity(c: number) {
+  private stateInHexEntity(c: number): void {
     if (c === CharCodes.Semi) {
       this.decodeNumericEntity(16, true)
     } else if (
@@ -714,7 +715,7 @@ export class Tokenizer {
     }
   }
 
-  private cleanup() {
+  private cleanup(): void {
     if (this.sectionStart < 0) {
       this.buffer = ''
       this.bufferOffset += this._index
@@ -747,7 +748,7 @@ export class Tokenizer {
    *
    * States that are more likely to be hit are higher up, as a performance improvement.
    */
-  private parse() {
+  private parse(): void {
     while (this._index < this.buffer.length && this.running) {
       const c = this.buffer.charCodeAt(this._index)
       if (this._state === State.Text) {
@@ -889,7 +890,7 @@ export class Tokenizer {
     this.cleanup()
   }
 
-  private finish() {
+  private finish(): void {
     // If there is remaining data, emit it in a reasonable way
     if (this.sectionStart < this._index) {
       this.handleTrailingData()
@@ -897,7 +898,7 @@ export class Tokenizer {
     this.cbs.onend()
   }
 
-  private handleTrailingData() {
+  private handleTrailingData(): void {
     const data = this.buffer.substr(this.sectionStart)
     if (this._state === State.InCdata || this._state === State.AfterCdata1 || this._state === State.AfterCdata2) {
       this.cbs.oncdata(data)
@@ -942,7 +943,7 @@ export class Tokenizer {
   private getSection(): string {
     return this.buffer.substring(this.sectionStart, this._index)
   }
-  private emitPartial(value: string) {
+  private emitPartial(value: string): void {
     if (this.baseState !== State.Text) {
       this.cbs.onattribdata(value)
     } else {

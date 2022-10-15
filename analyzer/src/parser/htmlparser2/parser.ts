@@ -111,7 +111,7 @@ export class Parser {
     this.cbs.onparserinit?.(this)
   }
 
-  private updatePosition(startIndexOffset = 0, endIndexOffset = 0) {
+  private updatePosition(startIndexOffset = 0, endIndexOffset = 0): void {
     this.startIndex = this.tokenizer.getAbsoluteSectionStart() - startIndexOffset
     this.endIndex = this.tokenizer.getAbsoluteIndex() + endIndexOffset
   }
@@ -130,7 +130,7 @@ export class Parser {
     this.emitOpenTag(name)
   }
 
-  private emitOpenTag(name: string) {
+  private emitOpenTag(name: string): void {
     this.tagname = name
     this.stack.push(name)
     this.cbs.onopentagname?.(name)
@@ -179,7 +179,7 @@ export class Parser {
     this.closeCurrentTag()
   }
 
-  private closeCurrentTag() {
+  private closeCurrentTag(): void {
     const name = this.tagname
     this.onopentagend()
     /*
@@ -219,7 +219,7 @@ export class Parser {
     this.attribvalue = ''
   }
 
-  private getInstructionName(value: string) {
+  private getInstructionName(value: string): string {
     const idx = value.search(reNameEnd)
     const name = idx < 0 ? value : value.substr(0, idx)
 
