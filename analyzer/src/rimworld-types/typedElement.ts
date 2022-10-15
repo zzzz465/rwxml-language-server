@@ -27,7 +27,7 @@ export class TypedElement extends Element {
   /**
    * checks if this node contains ChildElementNodes or not.
    */
-  isLeafNode() {
+  isLeafNode(): boolean {
     return this.ChildElementNodes.length === 0
   }
 
