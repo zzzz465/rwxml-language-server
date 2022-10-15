@@ -75,6 +75,10 @@ export class Node {
    * @param type The type of the node.
    */
   constructor(public type: ElementType) {}
+
+  cloneNode<T extends Node>(recursive?: boolean): T {
+    throw new Error('Not implemented')
+  }
 }
 
 /**
