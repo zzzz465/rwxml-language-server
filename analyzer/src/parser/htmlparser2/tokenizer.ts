@@ -248,10 +248,7 @@ export class Tokenizer {
   private readonly decodeEntities: boolean
   private readonly entityTrie: Uint16Array
 
-  constructor(
-    { decodeEntities = true }: { decodeEntities?: boolean },
-    private readonly cbs: Callbacks
-  ) {
+  constructor({ decodeEntities = true }: { decodeEntities?: boolean }, private readonly cbs: Callbacks) {
     this.decodeEntities = decodeEntities
     this.entityTrie = xmlDecodeTree
   }
@@ -312,7 +309,8 @@ export class Tokenizer {
   }
 
   private stateText(c: number) {
-    if (c === CharCodes.Lt) { // <
+    if (c === CharCodes.Lt) {
+      // <
       if (this._index > this.sectionStart) {
         this.cbs.ontext(this.getSection())
       }
@@ -343,7 +341,8 @@ export class Tokenizer {
   private stateBeforeTagName(c: number) {
     if (c === CharCodes.Slash) {
       this._state = State.BeforeClosingTagName
-    } else if (c === CharCodes.Lt) { // <
+    } else if (c === CharCodes.Lt) {
+      // <
       this.cbs.ontext(this.getSection())
       this.sectionStart = this._index
     } else if (c === CharCodes.Gt || this.special !== Special.None || whitespace(c)) {
@@ -372,7 +371,8 @@ export class Tokenizer {
   private stateBeforeClosingTagName(c: number) {
     if (whitespace(c)) {
       // Ignore
-    } else if (c === CharCodes.Gt) { // >
+    } else if (c === CharCodes.Gt) {
+      // >
       this._state = State.Text
     } else if (this.special !== Special.None) {
       if (this.special !== Special.Title && (c === CharCodes.LowerS || c === CharCodes.UpperS)) {
@@ -386,7 +386,8 @@ export class Tokenizer {
     } else if (!this.isTagStartChar(c)) {
       this._state = State.InSpecialComment
       this.sectionStart = this._index
-    } else if (c === CharCodes.Lt) { // <, closing is not completed but another tag is opened.
+    } else if (c === CharCodes.Lt) {
+      // <, closing is not completed but another tag is opened.
       this.cbs.onclosetag(this.getSection())
       this._state = State.BeforeTagName
       this.sectionStart = this._index
@@ -396,7 +397,8 @@ export class Tokenizer {
     }
   }
   private stateInClosingTagName(c: number) {
-    if (c === CharCodes.Gt || whitespace(c)) { // > or " "
+    if (c === CharCodes.Gt || whitespace(c)) {
+      // > or " "
       this.cbs.onclosetag(this.getSection())
       this.sectionStart = -1
       this._state = State.AfterClosingTagName
