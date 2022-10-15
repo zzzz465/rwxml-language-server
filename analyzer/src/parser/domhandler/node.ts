@@ -44,12 +44,6 @@ export class Node {
     return this.nodeRange.end
   }
 
-  /**
-   *
-   * @param type The type of the node.
-   */
-  constructor(public type: ElementType) {}
-
   // Read-only aliases
   get nodeType(): number {
     return nodeTypes.get(this.type) ?? 1
@@ -79,6 +73,12 @@ export class Node {
   set nextSibling(next: Node | null) {
     this.next = next
   }
+
+  /**
+   *
+   * @param type The type of the node.
+   */
+  constructor(public type: ElementType) {}
 }
 
 /**
@@ -87,17 +87,6 @@ export class Node {
 // NOTE: NodeWithChildren is used by Node, so it cannot be splitted to another file.
 // or else it would make a circular dependency, which is unable to compile.
 export class NodeWithChildren extends Node {
-  /**
-   * @param type Type of the node.
-   * @param children Children of the node. Only certain node types can have children.
-   */
-  constructor(
-    type: ElementType.Root | ElementType.CDATA | ElementType.Script | ElementType.Style | ElementType.Tag,
-    public children: Node[]
-  ) {
-    super(type)
-  }
-
   // Aliases
   get firstChild(): Node | null {
     return this.children[0] ?? null
@@ -113,6 +102,17 @@ export class NodeWithChildren extends Node {
 
   set childNodes(children: Node[]) {
     this.children = children
+  }
+
+  /**
+   * @param type Type of the node.
+   * @param children Children of the node. Only certain node types can have children.
+   */
+  constructor(
+    type: ElementType.Root | ElementType.CDATA | ElementType.Script | ElementType.Style | ElementType.Tag,
+    public children: Node[]
+  ) {
+    super(type)
   }
 
   toString(): string {
