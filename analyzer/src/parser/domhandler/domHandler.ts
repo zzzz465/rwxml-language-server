@@ -102,18 +102,22 @@ export class DomHandler {
   public ontext(data: string): void {
     const { lastNode } = this
 
-    if (lastNode && lastNode.type === ElementType.Text) {
+    if (!lastNode) {
+      return
+    }
+
+    if (lastNode.type === ElementType.Text) {
       lastNode.data += data
       lastNode.nodeRange.end = this.parser.endIndex
       lastNode.dataRange.end = this.parser.endIndex
     } else {
-      const node = new Text(data)
-      node.nodeRange.start = this.parser.startIndex
-      node.nodeRange.end = this.parser.endIndex
-      node.dataRange.start = this.parser.startIndex
-      node.dataRange.end = this.parser.endIndex
-      this.addNode(node)
-      this.lastNode = node
+      const text = new Text(data)
+      text.nodeRange.start = this.parser.startIndex
+      text.nodeRange.end = this.parser.endIndex
+      text.dataRange.start = this.parser.startIndex
+      text.dataRange.end = this.parser.endIndex
+      this.addNode(text)
+      this.lastNode = text
     }
   }
 
