@@ -1,5 +1,5 @@
 import $ from 'cheerio'
-import { Document, Element, Text } from '../parser'
+import { Document, Element, NodeWithChildren, replaceNode, Text } from '../parser'
 import { TypedElement } from '../parser/domhandler/typedElement'
 import { Def } from './def'
 import { DefReference, DefReferenceType } from './defReference'
@@ -12,7 +12,7 @@ $._options.xmlMode = true
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) {}
 
-  inject(document: Document) {
+  inject(document: Document): { document: Document; defs: Def[] } {
     const res = {
       document: document,
       defs: [] as Def[],
@@ -35,69 +35,72 @@ export class TypeInfoInjector {
     return res
   }
 
-  injectDefType(xmlNode: Element): boolean {
+  injectDefType(parent: NodeWithChildren, xmlNode: Element): boolean {
     const elementName = xmlNode.name
     const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
-      this.injectType(xmlNode, defTypeInfo)
-      Def.toDef(xmlNode as TypedElement)
+      const def = new Def(xmlNode.name, xmlNode.attribs, defTypeInfo, parent, xmlNode.childNodes)
       return true
     } else {
       return false
     }
   }
 
-  injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
-    console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
+  injectType(parent: TypedElement, curr: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
+    console.assert(!!typeInfo, `typeInfo for xmlNode ${curr.name} is null or undefined`)
 
-    const overridedTypeInfo = this.getOverridedTypeInfo(xmlNode, typeInfo)
+    const overridedTypeInfo = this.getOverridedTypeInfo(curr, typeInfo)
     if (overridedTypeInfo) {
-      return this.injectType(xmlNode, overridedTypeInfo, fieldInfo)
+      return this.injectType(parent, curr, overridedTypeInfo, fieldInfo)
     }
 
-    const injectable = TypedElement.toInjectable(xmlNode, typeInfo, fieldInfo)
+    const typedCurr = new TypedElement(curr.name, curr.attribs, parent, typeInfo, fieldInfo, curr.childNodes)
+    const childIndex = parent.childNodes.indexOf(curr)
+    if (childIndex === -1) {
+      // TODO: error handle
+    }
+
+    replaceNode(curr, typedCurr)
 
     if (typeInfo.isListStructured()) {
       const enumerableType = typeInfo.getEnumerableType()
       if (enumerableType) {
         if (enumerableType.customLoader()) {
-          return xmlNode.ChildElementNodes.forEach((childNode) =>
-            this.injectCustomLoaderType(childNode, enumerableType)
-          )
+          return curr.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
         }
 
-        return injectable.ChildElementNodes.filter((node) => node.tagName === 'li').forEach((node) =>
-          this.injectType(node, enumerableType)
+        return typedCurr.ChildElementNodes.filter((node) => node.tagName === 'li').forEach((node) =>
+          this.injectType(typedCurr, node, enumerableType)
         )
       }
     }
 
     if (typeInfo.isEnum) {
-      if (injectable.isLeafNode()) {
+      if (typedCurr.isLeafNode()) {
         // prettier-ignore
-        return injectable.childNodes
+        return typedCurr.childNodes
           .flatMap(node => node instanceof Text ? [node] : [])
           .forEach(node => node.typeInfo = typeInfo)
       } else {
         //prettier-ignore
-        return injectable
+        return typedCurr
           .ChildElementNodes
           .filter((node) => node.tagName === 'li')
-          .forEach((node) => this.injectType(node, typeInfo))
+          .forEach((node) => this.injectType(typedCurr, node, typeInfo))
       }
     }
 
-    return injectable.ChildElementNodes.forEach((childNode) => {
+    return typedCurr.ChildElementNodes.forEach((childNode) => {
       const fieldInfo = typeInfo.getField(childNode.tagName)
 
       if (fieldInfo) {
-        this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
+        this.injectType(typedCurr, childNode, fieldInfo.fieldType, fieldInfo)
       }
     })
   }
 
-  private injectCustomLoaderType(xmlNode: Element, typeInfo: TypeInfo) {
+  private injectCustomLoaderType(xmlNode: Element, typeInfo: TypeInfo): void {
     /*
     - direct def references
       - <statBases>
@@ -114,20 +117,22 @@ export class TypeInfoInjector {
       case 'SkillRequirement':
       case 'ThingDefCountClass':
       case 'PawnGenOption':
-        return this.injectDefRefType(xmlNode, typeInfo)
+        this.injectDefRefType(xmlNode, typeInfo)
+        return
 
       case 'DefHyperlink':
-        return this.injectHyperLinkType(xmlNode, typeInfo)
+        this.injectHyperLinkType(xmlNode, typeInfo)
+        return
     }
   }
 
   // special case where tag is defName, and value is an integer.
-  private injectDefRefType(xmlNode: Element, typeInfo: TypeInfo) {
+  private injectDefRefType(xmlNode: Element, typeInfo: TypeInfo): DefReference {
     return DefReference.into(xmlNode, typeInfo, DefReferenceType.RefWithCount)
   }
 
   // speical case where tag is DefType, and value is defName.
-  private injectHyperLinkType(xmlNode: Element, typeInfo: TypeInfo) {
+  private injectHyperLinkType(xmlNode: Element, typeInfo: TypeInfo): DefReference {
     return DefReference.into(xmlNode, typeInfo, DefReferenceType.Hyperlink)
   }
 
@@ -137,10 +142,12 @@ export class TypeInfoInjector {
     return this.getDerivedTypeOf(classAttributeValue ?? '', typeInfo) ?? null
   }
 
-  private getDerivedTypeOf(classAttributeValue: string, baseClass: TypeInfo) {
+  private getDerivedTypeOf(classAttributeValue: string, baseClass: TypeInfo): TypeInfo | null {
     const typeInfo = this.typeInfoMap.getTypeInfoByName(classAttributeValue)
     if (typeInfo?.isDerivedFrom(baseClass)) {
       return typeInfo
     }
+
+    return null
   }
 }
