@@ -1,24 +1,28 @@
 import { cache, CacheScope, CacheType } from 'cache-decorator'
-import { Element } from '../parser'
+import { ElementType } from 'domelementtype'
+import { Attribute, Element, Node, NodeWithChildren } from '../parser'
 import { TypedElement } from '../parser/domhandler/typedElement'
-import { Writable } from '../utils/types'
 import { FieldInfo } from './fieldInfo'
 import { TypeInfo } from './typeInfo'
 
 export type DefNameType = string
 
 export class Def extends Element {
-  /*
-    def is actually a subset of class Injectable, but we cannot override parent as Element
-    since typeof Injectable.parent is fixed to Injectable | Def
-  */
+  readonly typeInfo: TypeInfo
+  readonly fields: Map<string, TypedElement>
 
-  static toDef(injectable: TypedElement): Def {
-    const def = injectable as unknown as Writable<Def>
+  constructor(
+    name: string,
+    attribs: { [name: string]: Attribute },
+    typeInfo: TypeInfo,
+    parent?: NodeWithChildren,
+    children?: Node[]
+  ) {
+    super(name, attribs, children, ElementType.Tag)
 
-    Reflect.setPrototypeOf(def, Def.prototype)
-
-    return def as Def
+    this.typeInfo = typeInfo
+    this.fields = new Map() // TODO: impl this
+    this.parent = parent ?? null
   }
 
   getDefType(): string {
@@ -32,13 +36,7 @@ export class Def extends Element {
     }
   }
 
-  readonly name!: string
-  readonly typeInfo!: TypeInfo
-  readonly fieldInfo?: FieldInfo
-  readonly fields!: Map<string, TypedElement>
-  readonly parent!: Element
-
-  isLeafNode() {
+  isLeafNode(): boolean {
     return this.children.length == 0
   }
 
@@ -69,7 +67,7 @@ export class Def extends Element {
     }
   }
 
-  getFieldInfo() {
-    return undefined
+  getFieldInfo(): FieldInfo | null {
+    return null
   }
 }
