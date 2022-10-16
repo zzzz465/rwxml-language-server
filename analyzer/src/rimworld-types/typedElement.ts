@@ -43,7 +43,7 @@ export class TypedElement extends Element {
       const index = this.parent.childNodes.indexOf(this)
       return parentDefPath + '.' + String(index)
     } else {
-      return parentDefPath + '.' + this.name
+      return parentDefPath + '.' + this.tagName
     }
   }
 

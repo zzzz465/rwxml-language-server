@@ -33,7 +33,7 @@ export class Def extends Element {
       return defType
     } else {
       throw new Error(
-        `node: ${this.name} is DefType, but typeInfo doesn't have defType. uri: ${this.document.uri}, start: ${this.nodeRange.start}, end: ${this.nodeRange.end}`
+        `node: ${this.tagName} is DefType, but typeInfo doesn't have defType. uri: ${this.document.uri}, start: ${this.nodeRange.start}, end: ${this.nodeRange.end}`
       )
     }
   }
@@ -44,7 +44,7 @@ export class Def extends Element {
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
   getDefName(): string | undefined {
-    const defNameElement = this.children.find((d: any) => (d as Element).name == 'defName') as Element | undefined
+    const defNameElement = this.children.find((d: any) => (d as Element).tagName == 'defName') as Element | undefined
     return defNameElement?.content
   }
 
@@ -61,15 +61,13 @@ export class Def extends Element {
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
-  getDefPath(): string | undefined {
+  getDefPath(): string | null {
     const defName = this.getDefName()
 
     if (defName) {
-      return this.name + '.' + defName
+      return this.tagName + '.' + defName
     }
-  }
 
-  getFieldInfo(): FieldInfo | null {
     return null
   }
 }
