@@ -7,7 +7,8 @@
     "compile": "tsc -b",
     "watch": "tsc -b -w",
     "test": "jest",
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "dep-graph": "pnpx ts_dependency_graph --start ./src/index.ts > graph.dot"
   },
   "author": "madeline",
   "contributors": [
