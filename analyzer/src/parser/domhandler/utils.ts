@@ -61,3 +61,22 @@ export function isDocument(node: Node): node is Document {
 export function hasChildren(node: Node): node is NodeWithChildren {
   return Object.prototype.hasOwnProperty.call(node, 'children')
 }
+
+export function replaceNode(oldNode: Node, newNode: Node): void {
+  if (oldNode.parent) {
+    const index = oldNode.parent.childNodes.indexOf(oldNode)
+    oldNode.parent.childNodes[index] = newNode
+  }
+
+  if (oldNode instanceof NodeWithChildren) {
+    // TODO: move this check code to head.
+    // (currently typescript type system doesn't support this)
+    if (!(newNode instanceof NodeWithChildren)) {
+      throw new Error('Cannot replace a NodeWithChildren with a Node')
+    }
+
+    for (const childNode of oldNode.childNodes) {
+      childNode.parent = newNode
+    }
+  }
+}
