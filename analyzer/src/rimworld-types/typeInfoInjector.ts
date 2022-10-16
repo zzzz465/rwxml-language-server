@@ -48,56 +48,62 @@ export class TypeInfoInjector {
   }
 
   injectType(parent: TypedElement, curr: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
-    console.assert(!!typeInfo, `typeInfo for xmlNode ${curr.name} is null or undefined`)
-
     const overridedTypeInfo = this.getOverridedTypeInfo(curr, typeInfo)
     if (overridedTypeInfo) {
       return this.injectType(parent, curr, overridedTypeInfo, fieldInfo)
     }
 
     const typedCurr = new TypedElement(curr.name, curr.attribs, parent, typeInfo, fieldInfo, curr.childNodes)
-    const childIndex = parent.childNodes.indexOf(curr)
-    if (childIndex === -1) {
-      // TODO: error handle
-    }
 
     replaceNode(curr, typedCurr)
 
     if (typeInfo.isListStructured()) {
-      const enumerableType = typeInfo.getEnumerableType()
-      if (enumerableType) {
-        if (enumerableType.customLoader()) {
-          return curr.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
-        }
-
-        return typedCurr.ChildElementNodes.filter((node) => node.tagName === 'li').forEach((node) =>
-          this.injectType(typedCurr, node, enumerableType)
-        )
-      }
+      this.processListStructured(typedCurr)
     }
 
     if (typeInfo.isEnum) {
-      if (typedCurr.isLeafNode()) {
-        // prettier-ignore
-        return typedCurr.childNodes
-          .flatMap(node => node instanceof Text ? [node] : [])
-          .forEach(node => node.typeInfo = typeInfo)
-      } else {
-        //prettier-ignore
-        return typedCurr
-          .ChildElementNodes
-          .filter((node) => node.tagName === 'li')
-          .forEach((node) => this.injectType(typedCurr, node, typeInfo))
-      }
+      this.processEnumStructured(typedCurr)
     }
 
-    return typedCurr.ChildElementNodes.forEach((childNode) => {
-      const fieldInfo = typeInfo.getField(childNode.tagName)
+    this.processMapStructured(typedCurr)
+  }
+
+  private processMapStructured(curr: TypedElement): void {
+    for (const childNode of curr.ChildElementNodes) {
+      const fieldInfo = curr.typeInfo.getField(childNode.tagName)
 
       if (fieldInfo) {
-        this.injectType(typedCurr, childNode, fieldInfo.fieldType, fieldInfo)
+        this.injectType(curr, childNode, fieldInfo.fieldType, fieldInfo)
       }
-    })
+    }
+  }
+
+  private processListStructured(curr: TypedElement): void {
+    const enumerableType = curr.typeInfo.getEnumerableType()
+    if (enumerableType) {
+      if (enumerableType.customLoader()) {
+        return curr.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
+      }
+
+      return curr.ChildElementNodes.filter((childNode) => childNode.tagName === 'li').forEach((node) =>
+        this.injectType(curr, node, enumerableType)
+      )
+    }
+  }
+
+  private processEnumStructured(curr: TypedElement): void {
+    if (curr.isLeafNode()) {
+      // prettier-ignore
+      return curr.childNodes
+        .flatMap(node => node instanceof Text ? [node] : [])
+        .forEach(node => node.typeInfo = curr.typeInfo)
+    } else {
+      //prettier-ignore
+      return curr
+        .ChildElementNodes
+        .filter((node) => node.tagName === 'li')
+        .forEach((node) => this.injectType(curr, node, curr.typeInfo))
+    }
   }
 
   private injectCustomLoaderType(xmlNode: Element, typeInfo: TypeInfo): void {
