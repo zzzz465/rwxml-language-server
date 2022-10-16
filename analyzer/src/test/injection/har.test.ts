@@ -1,8 +1,8 @@
-import { parse } from '../../parser'
 import $ from 'cheerio'
-import har from './anty.json'
-import { TypeInfoLoader, RawTypeInfo, TypeInfoInjector } from '../..'
+import { RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../..'
+import { parse } from '../../parser'
 import { Def } from '../../rimworld-types'
+import har from './anty.json'
 
 $._options.xmlMode = true
 

@@ -1,7 +1,7 @@
+import cheerio from 'cheerio'
 import { parse } from '../..'
 import { TypedElement } from '../../rimworld-types'
 import { getInjector } from './utils'
-import cheerio from 'cheerio'
 
 const exampleXML = `
 <?xml version="1.0" encoding="utf-8" ?>

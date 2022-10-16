@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Document, parse, Text } from '../../parser'
 import $ from 'cheerio'
-import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
-import data from './anty.json'
+import { Document, parse, Text } from '../../parser'
+import { RawTypeInfo, TypedElement, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data_1_4 from '../data/typeinfo-1_4.json'
-import { not } from 'cheerio/lib/api/traversing'
+import data from './anty.json'
 
 // FIXME: consuming data multiple times creates circular reference error.
 

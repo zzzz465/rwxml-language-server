@@ -1,4 +1,4 @@
-import { TypeInfoLoader, RawTypeInfo, TypeInfoInjector, parse } from '../..'
+import { parse, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../..'
 import data from './anty.json'
 
 describe('wrong xml test', () => {
