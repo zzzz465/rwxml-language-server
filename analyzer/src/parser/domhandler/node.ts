@@ -129,6 +129,10 @@ export class NodeWithChildren extends Node {
     super(type)
   }
 
+  replaceChild(index: number, node: Node): void {
+    this._children[index] = node
+  }
+
   toString(): string {
     return this.childNodes.map((node) => node.toString()).join('')
   }
