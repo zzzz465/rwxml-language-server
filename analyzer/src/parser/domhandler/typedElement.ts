@@ -1,28 +1,32 @@
 import { cache, CacheScope, CacheType } from 'cache-decorator'
-import { Element } from '..'
 import { Def } from '../../rimworld-types/def'
 import { FieldInfo } from '../../rimworld-types/fieldInfo'
 import { TypeInfo } from '../../rimworld-types/typeInfo'
-import { Writable } from '../../utils/types'
+import { Attribute } from './attribute'
+import { Element } from './element'
+import { Node } from './node'
 
 export class TypedElement extends Element {
-  static toInjectable(node: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): TypedElement {
-    const ret = node as Writable<TypedElement>
-
-    ret.typeInfo = typeInfo
-    ret.fields = new Map()
-    ret.fieldInfo = fieldInfo
-
-    Reflect.setPrototypeOf(ret, TypedElement.prototype)
-
-    return ret as TypedElement
-  }
-
-  readonly name!: string
-  readonly typeInfo!: TypeInfo
+  readonly typeInfo: TypeInfo
   readonly fieldInfo?: FieldInfo
-  readonly fields!: Map<string, TypedElement>
-  readonly parent!: TypedElement | Def
+  readonly fields: Map<string, TypedElement>
+  readonly parent: TypedElement | Def
+
+  constructor(
+    name: string,
+    attribs: { [name: string]: Attribute },
+    typeInfo: TypeInfo,
+    parent: Def | TypedElement,
+    fieldInfo?: FieldInfo,
+    children?: Node[]
+  ) {
+    super(name, attribs, children)
+
+    this.typeInfo = typeInfo
+    this.fieldInfo = fieldInfo
+    this.fields = new Map() // TODO: impl this
+    this.parent = parent
+  }
 
   /**
    * checks if this node contains ChildElementNodes or not.
@@ -32,16 +36,14 @@ export class TypedElement extends Element {
   }
 
   @cache({ scope: CacheScope.INSTANCE, type: CacheType.MEMO })
-  getDefPath(): string | undefined {
+  getDefPath(): string {
     const parentDefPath = this.parent.getDefPath()
-    if (parentDefPath) {
-      if (this.parent.typeInfo.isList()) {
-        // TODO: add rule which doesn't use <li> node
-        const index = this.parent.childNodes.indexOf(this)
-        return parentDefPath + '.' + String(index)
-      } else {
-        return parentDefPath + '.' + this.name
-      }
+    if (this.parent.typeInfo.isList()) {
+      // TODO: add rule which doesn't use <li> node
+      const index = this.parent.childNodes.indexOf(this)
+      return parentDefPath + '.' + String(index)
+    } else {
+      return parentDefPath + '.' + this.name
     }
   }
 
