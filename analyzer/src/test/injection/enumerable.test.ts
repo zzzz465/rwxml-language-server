@@ -1,6 +1,6 @@
-import { parse } from "../../parser"
-import { DefReference, DefReferenceType, TypedElement } from "../../rimworld-types"
-import { injector_1_4 } from "../data/injector"
+import { parse } from '../../parser'
+import { DefReference, DefReferenceType, TypedElement } from '../../rimworld-types'
+import { injector_1_4 } from '../data/injector'
 
 describe('enumerable type injection test', () => {
   const xml = `
@@ -125,7 +125,6 @@ describe('enumerable type injection test', () => {
     expect(genType).toBeDefined()
     expect(genType.className).toBe('StatModifier')
     expect(genType.customLoader()).toBe(true)
-
 
     const globalLearningFactorNode = doc.findNodeAt(167)! as DefReference
     expect(globalLearningFactorNode).toBeDefined()

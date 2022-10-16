@@ -1,6 +1,6 @@
-import { parse } from "../../parser"
-import { TypedElement } from "../../rimworld-types"
-import { injector_1_4 } from "../data/injector"
+import { parse } from '../../parser'
+import { TypedElement } from '../../rimworld-types'
+import { injector_1_4 } from '../data/injector'
 
 describe('xml attrib related test', () => {
   const xml = `

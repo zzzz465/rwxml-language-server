@@ -1,8 +1,8 @@
-import { Document, parse } from '../../parser'
 import $ from 'cheerio'
-import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
-import data from './anty.json'
+import { Document, parse } from '../../parser'
+import { RawTypeInfo, TypedElement, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
 import { injector_1_4 } from '../data/injector'
+import data from './anty.json'
 
 const xml = `\
 <?xml version="1.0" encoding="utf-8"?>

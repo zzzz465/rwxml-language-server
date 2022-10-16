@@ -1,6 +1,6 @@
-import { Element, parse } from '../../parser'
 import $ from 'cheerio'
-import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
+import { Element, parse } from '../../parser'
+import { RawTypeInfo, TypedElement, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 
 $._options.xmlMode = true
