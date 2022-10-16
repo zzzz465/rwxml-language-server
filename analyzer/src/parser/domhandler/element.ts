@@ -16,13 +16,15 @@ export class Element extends NodeWithChildren {
    * @param children Children of the node.
    */
   constructor(
-    public name: string,
+    // DOM level 1 alias
+    public tagName: string,
     public attribs: { [name: string]: Attribute },
     children: Node[] = [],
     // prettier-ignore
-    type: ElementType.Tag | ElementType.Script | ElementType.Style = name === 'script'
+    // TODO: remove this
+    type: ElementType.Tag | ElementType.Script | ElementType.Style = tagName === 'script'
       ? ElementType.Script
-      : name === 'style'
+      : tagName === 'style'
         ? ElementType.Style
         : ElementType.Tag
   ) {
@@ -56,15 +58,6 @@ export class Element extends NodeWithChildren {
 
   get ChildElementNodes(): Element[] {
     return this.childNodes.filter((node) => node instanceof Element) as Element[]
-  }
-
-  // DOM Level 1 aliases
-  get tagName(): string {
-    return this.name
-  }
-
-  set tagName(name: string) {
-    this.name = name
   }
 
   get attributes(): Attribute[] {
