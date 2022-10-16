@@ -1,5 +1,5 @@
 import $ from 'cheerio'
-import { Document, Element, NodeWithChildren, replaceNode, Text } from '../parser'
+import { Document, Element, NodeWithChildren, replaceNode } from '../parser'
 import { Def } from './def'
 import { DefReference, DefReferenceType } from './defReference'
 import { FieldInfo } from './fieldInfo'
@@ -100,11 +100,13 @@ export class TypeInfoInjector {
   }
 
   private processEnumStructured(curr: Def | TypedElement): void {
-    if (curr.isLeafNode()) {
+    if (
+      curr.isLeafNode()
+    ) {
       // prettier-ignore
-      return curr.childNodes
-        .flatMap(node => node instanceof Text ? [node] : [])
-        .forEach(node => node.typeInfo = curr.typeInfo)
+      // NOTE: previously, there was an attempt to use a new type "TypedText",
+      // but it doesn't fit well with most use cases.
+      // so we just go back to old Text type.
     } else {
       //prettier-ignore
       return curr

@@ -1,6 +1,7 @@
 import { TypeInfo } from './typeInfo'
 
-export interface FieldInfoMetadata { }
+// prettier-ignore
+export interface FieldInfoMetadata {}
 
 export interface FieldAttributeData {
   attributeType: string
@@ -19,7 +20,7 @@ export class FieldInfo {
     public readonly isPublic: boolean,
     public readonly isPrivate: boolean,
     public readonly name: string
-  ) { }
+  ) {}
 
   getFieldAliasName(): string | null {
     const attr = this.attributes['LoadAliasAttribute']
