@@ -15,8 +15,8 @@ export class TypedElement extends Element {
   constructor(
     name: string,
     attribs: { [name: string]: Attribute },
-    typeInfo: TypeInfo,
     parent: Def | TypedElement,
+    typeInfo: TypeInfo,
     fieldInfo?: FieldInfo,
     children?: Node[]
   ) {
