@@ -57,15 +57,21 @@ export class TypeInfoInjector {
 
     replaceNode(curr, typedCurr)
 
+    this.processNode(typedCurr)
+  }
+
+  private processNode(curr: TypedElement): void {
+    const typeInfo = curr.typeInfo
+
     if (typeInfo.isListStructured()) {
-      this.processListStructured(typedCurr)
+      this.processListStructured(curr)
     }
 
     if (typeInfo.isEnum) {
-      this.processEnumStructured(typedCurr)
+      this.processEnumStructured(curr)
     }
 
-    this.processMapStructured(typedCurr)
+    this.processMapStructured(curr)
   }
 
   private processMapStructured(curr: TypedElement): void {
