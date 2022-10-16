@@ -8,7 +8,7 @@ import { Node } from './node'
 
 export class TypedElement extends Element {
   readonly typeInfo: TypeInfo
-  readonly fieldInfo?: FieldInfo
+  readonly fieldInfo: FieldInfo | null
   readonly fields: Map<string, TypedElement>
   readonly parent: TypedElement | Def
 
@@ -23,7 +23,7 @@ export class TypedElement extends Element {
     super(name, attribs, children)
 
     this.typeInfo = typeInfo
-    this.fieldInfo = fieldInfo
+    this.fieldInfo = fieldInfo ?? null
     this.fields = new Map() // TODO: impl this
     this.parent = parent
   }
@@ -47,7 +47,7 @@ export class TypedElement extends Element {
     }
   }
 
-  getFieldInfo(): FieldInfo | undefined {
+  getFieldInfo(): FieldInfo | null {
     return this.fieldInfo
   }
 }

@@ -9,6 +9,8 @@ export type DefNameType = string
 
 export class Def extends Element {
   readonly typeInfo: TypeInfo
+  // required to implement TypedElement
+  readonly fieldInfo: null = null
   readonly fields: Map<string, TypedElement>
 
   constructor(

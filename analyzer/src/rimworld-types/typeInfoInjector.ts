@@ -23,10 +23,9 @@ export class TypeInfoInjector {
     if (root instanceof Element) {
       if (root && root.name === 'Defs') {
         for (const node of root.ChildElementNodes) {
-          const success = this.injectDefType(node)
-
-          if (success) {
-            res.defs.push(node as Def)
+          const def = this.injectDefType(root, node)
+          if (def) {
+            res.defs.push(def)
           }
         }
       }
@@ -35,19 +34,22 @@ export class TypeInfoInjector {
     return res
   }
 
-  injectDefType(parent: NodeWithChildren, xmlNode: Element): boolean {
+  injectDefType(parent: NodeWithChildren, xmlNode: Element): Def | null {
     const elementName = xmlNode.name
     const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
       const def = new Def(xmlNode.name, xmlNode.attribs, defTypeInfo, parent, xmlNode.childNodes)
-      return true
-    } else {
-      return false
+      replaceNode(xmlNode, def)
+      this.processNode(def)
+
+      return def
     }
+
+    return null
   }
 
-  injectType(parent: TypedElement, curr: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
+  injectType(parent: Def | TypedElement, curr: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
     const overridedTypeInfo = this.getOverridedTypeInfo(curr, typeInfo)
     if (overridedTypeInfo) {
       return this.injectType(parent, curr, overridedTypeInfo, fieldInfo)
@@ -60,7 +62,7 @@ export class TypeInfoInjector {
     this.processNode(typedCurr)
   }
 
-  private processNode(curr: TypedElement): void {
+  private processNode(curr: Def | TypedElement): void {
     const typeInfo = curr.typeInfo
 
     if (typeInfo.isListStructured()) {
@@ -74,7 +76,7 @@ export class TypeInfoInjector {
     this.processMapStructured(curr)
   }
 
-  private processMapStructured(curr: TypedElement): void {
+  private processMapStructured(curr: Def | TypedElement): void {
     for (const childNode of curr.ChildElementNodes) {
       const fieldInfo = curr.typeInfo.getField(childNode.tagName)
 
@@ -84,7 +86,7 @@ export class TypeInfoInjector {
     }
   }
 
-  private processListStructured(curr: TypedElement): void {
+  private processListStructured(curr: Def | TypedElement): void {
     const enumerableType = curr.typeInfo.getEnumerableType()
     if (enumerableType) {
       if (enumerableType.customLoader()) {
@@ -97,7 +99,7 @@ export class TypeInfoInjector {
     }
   }
 
-  private processEnumStructured(curr: TypedElement): void {
+  private processEnumStructured(curr: Def | TypedElement): void {
     if (curr.isLeafNode()) {
       // prettier-ignore
       return curr.childNodes
