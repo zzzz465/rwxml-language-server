@@ -1,6 +1,6 @@
 import { Element } from '../parser'
-import { TypedElement } from '../parser/domhandler/typedElement'
 import { Writable } from '../utils/types'
+import { TypedElement } from './typedElement'
 import { TypeInfo } from './typeInfo'
 
 // const enum cannot be used, it will break test cases.

@@ -1,9 +1,9 @@
 import $ from 'cheerio'
 import { Document, Element, NodeWithChildren, replaceNode, Text } from '../parser'
-import { TypedElement } from '../parser/domhandler/typedElement'
 import { Def } from './def'
 import { DefReference, DefReferenceType } from './defReference'
 import { FieldInfo } from './fieldInfo'
+import { TypedElement } from './typedElement'
 import { TypeInfo } from './typeInfo'
 import { TypeInfoMap } from './typeInfoMap'
 

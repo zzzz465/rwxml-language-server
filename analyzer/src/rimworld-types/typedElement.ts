@@ -1,10 +1,10 @@
 import { cache, CacheScope, CacheType } from 'cache-decorator'
-import { Def } from '../../rimworld-types/def'
-import { FieldInfo } from '../../rimworld-types/fieldInfo'
-import { TypeInfo } from '../../rimworld-types/typeInfo'
-import { Attribute } from './attribute'
-import { Element } from './element'
-import { Node } from './node'
+import { Attribute } from '../parser/domhandler/attribute'
+import { Element } from '../parser/domhandler/element'
+import { Node } from '../parser/domhandler/node'
+import { Def } from './def'
+import { FieldInfo } from './fieldInfo'
+import { TypeInfo } from './typeInfo'
 
 export class TypedElement extends Element {
   readonly typeInfo: TypeInfo
