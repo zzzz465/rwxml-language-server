@@ -1,4 +1,4 @@
-import { TypeInfo } from './typeInfo'
+import { TypeInfo } from './types'
 
 // prettier-ignore
 export interface FieldInfoMetadata {}

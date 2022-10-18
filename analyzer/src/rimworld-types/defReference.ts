@@ -1,7 +1,7 @@
 import { Element } from '../parser'
 import { Writable } from '../utils/types'
 import { TypedElement } from './typedElement'
-import { TypeInfo } from './typeInfo'
+import { TypeInfo } from './types'
 
 // const enum cannot be used, it will break test cases.
 export enum DefReferenceType {

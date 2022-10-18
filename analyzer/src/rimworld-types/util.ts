@@ -1,5 +1,5 @@
 import { DefType } from './declaredType'
-import { TypeInfo } from './typeInfo'
+import { TypeInfo } from './types'
 
 // TODO: support C# internal class (generated)
 const fullNameRegexString = '([\\w]+\\.)+[\\w]+'
@@ -15,7 +15,7 @@ export function isDerivedType(derived: TypeInfo, base: TypeInfo): boolean {
     if (type === base) {
       return true
     }
-  } while (type = type.baseClass)
+  } while ((type = type.baseClass))
 
   return false
 }
