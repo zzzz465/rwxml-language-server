@@ -77,7 +77,7 @@ export class TypeInfoMap {
     return this.typeMap.get(id)
   }
 
-  private checkTypeAlreadyExists(typeInfo: TypeInfo) {
+  private checkTypeAlreadyExists(typeInfo: TypeInfo): void {
     if (this.typeMap.has(typeInfo.fullName)) {
       throw new Error(`exception while adding typeInfo: type ${typeInfo.fullName} is already exists`)
     }

@@ -33,11 +33,11 @@ export class TypeInfoInjector {
   }
 
   injectDefType(parent: NodeWithChildren, xmlNode: Element): Def | null {
-    const elementName = xmlNode.name
+    const elementName = xmlNode.tagName
     const defTypeInfo = this.typeInfoMap.getTypeInfoByName(elementName)
 
     if (defTypeInfo) {
-      const def = new Def(xmlNode.name, xmlNode.attribs, defTypeInfo, parent, xmlNode.childNodes)
+      const def = new Def(xmlNode.tagName, xmlNode.attribs, defTypeInfo, parent, xmlNode.childNodes)
       replaceNode(xmlNode, def)
       this.processNode(def)
 
@@ -53,7 +53,7 @@ export class TypeInfoInjector {
       return this.injectType(parent, curr, overridedTypeInfo, fieldInfo)
     }
 
-    const typedCurr = new TypedElement(curr.name, curr.attribs, parent, typeInfo, fieldInfo, curr.childNodes)
+    const typedCurr = new TypedElement(curr.tagName, curr.attribs, parent, typeInfo, fieldInfo, curr.childNodes)
 
     replaceNode(curr, typedCurr)
 
