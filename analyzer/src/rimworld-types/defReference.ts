@@ -1,6 +1,5 @@
-import { Element } from '../parser'
-import { Writable } from '../utils/types'
-import { TypedElement } from './typedElement'
+import { Attribute, Node } from '../parser'
+import { Def, TypedElement } from './typedElement'
 import { TypeInfo } from './types'
 
 // const enum cannot be used, it will break test cases.
@@ -9,27 +8,23 @@ export enum DefReferenceType {
   Hyperlink,
 }
 
-export class DefReference extends Element {
-  /**
-   * @deprecated use constructor & replaceNode instead.
-   */
-  static into(node: Element, typeInfo: TypeInfo, refType: DefReferenceType): DefReference {
-    const ret = node as Writable<DefReference>
-
-    ret.typeInfo = typeInfo
-    ret.refType = refType
-
-    Reflect.setPrototypeOf(ret, DefReference.prototype)
-
-    return ret
+export class DefReference extends TypedElement {
+  static from(node: TypedElement, refType: DefReferenceType): DefReference {
+    return new DefReference(node.tagName, node.attribs, node.parent, node.childNodes, node.typeInfo, refType)
   }
 
-  readonly typeInfo!: TypeInfo
-  readonly parent!: TypedElement
-  readonly refType!: DefReferenceType
+  readonly refType: DefReferenceType
 
-  private constructor() {
-    super('', {})
-    throw new Error('constructor must not be called')
+  constructor(
+    tagName: string,
+    attribs: { [key: string]: Attribute },
+    parent: TypedElement | Def,
+    children: Node[],
+    typeInfo: TypeInfo,
+    refType: DefReferenceType
+  ) {
+    super(tagName, attribs, parent, typeInfo, undefined, children)
+
+    this.refType = refType
   }
 }

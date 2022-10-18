@@ -88,7 +88,9 @@ export class TypeInfoInjector {
     const enumerableType = curr.typeInfo.getEnumerableType()
     if (enumerableType) {
       if (enumerableType.customLoader()) {
-        return curr.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
+        return curr.ChildElementNodes.forEach((childNode) =>
+          this.injectCustomLoaderType(curr, childNode, enumerableType)
+        )
       }
 
       return curr.ChildElementNodes.filter((childNode) => childNode.tagName === 'li').forEach((node) =>
@@ -114,7 +116,7 @@ export class TypeInfoInjector {
     }
   }
 
-  private injectCustomLoaderType(xmlNode: Element, typeInfo: TypeInfo): void {
+  private injectCustomLoaderType(parent: Def | TypedElement, xmlNode: Element, typeInfo: TypeInfo): void {
     /*
     - direct def references
       - <statBases>
@@ -126,28 +128,45 @@ export class TypeInfoInjector {
     - TODO
     */
 
+    // replace to typedElement is required to avoid forced casting
+    // NOTE: should I do this?
+    const typedElement = new TypedElement(
+      xmlNode.tagName,
+      xmlNode.attribs,
+      parent,
+      typeInfo,
+      undefined,
+      xmlNode.childNodes
+    )
+
+    replaceNode(xmlNode, typedElement)
+
     switch (typeInfo.className) {
       case 'StatModifier':
       case 'SkillRequirement':
       case 'ThingDefCountClass':
       case 'PawnGenOption':
-        this.injectDefRefType(xmlNode, typeInfo)
+        this.injectDefRefType(typedElement)
         return
 
       case 'DefHyperlink':
-        this.injectHyperLinkType(xmlNode, typeInfo)
+        this.injectHyperLinkType(typedElement)
         return
     }
   }
 
   // special case where tag is defName, and value is an integer.
-  private injectDefRefType(xmlNode: Element, typeInfo: TypeInfo): DefReference {
-    return DefReference.into(xmlNode, typeInfo, DefReferenceType.RefWithCount)
+  private injectDefRefType(target: TypedElement): void {
+    const newNode = DefReference.from(target, DefReferenceType.RefWithCount)
+
+    replaceNode(target, newNode)
   }
 
   // speical case where tag is DefType, and value is defName.
-  private injectHyperLinkType(xmlNode: Element, typeInfo: TypeInfo): DefReference {
-    return DefReference.into(xmlNode, typeInfo, DefReferenceType.Hyperlink)
+  private injectHyperLinkType(target: TypedElement): void {
+    const newNode = DefReference.from(target, DefReferenceType.Hyperlink)
+
+    replaceNode(target, newNode)
   }
 
   private getOverridedTypeInfo(xmlNode: Element, typeInfo: TypeInfo): TypeInfo | null {
