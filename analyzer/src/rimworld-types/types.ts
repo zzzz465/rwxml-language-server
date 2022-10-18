@@ -1,5 +1,4 @@
-import { FieldInfo } from './fieldInfo'
-import { cache, CacheType, CacheScope } from 'cache-decorator'
+import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
 
@@ -44,7 +43,7 @@ export class TypeInfo {
      */
     public readonly interfaces: Record<string, TypeInfo>, // need to populate typeInfo
     public readonly isInterface: boolean
-  ) { }
+  ) {}
 
   /**
    * check if this TypeInfo treated as a special type.
@@ -117,7 +116,7 @@ export class TypeInfo {
 
   /**
    * isListStructured() returns true if the XML list (<li> node) structured.
-   * 
+   *
    * usually, `IEnumerable<T>`, `IList<T>` is the target.
    * @see getEnumerableType()
    */
@@ -143,9 +142,9 @@ export class TypeInfo {
 
   /**
    * isMapStructured() returns true if the XML map structured.
-   * 
+   *
    * usually, `IDictionary<K, V>` is the target.
-   * 
+   *
    * @example
    * ```xml
    * <map> <!-- this is map structured -->
@@ -155,7 +154,7 @@ export class TypeInfo {
    *  </li>
    *  <li>...</li>
    * </map>
-   * ``` 
+   * ```
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isMapStructured(): boolean {
@@ -370,7 +369,7 @@ export class TypeInfo {
 
   /**
    * getEnumerableType returns T in IEnumerable<T>
-   * 
+   *
    * T may also be IEnumerable<T> itself, then T will be flattened.
    * @see isListStructured()
    */
@@ -382,7 +381,8 @@ export class TypeInfo {
     }
 
     // type may have nested List type. eg) List<List<T>>
-    let enumerableType: TypeInfo | null = _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
+    let enumerableType: TypeInfo | null =
+      _.find(this.interfaces, (_, key) => key.startsWith('System.Collections.Generic.IEnumerable')) ?? null
     if (!enumerableType && this.fullName.startsWith('System.Collections.Generic.IEnumerable')) {
       enumerableType = this
     }
@@ -428,5 +428,37 @@ export class TypeInfo {
     const v = this.genericArguments[1]
 
     return [k, v]
+  }
+}
+
+// prettier-ignore
+export interface FieldInfoMetadata {}
+
+export interface FieldAttributeData {
+  attributeType: string
+  ctorArgs: {
+    type: string
+    value: string
+  }[]
+}
+
+export class FieldInfo {
+  constructor(
+    public readonly metadata: FieldInfoMetadata,
+    public readonly declaringType: TypeInfo,
+    public readonly fieldType: TypeInfo,
+    public readonly attributes: Record<string, FieldAttributeData>,
+    public readonly isPublic: boolean,
+    public readonly isPrivate: boolean,
+    public readonly name: string
+  ) {}
+
+  getFieldAliasName(): string | null {
+    const attr = this.attributes['LoadAliasAttribute']
+    if (attr && attr.ctorArgs.length === 1) {
+      return attr.ctorArgs[0].value
+    }
+
+    return null
   }
 }
