@@ -11,11 +11,11 @@ export class Range {
     this.end = end ?? -1
   }
 
-  get valid() {
+  get valid(): boolean {
     return this.length >= 0
   }
 
-  get length() {
+  get length(): number {
     return this.end - this.start
   }
 
@@ -23,12 +23,12 @@ export class Range {
     return this.start <= offset && offset <= this.end
   }
 
-  copyFrom(other: Range) {
+  copyFrom(other: Range): void {
     this.start = other.start
     this.end = other.end
   }
 
-  clone() {
+  clone(): Range {
     const newRange = new Range()
     newRange.copyFrom(this)
 

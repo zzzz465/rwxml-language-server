@@ -1,12 +1,12 @@
 import { ElementType } from 'domelementtype'
 import { Parser } from '../htmlparser2'
-import { Attribute } from './attribute'
-import { Comment } from './comment'
-import { DataNode } from './dataNode'
-import { Document, Element } from './element'
-import { Node, NodeWithChildren } from './node'
-import { ProcessingInstruction } from './processingInstruction'
-import { Text } from './text'
+import { Attribute } from '../node/attribute'
+import { Comment } from '../node/comment'
+import { DataNode } from '../node/dataNode'
+import { Document, Element } from '../node/element'
+import { Node, NodeWithChildren } from '../node/node'
+import { ProcessingInstruction } from '../node/processingInstruction'
+import { Text } from '../node/text'
 
 type Callback = (error: Error | null, dom: Node[]) => void
 type ElementCallback = (element: Element) => void

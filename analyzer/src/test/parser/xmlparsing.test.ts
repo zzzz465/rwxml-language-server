@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Comment, Document, DomHandler, Element, Text } from '../../parser/domhandler'
-import { Parser } from '../../parser/htmlparser2'
 import $ from 'cheerio'
 import { readFileSync } from 'fs'
 import path from 'path'
+import { Parser } from '../../parser/htmlparser2'
+import { Comment, Document, DomHandler, Element, Text } from '../../parser/node'
 
 $._options.xmlMode = true
 
