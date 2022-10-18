@@ -1,7 +1,6 @@
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
 import { DataNode } from './dataNode'
-import { Document } from './document'
-import { Element } from './element'
+import { Document, Element } from './element'
 import { Node, NodeWithChildren } from './node'
 import { ProcessingInstruction } from './processingInstruction'
 import { Text } from './text'
