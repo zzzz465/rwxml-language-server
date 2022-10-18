@@ -1,7 +1,6 @@
 // source code: https://github.com/fb55/domhandler
 // all rights goes to original author.
 
-export * from '../domhandler/domHandler'
 export * from './attribute'
 export * from './comment'
 export * from './element'
