@@ -1,5 +1,6 @@
 import { AsEnumerable } from 'linq-es2015'
 import { Writable } from '../utils/types'
+import { RawFieldInfo } from './rawFieldInfo'
 import { RawTypeInfo } from './rawTypeInfo'
 import { TypeInfoMap } from './typeInfoMap'
 import { FieldInfo, TypeInfo } from './types'
@@ -18,7 +19,7 @@ export class TypeInfoLoader {
     for (const [fullname, rawTypeInfo] of rawTypeInfoMap) {
       // TODO: move this to somewhere.
       const fields = Object.fromEntries(
-        Object.entries(rawTypeInfo.fields ?? {}).map(([k, v]) => [
+        Object.entries(rawTypeInfo.fields ?? {}).map(([k, v]: [string, RawFieldInfo]) => [
           k,
           new FieldInfo({}, v.declaringType, v.fieldType, v.attributes ?? {}, v.isPublic, v.isPrivate, v.name),
         ])

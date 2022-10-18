@@ -1,3 +1,5 @@
+// eslint cannot detect decorator usage
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { AsEnumerable } from 'linq-es2015'
 import _ from 'lodash'
@@ -58,7 +60,7 @@ export class TypeInfo {
    * isDerivedFrom checks this type inherits base type.
    * this method returns false when base equals to self.
    */
-  isDerivedFrom(base: TypeInfo) {
+  isDerivedFrom(base: TypeInfo): boolean {
     if (this === base) {
       return false
     }
@@ -82,6 +84,7 @@ export class TypeInfo {
    * @param typeName class full name to match.
    */
   extends(typeName: string): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: TypeInfo | null = this
 
     while (current) {
@@ -182,14 +185,14 @@ export class TypeInfo {
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isString() {
+  isString(): boolean {
     return this.fullName === 'System.String'
   }
 
   // TODO: enum should be diagnosed as numeric value, but it will break all diagnostics
   // so, we need to find a way to fix this.
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isInteger() {
+  isInteger(): boolean {
     const integerTypes = [
       'System.Byte',
       'System.SByte',
@@ -207,7 +210,7 @@ export class TypeInfo {
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isFloat() {
+  isFloat(): boolean {
     switch (this.fullName) {
       case 'System.Single':
       case 'System.Decimal':
@@ -219,7 +222,7 @@ export class TypeInfo {
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isType() {
+  isType(): boolean {
     switch (this.fullName) {
       case 'System.Type':
         return true
@@ -229,12 +232,12 @@ export class TypeInfo {
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isBoolean() {
+  isBoolean(): boolean {
     return this.fullName === 'System.Boolean'
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isColor32() {
+  isColor32(): boolean {
     return this.fullName === 'UnityEngine.Color32'
   }
 
@@ -243,12 +246,12 @@ export class TypeInfo {
    * @see https://docs.microsoft.com/ko-kr/dotnet/api/system.flagsattribute?view=net-6.0
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  isEnumFlag() {
+  isEnumFlag(): false | TypeInfo {
     return this.isEnum && this.attributes['FlagsAttribute']
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
-  getDefType(): string | undefined {
+  getDefType(): string | null {
     if (this.isDef()) {
       if (this.namespaceName.startsWith('Verse') || this.namespaceName.startsWith('RimWorld')) {
         return this.className
@@ -256,6 +259,8 @@ export class TypeInfo {
         return this.fullName
       }
     }
+
+    return null
   }
 
   /**
@@ -432,6 +437,7 @@ export class TypeInfo {
 }
 
 // prettier-ignore
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface FieldInfoMetadata {}
 
 export interface FieldAttributeData {

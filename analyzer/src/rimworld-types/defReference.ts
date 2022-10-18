@@ -10,6 +10,9 @@ export enum DefReferenceType {
 }
 
 export class DefReference extends Element {
+  /**
+   * @deprecated use constructor & replaceNode instead.
+   */
   static into(node: Element, typeInfo: TypeInfo, refType: DefReferenceType): DefReference {
     const ret = node as Writable<DefReference>
 
