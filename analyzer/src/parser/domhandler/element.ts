@@ -1,7 +1,6 @@
 import { ElementType } from 'domelementtype'
 import { sortedFindFirst } from '../../utils/arrays'
 import { Attribute } from './attribute'
-import { Document } from './document'
 import { Node, NodeWithChildren } from './node'
 
 /**
@@ -117,5 +116,25 @@ export class Element extends NodeWithChildren {
     const openTagString = this.document.rawText.slice(this.openTagRange.start, this.openTagRange.end)
     const closeTagString = this.document.rawText.slice(this.closeTagRange.start, this.closeTagRange.end)
     return `${openTagString}${super.toString()}${closeTagString}`
+  }
+}
+
+export class Document extends Element {
+  uri: string
+  rawText: string
+  'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
+
+  constructor(children: Node[], uri?: string, rawText = '') {
+    super(ElementType.Root, {}, children)
+    this.uri = uri ?? ''
+    this.rawText = rawText
+  }
+
+  getCharAt(offset: number): string {
+    return this.rawText.charAt(offset)
+  }
+
+  toString(): string {
+    return this.rawText
   }
 }
