@@ -1,27 +1,26 @@
 import $ from 'cheerio'
-import { Element, parse } from '../../parser'
+import { readFileSync } from 'fs'
+import stringify from 'json-stringify-safe'
+import { join } from 'path'
+import { parse } from '../../parser'
 
+const expectedJsonString = readFileSync(join(__dirname, 'jsonSerializedDocument.json'), 'utf8')
+const expectedJson = JSON.parse(expectedJsonString)
+
+// TODO: fix this test
 describe('cheerio compability test', () => {
   test('node should work with cheerio API', () => {
     const xml = `
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
-    <ThingDef ParentName="BaseFilth">
-    <defName>Filth_Trash</defName>
-    <filth>
-        <placementMask> <!-- enum (flag) type -->
-        <li>Terrain</li>
-        <li>Unnatural</li>
-        </placementMask>
-    </filth>
-    </ThingDef>
 </Defs>
 `
-
     const doc = parse(xml)
+    const docSerialized = stringify(doc)
+    const actual = JSON.parse(docSerialized)
+    expect(actual).toBe(expectedJson)
 
     const defsNode = $(doc).find('Defs').get(0) as unknown as Element
-
     expect(defsNode).toBeDefined()
   })
 })
