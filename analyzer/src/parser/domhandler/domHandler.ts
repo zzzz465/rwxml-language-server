@@ -143,6 +143,7 @@ export class DomHandler {
   }
 
   public oncdatastart(): void {
+    // TODO: support cdata
     const text = new Text('')
     const node = new NodeWithChildren(ElementType.CDATA, [text])
 
@@ -157,6 +158,7 @@ export class DomHandler {
   }
 
   public onprocessinginstruction(name: string, data: string): void {
+    // TODO: support data range
     const node = new ProcessingInstruction(name, data)
     this.addNode(node)
   }
