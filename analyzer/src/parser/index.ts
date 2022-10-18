@@ -1,8 +1,9 @@
-import { DomHandler } from './domhandler'
 import { Parser } from './htmlparser2'
+import { DomHandler } from './node'
 
 export * from './domhandler'
 export * from './htmlparser2'
+export * from './node'
 export * from './range'
 
 export function parse(text: string, uri = '') {
