@@ -1,9 +1,8 @@
 import { cache, CacheScope, CacheType } from 'cache-decorator'
 import { ElementType } from 'domelementtype'
 import { Attribute, Element, Node, NodeWithChildren } from '../parser'
-import { FieldInfo } from './fieldInfo'
 import { TypedElement } from './typedElement'
-import { TypeInfo } from './typeInfo'
+import { TypeInfo } from './types'
 
 export type DefNameType = string
 

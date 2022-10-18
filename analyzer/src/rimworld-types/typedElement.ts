@@ -4,7 +4,7 @@ import { Element } from '../parser/node/element'
 import { Node } from '../parser/node/node'
 import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
-import { TypeInfo } from './typeInfo'
+import { TypeInfo } from './types'
 
 export class TypedElement extends Element {
   readonly typeInfo: TypeInfo

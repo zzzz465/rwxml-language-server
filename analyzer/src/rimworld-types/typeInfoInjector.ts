@@ -4,8 +4,8 @@ import { Def } from './def'
 import { DefReference, DefReferenceType } from './defReference'
 import { FieldInfo } from './fieldInfo'
 import { TypedElement } from './typedElement'
-import { TypeInfo } from './typeInfo'
 import { TypeInfoMap } from './typeInfoMap'
+import { TypeInfo } from './types'
 
 $._options.xmlMode = true
 

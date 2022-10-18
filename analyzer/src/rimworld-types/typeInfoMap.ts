@@ -1,7 +1,7 @@
-import { TypeInfo } from './typeInfo'
-import { DefType, TypeIdentifier } from './declaredType'
-import { isFullName } from './util'
 import { cache, CacheScope, CacheType } from 'cache-decorator'
+import { DefType, TypeIdentifier } from './declaredType'
+import { TypeInfo } from './types'
+import { isFullName } from './util'
 
 const rimworldNamespaces = [
   'Verse',
