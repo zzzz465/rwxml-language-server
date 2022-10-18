@@ -124,6 +124,14 @@ export class Document extends Element {
   rawText: string
   'x-mode'?: 'no-quirks' | 'quirks' | 'limited-quirks'
 
+  get startIndex(): number {
+    return 0
+  }
+
+  get endIndex(): number {
+    return this.rawText.length
+  }
+
   constructor(children: Node[], uri?: string, rawText = '') {
     super(ElementType.Root, {}, children)
     this.uri = uri ?? ''
