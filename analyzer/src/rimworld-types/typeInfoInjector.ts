@@ -2,10 +2,9 @@ import $ from 'cheerio'
 import { Document, Element, NodeWithChildren, replaceNode } from '../parser'
 import { Def } from './def'
 import { DefReference, DefReferenceType } from './defReference'
-import { FieldInfo } from './fieldInfo'
 import { TypedElement } from './typedElement'
 import { TypeInfoMap } from './typeInfoMap'
-import { TypeInfo } from './types'
+import { FieldInfo, TypeInfo } from './types'
 
 $._options.xmlMode = true
 
