@@ -1,6 +1,6 @@
-import { Def } from './def'
-import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
 import { from } from 'linq-es2015'
+import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
+import { Def } from './typedElement'
 
 export class NameDatabase {
   private inheritNames: DefaultDictionary<string, MultiDictionary<string, Def>> = new DefaultDictionary(

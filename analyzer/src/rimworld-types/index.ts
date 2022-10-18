@@ -1,5 +1,4 @@
 export * from './declaredType'
-export * from './def'
 export * from './defDatabase'
 export * from './defReference'
 export * from './fieldMetadata'

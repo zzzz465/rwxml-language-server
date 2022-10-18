@@ -1,5 +1,5 @@
-import { Def } from './def'
 import { DefaultDictionary, MultiDictionary } from 'typescript-collections'
+import { Def } from './typedElement'
 
 export class DefDatabase implements Iterable<Def> {
   // store defs sorted by defType

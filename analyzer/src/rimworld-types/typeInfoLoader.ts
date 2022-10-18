@@ -1,10 +1,8 @@
 import { AsEnumerable } from 'linq-es2015'
 import { Writable } from '../utils/types'
-import { FieldInfo } from './fieldInfo'
 import { RawTypeInfo } from './rawTypeInfo'
 import { TypeInfoMap } from './typeInfoMap'
-import { TypeInfo } from './types'
-'
+import { FieldInfo, TypeInfo } from './types'
 
 export class TypeInfoLoader {
   static load(rawTypeInfos: RawTypeInfo[]): TypeInfoMap {
