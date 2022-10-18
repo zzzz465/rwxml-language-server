@@ -5,6 +5,7 @@ specifiers:
   '@types/double-ended-queue': ^2.1.1
   '@types/jest': ^26.0.24
   '@types/js-yaml': ^4.0.5
+  '@types/json-stringify-safe': ^5.0.0
   '@types/lodash': ^4.14.186
   '@types/node': ^12.20.55
   '@types/normalize-path': ^3.0.0
@@ -25,6 +26,7 @@ specifiers:
   fast-glob: ^3.2.12
   jest: ^26.6.3
   js-yaml: ^4.1.0
+  json-stringify-safe: ^5.0.1
   linq-es2015: ^2.5.1
   lodash: ^4.17.21
   normalize-path: ^3.0.0
@@ -61,6 +63,7 @@ devDependencies:
   '@types/double-ended-queue': 2.1.1
   '@types/jest': 26.0.24
   '@types/js-yaml': 4.0.5
+  '@types/json-stringify-safe': 5.0.0
   '@types/lodash': 4.14.186
   '@types/node': 12.20.55
   '@types/normalize-path': 3.0.0
@@ -72,6 +75,7 @@ devDependencies:
   eslint-config-typescript: 3.0.0_q4lu4jsu4joku2dgqmmaqgji2m
   eslint-plugin-prettier: 3.4.1_7gsvg5lgwpfdww3i7smtqxamuy
   jest: 26.6.3_ts-node@10.9.1
+  json-stringify-safe: 5.0.1
   prettier: 2.7.1
   ts-jest: 26.5.6_we2p4sglclq5bmc4orivof3sv4
   ts-loader: 8.4.0_qqxisngxjbp7lstdk7boexbu3e
@@ -948,6 +952,10 @@ packages:
 
   /@types/json-schema/7.0.11:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
+    dev: true
+
+  /@types/json-stringify-safe/5.0.0:
+    resolution: {integrity: sha512-UUA1sH0RSRROdInuDOA1yoRzbi5xVFD1RHCoOvNRPTNwR8zBkJ/84PZ6NhKVDtKp0FTeIccJCdQz1X2aJPr4uw==}
     dev: true
 
   /@types/lodash/4.14.186:
@@ -3539,6 +3547,10 @@ packages:
 
   /json-stable-stringify-without-jsonify/1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
+    dev: true
+
+  /json-stringify-safe/5.0.1:
+    resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
     dev: true
 
   /json5/2.2.1:
