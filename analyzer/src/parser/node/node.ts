@@ -33,12 +33,12 @@ export class Node {
   readonly closeTagRange = new Range()
   readonly closeTagNameRange = new Range()
 
-  get startIndex(): number {
-    return this.nodeRange.start
+  get startIndex(): number | null {
+    return this.nodeRange.start == -1 ? null : this.nodeRange.start
   }
 
-  get endIndex(): number {
-    return this.nodeRange.end
+  get endIndex(): number | null {
+    return this.nodeRange.end == -1 ? null : this.nodeRange.end
   }
 
   // Read-only aliases

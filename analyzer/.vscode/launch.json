@@ -2,6 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Current ts file",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "args": [
+                "${relativeFile}"
+            ],
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "stage": "debug"
+            }
+        },
+        {
             "name": "tr extract ../../core",
             "type": "node",
             "request": "launch",
