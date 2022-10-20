@@ -23,6 +23,20 @@
                 "<node_internals>/**",
                 "node_modules/**"
             ]
+        },
+        {
+            "name": "Debug Current ts file",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "args": [
+                "${relativeFile}"
+            ],
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "env": {
+                "stage": "debug"
+            }
         }
     ]
 }

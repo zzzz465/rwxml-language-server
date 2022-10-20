@@ -316,15 +316,11 @@ export class Element extends NodeWithChildren {
   get document(): Document {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let node: Node = this
-    while (!(node instanceof Document)) {
-      if (node.parent) {
-        node = node.parent
-      } else {
-        throw new Error(`node ${node}'s parent is not Document.`)
-      }
+    while (node.parent !== null) {
+      node = node.parent
     }
 
-    return node
+    return node as Document
   }
 
   get ChildElementNodes(): Element[] {
