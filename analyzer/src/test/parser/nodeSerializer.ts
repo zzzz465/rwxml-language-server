@@ -1,4 +1,4 @@
-import type { EntryProcessor } from 'json-stringify-safe'
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import stringify from 'json-stringify-safe'
 import _ from 'lodash'
 
@@ -9,6 +9,7 @@ const keys = [
   '',
 
   // Node
+  'type',
   'nodeName',
   'nodeValue',
   'nodeType',
@@ -42,9 +43,9 @@ export const nodeSerializer = (log: boolean) => (key: string, value: any) => {
 
   const index = _.parseInt(key)
 
-  // if (!keys.includes(key)) {
-  //   return
-  // }
+  if (!keys.includes(key) && _.isNaN(index)) {
+    return
+  }
 
   if (!_.isObjectLike(value)) {
     return value
@@ -53,6 +54,8 @@ export const nodeSerializer = (log: boolean) => (key: string, value: any) => {
   if (_.isArray(value)) {
     const arr = [...value]
     replaceReference(new Set(), arr, value, arr)
+
+    return arr
   } else if (typeof value === 'object' && value !== null) {
     const obj = _.toPlainObject(value)
 
