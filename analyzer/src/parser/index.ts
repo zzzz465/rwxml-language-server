@@ -1,6 +1,6 @@
 import { DomHandler } from './domhandler'
 import { Parser } from './htmlparser2'
-import { Document } from './node'
+import { Document } from './node/document'
 
 export * from './domhandler'
 export * from './htmlparser2'

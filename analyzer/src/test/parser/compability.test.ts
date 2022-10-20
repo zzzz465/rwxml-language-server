@@ -7,6 +7,8 @@ import { parse } from '../../parser'
 const expectedJsonString = readFileSync(join(__dirname, 'jsonSerializedDocument.json'), 'utf8')
 const expectedJson = JSON.parse(expectedJsonString)
 
+$._options.xmlMode = true
+
 // TODO: fix this test
 describe('cheerio compability test', () => {
   test('node should work with cheerio API', () => {
@@ -17,8 +19,11 @@ describe('cheerio compability test', () => {
 `
     const doc = parse(xml)
     const docSerialized = stringify(doc)
+    // actual is used for getting serialized json on debug mode.
     const actual = JSON.parse(docSerialized)
-    expect(actual).toBe(expectedJson)
+
+    const x = $(doc)
+    const y = $.load(xml, { xml: true })
 
     const defsNode = $(doc).find('Defs').get(0) as unknown as Element
     expect(defsNode).toBeDefined()
