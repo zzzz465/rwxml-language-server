@@ -29,6 +29,7 @@ export class DiagnosticsProvider implements Provider {
     private readonly configuration: Configuration,
     @tsyringe.injectAll(DiagnosticsContributor.token) private readonly contributors: DiagnosticsContributor[]
   ) {
+    this.log.info(`DiagnosticsProvider initialized with ${contributors.length} contributors.`);
     projectManager.events.on('onProjectInitialized', this.onProjectInitialized.bind(this))
     configuration.events.on('onConfigurationChanged', this.onConfigurationChanged.bind(this))
   }
@@ -88,26 +89,22 @@ export class DiagnosticsProvider implements Provider {
       throw new Error('this.connection is undefined. check DiagnosticsProvider is initialized with init()')
     }
 
-    const projectReady = project.state === 'ready'
-    const uriValid = document.uri !== ''
-    const dependencyFile = project.resourceStore.isDependencyFile(document.uri)
+    // 过滤掉来自 RimWorld 本体 Data 目录的XML文件
+    // 路径格式：file:///h:/SteamLibrary/steamapps/common/RimWorld/Data/...
+    const uri = document.uri.toLowerCase()
+    if (uri.includes('/rimworld/data/') || uri.includes('\\rimworld\\data\\')) {
+      return // 跳过本体Data目录的诊断
+    }
+
     const RootIsDefsNode = getRootElement(document)?.tagName === 'Defs'
 
-    if (!(projectReady && uriValid && !dependencyFile && RootIsDefsNode)) {
+    this.log.info(`Checking diagnostics for ${document.uri}. RootIsDefs: ${RootIsDefsNode}, State: ${project.state}`);
+
+    if (!(project.state === 'ready' && document.uri !== '' && RootIsDefsNode)) {
       return
     }
 
-    const shouldDiagnosis =
-      document.uri !== '' &&
-      !project.resourceStore.isDependencyFile(document.uri) &&
-      getRootElement(document)?.tagName === 'Defs' &&
-      project.state === 'ready'
-
-    if (!shouldDiagnosis) {
-      return
-    }
-
-    const diagnosticsArr = this.diagnoseDocument(project, document, dirtyNodes)
+    const diagnosticsArr = await this.diagnoseDocument(project, document, dirtyNodes)
 
     for (const dig of diagnosticsArr) {
       if (dig.uri === document.uri) {
@@ -126,13 +123,14 @@ export class DiagnosticsProvider implements Provider {
     this.connection?.sendDiagnostics({ uri, diagnostics: [] })
   }
 
-  private diagnoseDocument(
+  private async diagnoseDocument(
     project: Project,
     document: Document,
     dirtyNodes: (Def | TypedElement)[]
-  ): { uri: string; diagnostics: ls.Diagnostic[] }[] {
-    return AsEnumerable(this.contributors)
-      .Select((contributor) => contributor.getDiagnostics(project, document, dirtyNodes))
+  ): Promise<{ uri: string; diagnostics: ls.Diagnostic[] }[]> {
+    const results = await Promise.all(this.contributors.map((contributor) => contributor.getDiagnostics(project, document, dirtyNodes)))
+
+    return AsEnumerable(results)
       .GroupBy((x) => x.uri)
       .Select((x) => ({
         uri: x.key,

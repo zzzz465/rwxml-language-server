@@ -53,15 +53,7 @@ namespace extractor
             {
                 try
                 {
-
-                    if (option.outputMode != OutputMode.stdout || option.outputMode != OutputMode.stdoutBytes)
-                    {
-                        Log.SetStdOutput();
-                    }
-                    // if (option.logOutputPath != null)
-                    // {
-                    // 	Log.SetOutput(option.logOutputPath);
-                    // }
+                    Log.SetStdOutput();
 
                     port = option.port;
 

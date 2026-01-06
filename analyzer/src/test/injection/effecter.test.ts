@@ -1,7 +1,7 @@
 import { parse } from '../..'
 import { TypedElement } from '../../rimworld-types'
 import { getInjector } from './utils'
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 
 const exampleXML = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -65,7 +65,7 @@ describe('SoundDef TypeInfo injection test', () => {
 
     injector.inject(root)
 
-    const $ = cheerio.load(root, { xmlMode: true })
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
     const clipPathNode = $('clipPath').get(0) as unknown as TypedElement
     const li = $('grains > li').get(0) as unknown as TypedElement
@@ -87,7 +87,7 @@ describe('SoundDef TypeInfo injection test', () => {
 
     injector.inject(root)
 
-    const $ = cheerio.load(root, { xmlMode: true })
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
     const liNode = $('grains > li').get(0) as unknown as TypedElement
     const clipPathNode = $('grains > li > clipPath').get(0) as unknown as TypedElement

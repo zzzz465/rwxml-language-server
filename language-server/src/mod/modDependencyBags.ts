@@ -282,6 +282,9 @@ export class ModDependencyBags {
     const deps = this.aboutMetadata.get(version)?.modDependency?.optional ?? []
     deps.push({ packageId: 'Ludeon.RimWorld.Ideology' })
     deps.push({ packageId: 'Ludeon.RimWorld.Royalty' })
+    deps.push({ packageId: 'Ludeon.RimWorld.Biotech' })
+    deps.push({ packageId: 'Ludeon.RimWorld.Anomaly' })
+    deps.push({ packageId: 'Ludeon.RimWorld.Odyssey' })
 
     // dependencies cannot have self as dependency.
     return deps.filter((dep) => dep.packageId !== this.about.packageId)

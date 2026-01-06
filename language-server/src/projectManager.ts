@@ -82,7 +82,15 @@ export class ProjectManager {
   }
 
   private onProjectFileAdded(file: File): void {
-    for (const proj of this.projects) {
+    const projects = this.projects
+    this.log.info(`[ProjectManager] onProjectFileAdded called. file: ${file.uri.toString()}, projects count: ${projects.length}`)
+
+    if (projects.length === 0) {
+      this.log.warn(`[ProjectManager] No projects available! supportedVersions: ${this.supportedVersions}`)
+    }
+
+    for (const proj of projects) {
+      this.log.info(`[ProjectManager] Processing file for project version: ${proj.version}`)
       proj.resourceStore.fileAdded(file)
     }
   }

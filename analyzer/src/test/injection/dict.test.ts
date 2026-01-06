@@ -1,5 +1,5 @@
 import { Document, parse } from '../../parser'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader, TypeInfoMap } from '../../rimworld-types'
 import data from './anty.json'
 import { injector_1_4 } from '../data/injector'
@@ -53,8 +53,8 @@ describe('Dictionary K, V type test', () => {
   })
 
   test('dictionary type should be parsed as generic', () => {
-    const dictNode = $(root)
-      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings')
+    const $ = cheerio.load(root as any, { xmlMode: true })
+    const dictNode = $('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings')
       .get(0) as unknown as TypedElement
 
     expect(dictNode).not.toBeUndefined()
@@ -62,8 +62,8 @@ describe('Dictionary K, V type test', () => {
   })
 
   test('dictionary K, V should have li as key with type K', () => {
-    const nodes = $(root)
-      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > key')
+    const $ = cheerio.load(root as any, { xmlMode: true })
+    const nodes = $('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > key')
       .toArray() as unknown as TypedElement[]
 
     expect(nodes.length).toBeGreaterThan(0)
@@ -76,8 +76,8 @@ describe('Dictionary K, V type test', () => {
   })
 
   test('dictionary K, V should have value as value with type V', () => {
-    const nodes = $(root)
-      .find('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > value')
+    const $ = cheerio.load(root as any, { xmlMode: true })
+    const nodes = $('Defs > AlienRace\\.ThingDef_AlienRace > alienRace > styleSettings > li > value')
       .toArray() as unknown as TypedElement[]
 
     expect(nodes.length).toBeGreaterThan(0)

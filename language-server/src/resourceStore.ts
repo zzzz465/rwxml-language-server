@@ -126,11 +126,19 @@ export class ResourceStore {
   }
 
   fileAdded(file: File): void {
-    if (!this.isProjectResource(file)) {
-      return
+    const uri = file.uri.toString()
+
+    // DLL 文件需要特殊记录
+    if (isDLLFile(file.ext)) {
+      this.log.info(`[fileAdded] DLL file received: ${uri}`)
     }
 
-    const uri = file.uri.toString()
+    if (!this.isProjectResource(file)) {
+      if (isDLLFile(file.ext)) {
+        this.log.warn(`[fileAdded] DLL file rejected by isProjectResource: ${uri}`)
+      }
+      return
+    }
 
     if (this.files.has(uri)) {
       this.log.error(`file already exists. uri: ${uri}`)
@@ -311,6 +319,7 @@ export class ResourceStore {
 
   private onDLLFileAdded(file: DLLFile): void {
     const uri = file.uri.toString()
+    this.log.info(`dll file added: ${uri}`)
     if (this.dllFiles.has(uri)) {
       this.log.error(`dll added but already exists. uri: ${uri}`)
       return
@@ -318,6 +327,7 @@ export class ResourceStore {
 
     this.dllFiles.add(uri)
 
+    this.log.info(`emitting dllChanged event for: ${uri}`)
     this.event.emit('dllChanged', uri)
   }
 

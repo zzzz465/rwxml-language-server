@@ -1,6 +1,7 @@
 import { spawnSync } from 'child_process'
 import { getFileProperties } from 'get-file-properties'
 import ono from 'ono'
+import * as path from 'path'
 import * as semver from 'semver'
 import * as tsyringe from 'tsyringe'
 import * as vscode from 'vscode'
@@ -13,6 +14,7 @@ import { extractTypeInfos } from '../typeInfo'
 import jsonStr from '../utils/json'
 import { createProgress } from '../utils/progress'
 import { Provider } from './provider'
+import * as fs from 'fs'
 
 @tsyringe.injectable()
 export class TypeInfoProvider implements Provider {
@@ -34,29 +36,16 @@ export class TypeInfoProvider implements Provider {
   private clearProgress: (() => void) | null = null
 
   async onTypeInfoRequest({ uris, version }: TypeInfoRequest): Promise<TypeInfoRequestResponse | ResponseError<Error>> {
-    this.log.info('received TypeInfo request.')
+    this.log.info(`Received atomic TypeInfo extraction request for ${uris.length} items.`)
 
-    const CoreDLLPath = this.pathStore.RimWorldCoreDLLPath
-    const semverVersion = this.parseVersion(version)
-    if (!semverVersion) {
-      const err = ono(`cannot parse version: ${version}`)
-      this.log.error(err)
-      return new ResponseError(1, err.message, err)
-    }
-
-    const isCoreDLLVersionCorrect = await this.checkCoreDLLVersion(CoreDLLPath, semverVersion)
-    if (!isCoreDLLVersionCorrect) {
-      const err = ono(
-        `Core DLL version mismatch. expected: ${semverVersion}, actual: ${await this.getCoreDLLVersion(CoreDLLPath)}`
-      )
-      this.log.error(err)
-      return new ResponseError(2, err.message, err)
+    if (uris.length === 0) {
+      return { data: [] }
     }
 
     if (!this.clearProgress) {
       const { resolve } = await createProgress({
         location: vscode.ProgressLocation.Notification,
-        title: 'RWXML: reading DLLs...',
+        title: 'RWXML: reading DLLs...', 
       })
       this.clearProgress = resolve
     }
@@ -85,14 +74,34 @@ export class TypeInfoProvider implements Provider {
   }
 
   async extractTypeInfo(uris: string[]): Promise<unknown[] | Error> {
-    const dllPaths = uris.map((uri) => vscode.Uri.parse(uri).fsPath) // single .dll file or directory
+    const managedDirectory = this.pathStore.RimWorldManagedDirectory.toLowerCase()
+    const coreDLLPath = this.pathStore.RimWorldCoreDLLPath
+    
+    const dllPaths = uris
+      .map((uri) => vscode.Uri.parse(uri).fsPath)
+      .filter((path) => {
+        const lowerPath = path.toLowerCase()
+        // 过滤掉大部分 Managed 目录，但保留用户特别指定的路径
+        return !lowerPath.includes(managedDirectory) && !lowerPath.includes('managed')
+      })
 
-    const managedDirectory = this.pathStore.RimWorldManagedDirectory
+    // 关键修复：显式加入核心 DLL 和 UnityEngine，否则提取器会报错
+    if (fs.existsSync(coreDLLPath)) {
+      dllPaths.unshift(coreDLLPath)
+      
+      // 同时也尝试加入 UnityEngine.dll
+      const unityDLLPath = path.join(path.dirname(coreDLLPath), 'UnityEngine.dll')
+      if (fs.existsSync(unityDLLPath)) {
+        dllPaths.push(unityDLLPath)
+      }
+    }
 
-    this.log.debug('managed directory: ', managedDirectory)
-    dllPaths.push(managedDirectory)
+    if (dllPaths.length <= 1) { // 只有 Core DLL 或者什么都没有
+      this.log.info('No project-specific DLLs to extract. Skipping extractor.')
+      return []
+    }
 
-    this.log.debug(`extracting typeinfos from: ${jsonStr(dllPaths)}`)
+    this.log.info(`Extracting typeinfos from ${dllPaths.length} DLLs (including Core DLL).`)
     return await extractTypeInfos(...dllPaths)
   }
 

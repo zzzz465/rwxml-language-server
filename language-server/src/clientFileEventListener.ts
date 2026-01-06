@@ -22,11 +22,13 @@ export class ClientFileEventListener {
   }
 
   private onFileAdded(uri: string): void {
+    this.log.info(`file added notification received: ${uri}`)
     const res = this.fileStore.load({ uri: URI.parse(uri) })
     if (either.isLeft(res)) {
       this.log.error(`cannot add file. error: ${res.left}`)
       return
     }
+    this.log.info(`file loaded successfully: ${uri}`)
   }
 
   private onFileChanged(uri: string): void {

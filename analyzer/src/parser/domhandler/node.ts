@@ -5,7 +5,6 @@
 import { ElementType, isTag as isTagRaw } from 'domelementtype'
 import { sortedFindFirst } from '../../utils/arrays'
 import { Range } from '../range'
-import $ from 'cheerio'
 import { TypeInfo } from '../../rimworld-types'
 
 const nodeTypes = new Map<ElementType, number>([
@@ -242,7 +241,7 @@ export class Document extends NodeWithChildren {
   findNode(predicate: (node: Element) => boolean): Element[] {
     const ret: Element[] = []
 
-    for (const child of this.children.filter((node: any) => node instanceof Element) as Element[]) {
+    for (const child of this.children.filter((node: any) => isTagRaw(node)) as Element[]) {
       findNode(ret, child, predicate)
     }
 
@@ -328,7 +327,7 @@ export class Element extends NodeWithChildren {
   }
 
   get ChildElementNodes(): Element[] {
-    return this.children.filter(node => node instanceof Element) as Element[]
+    return this.children.filter(node => isTagRaw(node)) as Element[]
   }
 
   // DOM Level 1 aliases
@@ -511,7 +510,7 @@ type RangedNode = Element | DataNode
 
 // NOTE: is this really needed?
 function isRangedNode(node: Node): node is RangedNode {
-  return node instanceof Element || node instanceof DataNode
+  return isTagRaw(node) || node instanceof DataNode
 }
 
 // TODO: return null instead of undefined

@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DomHandler, { Comment, Document, Element, Text } from '../../parser/domhandler'
 import { Parser } from '../../parser/htmlparser2'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { readFileSync } from 'fs'
 import path from 'path'
-
-$._options.xmlMode = true
 
 function parse(text: string): Document {
   const domHandler = new DomHandler()
@@ -46,25 +44,25 @@ Paniel the Automata
     parser.end(exampleXML)
 
     const root = domHandler.root
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const name = $(root).find('ModMetaData > name').text()
+    const name = $('ModMetaData > name').text()
     expect(name).toEqual('Paniel the Automata Beta 1.3')
 
-    const author = $(root).find('ModMetaData > author').text()
+    const author = $('ModMetaData > author').text()
     expect(author).toEqual('AhnDemi')
 
-    const packageIdNode = $(root).find('ModMetaData > packageId').get(0).firstChild as unknown as Text
-    const packageId = $(root).find('ModMetaData > packageId').text()
+    const packageIdNode = $('ModMetaData > packageId').get(0)?.firstChild as unknown as Text
+    const packageId = $('ModMetaData > packageId').text()
     expect(packageId).toEqual('AhnDemi.PanieltheAutomataBetatwo')
     expect(packageIdNode).toBeInstanceOf(Text)
     expect(packageIdNode.dataRange.start).toEqual(191) // 191 ~ 223
     expect(packageIdNode.dataRange.end).toEqual(223)
 
-    const description = $(root).find('ModMetaData > description').text()
+    const description = $('ModMetaData > description').text()
     expect(description.trim()).toEqual('Paniel the Automata')
 
-    const supportedVersions = $(root)
-      .find('ModMetaData > supportedVersions > li')
+    const supportedVersions = $('ModMetaData > supportedVersions > li')
       .map((_, el) => $(el).text())
       .toArray()
     expect(supportedVersions).toEqual(['1.3'])
@@ -72,8 +70,9 @@ Paniel the Automata
 
   test('xml parser range test', () => {
     const root = parse(exampleXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const ModMetaData = $(root).find('ModMetaData').get(0) as unknown as Element // 40 ~ 354
+    const ModMetaData = $('ModMetaData').get(0) as unknown as Element // 40 ~ 354
     expect(ModMetaData.nodeRange.start).toEqual(40)
     expect(ModMetaData.nodeRange.end).toEqual(355)
 
@@ -102,18 +101,20 @@ Paniel the Automata
 
   test('text must return valid TextNode', () => {
     const root = parse(exampleXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const descriptionNode = $(root).find('description')
+    const descriptionNode = $('description')
 
     expect(descriptionNode.text()).toEqual('\nPaniel the Automata\n')
   })
 
   test('xml parser text node range test', () => {
     const root = parse(exampleXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const packageIdNode = $(root).find('packageId').get(0) as unknown as Element
+    const packageIdNode = $('packageId').get(0) as unknown as Element
 
-    expect($(packageIdNode).text()).toEqual('AhnDemi.PanieltheAutomataBetatwo')
+    expect($(packageIdNode as any).text()).toEqual('AhnDemi.PanieltheAutomataBetatwo')
     expect(packageIdNode.nodeRange.length).toEqual(55)
   })
 
@@ -124,8 +125,9 @@ Paniel the Automata
     parser.end(exampleXML)
 
     const root = domHandler.root
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const elements = $('*', root)
+    const elements = $('*')
 
     const nodes = elements.toArray()
 
@@ -190,15 +192,17 @@ describe('broken XML parsing test', () => {
 
   test('invalid xml should be parsed', () => {
     const root = parse(attribBrokenXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const nameNode = $(root).find('ModMetaData > name')
+    const nameNode = $('ModMetaData > name')
     expect(nameNode.text()).toEqual('Paniel the Automata Beta 1.3')
   })
 
   test('unclosed xml should be parsed', () => {
     const root = parse(notclosedXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const nameNode = $(root).find('ModMetaData > name')
+    const nameNode = $('ModMetaData > name')
     expect(nameNode.text()).toBe('Paniel the Automata Beta 1.3')
   })
 })

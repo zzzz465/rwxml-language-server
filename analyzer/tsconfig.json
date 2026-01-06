@@ -14,12 +14,14 @@
         "skipLibCheck": true,
         "esModuleInterop": true,
         "baseUrl": ".",
-
         "paths": {
-            "cache-decorator": ["node_modules/cache-decorator/lib/index.d.ts"] // https://github.com/brn/cache-decorator
+            "cache-decorator": ["../node_modules/cache-decorator/lib/index.d.ts"]
         }
     },
     "exclude": [
-        "./dist"
+        "node_modules",
+        "../node_modules",
+        "./dist",
+        "src/run-test.ts"
     ]
 }

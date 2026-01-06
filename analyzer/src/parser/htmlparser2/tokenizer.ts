@@ -1,8 +1,15 @@
 // source code: https://github.com/fb55/htmlparser2
 // all rights goes to original author.
 /* eslint-disable prettier/prettier */
-import decodeCodePoint from 'entities/lib/decode_codepoint'
-import { xmlDecodeTree, BinTrieFlags, determineBranch } from 'entities/lib/decode'
+import decodeCodePoint from './decode'
+
+const xmlEntities: { [key: string]: string } = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'"
+}
 
 const enum CharCodes {
   Tab = 0x9, // "\t"
@@ -246,14 +253,12 @@ export class Tokenizer {
 
   private readonly xmlMode = true
   private readonly decodeEntities: boolean
-  private readonly entityTrie: Uint16Array
 
   constructor(
     { decodeEntities = true }: { decodeEntities?: boolean },
     private readonly cbs: Callbacks
   ) {
     this.decodeEntities = decodeEntities
-    this.entityTrie = xmlDecodeTree
   }
 
   public reset(): void {
@@ -618,10 +623,7 @@ export class Tokenizer {
     } else this._state = State.Text
   }
 
-  private trieIndex = 0
-  private trieCurrent = 0
-  private trieResult: string | null = null
-  private trieExcess = 0
+  private entityStart = 0
 
   private stateBeforeEntity(c: number) {
     if (c === CharCodes.Num) {
@@ -632,52 +634,34 @@ export class Tokenizer {
       this.sectionStart = this._index
     } else {
       this._state = State.InNamedEntity
-      this.trieIndex = 0
-      this.trieCurrent = this.entityTrie[0]
-      this.trieResult = null
-      // Start excess with 1 to include the '&'
-      this.trieExcess = 1
+      this.entityStart = this._index - 1
       this._index--
     }
   }
 
   private stateInNamedEntity(c: number) {
-    this.trieExcess += 1
-
-    this.trieIndex = determineBranch(this.entityTrie, this.trieCurrent, this.trieIndex + 1, c)
-
-    if (this.trieIndex < 0) {
+    if (c === CharCodes.Semi) {
       this.emitNamedEntity()
-      return
-    }
-
-    this.trieCurrent = this.entityTrie[this.trieIndex]
-
-    // If the branch is a value, store it and continue
-    if (this.trieCurrent & BinTrieFlags.HAS_VALUE) {
-      // If we have a legacy entity while parsing strictly, just skip the number of bytes
-      if (c !== CharCodes.Semi) {
-        // No need to consider multi-byte values, as the legacy entity is always a single byte
-        this.trieIndex += 1
-      } else {
-        // If this is a surrogate pair, combine the higher bits from the node with the next byte
-        this.trieResult =
-          this.trieCurrent & BinTrieFlags.MULTI_BYTE
-            ? String.fromCharCode(this.entityTrie[++this.trieIndex], this.entityTrie[++this.trieIndex])
-            : String.fromCharCode(this.entityTrie[++this.trieIndex])
-        this.trieExcess = 0
-      }
+    } else if (
+      (c < CharCodes.LowerA || c > CharCodes.LowerZ) &&
+      (c < CharCodes.UpperA || c > CharCodes.UpperZ) &&
+      (c < CharCodes.Zero || c > CharCodes.Nine)
+    ) {
+      this._state = this.baseState
+      this._index--
     }
   }
 
   private emitNamedEntity() {
-    if (this.trieResult) {
-      this.emitPartial(this.trieResult)
+    const name = this.buffer.substring(this.entityStart + 1, this._index)
+    const result = xmlEntities[name]
+
+    if (result) {
+      this.emitPartial(result)
+      this.sectionStart = this._index + 1
     }
 
-    this.sectionStart = this._index - this.trieExcess + 1
     this._state = this.baseState
-    this._index--
   }
 
   private decodeNumericEntity(base: 10 | 16, strict: boolean) {
@@ -906,8 +890,6 @@ export class Tokenizer {
     ) {
       this.cbs.oncomment(data)
     } else if (this._state === State.InNamedEntity) {
-      // Increase excess for EOF
-      this.trieExcess++
       this.emitNamedEntity()
       if (this.sectionStart < this._index) {
         this._state = this.baseState

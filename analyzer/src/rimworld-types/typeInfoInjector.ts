@@ -4,10 +4,7 @@ import { TypedElement } from './typedElement'
 import { Def } from './def'
 import { FieldInfo } from './fieldInfo'
 import { Document, Element, Text } from '../parser'
-import $ from 'cheerio'
 import { DefReference, DefReferenceType } from './defReference'
-
-$._options.xmlMode = true
 
 export class TypeInfoInjector {
   constructor(private typeInfoMap: TypeInfoMap) { }
@@ -18,7 +15,7 @@ export class TypeInfoInjector {
       defs: [] as Def[],
     }
 
-    const root = $(document).children('Defs').get(0) // possible undefined, but type isn't showing
+    const root = document.children.find(node => node instanceof Element && node.name === 'Defs') as Element | undefined
 
     if (root instanceof Element) {
       if (root && root.name === 'Defs') {
@@ -51,6 +48,20 @@ export class TypeInfoInjector {
   injectType(xmlNode: Element, typeInfo: TypeInfo, fieldInfo?: FieldInfo): void {
     console.assert(!!typeInfo, `typeInfo for xmlNode ${xmlNode.name} is null or undefined`)
 
+    if (typeInfo.isNullable()) {
+      const nullableType = typeInfo.getNullableType()
+      if (nullableType) {
+        return this.injectType(xmlNode, nullableType, fieldInfo)
+      }
+    }
+
+    if (typeInfo.fullName.startsWith('RimWorld.QuestGen.SlateRef`1') && typeInfo.genericArguments.length > 0) {
+      const slateRefType = typeInfo.genericArguments[0]
+      if (slateRefType) {
+        return this.injectType(xmlNode, slateRefType, fieldInfo)
+      }
+    }
+
     const overridedTypeInfo = this.getOverridedTypeInfo(xmlNode, typeInfo)
     if (overridedTypeInfo) {
       return this.injectType(xmlNode, overridedTypeInfo, fieldInfo)
@@ -62,8 +73,23 @@ export class TypeInfoInjector {
       const enumerableType = typeInfo.getEnumerableType()
       if (enumerableType) {
         if (enumerableType.customLoader()) {
+          xmlNode.ChildElementNodes.forEach((childNode) => {
+            if (childNode.tagName !== 'li') {
+              this.injectType(childNode, enumerableType)
+            }
+          })
           return xmlNode.ChildElementNodes.forEach((childNode) => this.injectCustomLoaderType(childNode, enumerableType))
         }
+
+        const isMap = typeInfo.isMapStructured()
+        const [, valueType] = isMap ? (typeInfo.getMapGenTypes() ?? []) : []
+
+        xmlNode.ChildElementNodes.forEach((childNode) => {
+          if (childNode.tagName !== 'li') {
+            // 如果是 Map，注入值的类型；否则（如 skillGains, forcedTraits）注入列表项自身的类型作为兜底
+            this.injectType(childNode, valueType ?? enumerableType)
+          }
+        })
 
         return injectable.ChildElementNodes
           .filter(node => node.tagName === 'li')
@@ -91,6 +117,13 @@ export class TypeInfoInjector {
 
       if (fieldInfo) {
         this.injectType(childNode, fieldInfo.fieldType, fieldInfo)
+      } else if (childNode.tagName === 'li') {
+        // heuristic: for li nodes that doesn't matched any field, inject parent type.
+        this.injectType(childNode, typeInfo)
+      } else if (childNode.tagName === 'thing' || childNode.tagName === 'points' || childNode.tagName === 'tag' || childNode.tagName === 'chance') {
+        // Heuristic: allow specific 'wrapper' tags to inherit the current type if no field matches.
+        // This is common in QuestGen and Bossgroups where metadata is slightly off.
+        this.injectType(childNode, typeInfo)
       }
     })
   }

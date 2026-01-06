@@ -46,14 +46,15 @@ export class LogManager {
   }
 }
 
-export const withClass = format((data, classType?: new (...p: any[]) => any) => {
+export const withClass = format((data, opts: any) => {
+  const classType = opts as (new (...p: any[]) => any) | undefined
   data.className = classType?.name ?? 'NONTYPE'
 
   return data
 })
 
-export const withVersion = format((data, version) => {
-  data.version = version
+export const withVersion = format((data, opts: any) => {
+  data.version = opts
 
   return data
 })

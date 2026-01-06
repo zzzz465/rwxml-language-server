@@ -1,9 +1,7 @@
 import { Element, parse } from '../../parser'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
-
-$._options.xmlMode = true
 
 const exampleXML = `\
 <?xml version="1.0" encoding="utf-8" ?>
@@ -41,8 +39,9 @@ const exampleXML = `\
 describe('TypeInfo injection test against HediffDef with mohar', () => {
   test('BodyDef.corePart.def', () => {
     const root = parse(exampleXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const defName = $(root).find('Defs > HediffDef > defName').get(0)
+    const defName = $('Defs > HediffDef > defName').get(0)
     expect(defName).toBeInstanceOf(Element)
 
     const map = TypeInfoLoader.load(data as RawTypeInfo[])
@@ -50,7 +49,7 @@ describe('TypeInfo injection test against HediffDef with mohar', () => {
 
     injector.inject(root)
 
-    const injectable = $(root).find('Defs > HediffDef > comps > li').get(0) as unknown as TypedElement
+    const injectable = $('Defs > HediffDef > comps > li').get(0) as unknown as TypedElement
     expect(injectable).toBeInstanceOf(TypedElement)
     expect(injectable.typeInfo.fullName).toBe('MoharHediffs.HeDiffCompProperties_HediffExclusive')
   })

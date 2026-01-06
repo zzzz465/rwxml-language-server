@@ -60,6 +60,15 @@ export class About {
     return this._packageId
   }
   get supportedVersions(): string[] {
+    // 如果 supportedVersions 为空，初始化为默认值并触发事件
+    if (this._supportedVersions.length === 0) {
+      this.log.warn('About.supportedVersions is empty, initializing with default versions.')
+      const defaultVersions = ['default', '1.6']
+      this._supportedVersions = defaultVersions
+      // 触发 aboutChanged 事件，让 ProjectManager 知道版本已更新
+      this.event.emit('aboutChanged', this)
+      return [...this._supportedVersions]
+    }
     return [...this._supportedVersions]
   }
   get description(): string {
@@ -152,6 +161,21 @@ export class About {
   }
 
   private async onFileChanged(file: File): Promise<void> {
+    // 只对XML文件打印详细日志
+    if (file instanceof XMLFile) {
+      const fsPath = file.uri.fsPath
+      const name = path.basename(path.normalize(fsPath))
+      const dirname = path.basename(path.dirname(fsPath))
+
+      const isAboutDir = dirname.toLowerCase() === 'about'
+      const isAboutFileName = name.toLowerCase() === 'about.xml'
+
+      this.log.info(`[About] Checking XML file: ${fsPath}`)
+      this.log.info(`[About]   dirname: "${dirname}", name: "${name}"`)
+      this.log.info(`[About]   isAboutDir: ${isAboutDir}, isAboutFile: ${isAboutFileName}`)
+      this.log.info(`[About]   isAboutFile() result: ${isAboutFile(file)}`)
+    }
+
     if (isAboutFile(file)) {
       this.log.info('about file changed.')
 

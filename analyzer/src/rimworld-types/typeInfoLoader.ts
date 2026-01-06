@@ -91,6 +91,7 @@ export class TypeInfoLoader {
           if (genericArgumentType) {
             typeInfo.genericArguments[i] = genericArgumentType
           } else {
+            typeInfo.genericArguments[i] = undefined as any // 清除未识别的字符串
             errors.push(
               new Error(
                 `while linking "${typeInfo.fullName}"'s genArgs, type "${genericArgumentTypeName}" is not found.`
@@ -98,16 +99,18 @@ export class TypeInfoLoader {
             )
           }
         }
+        // 过滤掉未识别的泛型参数
+        (typeInfo as any).genericArguments = typeInfo.genericArguments.filter(x => !!x);
 
         // link baseClass
         if (typeInfo.baseClass) {
           const baseClassTypeinfoName = typeInfo.baseClass as unknown as string
           const baseClassTypeInfo = typeInfoMap.get(baseClassTypeinfoName)
 
-          if (baseClassTypeinfoName) {
+          if (baseClassTypeInfo) {
             typeInfo.baseClass = baseClassTypeInfo
           } else {
-            delete typeInfo.baseClass
+            typeInfo.baseClass = undefined
             errors.push(
               new Error(
                 `while linking "${typeInfo.fullName}"'s base class, type "${baseClassTypeinfoName}" is not found.`

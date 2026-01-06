@@ -58,5 +58,5 @@ export abstract class DiagnosticsContributor {
     project: Project,
     document: Document,
     dirtyTypedElements: (Def | TypedElement)[]
-  ): { uri: string; diagnostics: ls.Diagnostic[] }
+  ): { uri: string; diagnostics: ls.Diagnostic[] } | Promise<{ uri: string; diagnostics: ls.Diagnostic[] }>
 }

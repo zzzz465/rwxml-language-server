@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Document, parse, Text } from '../../parser'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import data from './anty.json'
 import data_1_4 from '../data/typeinfo-1_4.json'
-import { not } from 'cheerio/lib/api/traversing'
 
 // FIXME: consuming data multiple times creates circular reference error.
 
@@ -32,7 +31,8 @@ describe('Enum type test', () => {
 
     injector_1_3.inject(root)
 
-    const injectable = $(root).find('Defs > ThingDef > filth > placementMask').get(0)
+    const $ = cheerio.load(root as any)
+    const injectable = $('Defs > ThingDef > filth > placementMask').get(0)
     expect(injectable).toBeInstanceOf(TypedElement)
   })
 
@@ -57,7 +57,8 @@ describe('Enum type test', () => {
 
     injector_1_3.inject(root)
 
-    const injectable = $(root).find('Defs > ThingDef > filth > placementMask > li').get(0)
+    const $ = cheerio.load(root as any)
+    const injectable = $('Defs > ThingDef > filth > placementMask > li').get(0)
     expect(injectable).toBeInstanceOf(TypedElement)
   })
 
