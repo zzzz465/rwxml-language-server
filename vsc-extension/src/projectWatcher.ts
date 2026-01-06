@@ -1,10 +1,10 @@
 import { injectable } from 'tsyringe'
 import vscode, { Uri, workspace } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient, State } from 'vscode-languageclient'
 import * as winston from 'winston'
 import { ProjectFileAdded, ProjectFileChanged, ProjectFileDeleted } from './events'
 import { className, log, logFormat } from './log'
-import jsonStr from './utils/json'
+import * as path from 'path'
 
 const watchedExts = ['xml', 'wav', 'mp3', 'bmp', 'jpeg', 'jpg', 'png', 'dll']
 export const globPattern = `**/*.{${watchedExts.join(',')}}`
@@ -26,16 +26,22 @@ export class ProjectWatcher {
 
   constructor(private readonly client: LanguageClient) {}
 
-  start(): void {
+  async start(): Promise<void> {
     if (this.isWatching) {
       return
     }
+
+    this.log.info('Waiting for language client to be ready...')
 
     this.fileSystemWatcher.onDidCreate(this.onDidcreate.bind(this))
     this.fileSystemWatcher.onDidChange(this.onDidChange.bind(this))
     this.fileSystemWatcher.onDidDelete(this.onDidDelete.bind(this))
 
-    this.initLoading()
+    // 等待LanguageClient完全准备好
+    await this.client.onReady()
+
+    // 等待服务器完全准备好后再加载文件
+    await this.initLoading()
 
     this.watching = true
   }
@@ -44,24 +50,52 @@ export class ProjectWatcher {
    * scan all files on current workspace for initial loading
    */
   private async initLoading(): Promise<void> {
+    // 扫描所有关注的文件
     const uris = await vscode.workspace.findFiles(globPattern)
-    this.log.debug(`sending initial load files. count: ${uris.length}`)
-    this.log.silly(`initial load files: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
 
-    for (const uri of uris) {
-      this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
+    this.log.info(`sending initial load files. count: ${uris.length}`)
+
+    // 分批发送，每批50个文件，每批之间延迟100ms
+    const batchSize = 50
+    let successCount = 0
+    let errorCount = 0
+
+    for (let i = 0; i < uris.length; i += batchSize) {
+      const batch = uris.slice(i, Math.min(i + batchSize, uris.length))
+      this.log.info(`sending batch ${Math.floor(i / batchSize) + 1}, size: ${batch.length}`)
+
+      for (const uri of batch) {
+        try {
+          this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
+          successCount++
+        } catch (e) {
+          this.log.error(`Failed to send initial file ${uri}: ${e}`)
+          errorCount++
+        }
+      }
+      // 批次之间延迟，避免缓冲区溢出
+      if (i + batchSize < uris.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
     }
+    this.log.info(`finished sending initial load files. success: ${successCount}, errors: ${errorCount}`)
   }
 
   private async onDidcreate(uri: Uri): Promise<void> {
-    this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
+    try {
+      this.client.sendNotification(ProjectFileAdded, { uri: uri.toString() })
+    } catch (e) {}
   }
 
   private async onDidChange(uri: Uri): Promise<void> {
-    this.client.sendNotification(ProjectFileChanged, { uri: uri.toString() })
+    try {
+      this.client.sendNotification(ProjectFileChanged, { uri: uri.toString() })
+    } catch (e) {}
   }
 
   private async onDidDelete(uri: Uri): Promise<void> {
-    this.client.sendNotification(ProjectFileDeleted, { uri: uri.toString() })
+    try {
+      this.client.sendNotification(ProjectFileDeleted, { uri: uri.toString() })
+    } catch (e) {}
   }
 }

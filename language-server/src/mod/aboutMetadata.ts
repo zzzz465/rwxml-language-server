@@ -140,7 +140,7 @@ export class AboutMetadata {
   /**
    * create MetadataItem of specific version.
    */
-  private parseMetadataItem(elem: cheerio.Element): MetadataItem | undefined {
+  private parseMetadataItem(elem: any): MetadataItem | undefined {
     const version = elem.tagName
     const $ = cheerio.load(elem, { xmlMode: true })
 

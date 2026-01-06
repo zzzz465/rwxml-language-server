@@ -99,7 +99,7 @@ export class LoadFolder {
     }
   }
 
-  private parseVersionNode(node: cheerio.Element): ProjectWorkspace {
+  private parseVersionNode(node: any): ProjectWorkspace {
     const $ = cheerio.load(node)
 
     const version = node.tagName.replace('v', '')

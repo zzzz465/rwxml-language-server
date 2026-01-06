@@ -13,7 +13,8 @@ export const logFormat = format.printf(({ level, className, id, message }) =>
   id ? `[${level}]\t[${className}]\t(${id}):\t${message}` : `[${level}]\t[${className}]:\t${message}`
 )
 
-export const className = format((info, classType?: new (...p: any[]) => any) => {
+export const className = winston.format((info, opts: any) => {
+  const classType = opts as (new (...p: any[]) => any) | undefined
   info.className = classType?.name ?? 'NONTYPE'
 
   return info

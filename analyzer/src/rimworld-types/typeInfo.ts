@@ -100,7 +100,7 @@ export class TypeInfo {
   isDef(): boolean {
     if (this.fullName === 'Verse.Def') {
       return true
-    } else if (this.baseClass) {
+    } else if (this.baseClass && typeof this.baseClass.isDef === 'function') {
       return this.baseClass.isDef()
     } else {
       return false
@@ -133,7 +133,7 @@ export class TypeInfo {
       const genArg0 = this.genericArguments[0]
 
       // why not checking with List or Array? -> check QuestNode sitePartsTags
-      if (genArg0.isEnumerable()) {
+      if (genArg0 && typeof genArg0.isEnumerable === 'function' && genArg0.isEnumerable()) {
         return true
       }
     }
@@ -171,7 +171,11 @@ export class TypeInfo {
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isList(): boolean {
-    return !!this.isImplementingInterface('System.Collections.IList')
+    return (
+      this.isImplementingInterface('System.Collections.IList') ||
+      this.getInterfaces().some((iface) => iface.fullName.startsWith('System.Collections.Generic.IReadOnlyList`1')) ||
+      this.getInterfaces().some((iface) => iface.fullName.startsWith('System.Collections.Generic.IReadOnlyCollection`1'))
+    )
   }
 
   /**
@@ -179,7 +183,8 @@ export class TypeInfo {
    */
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
   isDictionary(): boolean {
-    return !!this.isImplementingInterface('System.Collections.IDictionary')
+    return !!this.isImplementingInterface('System.Collections.IDictionary') || 
+           !!this.isImplementingInterface('System.Collections.Generic.IDictionary`2')
   }
 
   @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
@@ -239,6 +244,18 @@ export class TypeInfo {
     return this.fullName === 'UnityEngine.Color32'
   }
 
+  @cache({ type: CacheType.MEMO, scope: CacheScope.INSTANCE })
+  isNullable(): boolean {
+    return this.fullName.startsWith('System.Nullable`1') && this.genericArguments.length === 1
+  }
+
+  getNullableType(): TypeInfo | null {
+    if (this.isNullable()) {
+      return this.genericArguments[0]
+    }
+    return null
+  }
+
   /**
    * check this type is enum flag.
    * @see https://docs.microsoft.com/ko-kr/dotnet/api/system.flagsattribute?view=net-6.0
@@ -269,10 +286,35 @@ export class TypeInfo {
       return this.fields[name]
     }
 
-    if (inherited && this.baseClass) {
+    if (inherited && this.baseClass instanceof TypeInfo) {
       const field = this.baseClass.getField(name, inherited)
       if (field) {
         return field
+      }
+    }
+
+    // Heuristic fallback for QuestGen and other wrapper types:
+    // If field not found in self or base, check generic arguments recursively.
+    if (this.isGeneric) {
+      for (const genArg of this.genericArguments) {
+        if (genArg instanceof TypeInfo) {
+          const field = genArg.getField(name, inherited, includeAlias)
+          if (field) {
+            return field
+          }
+        }
+      }
+    }
+
+    // Heuristic: check interfaces if it's a QuestGen related type
+    if (this.fullName.includes('QuestGen')) {
+      for (const iface of Object.values(this.interfaces)) {
+        if (iface instanceof TypeInfo) {
+          const field = iface.getField(name, inherited, includeAlias)
+          if (field) {
+            return field
+          }
+        }
       }
     }
 
@@ -402,7 +444,11 @@ export class TypeInfo {
       if (this.genericArguments.length === 1) {
         const genArg0 = this.genericArguments[0]
 
-        return genArg0.getEnumerableType() ?? genArg0
+        if (genArg0 && typeof genArg0.getEnumerableType === 'function') {
+          return genArg0.getEnumerableType() ?? genArg0
+        } else {
+          return genArg0
+        }
       }
 
       // unknown case

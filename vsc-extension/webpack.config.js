@@ -26,7 +26,7 @@ const config = {
   plugins: [
     // definePlugin's value must be passed with JSON.stringify()
     new webpack.DefinePlugin({
-      'process.env.LANGUAGE_SERVER_MODULE_PATH_RELATIVE': JSON.stringify('../language-server/dist/index.js'),
+      'process.env.LANGUAGE_SERVER_MODULE_PATH_RELATIVE': JSON.stringify('./server-dist/index.js'),
       'process.env.isWebpack': JSON.stringify(true),
       'process.env.EXTRACTOR_PATH_WIN32': JSON.stringify('../extractor/extractor/bin/Debug'), // debug on windows only
       'process.env.EXTRACTOR_PATH_LINUX': JSON.stringify('../extractor/extractor/bin/Debug'), // debug on windows only

@@ -1,4 +1,4 @@
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import DomHandler from '../../parser/domhandler'
 import { Parser } from '../../parser/htmlparser2'
 
@@ -11,6 +11,7 @@ describe('parser test', () => {
 
     const root = domHandler.root
 
-    $('', root)
+    const $ = cheerio.load(root as any)
+    $('')
   })
 })

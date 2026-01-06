@@ -29,18 +29,18 @@ export interface DocumentWithNodeMap extends analyzer.Document {
 
 export function create(document: Document): DocumentWithNodeMap {
   const map = new Map()
-  map.set(Def.name, [])
-  map.set(TypedElement.name, [])
+  map.set('Def', [])
+  map.set('TypedElement', [])
 
   return Object.create(document, {
     nodeMap: {
       get: () => map,
     },
     defs: {
-      get: () => map.get(Def.name),
+      get: () => map.get('Def'),
     },
-    injectables: {
-      get: () => map.get(TypedElement.name),
+    typedElements: {
+      get: () => map.get('TypedElement'),
     },
   })
 }

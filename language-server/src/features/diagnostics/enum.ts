@@ -115,16 +115,9 @@ export class Enum implements DiagnosticsContributor {
     }
 
     const numericParsed = _.parseInt(content)
-    if (!_.isNaN(numericParsed)) {
-      // TODO: support when enum variant has specific value
-      if (numericParsed < 0 || numericParsed >= node.typeInfo.enums.length) {
-        return [
-          {
-            range,
-            message: `Enum value ${content} is out of range. expected: 0 <= value < ${node.typeInfo.enums.length}`,
-          },
-        ]
-      }
+    if (!_.isNaN(numericParsed) || node.typeInfo.enums.length === 0) {
+      // If it's a number or if we have no enum data, treat it as potentially valid
+      return null
     }
 
     const invalidEnums = content

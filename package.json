@@ -11,19 +11,19 @@
     "vsc-extension"
   ],
   "scripts": {
-    "install/analyzer": "pnpm --dir analyzer install",
-    "install/extractor": "pnpm --dir extractor install",
-    "install/language-server": "pnpm --dir language-server install",
-    "install/vsc-extension": "pnpm --dir vsc-extension install",
-    "build/analyzer": "pnpm --dir analyzer build",
-    "build/extractor": "pnpm --dir extractor build",
-    "build/language-server": "pnpm --dir language-server build",
-    "build": "pnpm run build/analyzer && pnpm run build/language-server",
-    "clear": "pnpx rimraf ./*/dist",
-    "purge": "pnpx rimraf ./*/node_modules",
-    "reinstall": "pnpm run clear && pnpm run purge && pnpm install",
-    "postinstall": "pnpm run install/analyzer && pnpm run install/extractor && pnpm run install/language-server && pnpm run install/vsc-extension && pnpm run build/analyzer && pnpm run build/extractor",
-    "watch": "pnpm run -r --parallel watch"
+    "install/analyzer": "npm --prefix analyzer install",
+    "install/extractor": "npm --prefix extractor install",
+    "install/language-server": "npm --prefix language-server install",
+    "install/vsc-extension": "npm --prefix vsc-extension install",
+    "build/analyzer": "npm --prefix analyzer run build",
+    "build/extractor": "npm --prefix extractor run build",
+    "build/language-server": "npm --prefix language-server run build",
+    "build": "npm run build/analyzer && npm run build/language-server",
+    "clear": "rimraf ./*/dist",
+    "purge": "rimraf ./*/node_modules",
+    "reinstall": "npm run clear && npm run purge && npm install",
+    "postinstall": "npm run install/analyzer && npm run install/language-server && npm run install/vsc-extension && npm run build/analyzer",
+    "watch": "npm run build/analyzer -- --watch"
   },
   "dependencies": {
     "rimraf": "^3.0.2"

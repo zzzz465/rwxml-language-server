@@ -147,7 +147,7 @@ export class LoadFolder {
   /**
    * parse <loadFolders> node.
    */
-  private parseLoadFolderXML(loadFolders: cheerio.Cheerio<cheerio.Element>): ProjectWorkspace[] {
+  private parseLoadFolderXML(loadFolders: cheerio.Cheerio<any>): ProjectWorkspace[] {
     return LINQ.from(loadFolders.children())
       .Where((x) => !!x.tagName.match(/v[\d]\.[\d]/))
       .Select((x) => this.parseVersion(x))
@@ -159,7 +159,7 @@ export class LoadFolder {
   /**
    * parse<v1.0>, <v1.1>, ... nodes.
    */
-  private parseVersion(versionNode: cheerio.Element): ProjectWorkspace | null {
+  private parseVersion(versionNode: any): ProjectWorkspace | null {
     let version = versionNode.tagName
     if (!version.match(VERSION_REGEX)) {
       return null

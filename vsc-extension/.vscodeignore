@@ -1,0 +1,14 @@
+**/*.ts
+**/*.map
+**/*.map.*
+src/
+test/
+**/test/
+node_modules/
+.vscode/
+**/*.md
+**/.gitignore
+**/tsconfig.json
+**/.eslintrc.json
+**/*.spec.ts
+**/webpack.config.js*

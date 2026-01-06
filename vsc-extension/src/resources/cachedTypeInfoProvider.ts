@@ -87,115 +87,149 @@ export class CachedTypeInfoProvider implements Provider {
    * @todo check cache confliction on write
    */
   private async onTypeInfoRequest({ uris, version }: TypeInfoRequest): Promise<TypeInfoRequestResponse> {
-    this.log.debug(`received type info request. version: ${version}`)
+    this.log.info(`Received TypeInfo request for version: ${version}, uris: ${uris.length}`)
 
-    uris.sort()
+    // 1. 获取基础官方元数据包 (1.6)
+    const baseData = await this.getBaseMetadata();
+    
+    // 2. 扫描工作区定义的静态包 (项目目录/Metadata/*.json)
+    const workspaceStaticData = await this.getWorkspaceStaticMetadata();
 
-    // get cache name based on checksum name of given uris
-    // and make a short hash
-    const cacheName = this.getCacheName(uris).slice(0, 12)
-    const cachePath = path.join(this.pathStore.cacheDirectory, 'dlls', `${cacheName}.json`)
+    // 3. 对于传入的每个 URI (DLL)，独立处理缓存或提取
+    const workspaceTypeInfos: any[] = [];
+    const missingUris: string[] = [];
 
-    this.log.debug(`received typeInfo request. uris count: ${uris.length}`)
-    this.log.silly(`uris: ${jsonStr(uris.map((uri) => decodeURIComponent(uri.toString())))}`)
+    for (const uri of uris) {
+      const cacheData = await this.getCacheForUri(uri);
+      if (cacheData) {
+        workspaceTypeInfos.push(...cacheData);
+      } else {
+        missingUris.push(uri);
+      }
+    }
 
-    const checkCacheValid = async (): Promise<{ valid: boolean; data: any }> => {
-      // https://nodejs.org/api/fs.html#file-system-flags
-      let file: fs.FileHandle | null = null
+    // 4. 对缺失的 DLL 进行增量提取
+    if (missingUris.length > 0) {
+      this.log.info(`Cache miss for ${missingUris.length} DLLs. Starting incremental extraction...`);
+      const res = await this.typeInfoProvider.onTypeInfoRequest({ uris: missingUris, version });
+      
+      if (!(res instanceof Error)) {
+        const newData = (res as any).data;
+        workspaceTypeInfos.push(...newData);
+        
+        // 保存缓存时使用更具辨识度的文件名
+        await this.saveIncrementalCache(missingUris, newData);
+      }
+    }
 
+    const combinedData = [...baseData, ...workspaceStaticData, ...workspaceTypeInfos];
+    this.log.info(`Total types: ${combinedData.length} (Base: ${baseData.length}, Static: ${workspaceStaticData.length}, Dynamic: ${workspaceTypeInfos.length}).`);
+
+    return { data: combinedData };
+  }
+
+  private async getWorkspaceStaticMetadata(): Promise<any[]> {
+    const results: any[] = [];
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) return [];
+
+    for (const folder of workspaceFolders) {
+      const metadataDir = path.join(folder.uri.fsPath, 'Metadata');
       try {
-        file = await fs.open(cachePath, 'a+', '644')
-
-        const cache = await this.getCache(file)
-        return {
-          valid: await this.isCacheValid(cache, uris),
-          data: cache.data,
+        const files = await fs.readdir(metadataDir);
+        for (const file of files) {
+          if (file.endsWith('.json')) {
+            const content = await fs.readFile(path.join(metadataDir, file), 'utf-8');
+            const data = JSON.parse(content);
+            if (Array.isArray(data)) {
+              this.log.info(`Loaded workspace static package: ${file} (${data.length} types)`);
+              results.push(...data);
+            }
+          }
         }
       } catch (e) {
-        this.log.warn(`failed opening cache. file: ${jsonStr(cachePath)}, err: `, e)
-      } finally {
-        await file?.close()
-      }
-
-      return {
-        valid: false,
-        data: null,
+        // Directory doesn't exist or other error, ignore
       }
     }
-
-    const cacheData = await checkCacheValid()
-    let data = cacheData.data
-    if (!cacheData.valid) {
-      this.log.debug('checksum invalid, updating cache.')
-
-      const res = await this.typeInfoProvider.onTypeInfoRequest({ uris, version })
-      if (res instanceof Error) {
-        throw res
-      }
-
-      data = res.data
-
-      await this.updateCache(cachePath, uris, data)
-    } else {
-      this.log.silly(`cache hit! uris: ${jsonStr(uris)}`)
-    }
-
-    return { data }
+    return results;
   }
 
-  private getCacheName(files: string[]): string {
-    const hash = crypto.createHash('md5')
-
-    for (const file of files) {
-      hash.update(file, 'utf-8')
-    }
-
-    return hash.digest('hex')
+  private getCachePathForUri(uri: string): string {
+    const fileName = path.basename(vscode.Uri.parse(uri).fsPath);
+    const shortHash = crypto.createHash('md5').update(uri).digest('hex').slice(0, 8);
+    // 命名格式：FileName-Hash.json
+    return path.join(this.dllCacheDirectory, `${fileName}-${shortHash}.json`);
   }
 
-  private async getCache(file: fs.FileHandle): Promise<Cache> {
-    const data = (await file.readFile()).toString('utf-8')
-    return JSON.parse(data) as Cache
-  }
+  private async getCacheForUri(uri: string): Promise<any[] | null> {
+    const cachePath = this.getCachePathForUri(uri);
 
-  private async isCacheValid(cache: Cache, files: string[]): Promise<boolean> {
-    const cacheVersion = semver.parse(cache.extractorVersion, true)
-    if (!cacheVersion) {
-      return false
-    }
-
-    if (CachedTypeInfoProvider.extractorVersion.compare(cacheVersion) !== 0) {
-      return false
-    }
-
-    const checksums = await this.getChecksums(files)
-
-    return _.isEqual(cache.checksums, checksums)
-  }
-
-  private async getChecksums(files: string[]): Promise<string[]> {
-    return [...files.map((uri) => vscode.Uri.parse(uri).fsPath).map(md5sum)]
-  }
-
-  private async updateCache(cachePath: string, files: string[], data: any): Promise<void> {
     try {
-      const checksums = await this.getChecksums(files)
+      const stats = await fs.stat(vscode.Uri.parse(uri).fsPath);
+      const cacheBuffer = await fs.readFile(cachePath);
+      const cache: Cache = JSON.parse(cacheBuffer.toString('utf-8'));
 
+      const currentChecksum = `${stats.mtimeMs}-${stats.size}`;
+      if (cache.checksums[0] === currentChecksum) {
+        return cache.data;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  private async saveIncrementalCache(uris: string[], data: any): Promise<void> {
+    // 如果是单 DLL 提取，则保存精准缓存
+    if (uris.length === 1) {
+      const uri = uris[0];
+      const cachePath = this.getCachePathForUri(uri);
+      try {
+        const stats = await fs.stat(vscode.Uri.parse(uri).fsPath);
+        const checksum = `${stats.mtimeMs}-${stats.size}`;
+        const cache: Cache = {
+          extractorVersion: CachedTypeInfoProvider.extractorVersion.format(),
+          checksums: [checksum],
+          createdAt: dayjs().format(),
+          createdBy: CachedTypeInfoProvider.name,
+          data: data,
+          requestedFileUris: [uri],
+        }
+        await fs.writeFile(cachePath, jsonStr(cache));
+        this.log.info(`Saved identified cache: ${path.basename(cachePath)}`);
+      } catch (e) {}
+    } else {
+      // 如果是多 DLL 批量提取，暂时存为 generic 块
+      const hash = crypto.createHash('md5').update(uris.join(',')).digest('hex').slice(0, 12);
+      const cachePath = path.join(this.dllCacheDirectory, `batch-${hash}.json`);
       const cache: Cache = {
         extractorVersion: CachedTypeInfoProvider.extractorVersion.format(),
-        checksums,
+        checksums: ['batch-no-checksum'],
         createdAt: dayjs().format(),
         createdBy: CachedTypeInfoProvider.name,
-        data,
-        requestedFileUris: files,
+        data: data,
+        requestedFileUris: uris,
       }
+      await fs.writeFile(cachePath, jsonStr(cache));
+    }
+  }
 
-      const raw = jsonStr(cache)
-
-      await fs.writeFile(cachePath, raw, { encoding: 'utf-8', flag: 'w+', mode: '644' })
-      this.log.debug(`write cache to file: ${jsonStr(cachePath)}`)
-    } catch (err) {
-      this.log.error(`failed to write cache to file: ${cachePath}, err: ${jsonStr(err)}`)
+  private async getBaseMetadata(): Promise<any[]> {
+    const localMetadataPath = 'D:/RimworldProject/rwxml-language-server-master/rimworld-defs-metadata-1.6.json';
+    try {
+      const buffer = await fs.readFile(localMetadataPath);
+      let content = "";
+      if (buffer.length >= 2 && buffer[0] === 0xFF && buffer[1] === 0xFE) {
+        content = buffer.toString('utf16le', 2);
+      } else if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+        content = buffer.toString('utf8', 3);
+      } else {
+        content = buffer.toString('utf8');
+      }
+      content = content.trim();
+      if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+      return JSON.parse(content);
+    } catch (e) {
+      this.log.error(`Error loading base metadata: ${e}`);
+      return [];
     }
   }
 }

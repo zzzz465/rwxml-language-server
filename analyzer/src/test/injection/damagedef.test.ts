@@ -1,10 +1,8 @@
 import { parse } from '../../parser'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import core from './anty.json'
 import { TypeInfoLoader, RawTypeInfo, TypeInfoInjector } from '../..'
 import { Def } from '../../rimworld-types'
-
-$._options.xmlMode = true
 
 const damageDef = `
 <?xml version="1.0" encoding="utf-8" ?>
@@ -45,13 +43,14 @@ const damageDef = `
 describe('API test', () => {
   test('getDefName() should return defName', () => {
     const root = parse(damageDef)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
     const map = TypeInfoLoader.load(core as RawTypeInfo[])
     const injector = new TypeInfoInjector(map)
 
     injector.inject(root)
 
-    const def = $(root).find('DamageDef').get(0) as unknown as Def
+    const def = $('DamageDef').get(0) as unknown as Def
     expect(def).toBeInstanceOf(Def)
     expect(def.getDefName()).toBe('SurgicalCut')
   })

@@ -9,6 +9,7 @@ import {
   NodeWithChildren,
   Text,
   TypedElement,
+  isTag,
 } from '@rwxml/analyzer'
 import { array, either, option } from 'fp-ts'
 import { filter, findFirst } from 'fp-ts/lib/Array'
@@ -248,20 +249,20 @@ export function isNonLeafContent(node: Node): boolean {
 
 export function getRootElement(node: Node): Element | undefined {
   let doc: Node = node
-  while (!(doc instanceof Document) && doc.parentNode) {
+  while (doc.type !== 'root' && doc.parentNode) {
     doc = doc.parentNode
   }
 
-  if (!doc || !(doc instanceof Document)) {
+  if (!doc || doc.type !== 'root') {
     return
   }
 
-  return AsEnumerable(doc.childNodes).FirstOrDefault((x) => x instanceof Element) as Element | undefined
+  return AsEnumerable((doc as any).childNodes).FirstOrDefault((x: any) => isTag(x)) as Element | undefined
 }
 
-export const isElement = (node: Node): node is Element => node instanceof Element
+export const isElement = (node: Node): node is Element => !!node && (node.type === 'tag' || node.type === 'script' || node.type === 'style')
 
-export const isDef = (node: Node): node is Def => node instanceof Def
+export const isDef = (node: Node): node is Def => isElement(node) && 'getDefType' in node
 
 export const childElements = (node: NodeWithChildren) => node.childNodes.filter(isElement)
 

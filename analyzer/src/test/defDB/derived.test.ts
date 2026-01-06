@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Document, parse } from '../../parser'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { Def, DefDatabase, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import typeInfo from './typeInfo.json'
 import { isDerivedType } from '../../rimworld-types/util'
@@ -93,8 +93,9 @@ describe('DefDatabase test', () => {
     defDB = new DefDatabase()
     injector.inject(doc)
 
-    damageKnockbackDef = $(doc).find('Defs > PawnKnockback\\.DamageKnockbackDef').get(0) as unknown as Def
-    bulletExecutionerChain = $(doc).find('Defs > ThingDef').get(0) as unknown as Def
+    const $ = cheerio.load(doc as any, { xmlMode: true })
+    damageKnockbackDef = $('Defs > PawnKnockback\\.DamageKnockbackDef').get(0) as unknown as Def
+    bulletExecutionerChain = $('Defs > ThingDef').get(0) as unknown as Def
   })
 
   test('xml should be parsed as intended types', () => {

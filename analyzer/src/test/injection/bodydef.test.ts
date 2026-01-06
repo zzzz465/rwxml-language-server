@@ -1,9 +1,7 @@
 import { Element, parse } from '../../parser'
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { TypedElement, RawTypeInfo, TypeInfoInjector, TypeInfoLoader } from '../../rimworld-types'
 import core from './anty.json'
-
-$._options.xmlMode = true
 
 const exampleXML = `\
 <?xml version="1.0" encoding="utf-8" ?>
@@ -108,8 +106,9 @@ const exampleXML = `\
 describe('TypeInfo injection test against BodyDef', () => {
   test('BodyDef.corePart.def', () => {
     const root = parse(exampleXML)
+    const $ = cheerio.load(root as any, { xmlMode: true })
 
-    const defName = $(root).find('Defs > BodyDef > defName').get(0)
+    const defName = $('Defs > BodyDef > defName').get(0)
     expect(defName).toBeInstanceOf(Element)
 
     const map = TypeInfoLoader.load(core as RawTypeInfo[])
@@ -117,7 +116,7 @@ describe('TypeInfo injection test against BodyDef', () => {
 
     injector.inject(root)
 
-    const injectable = $(root).find('Defs > BodyDef > corePart > def').get(0)
+    const injectable = $('Defs > BodyDef > corePart > def').get(0)
     expect(injectable).toBeInstanceOf(TypedElement)
   })
 })

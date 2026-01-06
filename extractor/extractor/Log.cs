@@ -25,7 +25,7 @@ namespace extractor
 
             var appenderStdout = new ConsoleAppender();
             appenderStdout.Layout = layout;
-            appenderStdout.Target = ConsoleAppender.ConsoleOut;
+            appenderStdout.Target = ConsoleAppender.ConsoleError;
             var stdOutFilter = new LevelRangeFilter();
             stdOutFilter.LevelMax = Level.Warn;
             stdOutFilter.LevelMin = Level.All;

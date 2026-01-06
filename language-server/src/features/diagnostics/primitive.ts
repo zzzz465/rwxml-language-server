@@ -48,8 +48,13 @@ export class PrimitiveValue implements DiagnosticsContributor {
   }
 
   private diagnosisPrimitveNodes(node: TypedElement): ls.Diagnostic[] | null {
-    const text = node.content
+    const text = node.content?.trim()
     if (!text || !node.contentRange) {
+      return null
+    }
+
+    // skip if content is a variable (QuestScript)
+    if (text.startsWith('$')) {
       return null
     }
 
@@ -66,7 +71,7 @@ export class PrimitiveValue implements DiagnosticsContributor {
       diagnostics.push(...(this.diagnosisBool(text, textRange) ?? []))
     } else if (node.typeInfo.isString() && !node.parent.typeInfo.isGeneric) {
       // ignore if LIst<string>
-      diagnostics.push(...(this.diagnosisString(text, textRange) ?? []))
+      diagnostics.push(...(this.diagnosisString(node.content || '', textRange) ?? []))
     } else if (node.typeInfo.isFloat()) {
       diagnostics.push(...(this.diagnosisFloat(text, textRange) ?? []))
     }

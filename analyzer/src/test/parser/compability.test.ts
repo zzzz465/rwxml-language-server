@@ -1,4 +1,4 @@
-import $ from 'cheerio'
+import * as cheerio from 'cheerio'
 import { Element, parse } from '../../parser'
 
 describe('cheerio compability test', () => {
@@ -20,7 +20,8 @@ describe('cheerio compability test', () => {
 
     const doc = parse(xml)
 
-    const defsNode = $(doc).find('Defs').get(0) as unknown as Element
+    const $ = cheerio.load(doc as any, { xmlMode: true })
+    const defsNode = $('Defs').get(0) as unknown as Element
 
     expect(defsNode).toBeDefined()
   })

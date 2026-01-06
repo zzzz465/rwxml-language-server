@@ -12,9 +12,9 @@ function mockedVsCode() {
     Uri: URI,
     workspace: {
       fs: {
-        readFile: (uri) => readFile(uri),
-        readDirectory: (uri) => loadDirectory(uri),
-      } as Partial<FileSystem>,
+        readFile: (uri: URI) => readFile(uri),
+        readDirectory: (uri: URI) => loadDirectory(uri),
+      } as unknown as Partial<FileSystem>,
     },
   }
 

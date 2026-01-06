@@ -26,9 +26,15 @@ namespace extractor
 
         public static Dictionary<Type, RawTypeInfo> parse(IEnumerable<Assembly> assemblies)
         {
-            var RWAssem = assemblies.FirstOrDefault(assembly => assembly.GetName().Name == "Assembly-CSharp");
-            var UnityAssem = assemblies.FirstOrDefault(assembly => assembly.GetName().Name == "UnityEngine");
-            if (RWAssem != null && UnityAssem != null)
+            foreach (var assem in assemblies)
+            {
+                Log.Info($"Received assembly: {assem.GetName().Name}");
+            }
+
+            var RWAssem = assemblies.FirstOrDefault(assembly => assembly.GetName().Name.Equals("Assembly-CSharp", StringComparison.OrdinalIgnoreCase));
+            var UnityAssem = assemblies.FirstOrDefault(assembly => assembly.GetName().Name.Equals("UnityEngine", StringComparison.OrdinalIgnoreCase));
+            
+            if (RWAssem != null)
             {
                 RWTypes.assembly = RWAssem;
                 RWTypes.Def = RWAssem.GetType("Verse.Def");
@@ -37,7 +43,15 @@ namespace extractor
                 RWTypes.FloatRange = RWAssem.GetType("Verse.FloatRange");
                 RWTypes.IntVec3 = RWAssem.GetType("Verse.IntVec3");
                 RWTypes.MustTranslateAttribute = RWAssem.GetType("Verse.MustTranslateAttribute");
-                UnityEngineTypes.Color = UnityAssem.GetType("UnityEngine.Color");
+                
+                if (UnityAssem != null)
+                {
+                    UnityEngineTypes.Color = UnityAssem.GetType("UnityEngine.Color");
+                }
+                else
+                {
+                    Log.Warn("UnityEngine.dll not found. Some Unity-specific types might not be resolved correctly.");
+                }
 
                 foreach (var assembly in assemblies)
                 {
@@ -107,23 +121,33 @@ namespace extractor
                 var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
                 foreach (var fieldInfo in fields)
                 {
-                    var fieldType = fieldInfo.FieldType;
                     var fieldName = fieldInfo.Name;
+                    Type fieldType = null;
+
+                    try
+                    {
+                        fieldType = fieldInfo.FieldType;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn($"Failed to get FieldType for field '{fieldName}' in type '{type.FullName}': {ex.Message}");
+                        continue;
+                    }
 
                     if (typeDict.ContainsKey(fieldType))
                     {
                         continue;
                     }
 
-                    Exception ex = null;
-                    if (TryNewRawTypeInfo(fieldType, out RawTypeInfo value, out ex))
+                    Exception ex2 = null;
+                    if (TryNewRawTypeInfo(fieldType, out RawTypeInfo value, out ex2))
                     {
                         typeDict.Add(fieldType, value);
                         types.Enqueue(fieldType);
                     }
                     else
                     {
-                        Log.Warn(ex.ToString());
+                        Log.Warn(ex2.ToString());
                     }
                 }
 
